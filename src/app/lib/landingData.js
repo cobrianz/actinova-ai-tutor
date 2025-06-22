@@ -26,42 +26,42 @@ export const data = {
       name: "Sarah Chen",
       role: "Software Developer at Google",
       content: "Actinova helped me transition from marketing to tech in just 6 months. The personalized roadmap was exactly what I needed. The AI tutor understood my learning style perfectly.",
-      avatar: "/placeholder.svg?height=60&width=60",
+      avatar: "/avatar1.jpg",
       rating: 5
     },
     {
       name: "Marcus Johnson",
       role: "Data Scientist at Microsoft",
       content: "The AI tutor understands my learning style perfectly. I've never been more engaged with online learning. The progress tracking kept me motivated throughout.",
-      avatar: "/placeholder.svg?height=60&width=60",
+      avatar: "/avatar2.jpg",
       rating: 5
     },
     {
       name: "Elena Rodriguez",
       role: "UX Designer at Airbnb",
       content: "Amazing platform! The progress tracking and adaptive content kept me motivated throughout my journey. I completed 5 courses in 3 months.",
-      avatar: "/placeholder.svg?height=60&width=60",
+      avatar: "/avatar3.jpg",
       rating: 5
     },
     {
       name: "David Kim",
       role: "Full Stack Developer",
       content: "The community aspect is incredible. I've made connections that helped me land my dream job. The courses are top-notch and always up-to-date.",
-      avatar: "/placeholder.svg?height=60&width=60",
+      avatar: "/avatar4.jpg",
       rating: 5
     },
     {
       name: "Lisa Wang",
       role: "Product Manager at Stripe",
       content: "Actinova's AI recommendations are spot-on. It suggested exactly the skills I needed for my career transition. Highly recommend!",
-      avatar: "/placeholder.svg?height=60&width=60",
+      avatar: "/avatar5.jpg",
       rating: 5
     },
     {
       name: "Ahmed Hassan",
       role: "DevOps Engineer",
       content: "The hands-on projects and real-world applications made all the difference. I went from beginner to confident professional in months.",
-      avatar: "/placeholder.svg?height=60&width=60",
+      avatar: "/avatar6.jpg",
       rating: 5
     }
   ],
