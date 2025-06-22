@@ -8,7 +8,7 @@ import { Crown, Zap, Check, X, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
-export default function UpgradePage() {
+export default function Upgrade() {
   const [selectedPlan, setSelectedPlan] = useState("pro")
   const [billingCycle, setBillingCycle] = useState("monthly")
   const [isProcessing, setIsProcessing] = useState(false)

@@ -1,21 +1,29 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, Star, Users, Sparkles, Search } from "lucide-react";
+import {
+  BookOpen,
+  Star,
+  Users,
+  Sparkles,
+  Search,
+  CreditCard,
+  Plus,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
-export default function Sidebar() {
-  const pathname = usePathname();
+export default function Sidebar({ setActiveContent }) {
   const [isSmallScreen, setIsSmallScreen] = useState(true);
+  const [activeItem, setActiveItem] = useState("generate"); // Default to "New +"
 
   const navigation = [
-    { name: "Explore", href: "/explore", icon: Search },
-    { name: "My Roadmap", href: "/roadmap", icon: BookOpen },
-    { name: "Library", href: "/library", icon: BookOpen },
-    { name: "Staff Picks", href: "/staff-picks", icon: Star },
-    { name: "Community", href: "/community", icon: Users },
+    { name: "New", id: "generate", icon: Plus },
+    { name: "Explore", id: "explore", icon: Search },
+    { name: "My Roadmap", id: "roadmap", icon: BookOpen },
+    { name: "Library", id: "library", icon: BookOpen },
+    { name: "Staff Picks", id: "staff-picks", icon: Star },
+    { name: "Community", id: "community", icon: Users },
+    { name: "Upgrade", id: "upgrade", icon: CreditCard },
   ];
 
   useEffect(() => {
@@ -26,6 +34,11 @@ export default function Sidebar() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handleItemClick = (id) => {
+    setActiveItem(id);
+    setActiveContent(id);
+  };
 
   return (
     <div className="relative flex h-full">
@@ -59,19 +72,19 @@ export default function Sidebar() {
           <ul className="space-y-2">
             {navigation.map((item, index) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive = activeItem === item.id;
 
               return (
                 <motion.li
-                  key={item.name}
+                  key={item.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className="relative group"
                 >
-                  <Link
-                    href={item.href}
-                    className={`flex items-center ${
+                  <button
+                    onClick={() => handleItemClick(item.id)}
+                    className={`flex items-center w-full ${
                       isSmallScreen ? "justify-center" : "space-x-3 px-3"
                     } py-2 rounded-lg text-sm font-medium transition-all duration-200 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 ${
                       isActive
@@ -92,7 +105,7 @@ export default function Sidebar() {
                       )}
                     </motion.div>
                     {!isSmallScreen && <span>{item.name}</span>}
-                  </Link>
+                  </button>
                 </motion.li>
               );
             })}

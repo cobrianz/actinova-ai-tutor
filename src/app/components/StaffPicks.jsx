@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { Star, BookOpen, Clock, Users, Award, TrendingUp, Crown, Zap } from "lucide-react"
 import Link from "next/link"
 
-export default function StaffPicksPage() {
+export default function StaffPicks() {
   const featuredPick = {
     id: 1,
     title: "Complete Full-Stack Development Bootcamp",

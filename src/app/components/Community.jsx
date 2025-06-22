@@ -17,10 +17,10 @@ import {
   MessageSquare,
   Eye,
 } from "lucide-react"
-import CreateDiscussion from "../components/CreateDiscussion"
-import JoinGroup from "../components/JoinGroup"
+import CreateDiscussion from "./CreateDiscussion"
+import JoinGroup from "./JoinGroup"
 
-export default function CommunityPage() {
+export default function Community() {
   const [activeTab, setActiveTab] = useState("discussions") // "discussions", "study-groups", "achievements"
   const [searchQuery, setSearchQuery] = useState("")
   const [showCreateDiscussion, setShowCreateDiscussion] = useState(false)

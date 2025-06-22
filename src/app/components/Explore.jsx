@@ -1,7 +1,7 @@
 import { BookOpen, Users, Clock, Star, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
-export default function ExplorePage() {
+export default function Explore() {
   const categories = [
     {
       name: "Programming",

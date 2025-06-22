@@ -4,7 +4,7 @@ import { useState } from "react"
 import { BookOpen, Clock, Target, Play, Bookmark, Share2 } from "lucide-react"
 import Link from "next/link"
 
-export default function RoadmapPage() {
+export default function Roadmap() {
   const [activeTab, setActiveTab] = useState("saved")
 
   // Mock saved roadmaps

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { BookOpen, Clock, Star, Search, Grid, List, Play, Bookmark, MoreHorizontal } from "lucide-react"
 import Link from "next/link"
 
-export default function LibraryPage() {
+export default function Library() {
   const [viewMode, setViewMode] = useState("grid") // "grid" or "list"
   const [filterBy, setFilterBy] = useState("all") // "all", "completed", "in-progress", "bookmarked"
   const [searchQuery, setSearchQuery] = useState("")
