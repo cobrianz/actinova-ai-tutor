@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 
 export default function Sidebar({ setActiveContent }) {
   const [isSmallScreen, setIsSmallScreen] = useState(true);
-  const [activeItem, setActiveItem] = useState("generate"); // Default to "New +"
+  const [activeItem, setActiveItem] = useState("new");
 
   const navigation = [
     { name: "New", id: "generate", icon: Plus },
@@ -41,9 +41,9 @@ export default function Sidebar({ setActiveContent }) {
   };
 
   return (
-    <div className="relative flex h-full">
+    <div className="relative flex">
       <motion.div
-        className={`top-0 left-0 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden z-30 ${
+        className={`fixed top-[64px] left-0 h-[calc(100vh-64px)] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden z-30 ${
           isSmallScreen ? "w-16" : "w-64"
         }`}
         initial={{ opacity: 0 }}
@@ -68,7 +68,18 @@ export default function Sidebar({ setActiveContent }) {
           )}
         </div>
 
-        <nav className="flex-1 p-4">
+        <nav
+          className="flex-1 p-4 overflow-y-auto scrollbar-hide"
+          style={{
+            scrollbarWidth: "none" /* Firefox */,
+            msOverflowStyle: "none" /* IE and Edge */,
+          }}
+        >
+          <style jsx>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none; /* Chrome, Safari, and Edge */
+            }
+          `}</style>
           <ul className="space-y-2">
             {navigation.map((item, index) => {
               const Icon = item.icon;
