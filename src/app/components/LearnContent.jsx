@@ -65,7 +65,7 @@ export default function LearnContent() {
 
   const selectLesson = (moduleId, lessonIndex) => {
     setActiveLesson({ moduleId, lessonIndex });
-    setIsSidebarOpen(false); // Close sidebar on lesson selection for mobile
+    setIsSidebarOpen(false);
   };
 
   const toggleLessonCompletion = (moduleId, lessonIndex) => {
@@ -182,7 +182,7 @@ export default function LearnContent() {
   }, [completedCount, totalLessons]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className=" h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <button
@@ -216,7 +216,7 @@ export default function LearnContent() {
         <div
           className={`${
             isSidebarOpen ? "block" : "hidden"
-          } lg:block w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px]`}
+          } lg:block w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar`} 
         >
           <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
@@ -241,7 +241,7 @@ export default function LearnContent() {
               ></div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto hide-scrollbar">
+          <div className="flex-1">
             {courseData.modules.map((module, moduleIndex) => (
               <div
                 key={module.id}
@@ -428,7 +428,7 @@ export default function LearnContent() {
         <div
           className={`${
             isRightPanelOpen ? "block" : "hidden"
-          } lg:block w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px] right-0`}
+          } lg:block w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px] right-0 h-full`} // Added h-full
         >
           <div className="border-b border-gray-200 dark:border-gray-700">
             <div className="flex">
@@ -456,7 +456,7 @@ export default function LearnContent() {
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden h-[calc(100vh-10rem)]">
             {activeRightPanel === "notes" ? (
               <div className="h-full flex flex-col">
                 <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
@@ -472,14 +472,14 @@ export default function LearnContent() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Write your notes here..."
-                    className="w-full h-full resize-none border-none outline-none bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                    className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400" 
                   />
                 </div>
                 <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={handleDownloadNotes}
                     disabled={!notes.trim()}
-                    className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-blue-600 text-white py-1.5 sm:py-2 px-3 sm:px-4 text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center space-x-1 sm:space-x-2 bg-blue-600 text-white py-1.5 sm:py-4 px-3 sm:px-4 text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors sm:p-x3"
                   >
                     <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>Download Notes</span>
@@ -496,7 +496,7 @@ export default function LearnContent() {
                     Ask questions about the lesson
                   </p>
                 </div>
-                <div className="flex-1 overflow-y-auto hide-scrollbar p-3 sm:p-4 space-y-3 sm:space-y-4">
+                <div className="flex-1 overflow-y-auto hide-scrollbar p-3 sm:p-4">
                   {chatMessages.map((message, index) => (
                     <div
                       key={index}
@@ -507,7 +507,7 @@ export default function LearnContent() {
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                        className={`max-w-[80%] px-3 py-1.5 sm:px-4 sm:p-2 rounded-lg text-xs sm:text-sm ${
                           message.type === "user"
                             ? "bg-blue-600 text-white"
                             : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -516,12 +516,12 @@ export default function LearnContent() {
                         {message.type === "ai" && (
                           <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
                             <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="text-xs font-medium">
+                            <span className="text-xs sm:text-sm font-medium">
                               AI Tutor
                             </span>
                           </div>
                         )}
-                        <p>{message.message}</p>
+                        <p className="sm:text-sm">{message.message}</p>
                       </div>
                     </div>
                   ))}
@@ -534,12 +534,12 @@ export default function LearnContent() {
                       onChange={(e) => setAiQuestion(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && sendAiQuestion()}
                       placeholder="Ask a question..."
-                      className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-2 py-1.5 sm:p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                       onClick={sendAiQuestion}
                       disabled={!aiQuestion.trim()}
-                      className="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-2 py-1.5 sm:p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Send className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
@@ -564,4 +564,4 @@ export default function LearnContent() {
       />
     </div>
   );
-}
+    }

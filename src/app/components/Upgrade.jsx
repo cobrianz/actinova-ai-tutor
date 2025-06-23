@@ -5,7 +5,6 @@ import React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Crown, Zap, Check, X, Sparkles } from "lucide-react"
-import Link from "next/link"
 import { toast } from "sonner"
 
 export default function Upgrade() {
@@ -123,46 +122,9 @@ export default function Upgrade() {
     },
   ]
 
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "Software Engineer",
-      company: "Google",
-      content:
-        "The Pro plan transformed my learning experience. The personalized paths and certificates helped me land my dream job!",
-      avatar: "/placeholder.svg?height=60&width=60",
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "Learning & Development Manager",
-      company: "Microsoft",
-      content:
-        "Enterprise plan is perfect for our team. The analytics and custom courses have improved our training efficiency by 300%.",
-      avatar: "/placeholder.svg?height=60&width=60",
-    },
-  ]
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navigation */}
-      <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">Actinova AI Tutor</span>
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -423,74 +385,6 @@ export default function Upgrade() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </motion.div>
-
-        {/* Testimonials */}
-        <motion.div
-          className="mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">What Our Users Say</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                <div className="flex items-center space-x-4 mb-4">
-                  <img
-                    src={testimonial.avatar || "/placeholder.svg"}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full"
-                  />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{testimonial.name}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {testimonial.role} at {testimonial.company}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 italic">"{testimonial.content}"</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* FAQ */}
-        <motion.div
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Can I change my plan anytime?</h4>
-              <p className="text-gray-600 dark:text-gray-400">
-                Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing
-                cycle.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                What happens to my certificates if I downgrade?
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400">
-                All certificates you've earned will remain accessible even if you downgrade. However, you won't be able
-                to earn new certificates on the free plan.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                Is there a free trial for paid plans?
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400">
-                Yes, we offer a 14-day free trial for all paid plans. No credit card required to start.
-              </p>
-            </div>
           </div>
         </motion.div>
       </div>

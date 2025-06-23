@@ -11,7 +11,7 @@ import StaffPicks from "./StaffPicks";
 import Community from "./Community";
 import Upgrade from "./Upgrade";
 
-export default function DashboardContent() {
+export default function DashboardContent({ sidebarOpen, setSidebarOpen }) {
   const [activeContent, setActiveContent] = useState("generate");
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("course");
@@ -21,7 +21,6 @@ export default function DashboardContent() {
   const routeComponents = {
     generate: () => (
       <div>
-        {/* Welcome Section */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
             Welcome back, John! 👋
@@ -32,8 +31,7 @@ export default function DashboardContent() {
           </p>
         </div>
 
-        {/* AI Tutor Interface */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 mb-10">
+        <div className="bg-white dark:bg-gray-800 p-8 mb-10">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               What can I help you learn today?
@@ -117,7 +115,6 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Quick Topics */}
         <div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Popular Learning Tracks
@@ -165,28 +162,37 @@ export default function DashboardContent() {
     }
   };
 
-  const ContentComponent = routeComponents[activeContent];
+  const ContentComponent =
+    routeComponents[activeContent] || routeComponents.generate;
 
   return (
     <div className="relative flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar setActiveContent={setActiveContent} />
+      <Sidebar
+        setActiveContent={setActiveContent}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        activeContent={activeContent}
+      />
       <div
         className="flex-1 max-w-[90rem] w-full mx-auto px-6 sm:px-8 lg:px-12 py-12 overflow-y-auto h-[100vh] scrollbar-hide"
         style={{
-          scrollbarWidth: "none" /* Firefox */,
-          msOverflowStyle: "none" /* IE and Edge */,
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
       >
         <style jsx>{`
           .scrollbar-hide::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, and Edge */
+            display: none;
           }
         `}</style>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-3">
-            {ContentComponent && (
+            {ContentComponent ? (
               <ContentComponent setActiveContent={setActiveContent} />
+            ) : (
+              <div className="text-center text-gray-600 dark:text-gray-400">
+                Loading content...
+              </div>
             )}
           </div>
         </div>

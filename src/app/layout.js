@@ -13,7 +13,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={jost.className}>
+      <body className={jost.className} suppressHydrationWarning={true}>
         <AuthProvider>
           {children}
           <Toaster position="top-right" richColors />

@@ -1,14 +1,14 @@
 "use client";
 
+import { Moon, Sun, User, Settings, LogOut, Menu } from "lucide-react";
+import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "./ThemeProvider";
-import { Moon, Sun, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
 
-export default function Navbar() {
+export default function Navbar({ toggleSidebar }) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -23,16 +23,22 @@ export default function Navbar() {
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
-        <nav className="flex items-center space-x-8">
-          {" "}
-          {/* Removed hidden md:flex */}
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={toggleSidebar}
+            className="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
-            Dashboard
-          </Link>
-        </nav>
+            <Menu className="w-5 h-5" />
+          </button>
+          <nav className="flex items-center space-x-8">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Dashboard
+            </Link>
+          </nav>
+        </div>
 
         <div className="flex items-center space-x-4">
           <button
