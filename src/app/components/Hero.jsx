@@ -38,7 +38,7 @@ export default function Hero({ handleGetStarted }) {
               <span>Start Learning Free</span>
             </button>
             <Link
-              href="#demo"
+              href="/demo"
               className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
             >
               Watch Demo
