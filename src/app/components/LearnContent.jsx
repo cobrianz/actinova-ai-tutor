@@ -2,8 +2,8 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
-  Share,
   BookOpen,
   Play,
   ChevronDown,
@@ -15,6 +15,7 @@ import {
   Download,
   Award,
   Menu,
+  Sparkles,
   X,
 } from "lucide-react";
 import NotesDownload from "./NotesDownload";
@@ -190,9 +191,23 @@ export default function LearnContent() {
           className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
         >
           {isSidebarOpen ? (
-            <X className="w-6 h-6" />
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+              </Link>
+              <X className="w-6 h-6" />
+            </div>
           ) : (
-            <Menu className="w-6 h-6" />
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+              </Link>
+              <Menu className="w-6 h-6" />
+            </div>
           )}
         </button>
         <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">
@@ -216,12 +231,19 @@ export default function LearnContent() {
         <div
           className={`${
             isSidebarOpen ? "block" : "hidden"
-          } lg:block w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar`} 
+          } lg:block w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar`}
         >
           <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
-              {courseData.title}
-            </h2>
+            <div className="flex justify-between flex-wrap flex-col">
+              <Link href="/dashboard">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+              </Link>
+              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
+                {courseData.title}
+              </h2>
+            </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               {courseData.totalModules} modules • {courseData.totalLessons}{" "}
               lessons
@@ -351,9 +373,6 @@ export default function LearnContent() {
                     <span>Get Certificate</span>
                   </button>
                 )}
-                <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                  <Share className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>
@@ -472,7 +491,7 @@ export default function LearnContent() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Write your notes here..."
-                    className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400" 
+                    className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
                 <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">

@@ -5,13 +5,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "./ThemeProvider";
 import { useAuth } from "./AuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 export default function Navbar({ toggleSidebar }) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLogout = () => {
@@ -20,13 +21,18 @@ export default function Navbar({ toggleSidebar }) {
     router.push("/");
   };
 
+  // Hide Navbar if the current path includes 'learnContent'
+  if (pathname.includes("learn")) {
+    return null;
+  }
+
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleSidebar}
-            className="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
             <Menu className="w-5 h-5" />
           </button>
