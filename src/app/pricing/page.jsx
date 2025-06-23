@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Check, Sparkles, Crown, Zap } from "lucide-react"
 import Link from "next/link"
+import HeroNavbar from "../components/heroNavbar"
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false)
@@ -86,30 +87,8 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Navigation */}
-      <nav className="border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">Actinova AI Tutor</span>
-            </Link>
-
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                Back to Home
-              </Link>
-              <Link
-                href="/auth/login"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      
+        <HeroNavbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

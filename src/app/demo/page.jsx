@@ -21,10 +21,10 @@ import {
   Volume2,
   VolumeX,
   Maximize,
-  Download,
   Share2,
 } from "lucide-react"
 import Link from "next/link"
+import HeroNavbar from "../components/heroNavbar"
 
 export default function DemoPage() {
   const [currentDemo, setCurrentDemo] = useState("overview")
@@ -219,57 +219,7 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Navigation */}
-      <nav className="border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <motion.div
-                className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Sparkles className="w-5 h-5 text-white" />
-              </motion.div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">Actinova AI Tutor</span>
-            </Link>
-
-            <div className="flex items-center space-x-6">
-              <Link
-                href="/"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                Home
-              </Link>
-              <Link
-                href="/pricing"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="/about"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                About
-              </Link>
-              <Link
-                href="/auth/login"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+      <HeroNavbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <motion.div
@@ -297,7 +247,7 @@ export default function DemoPage() {
 
         {/* Demo Player */}
         <motion.div
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden mb-16"
+          className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden mb-16"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -442,7 +392,6 @@ export default function DemoPage() {
                     whileTap={{ scale: 0.95 }}
                     className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                   >
-                    <Download className="w-4 h-4" />
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
