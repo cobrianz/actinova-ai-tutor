@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, User, Settings, LogOut, Menu } from "lucide-react";
+import { Moon, Sun, User, Settings, LogOut, Menu, Home } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "./ThemeProvider";
@@ -21,14 +21,10 @@ export default function Navbar({ toggleSidebar }) {
     router.push("/");
   };
 
-  // Hide Navbar if the current path includes 'learnContent'
-  if (pathname.includes("learn")) {
-    return null;
-  }
-
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
+        {/* Left Section */}
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleSidebar}
@@ -36,7 +32,13 @@ export default function Navbar({ toggleSidebar }) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <nav className="flex items-center space-x-8">
+          <nav className="flex items-center space-x-4">
+            <Link
+              href="/"
+              className="flex items-center space-x-1 text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              <Home className="w-4 h-4" />
+            </Link>
             <Link
               href="/dashboard"
               className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
@@ -46,7 +48,9 @@ export default function Navbar({ toggleSidebar }) {
           </nav>
         </div>
 
+        {/* Right Section */}
         <div className="flex items-center space-x-4">
+          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
@@ -58,6 +62,7 @@ export default function Navbar({ toggleSidebar }) {
             )}
           </button>
 
+          {/* User dropdown */}
           {user && (
             <div className="relative">
               <button

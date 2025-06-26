@@ -30,37 +30,53 @@ export default function SignupPage() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords don't match!")
-      return
+      toast.error("Passwords don't match!");
+      return;
     }
 
     if (!agreedToTerms) {
-      toast.error("Please agree to the terms and conditions")
-      return
+      toast.error("Please agree to the terms and conditions");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
-    // Simulate signup
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-      // Mock user data
-      const userData = {
-        id: 1,
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        avatar: "/placeholder.svg?height=40&width=40",
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Something went wrong");
+      } else {
+        login({
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          avatar: "/placeholder.svg?height=40&width=40",
+        });
+        toast.success(data.message);
+        router.push("/dashboard");
       }
-
-      login(userData)
-      toast.success("Account created successfully! Welcome to Actinova AI Tutor.")
-      router.push("/dashboard")
-    }, 1000)
-  }
+    } catch (err) {
+      toast.error("Server error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

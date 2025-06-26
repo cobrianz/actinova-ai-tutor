@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { useAuth } from "../../components/AuthProvider"
+import { useAuth } from "@/components/AuthProvider"
 
 export default function LoginPage() {
+  const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -16,26 +17,34 @@ export default function LoginPage() {
   const { login } = useAuth()
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
-    // Simulate login
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, rememberMe }),
+      });
 
-      // Mock user data
-      const userData = {
-        id: 1,
-        name: "John Doe",
-        email: email,
-        avatar: "/placeholder.svg?height=40&width=40",
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Login failed");
+        setLoading(false);
+        return;
       }
 
-      login(userData)
-      toast.success("Welcome back! Successfully logged in.")
-      router.push("/dashboard")
-    }, 1000)
-  }
+      login(data.user); // your auth context
+      toast.success("Welcome back!");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -46,18 +55,27 @@ export default function LoginPage() {
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">Actinova AI Tutor</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              Actinova AI Tutor
+            </span>
           </Link>
 
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back</h2>
-          <p className="text-gray-600 dark:text-gray-400">Sign in to continue your learning journey</p>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Welcome back
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Sign in to continue your learning journey
+          </p>
         </div>
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Email address
               </label>
               <div className="relative">
@@ -76,7 +94,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -96,7 +117,11 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -108,14 +133,22 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+              >
                 Remember me
               </label>
             </div>
 
-            <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
               Forgot password?
             </Link>
           </div>
@@ -131,7 +164,10 @@ export default function LoginPage() {
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{" "}
-              <Link href="/auth/signup" className="text-blue-600 hover:text-blue-500 font-medium">
+              <Link
+                href="/auth/signup"
+                className="text-blue-600 hover:text-blue-500 font-medium"
+              >
                 Sign up
               </Link>
             </p>
@@ -184,5 +220,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

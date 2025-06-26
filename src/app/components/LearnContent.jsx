@@ -22,6 +22,7 @@ import NotesDownload from "./NotesDownload";
 import AchievementCertificate from "./AchievementCertificate";
 import toast from "react-hot-toast";
 import { courseData } from "../lib/LearnContentData";
+import Navbar from "./Navbar";
 
 export default function LearnContent() {
   const params = useParams();
@@ -235,11 +236,6 @@ export default function LearnContent() {
         >
           <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between flex-wrap flex-col">
-              <Link href="/dashboard">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-              </Link>
               <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
                 {courseData.title}
               </h2>

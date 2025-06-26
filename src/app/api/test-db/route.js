@@ -1,11 +1,11 @@
-// pages/api/test-db.js
+// app/api/test-db/route.js
 import { connectToDatabase } from "@/lib/mongodb";
 
-export default async function handler(req, res) {
+export async function GET() {
   try {
     await connectToDatabase();
-    res.status(200).json({ status: "✅ MongoDB Connected Successfully" });
+    return Response.json({ status: "MongoDB Connected Successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }
