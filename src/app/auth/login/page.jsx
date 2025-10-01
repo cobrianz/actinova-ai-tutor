@@ -21,23 +21,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, rememberMe }),
-      });
+      const result = await login({ email, password, rememberMe });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Login failed");
-        setLoading(false);
-        return;
+      if (result.success) {
+        toast.success("Welcome back!");
+        router.push("/dashboard");
+      } else {
+        toast.error(result.error || "Login failed");
       }
-
-      login(data.user); // your auth context
-      toast.success("Welcome back!");
-      router.push("/dashboard");
     } catch (err) {
       toast.error("Something went wrong.");
     } finally {

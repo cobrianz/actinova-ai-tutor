@@ -21,7 +21,6 @@ import {
 import NotesDownload from "./NotesDownload";
 import AchievementCertificate from "./AchievementCertificate";
 import toast from "react-hot-toast";
-import { courseData } from "../lib/LearnContentData";
 import Navbar from "./Navbar";
 
 export default function LearnContent() {
@@ -54,6 +53,9 @@ export default function LearnContent() {
   const [currentAchievement, setCurrentAchievement] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [courseData, setCourseData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const toggleModule = (moduleId) => {
     const newExpanded = new Set(expandedModules);
@@ -109,6 +111,8 @@ export default function LearnContent() {
   };
 
   const getCurrentLesson = () => {
+    if (!courseData || !courseData.modules) return null;
+
     const module = courseData.modules.find(
       (m) => m.id === activeLesson.moduleId
     );
@@ -124,12 +128,11 @@ export default function LearnContent() {
     return lesson;
   };
 
-  const totalLessons = courseData.modules.reduce(
-    (acc, module) => acc + module.lessons.length,
-    0
-  );
+  const totalLessons = courseData && courseData.modules
+    ? courseData.modules.reduce((acc, module) => acc + module.lessons.length, 0)
+    : 0;
   const completedCount = completedLessons.size;
-  const progressPercentage = (completedCount / totalLessons) * 100;
+  const progressPercentage = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
 
   const currentLesson = getCurrentLesson();
 
@@ -158,7 +161,47 @@ export default function LearnContent() {
     setShowCertificate(true);
   };
 
+  // Fetch course data on component mount
   useEffect(() => {
+    const fetchCourseData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch('/api/generate-course', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            topic,
+            format,
+            difficulty,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to generate course');
+        }
+
+        const data = await response.json();
+        setCourseData(data);
+      } catch (err) {
+        console.error('Error fetching course data:', err);
+        setError(err.message);
+        toast.error(`Failed to generate course: ${err.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourseData();
+  }, [topic, format, difficulty]);
+
+  useEffect(() => {
+    if (!courseData) return;
+
     const progressPercentage = (completedCount / totalLessons) * 100;
 
     if (progressPercentage === 100 && completedCount > 0) {
@@ -181,7 +224,68 @@ export default function LearnContent() {
         "🎉 Congratulations! You've completed the course and earned a certificate!"
       );
     }
-  }, [completedCount, totalLessons]);
+  }, [completedCount, totalLessons, courseData]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              Generating your course...
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              This may take a few moments
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto p-6">
+            <div className="text-red-500 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              Failed to generate course
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {error}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ensure courseData exists
+  if (!courseData) {
+    return (
+      <div className="h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-400">No course data available</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className=" h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">

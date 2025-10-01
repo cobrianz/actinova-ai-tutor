@@ -16,6 +16,9 @@ export default function DashboardContent({ sidebarOpen, setSidebarOpen }) {
   const [topic, setTopic] = useState("");
   const [format, setFormat] = useState("course");
   const [difficulty, setDifficulty] = useState("beginner");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationMessage, setGenerationMessage] = useState("");
   const router = useRouter();
 
   const routeComponents = {
@@ -152,14 +155,38 @@ export default function DashboardContent({ sidebarOpen, setSidebarOpen }) {
     upgrade: Upgrade,
   };
 
-  const handleGenerate = () => {
-    if (topic.trim()) {
-      router.push(
-        `/learn/${encodeURIComponent(
-          topic.trim()
-        )}?format=${format}&difficulty=${difficulty}`
-      );
+  const handleGenerate = async () => {
+    if (!topic.trim()) return;
+
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    setGenerationMessage("Initializing course generation...");
+
+    // Simulate progress updates
+    const progressSteps = [
+      { progress: 10, message: "Analyzing your topic...", delay: 500 },
+      { progress: 25, message: "Designing course structure...", delay: 800 },
+      { progress: 45, message: "Generating learning objectives...", delay: 1000 },
+      { progress: 65, message: "Creating lesson content...", delay: 1200 },
+      { progress: 85, message: "Adding interactive elements...", delay: 800 },
+      { progress: 95, message: "Finalizing your course...", delay: 600 },
+      { progress: 100, message: "Course ready! Redirecting...", delay: 300 },
+    ];
+
+    for (const step of progressSteps) {
+      await new Promise(resolve => setTimeout(resolve, step.delay));
+      setGenerationProgress(step.progress);
+      setGenerationMessage(step.message);
     }
+
+    // Navigate to the course
+    router.push(
+      `/learn/${encodeURIComponent(
+        topic.trim()
+      )}?format=${format}&difficulty=${difficulty}`
+    );
+
+    setIsGenerating(false);
   };
 
   const ContentComponent =
@@ -197,6 +224,66 @@ export default function DashboardContent({ sidebarOpen, setSidebarOpen }) {
           </div>
         </div>
       </div>
+
+      {/* Beautiful Generation Loading Modal */}
+      {isGenerating && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              {/* Animated SVG Icon */}
+              <div className="relative mb-6">
+                <div className="w-20 h-20 mx-auto relative">
+                  {/* Outer rotating ring */}
+                  <div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 animate-spin"></div>
+
+                  {/* Inner pulsing circle */}
+                  <div className="absolute inset-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center animate-pulse">
+                      <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating particles */}
+                <div className="absolute -top-2 -right-2 w-3 h-3 bg-yellow-400 rounded-full animate-bounce"></div>
+                <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="absolute top-1/2 -right-3 w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500 ease-out relative"
+                    style={{ width: `${generationProgress}%` }}
+                  >
+                    <div className="absolute inset-0 bg-white opacity-30 animate-pulse"></div>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {generationProgress}% Complete
+                </div>
+              </div>
+
+              {/* Dynamic Messages */}
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Generating Your Course
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                {generationMessage}
+              </p>
+
+              {/* Fun facts or tips */}
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  💡 <strong>Did you know?</strong> Our AI creates personalized learning paths tailored to your skill level and interests!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
