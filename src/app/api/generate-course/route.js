@@ -1,16 +1,26 @@
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
-import { withRateLimit, withErrorHandling } from '@/lib/middleware';
+import { withRateLimit, withErrorHandling, withAuth } from '@/lib/middleware';
+import connectToMongoose from '@/app/lib/mongoose';
+import Course from '@/app/models/Course';
+import User from '@/app/models/User';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 async function generateCourseHandler(request) {
+  await connectToMongoose();
+
+  // Authenticate user
+  const user = request.user;
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const { topic, format, difficulty } = await request.json();
 
   try {
-
     // Validate input
     if (!topic || !format || !difficulty) {
       return NextResponse.json(
@@ -119,7 +129,34 @@ The guide should have 8-15 sections with detailed, practical content suitable fo
       );
     }
 
-    return NextResponse.json(courseData);
+    // Save course to database
+    const newCourse = new Course({
+      title: courseData.title,
+      level: courseData.level,
+      totalModules: courseData.totalModules,
+      totalLessons: courseData.totalLessons,
+      modules: courseData.modules,
+      createdBy: user._id,
+    });
+
+    await newCourse.save();
+
+    // Link course to user
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $push: {
+          courses: {
+            courseId: newCourse._id,
+            progress: 0,
+            completed: false,
+            enrolledAt: new Date(),
+          },
+        },
+      }
+    );
+
+    return NextResponse.json(newCourse);
 
   } catch (error) {
     console.error('Error generating course:', error);
@@ -198,7 +235,34 @@ The guide should have 8-15 sections with detailed, practical content suitable fo
         ]
       };
 
-      return NextResponse.json(mockCourseData);
+      // Save mock course to database for testing
+      const newCourse = new Course({
+        title: mockCourseData.title,
+        level: mockCourseData.level,
+        totalModules: mockCourseData.totalModules,
+        totalLessons: mockCourseData.totalLessons,
+        modules: mockCourseData.modules,
+        createdBy: user._id,
+      });
+
+      await newCourse.save();
+
+      // Link course to user
+      await User.updateOne(
+        { _id: user._id },
+        {
+          $push: {
+            courses: {
+              courseId: newCourse._id,
+              progress: 0,
+              completed: false,
+              enrolledAt: new Date(),
+            },
+          },
+        }
+      );
+
+      return NextResponse.json(newCourse);
     }
 
     if (error.status === 400) {
@@ -215,8 +279,9 @@ The guide should have 8-15 sections with detailed, practical content suitable fo
   }
 }
 
-// Apply middleware - rate limit to 5 course generations per hour per IP
-const rateLimitedHandler = withRateLimit({ max: 5, windowMs: 60 * 60 * 1000 })(generateCourseHandler);
+// Apply middleware - rate limit to 5 course generations per hour per IP, with authentication
+const authenticatedHandler = withAuth(generateCourseHandler);
+const rateLimitedHandler = withRateLimit({ max: 5, windowMs: 60 * 60 * 1000 })(authenticatedHandler);
 const errorHandledHandler = withErrorHandling(rateLimitedHandler);
 
 export const POST = errorHandledHandler;
