@@ -1,26 +1,30 @@
 import OpenAI from 'openai';
-import { NextResponse } from 'next/server';
-import { withRateLimit, withErrorHandling, withAuth } from '@/lib/middleware';
-import connectToMongoose from '@/app/lib/mongoose';
-import Course from '@/app/models/Course';
-import User from '@/app/models/User';
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
+import { verifyToken } from "@/lib/auth";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function generateCourseHandler(request) {
-  await connectToMongoose();
-
-  // Authenticate user
-  const user = request.user;
-  if (!user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  const { topic, format, difficulty } = await request.json();
-
+export async function POST(request) {
   try {
+    // Check authentication (optional for now)
+    let userId = null;
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = verifyToken(token);
+        userId = decoded.id;
+      } catch (error) {
+        // Continue without authentication for now
+        console.log('Auth token invalid, continuing without user ID');
+      }
+    }
+
+    const { topic, format, difficulty } = await request.json();
+
     // Validate input
     if (!topic || !format || !difficulty) {
       return NextResponse.json(
@@ -60,228 +64,113 @@ async function generateCourseHandler(request) {
       "lessons": [
         {
           "title": "Lesson Title",
-          "content": "Detailed lesson content in markdown format with proper headings, code examples, and explanations"
-        },
-        // more lessons...
+          "content": "Detailed lesson content with explanations, examples, and practical exercises"
+        }
       ]
-    },
-    // more modules...
+    }
   ]
 }
 
-The course should have 4-7 modules, each with 4-8 lessons. Make the content educational, practical, and suitable for ${difficulty} learners. Include code examples where appropriate.`;
+Make sure the course is comprehensive, well-structured, and appropriate for ${difficulty} level learners.`;
     } else {
       prompt = `Create a comprehensive ${difficulty} level guide on "${topic}". Return the response as a JSON object with the following structure:
 
 {
   "title": "Guide Title",
   "level": "${difficulty}",
-  "totalModules": 1,
   "totalLessons": number,
   "modules": [
     {
       "id": 1,
-      "title": "Guide Content",
+      "title": "Module Title",
       "lessons": [
         {
-          "title": "Section Title",
-          "content": "Detailed content in markdown format with proper headings, examples, and explanations"
-        },
-        // more sections...
+          "title": "Lesson Title",
+          "content": "Detailed lesson content with explanations, examples, and practical exercises"
+        }
       ]
     }
   ]
 }
 
-The guide should have 8-15 sections with detailed, practical content suitable for ${difficulty} learners. Include examples and best practices.`;
+Make sure the guide is comprehensive, well-structured, and appropriate for ${difficulty} level learners.`;
     }
 
-    // Call OpenAI API
+    // Generate content using OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Using GPT-3.5-turbo for course generation
+      model: "gpt-3.5-turbo",
       messages: [
-        { role: "system", content: "You are an expert educator and course creator. Generate high-quality, structured educational content." },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 4000,
-      temperature: 0.7,
-    });
-
-    const response = completion.choices[0].message.content;
-
-    // Parse the JSON response
-    let courseData;
-    try {
-      courseData = JSON.parse(response);
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', response);
-      return NextResponse.json(
-        { error: 'Failed to generate course content. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    // Validate the structure
-    if (!courseData.title || !courseData.modules || !Array.isArray(courseData.modules)) {
-      return NextResponse.json(
-        { error: 'Generated content is not in the expected format. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    // Save course to database
-    const newCourse = new Course({
-      title: courseData.title,
-      level: courseData.level,
-      totalModules: courseData.totalModules,
-      totalLessons: courseData.totalLessons,
-      modules: courseData.modules,
-      createdBy: user._id,
-    });
-
-    await newCourse.save();
-
-    // Link course to user
-    await User.updateOne(
-      { _id: user._id },
-      {
-        $push: {
-          courses: {
-            courseId: newCourse._id,
-            progress: 0,
-            completed: false,
-            enrolledAt: new Date(),
-          },
+        {
+          role: "system",
+          content: "You are an expert educational content creator. Create high-quality, structured learning content that is engaging and educational."
         },
-      }
-    );
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 4000,
+    });
 
-    return NextResponse.json(newCourse);
-
-  } catch (error) {
-    console.error('Error generating course:', error);
-
-    // Handle specific OpenAI errors
-    if (error.status === 401) {
-      return NextResponse.json(
-        { error: 'Invalid API key' },
-        { status: 401 }
-      );
-    }
-
-    if (error.status === 429) {
-      // Return mock data for testing when quota is exceeded
-      console.log('OpenAI quota exceeded, returning mock data for testing');
-      const mockCourseData = {
-        title: `${topic} Course`,
+    const generatedContent = completion.choices[0].message.content;
+    
+    // Try to parse JSON response
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(generatedContent);
+    } catch (parseError) {
+      // If JSON parsing fails, create a basic structure
+      parsedContent = {
+        title: `${topic} - ${difficulty} Level ${format === 'course' ? 'Course' : 'Guide'}`,
         level: difficulty,
-        totalModules: 3,
-        totalLessons: 9,
+        totalModules: 1,
+        totalLessons: 1,
         modules: [
           {
             id: 1,
             title: `Introduction to ${topic}`,
             lessons: [
               {
-                title: `What is ${topic}?`,
-                content: `# What is ${topic}?\n\n${topic} is an important technology that you will learn about in this course. This lesson covers the basics and why ${topic} matters.\n\n## Key Concepts\n\n- Understanding the fundamentals\n- Real-world applications\n- Getting started with ${topic}\n\n## Next Steps\n\nIn the following lessons, we'll dive deeper into practical implementation.`
-              },
-              {
-                title: `Setting Up Your Environment`,
-                content: `# Setting Up Your Development Environment\n\nBefore we start coding, let's set up your development environment for ${topic}.\n\n## Prerequisites\n\n- Basic computer knowledge\n- Text editor (VS Code recommended)\n- Node.js installed\n\n## Installation Steps\n\n1. Download and install Node.js\n2. Install a code editor\n3. Set up your project directory\n\nYour environment is now ready!`
-              },
-              {
-                title: `Your First ${topic} Program`,
-                content: `# Your First ${topic} Program\n\nLet's create your first program in ${topic}.\n\n## Hello World Example\n\n\`\`\`javascript\nconsole.log("Hello, ${topic} World!");\n\`\`\`\n\n## What This Code Does\n\n- Prints a message to the console\n- Demonstrates basic syntax\n- Shows how to run ${topic} code\n\nCongratulations on your first program!`
-              }
-            ]
-          },
-          {
-            id: 2,
-            title: `Core ${topic} Concepts`,
-            lessons: [
-              {
-                title: `Variables and Data Types`,
-                content: `# Variables and Data Types\n\nUnderstanding variables is fundamental to programming.\n\n## Variable Declaration\n\n\`\`\`javascript\nlet message = "Hello";\nconst PI = 3.14159;\nvar oldWay = "deprecated";\n\`\`\`\n\n## Data Types\n\n- Strings\n- Numbers\n- Booleans\n- Arrays\n- Objects`
-              },
-              {
-                title: `Functions and Methods`,
-                content: `# Functions and Methods\n\nFunctions allow you to organize and reuse code.\n\n## Function Declaration\n\n\`\`\`javascript\nfunction greet(name) {\n  return \`Hello, \${name}!\`;\n}\n\`\`\`\n\n## Arrow Functions\n\n\`\`\`javascript\nconst greet = (name) => \`Hello, \${name}!\`;\n\`\`\`\n\nFunctions make your code modular and maintainable.`
-              },
-              {
-                title: `Control Flow`,
-                content: `# Control Flow\n\nControl flow determines how your program executes.\n\n## Conditional Statements\n\n\`\`\`javascript\nif (condition) {\n  // do something\n} else {\n  // do something else\n}\n\`\`\`\n\n## Loops\n\n\`\`\`javascript\nfor (let i = 0; i < 5; i++) {\n  console.log(i);\n}\n\`\`\`\n\nControl flow is essential for making decisions in your code.`
-              }
-            ]
-          },
-          {
-            id: 3,
-            title: `Advanced ${topic} Topics`,
-            lessons: [
-              {
-                title: `Working with APIs`,
-                content: `# Working with APIs\n\nAPIs allow your applications to communicate with other services.\n\n## Making API Calls\n\n\`\`\`javascript\nfetch('https://api.example.com/data')\n  .then(response => response.json())\n  .then(data => console.log(data));\n\`\`\`\n\n## Async/Await\n\n\`\`\`javascript\nasync function getData() {\n  try {\n    const response = await fetch('https://api.example.com/data');\n    const data = await response.json();\n    return data;\n  } catch (error) {\n    console.error('Error:', error);\n  }\n}\n\`\`\``
-              },
-              {
-                title: `Error Handling`,
-                content: `# Error Handling\n\nProper error handling makes your applications robust.\n\n## Try/Catch Blocks\n\n\`\`\`javascript\ntry {\n  // risky code\n  riskyFunction();\n} catch (error) {\n  console.error('An error occurred:', error);\n}\n\`\`\`\n\n## Error Types\n\n- SyntaxError\n- ReferenceError\n- TypeError\n- Custom errors\n\nGood error handling improves user experience.`
-              },
-              {
-                title: `Best Practices`,
-                content: `# Best Practices\n\nFollowing best practices leads to better code quality.\n\n## Code Organization\n\n- Use meaningful variable names\n- Keep functions small and focused\n- Comment your code\n- Follow consistent formatting\n\n## Performance Tips\n\n- Avoid global variables\n- Use efficient algorithms\n- Minimize DOM manipulation\n- Optimize images and assets\n\nBest practices make your code maintainable and scalable.`
+                title: `Getting Started with ${topic}`,
+                content: generatedContent || `This is a ${difficulty} level ${format} about ${topic}. The content will be generated here.`
               }
             ]
           }
         ]
       };
-
-      // Save mock course to database for testing
-      const newCourse = new Course({
-        title: mockCourseData.title,
-        level: mockCourseData.level,
-        totalModules: mockCourseData.totalModules,
-        totalLessons: mockCourseData.totalLessons,
-        modules: mockCourseData.modules,
-        createdBy: user._id,
-      });
-
-      await newCourse.save();
-
-      // Link course to user
-      await User.updateOne(
-        { _id: user._id },
-        {
-          $push: {
-            courses: {
-              courseId: newCourse._id,
-              progress: 0,
-              completed: false,
-              enrolledAt: new Date(),
-            },
-          },
-        }
-      );
-
-      return NextResponse.json(newCourse);
     }
 
-    if (error.status === 400) {
-      return NextResponse.json(
-        { error: 'Invalid request to OpenAI API' },
-        { status: 400 }
-      );
+    // Save to database if it's a course
+    if (format === 'course') {
+      const { db } = await connectToDatabase();
+      const coursesCol = db.collection('courses');
+      
+      const courseData = {
+        ...parsedContent,
+        createdBy: userId || 'anonymous',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        students: 0,
+        rating: 0,
+        reviews: [],
+        isPremium: false,
+        price: 0
+      };
+
+      await coursesCol.insertOne(courseData);
     }
 
+    return NextResponse.json({
+      success: true,
+      content: parsedContent
+    });
+
+  } catch (error) {
+    console.error('Error generating course:', error);
     return NextResponse.json(
-      { error: 'Failed to generate course. Please try again later.' },
+      { error: 'Failed to generate course content' },
       { status: 500 }
     );
   }
 }
-
-// Apply middleware - rate limit to 5 course generations per hour per IP, with authentication
-const authenticatedHandler = withAuth(generateCourseHandler);
-const rateLimitedHandler = withRateLimit({ max: 5, windowMs: 60 * 60 * 1000 })(authenticatedHandler);
-const errorHandledHandler = withErrorHandling(rateLimitedHandler);
-
-export const POST = errorHandledHandler;

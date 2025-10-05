@@ -4,7 +4,28 @@ import { motion } from "framer-motion"
 import { Star, BookOpen, Clock, Users, Award, TrendingUp, Crown, Zap } from "lucide-react"
 import Link from "next/link"
 
-export default function StaffPicks() {
+export default function PremiumCourses() {
+  const handleUpgradePlan = async (plan) => {
+    try {
+      const response = await fetch('/api/billing/create-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        console.error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+    }
+  };
+
   const featuredPick = {
     id: 1,
     title: "Complete Full-Stack Development Bootcamp",
@@ -187,11 +208,10 @@ export default function StaffPicks() {
       >
         <div className="flex items-center justify-center space-x-2 mb-4">
           <Star className="w-8 h-8 text-yellow-500" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Staff Picks</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Premium Courses</h1>
         </div>
         <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Curated learning paths recommended by our education experts. These courses represent the best of what we
-          offer.
+          High-quality courses with advanced features, expert instruction, and comprehensive learning materials.
         </p>
       </motion.div>
 
@@ -255,23 +275,20 @@ export default function StaffPicks() {
               <p className="text-xs text-blue-200 mt-2">- Education Team</p>
             </div>
 
-            <Link
-              href={`/learn/${encodeURIComponent(featuredPick.title)}`}
-              className="inline-flex items-center space-x-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            <button
+              onClick={() => handleUpgradePlan('editors-choice')}
+              className="mt-4 w-full py-3 px-4 rounded-lg font-medium transition-all bg-white text-blue-600 hover:bg-gray-100 shadow-lg"
             >
-              <BookOpen className="w-5 h-5" />
-              <span>Start Learning</span>
-            </Link>
+              Purchase Premium Course
+            </button>
           </div>
 
           <div className="relative">
-            <img
-              src={featuredPick.thumbnail || "/placeholder.svg"}
-              alt={featuredPick.title}
-              className="rounded-lg shadow-2xl"
-            />
+            <div className="w-full h-64 bg-gray-200 dark:bg-gray-700 rounded-lg shadow-2xl flex items-center justify-center">
+              <span className="text-gray-500 dark:text-gray-400">Image removed</span>
+            </div>
             <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-semibold">
-              #1 Pick
+              Editor's Choice
             </div>
           </div>
         </div>
@@ -292,11 +309,9 @@ export default function StaffPicks() {
             className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
           >
             <div className="relative">
-              <img
-                src={course.thumbnail || "/placeholder.svg"}
-                alt={course.title}
-                className="w-full h-48 object-cover"
-              />
+              <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <span className="text-gray-500 dark:text-gray-400">Image removed</span>
+              </div>
               <div
                 className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getBadgeColor(course.badge)}`}
               >

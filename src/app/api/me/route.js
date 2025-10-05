@@ -1,14 +1,23 @@
 // src/app/api/me/route.js
 
 import { cookies } from "next/headers";
-import { verifyToken, sanitizeUser } from "@/lib/auth";
-import { findUserById } from "@/lib/db";
+import { verifyToken } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/mongodb";
 import { withErrorHandling, withCORS } from "@/lib/middleware";
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 
 async function meHandler(req) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  // Try to get token from authorization header first, then from cookies
+  const authHeader = req.headers.get('authorization');
+  let token = null;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else {
+    const cookieStore = cookies();
+    token = cookieStore.get("token")?.value;
+  }
 
   console.log("/api/me - token present:", !!token);
 
@@ -21,7 +30,10 @@ async function meHandler(req) {
     const decoded = verifyToken(token);
     console.log("/api/me - decoded token:", decoded);
 
-    const user = await findUserById(decoded.id);
+    const { db } = await connectToDatabase();
+    const usersCol = db.collection('users');
+    
+    const user = await usersCol.findOne({ _id: new ObjectId(decoded.id) });
     console.log("/api/me - user found:", !!user);
 
     if (!user) {
@@ -36,9 +48,12 @@ async function meHandler(req) {
       return NextResponse.json({ user: null });
     }
 
+    // Sanitize user data (remove sensitive fields)
+    const { password, refreshTokens, ...sanitizedUser } = user;
+    
     console.log("/api/me - returning user");
     return NextResponse.json({
-      user: sanitizeUser(user),
+      user: sanitizedUser,
     });
   } catch (err) {
     console.error("/me error:", err);

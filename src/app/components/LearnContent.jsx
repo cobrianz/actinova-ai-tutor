@@ -37,6 +37,7 @@ export default function LearnContent() {
     lessonIndex: 0,
   });
   const [notes, setNotes] = useState("");
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [chatMessages, setChatMessages] = useState([
     {
@@ -83,7 +84,7 @@ export default function LearnContent() {
     setCompletedLessons(newCompleted);
   };
 
-  const sendAiQuestion = () => {
+  const sendAiQuestion = async () => {
     if (!aiQuestion.trim()) return;
 
     const userMessage = {
@@ -92,22 +93,62 @@ export default function LearnContent() {
       timestamp: new Date(),
     };
 
-    const aiResponses = [
-      "That's a great question! Let me explain that concept in more detail...",
-      "I can help clarify that for you. This is a common point of confusion...",
-      "Excellent question! This relates to what we covered earlier about...",
-      "Let me break that down for you step by step...",
-      "That's an important concept to understand. Here's how it works...",
-    ];
-
-    const aiMessage = {
-      type: "ai",
-      message: aiResponses[Math.floor(Math.random() * aiResponses.length)],
-      timestamp: new Date(),
-    };
-
-    setChatMessages((prev) => [...prev, userMessage, aiMessage]);
+    // Add user message immediately
+    setChatMessages((prev) => [...prev, userMessage]);
     setAiQuestion("");
+
+    // Add loading message
+    const loadingMessage = {
+      type: "ai",
+      message: "Thinking...",
+      timestamp: new Date(),
+      isLoading: true
+    };
+    setChatMessages((prev) => [...prev, loadingMessage]);
+
+    try {
+      const response = await fetch('/api/course-agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: userMessage.message,
+          courseContent: currentLesson?.content || '',
+          lessonTitle: currentLesson?.title || '',
+          context: `Course: ${courseData?.title || ''}, Level: ${courseData?.level || ''}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+
+      // Remove loading message and add real response
+      setChatMessages((prev) => {
+        const withoutLoading = prev.filter(msg => !msg.isLoading);
+        return [...withoutLoading, {
+          type: "ai",
+          message: data.response,
+          timestamp: new Date(),
+        }];
+      });
+
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      // Remove loading message and add error response
+      setChatMessages((prev) => {
+        const withoutLoading = prev.filter(msg => !msg.isLoading);
+        return [...withoutLoading, {
+          type: "ai",
+          message: "I'm sorry, I'm having trouble responding right now. Please try again later.",
+          timestamp: new Date(),
+        }];
+      });
+    }
   };
 
   const getCurrentLesson = () => {
@@ -136,13 +177,45 @@ export default function LearnContent() {
 
   const currentLesson = getCurrentLesson();
 
+  const saveNotes = async (notesContent) => {
+    if (!notesContent.trim()) return;
+
+    try {
+      setIsSavingNotes(true);
+      const response = await fetch('/api/notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: courseData?.title || '',
+          lessonId: `${activeLesson.moduleId}-${activeLesson.lessonIndex}`,
+          content: notesContent,
+          title: currentLesson?.title || 'Lesson Notes'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save notes');
+      }
+
+      const data = await response.json();
+      console.log('Notes saved:', data.message);
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast.error('Failed to save notes');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
   const handleDownloadNotes = () => {
     const notesData = {
       title: currentLesson?.title || "Lesson Notes",
       content: notes,
       date: new Date().toLocaleDateString(),
       course: courseData.title,
-      tags: ["TypeScript", "Programming", "Learning"],
+      tags: ["Learning", courseData?.level || "General"],
     };
     setCurrentNotes(notesData);
     setShowNotesDownload(true);
@@ -160,6 +233,17 @@ export default function LearnContent() {
     setCurrentAchievement(achievement);
     setShowCertificate(true);
   };
+
+  // Auto-save notes when they change
+  useEffect(() => {
+    if (notes.trim() && courseData) {
+      const timeoutId = setTimeout(() => {
+        saveNotes(notes);
+      }, 2000); // Auto-save after 2 seconds of inactivity
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [notes, courseData, activeLesson]);
 
   // Fetch course data on component mount
   useEffect(() => {
@@ -590,9 +674,14 @@ export default function LearnContent() {
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Write your notes here..."
+                    placeholder="Write your notes here... (Auto-saves every 2 seconds)"
                     className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
+                  {isSavingNotes && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Saving...
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
                   <button

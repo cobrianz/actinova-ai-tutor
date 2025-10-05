@@ -79,15 +79,28 @@ export default function Upgrade() {
     setIsProcessing(true)
 
     try {
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const response = await fetch('/api/billing/create-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: planName
+        }),
+      });
 
-      toast.success(`Successfully upgraded to ${planName} plan!`)
-      // In real app, redirect to payment processor or update user plan
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const data = await response.json();
+      
+      // Redirect to Stripe checkout
+      window.location.href = data.sessionUrl;
     } catch (error) {
-      toast.error("Failed to process upgrade. Please try again.")
-    } finally {
-      setIsProcessing(false)
+      console.error('Error upgrading:', error);
+      toast.error('Failed to start upgrade process. Please try again.');
+      setIsProcessing(false);
     }
   }
 

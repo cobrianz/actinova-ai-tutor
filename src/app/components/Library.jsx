@@ -1,114 +1,88 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { BookOpen, Clock, Star, Search, Grid, List, Play, Bookmark, MoreHorizontal } from "lucide-react"
+import { BookOpen, Clock, Star, Search, Grid, List, Play, Bookmark, MoreHorizontal, Trash2, ChevronLeft, ChevronRight, Filter, Trophy, Flame } from "lucide-react"
 import Link from "next/link"
 
 export default function Library() {
   const [viewMode, setViewMode] = useState("grid") // "grid" or "list"
   const [filterBy, setFilterBy] = useState("all") // "all", "completed", "in-progress", "bookmarked"
   const [searchQuery, setSearchQuery] = useState("")
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState({})
+  const [stats, setStats] = useState({})
+  const [achievements, setAchievements] = useState([])
+  const coursesPerPage = 6
 
-  const savedCourses = [
-    {
-      id: 1,
-      title: "JavaScript Fundamentals",
-      description: "Master the core concepts of JavaScript programming",
-      progress: 75,
-      totalLessons: 24,
-      completedLessons: 18,
-      lastAccessed: "2 hours ago",
-      estimatedTime: "3 weeks",
-      difficulty: "beginner",
-      category: "Programming",
-      isBookmarked: true,
-      thumbnail: "/placeholder.svg?height=200&width=300",
-      instructor: "John Smith",
-      rating: 4.8,
-    },
-    {
-      id: 2,
-      title: "React Development",
-      description: "Build modern web applications with React",
-      progress: 40,
-      totalLessons: 32,
-      completedLessons: 13,
-      lastAccessed: "1 day ago",
-      estimatedTime: "5 weeks",
-      difficulty: "intermediate",
-      category: "Frontend",
-      isBookmarked: false,
-      thumbnail: "/placeholder.svg?height=200&width=300",
-      instructor: "Sarah Johnson",
-      rating: 4.9,
-    },
-    {
-      id: 3,
-      title: "Node.js Backend",
-      description: "Create scalable backend applications",
-      progress: 10,
-      totalLessons: 28,
-      completedLessons: 3,
-      lastAccessed: "3 days ago",
-      estimatedTime: "4 weeks",
-      difficulty: "intermediate",
-      category: "Backend",
-      isBookmarked: true,
-      thumbnail: "/placeholder.svg?height=200&width=300",
-      instructor: "Mike Chen",
-      rating: 4.7,
-    },
-    {
-      id: 4,
-      title: "Python for Data Science",
-      description: "Analyze data and build ML models with Python",
-      progress: 100,
-      totalLessons: 36,
-      completedLessons: 36,
-      lastAccessed: "1 week ago",
-      estimatedTime: "6 weeks",
-      difficulty: "beginner",
-      category: "Data Science",
-      isBookmarked: false,
-      thumbnail: "/placeholder.svg?height=200&width=300",
-      instructor: "Dr. Emily Rodriguez",
-      rating: 4.9,
-    },
-    {
-      id: 5,
-      title: "UI/UX Design Principles",
-      description: "Create beautiful and functional user interfaces",
-      progress: 60,
-      totalLessons: 20,
-      completedLessons: 12,
-      lastAccessed: "2 days ago",
-      estimatedTime: "4 weeks",
-      difficulty: "beginner",
-      category: "Design",
-      isBookmarked: true,
-      thumbnail: "/placeholder.svg?height=200&width=300",
-      instructor: "Alex Kim",
-      rating: 4.6,
-    },
-  ]
+  useEffect(() => {
+    fetchLibraryData();
+  }, [currentPage, filterBy, searchQuery]);
 
-  const filteredCourses = savedCourses.filter((course) => {
-    const matchesSearch =
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase())
-
-    switch (filterBy) {
-      case "completed":
-        return matchesSearch && course.progress === 100
-      case "in-progress":
-        return matchesSearch && course.progress > 0 && course.progress < 100
-      case "bookmarked":
-        return matchesSearch && course.isBookmarked
-      default:
-        return matchesSearch
+  const fetchLibraryData = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: coursesPerPage.toString(),
+        filter: filterBy,
+        search: searchQuery
+      });
+      
+      const response = await fetch(`/api/library?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data.courses);
+        setPagination(data.pagination);
+        setStats(data.stats);
+        setAchievements(data.achievements);
+      }
+    } catch (error) {
+      console.error('Error fetching library data:', error);
+    } finally {
+      setLoading(false);
     }
-  })
+  };
+
+  const handleBookmark = async (courseId) => {
+    try {
+      const response = await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'bookmark', courseId })
+      });
+      
+      if (response.ok) {
+        fetchLibraryData(); // Refresh data
+      }
+    } catch (error) {
+      console.error('Error bookmarking course:', error);
+    }
+  };
+
+  const handleDelete = async (courseId) => {
+    if (window.confirm('Are you sure you want to remove this course from your library?')) {
+      try {
+        const response = await fetch('/api/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', courseId })
+        });
+        
+        if (response.ok) {
+          fetchLibraryData(); // Refresh data
+        }
+      } catch (error) {
+        console.error('Error deleting course:', error);
+      }
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -139,6 +113,60 @@ export default function Library() {
           Your personal collection of saved courses and learning materials
         </p>
       </motion.div>
+
+      {/* Stats */}
+      {stats && Object.keys(stats).length > 0 && (
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
+            <BookOpen className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalCourses}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Courses</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
+            <Trophy className="w-6 h-6 text-green-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.completedCourses}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Completed</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
+            <Bookmark className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.bookmarkedCourses}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Bookmarked</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
+            <Flame className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.streak}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Day Streak</div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Achievements */}
+      {achievements && achievements.length > 0 && (
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Achievements</h3>
+          <div className="flex flex-wrap gap-2">
+            {achievements.slice(0, 3).map((achievement) => (
+              <div
+                key={achievement.id}
+                className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1"
+              >
+                <Trophy className="w-3 h-3" />
+                <span>{achievement.title}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Controls */}
       <motion.div
@@ -191,16 +219,22 @@ export default function Library() {
       </motion.div>
 
       {/* Course Grid/List */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={viewMode}
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
-        >
-          {filteredCourses.map((course) => (
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your library...</p>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewMode}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
+          >
+            {courses.map((course) => (
             <motion.div
               key={course.id}
               variants={itemVariants}
@@ -222,18 +256,37 @@ export default function Library() {
               <div className={`${viewMode === "list" ? "flex flex-1" : ""}`}>
                 {/* Thumbnail */}
                 <div className={`${viewMode === "list" ? "w-48 flex-shrink-0" : ""}`}>
-                  <img
-                    src={course.thumbnail || "/placeholder.svg"}
-                    alt={course.title}
-                    className={`w-full object-cover ${viewMode === "list" ? "h-32" : "h-48"}`}
-                  />
+                  {course.thumbnail ? (
+                    <img
+                      src={course.thumbnail}
+                      alt={course.title}
+                      className={`w-full object-cover ${viewMode === "list" ? "h-32" : "h-48"}`}
+                    />
+                  ) : course.isGenerated ? (
+                    <div className={`w-full ${viewMode === "list" ? "h-32" : "h-48"} bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center`}>
+                      <BookOpen className="w-12 h-12 text-white opacity-80" />
+                    </div>
+                  ) : (
+                    <img
+                      src="/placeholder.svg"
+                      alt={course.title}
+                      className={`w-full object-cover ${viewMode === "list" ? "h-32" : "h-48"}`}
+                    />
+                  )}
                 </div>
 
                 {/* Content */}
                 <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{course.title}</h3>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{course.title}</h3>
+                        {course.isGenerated && (
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                            AI Generated
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{course.description}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-500">by {course.instructor}</p>
                     </div>
@@ -242,15 +295,21 @@ export default function Library() {
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
+                        onClick={() => handleBookmark(course.id)}
                         className="p-1 text-gray-400 hover:text-yellow-500"
                       >
                         <Bookmark
                           className={`w-4 h-4 ${course.isBookmarked ? "fill-yellow-500 text-yellow-500" : ""}`}
                         />
                       </motion.button>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      {!course.isGenerated && (
+                        <button 
+                          onClick={() => handleDelete(course.id)}
+                          className="p-1 text-gray-400 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -301,11 +360,52 @@ export default function Library() {
               </div>
             </motion.div>
           ))}
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <motion.div
+          className="flex items-center justify-center space-x-2 mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={!pagination.hasPrev}
+            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          
+          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => handlePageChange(page)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                currentPage === page
+                  ? "bg-blue-600 text-white"
+                  : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+          
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={!pagination.hasNext}
+            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </motion.div>
-      </AnimatePresence>
+      )}
 
       {/* Empty State */}
-      {filteredCourses.length === 0 && (
+      {!loading && courses.length === 0 && (
         <motion.div
           className="text-center py-12"
           initial={{ opacity: 0, scale: 0.9 }}

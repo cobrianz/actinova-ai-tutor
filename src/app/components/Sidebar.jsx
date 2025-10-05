@@ -3,7 +3,6 @@
 import {
   BookOpen,
   Star,
-  Users,
   Sparkles,
   Search,
   CreditCard,
@@ -24,10 +23,8 @@ export default function Sidebar({
   const navigation = [
     { name: "New", id: "generate", icon: Plus },
     { name: "Explore", id: "explore", icon: Search },
-    { name: "My Roadmap", id: "roadmap", icon: BookOpen },
     { name: "Library", id: "library", icon: BookOpen },
-    { name: "Staff Picks", id: "staff-picks", icon: Star },
-    { name: "Community", id: "community", icon: Users },
+    { name: "Premium", id: "staff-picks", icon: Star },
     { name: "Upgrade", id: "upgrade", icon: CreditCard },
   ];
 
