@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/components/AuthProvider";
+import { useAuth } from "../../components/AuthProvider";
 
 export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
@@ -238,5 +238,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  ); 
+  );
 }
