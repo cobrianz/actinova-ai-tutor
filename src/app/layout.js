@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Jost } from "next/font/google";
 import { AuthProvider } from "./components/AuthProvider";
-import { Toaster } from "sonner";
+import ToasterClient from "./components/ToasterClient";
 import InactivityModal from "./components/InactivityModal";
 
 const jost = Jost({ subsets: ["latin"] });
@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           {children}
-          <Toaster position="top-right" richColors />
+          <ToasterClient />
           <InactivityModal />
         </AuthProvider>
       </body>
