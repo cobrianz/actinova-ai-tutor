@@ -177,11 +177,12 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     pdf.setFont("helvetica", "normal"); // Reset
   };
 
-  const processContent = (content) => {
+  const processContent = (content, titleToSkip = null) => {
     if (!content) return;
     const lines = content.split('\n');
     let isInCodeBlock = false;
 
+    let hasSkippedTitle = false;
     lines.forEach(line => {
       const trimmedLine = line.trim();
 
@@ -217,16 +218,24 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
       if (trimmedLine.startsWith("# ")) {
         const headerText = trimmedLine.substring(2).trim();
-        // Skip if it matches the course title to avoid redundancy
-        if (headerText.toLowerCase() === data.title?.toLowerCase()) {
+        // Skip if it matches the specified title (e.g. lesson title or course title)
+        if (!hasSkippedTitle && titleToSkip && headerText.toLowerCase() === titleToSkip.toLowerCase()) {
+          hasSkippedTitle = true;
           return;
         }
+        // Also skip if it exactly matches data.title (fallback)
+        if (!hasSkippedTitle && headerText.toLowerCase() === data.title?.toLowerCase()) {
+          hasSkippedTitle = true;
+          return;
+        }
+
         y += 5;
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(26);
         pdf.setTextColor(...COLORS.primary);
         pdf.text(headerText, pageWidth / 2, y, { align: "center" });
         y += 15;
+        hasSkippedTitle = true; // Still mark as skipped if we did print one, to avoid skipping subsequent ones (though usually only one H1)
       } else if (trimmedLine.startsWith("## ")) {
         y += 5;
         pdf.setFont("helvetica", "bold");
@@ -338,14 +347,14 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         y += 10;
 
         if (lesson.content) {
-          processContent(lesson.content);
+          processContent(lesson.content, lesson.title || lesson);
         }
         y += 10;
       });
     });
   } else {
     // Mode is "notes"
-    processContent(data.content);
+    processContent(data.content, data.title);
   }
 
   // --- FINAL DECORATION ---
