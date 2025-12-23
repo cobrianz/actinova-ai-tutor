@@ -207,42 +207,42 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Create a password"
-                  minLength={8}
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
+          <div>
+  <label
+    htmlFor="password"
+    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+  >
+    Password
+  </label>
+  <div className="relative">
+    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <input
+      id="password"
+      name="password"
+      type={showPassword ? "text" : "password"}
+      required
+      value={formData.password}
+      onChange={handleChange}
+      className="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      placeholder="Create a password"
+      minLength={8}
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+    >
+      {showPassword ? (
+        <EyeOff className="w-5 h-5" />
+      ) : (
+        <Eye className="w-5 h-5" />
+      )}
+    </button>
+  </div>
+  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+    Must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)
+  </p>
+</div>
 
             <div>
               <label

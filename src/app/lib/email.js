@@ -1,8 +1,16 @@
 // lib/email.js
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-// Email configuration
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Nodemailer transporter configuration
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const getEmailVerificationTemplate = (
   firstName,
@@ -253,18 +261,14 @@ const getPasswordResetTemplate = (firstName, resetLink) => `
 // Email sending functions
 export async function sendVerificationEmail({ to, name, token, code }) {
   try {
-    const verificationLink = `${
-      process.env.NEXTAUTH_URL || "http://localhost:3000"
-    }/auth/verify-email?token=${token}`;
+    const verificationLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"
+      }/auth/verify-email?token=${token}`;
 
-    const fromAddress =
-      process.env.NODE_ENV === "production"
-        ? "Actinova AI Tutor <noreply@actinova.com>"
-        : "Actinova AI Tutor <onboarding@resend.dev>";
+    const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
 
-    const data = await resend.emails.send({
+    const data = await transporter.sendMail({
       from: fromAddress,
-      to: [to],
+      to: to,
       subject: "Welcome to Actinova AI Tutor: Verify Your Email",
       html: getEmailVerificationTemplate(name, verificationLink, code),
       text: `Hi ${name},
@@ -302,7 +306,7 @@ Best regards,
 The Actinova AI Tutor Team`,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -310,18 +314,14 @@ The Actinova AI Tutor Team`,
 
 export async function sendPasswordResetEmail({ to, name, token }) {
   try {
-    const resetLink = `${
-      process.env.NEXTAUTH_URL || "http://localhost:3000"
-    }/auth/reset-password?token=${token}`;
+    const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"
+      }/auth/reset-password?token=${token}`;
 
-    const fromAddress =
-      process.env.NODE_ENV === "production"
-        ? "Actinova AI Tutor <noreply@actinova.com>"
-        : "Actinova AI Tutor <onboarding@resend.dev>";
+    const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
 
-    const data = await resend.emails.send({
+    const data = await transporter.sendMail({
       from: fromAddress,
-      to: [to],
+      to: to,
       subject: "Password Reset Request for Your Actinova AI Tutor Account",
       html: getPasswordResetTemplate(name, resetLink),
       text: `Hi ${name},
@@ -338,7 +338,7 @@ Best regards,
 The Actinova AI Tutor Team`,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -346,14 +346,11 @@ The Actinova AI Tutor Team`,
 
 export async function sendWelcomeEmail({ to, name }) {
   try {
-    const fromAddress =
-      process.env.NODE_ENV === "production"
-        ? "Actinova AI Tutor <noreply@actinova.com>"
-        : "Actinova AI Tutor <onboarding@resend.dev>";
+    const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
 
-    const data = await resend.emails.send({
+    const data = await transporter.sendMail({
       from: fromAddress,
-      to: [to],
+      to: to,
       subject: "Welcome to Actinova AI Tutor!",
       html: `
 <!DOCTYPE html>
@@ -451,19 +448,16 @@ Best regards,
 The Actinova AI Tutor Team`,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }
 }
 
-// Send a 6-digit password reset code via Resend
+// Send a 6-digit password reset code via Nodemailer
 export async function sendPasswordResetCodeEmail({ to, name, code }) {
   try {
-    const fromAddress =
-      process.env.NODE_ENV === "production"
-        ? "Actinova AI Tutor <noreply@actinova.com>"
-        : "Actinova AI Tutor <onboarding@resend.dev>";
+    const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
 
     const subject = "Your Actinova AI Tutor Password Reset Code";
     const html = `
@@ -497,15 +491,15 @@ export async function sendPasswordResetCodeEmail({ to, name, code }) {
 
     const text = `Hi ${name || "Learner"},\n\nYour password reset code is: ${code}\nThis code expires in 15 minutes. If you didn't request this, ignore this email.\n\nActinova AI Tutor`;
 
-    const data = await resend.emails.send({
+    const data = await transporter.sendMail({
       from: fromAddress,
-      to: [to],
+      to: to,
       subject,
       html,
       text,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -514,14 +508,11 @@ export async function sendPasswordResetCodeEmail({ to, name, code }) {
 // Send password change notification email
 export async function sendPasswordChangeNotificationEmail({ to, name }) {
   try {
-    const fromAddress =
-      process.env.NODE_ENV === "production"
-        ? "Actinova AI Tutor <noreply@actinova.com>"
-        : "Actinova AI Tutor <onboarding@resend.dev>";
+    const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
 
-    const data = await resend.emails.send({
+    const data = await transporter.sendMail({
       from: fromAddress,
-      to: [to],
+      to: to,
       subject: "Your Password Has Been Changed - Actinova AI Tutor",
       html: `
 <!DOCTYPE html>
@@ -626,7 +617,7 @@ Best regards,
 The Actinova AI Tutor Team`,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -643,8 +634,7 @@ export async function sendContactMessageEmail({
   try {
     const toAddress = "briankipkemoi808@gmail.com";
 
-    // Use Resend's onboarding address to avoid domain verification issues
-    const fromAddress = "Actinova AI Tutor <onboarding@resend.dev>";
+    const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
 
     const safeSubject = subject?.trim() || "New Contact Message";
     const finalSubject = `Contact: ${category} - ${safeSubject}`.slice(0, 180);
@@ -685,16 +675,16 @@ export async function sendContactMessageEmail({
 
     const text = `New Contact Message\n\nFrom: ${name || "Unknown"} <${fromEmail || "no-email"}>\nCategory: ${category}\nSubject: ${safeSubject}\nReceived At: ${createdAtStr}\n\nMessage:\n${message || ""}`;
 
-    const data = await resend.emails.send({
+    const data = await transporter.sendMail({
       from: fromAddress,
-      to: [toAddress],
+      to: toAddress,
       subject: finalSubject,
       html,
       text,
-      reply_to: fromEmail || undefined,
+      replyTo: fromEmail || undefined,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     return { success: false, error: error.message };
   }

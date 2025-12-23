@@ -207,9 +207,7 @@ export async function POST(request) {
     try {
       updates = await request.json();
       console.log(
-        "[POST /profile/update] Received updates:",
-        JSON.stringify(updates, null, 2)
-      );
+        "[POST /profile/update] Received updates:");
     } catch (error) {
       console.error("[POST /profile/update] Invalid JSON:", error);
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
