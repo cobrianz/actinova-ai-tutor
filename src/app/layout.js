@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Jost } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "./components/AuthProvider";
 import ToasterClient from "./components/ToasterClient";
 import InactivityModal from "./components/InactivityModal";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
           {children}
           <ToasterClient />
           <InactivityModal />
+          <Analytics />
         </AuthProvider>
       </body>
     </html>
