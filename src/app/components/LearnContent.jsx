@@ -1448,36 +1448,16 @@ export default function LearnContent() {
     <div className=" h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-        >
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-            </Link>
-            {isSidebarOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </div>
-        </button>
-        <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">
-          {courseData?.title || "Loading Course"}
-        </h2>
-        <button
-          onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-        >
-          {isRightPanelOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <FileText className="w-6 h-6" />
-          )}
-        </button>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+          </Link>
+          <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+            {courseData?.title || "Loading Course"}
+          </h2>
+        </div>
       </div>
 
       {/* Main Layout */}
@@ -1746,6 +1726,21 @@ export default function LearnContent() {
                       : "Pro: Notes PDF"}
                   </span>
                 </button>
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="flex lg:hidden items-center space-x-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title={isSidebarOpen ? "Close outline" : "Open outline"}
+                >
+                  <Menu className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+                  className="flex items-center space-x-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title={isRightPanelOpen ? "Close side panel" : "Open side panel"}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{isRightPanelOpen ? "Hide Tools" : "Show Tools"}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1753,7 +1748,7 @@ export default function LearnContent() {
             ref={contentRef}
             className="flex-1 overflow-y-auto hide-scrollbar bg-white dark:bg-gray-800"
           >
-            <div className="max-w-full sm:max-w-3xl lg:max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+            <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
               {lessonContentLoading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -1794,8 +1789,8 @@ export default function LearnContent() {
 
         {/* Right Panel - Notes & AI Tutor */}
         <div
-          className={`${isRightPanelOpen ? "block" : "hidden"
-            } lg:block w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-[100vh]`}
+          className={`${isRightPanelOpen ? "flex" : "hidden"
+            } w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-[calc(100vh-6rem)] lg:h-full`}
         >
           <div className="border-b border-gray-200 dark:border-gray-700">
             <div className="flex">
@@ -1899,78 +1894,126 @@ export default function LearnContent() {
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col">
-                <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100">
-                    AI Tutor
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                    Ask questions about the lesson
-                  </p>
+              <div className="h-full flex flex-col bg-[#e5ddd5] dark:bg-[#0b141a] relative overflow-hidden">
+                {/* Chat Background Pattern - Subtle Overlay */}
+                <div
+                  className="absolute inset-0 opacity-[0.05] dark:opacity-[0.03] pointer-events-none"
+                  style={{
+                    backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")`,
+                    backgroundRepeat: 'repeat'
+                  }}
+                />
+
+                <div className="p-3 sm:p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md z-10 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+                      AI Tutor
+                    </h3>
+                    <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                      Online & ready to help
+                    </p>
+                  </div>
                 </div>
+
                 <div
                   ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto hide-scrollbar p-3 sm:p-4"
+                  className="flex-1 overflow-y-auto scrollbar-hide p-3 sm:p-4 space-y-3 z-10"
                 >
-                  {chatMessages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${message.type === "user"
-                        ? "justify-end"
-                        : "justify-start"
+                  <style jsx>{`
+                    .scrollbar-hide::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                  {chatMessages.map((message, index) => {
+                    const isUser = message.type === "user";
+                    const time = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+
+                    return (
+                      <div
+                        key={index}
+                        className={`flex ${isUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                      >
+                        <div
+                          className={`max-w-[85%] px-3 py-2 rounded-xl text-sm relative shadow-sm ${isUser
+                            ? "bg-[#dcf8c6] dark:bg-[#005c4b] text-gray-800 dark:text-gray-100 rounded-tr-none"
+                            : "bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-tl-none"
+                            }`}
+                        >
+                          {!isUser && (
+                            <div className="flex items-center space-x-2 mb-1 opacity-70">
+                              <Bot className="w-3 h-3 text-blue-500" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">
+                                AI Tutor
+                              </span>
+                            </div>
+                          )}
+
+                          {message.html ? (
+                            <div
+                              className="prose prose-sm dark:prose-invert max-w-none break-words"
+                              dangerouslySetInnerHTML={{
+                                __html: message.message,
+                              }}
+                            />
+                          ) : (
+                            <p className="whitespace-pre-wrap break-words">{message.message}</p>
+                          )}
+
+                          <div className={`text-[10px] mt-1 flex justify-end items-center space-x-1 opacity-50 ${isUser ? "text-gray-700 dark:text-gray-300" : "text-gray-500 dark:text-gray-400"}`}>
+                            <span>{time}</span>
+                            {isUser && (
+                              <svg className="w-3 h-3 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M20 6L9 17l-5-5" />
+                                <path d="M20 10l-11 11-5-5" className="translate-x-1" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-700/50 z-10 transition-all">
+                  <div className="flex items-end space-x-2 max-w-full">
+                    <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-2xl shadow-sm border border-gray-200 dark:border-transparent focus-within:border-blue-500 transition-all flex items-end p-1">
+                      <textarea
+                        value={aiQuestion}
+                        onChange={(e) => {
+                          setAiQuestion(e.target.value);
+                          // Auto expand height
+                          e.target.style.height = 'auto';
+                          e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            if (aiQuestion.trim()) {
+                              sendAiQuestion();
+                              e.target.style.height = 'auto';
+                            }
+                          }
+                        }}
+                        placeholder="Type a message"
+                        className="flex-1 px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none resize-none max-h-[120px]"
+                        rows={1}
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        sendAiQuestion();
+                        // Reset textarea height after click
+                        const textarea = document.querySelector('textarea[placeholder="Type a message"]');
+                        if (textarea) textarea.style.height = 'auto';
+                      }}
+                      disabled={!aiQuestion.trim()}
+                      className={`p-3 rounded-full flex items-center justify-center transition-all ${aiQuestion.trim()
+                        ? "bg-[#00a884] shadow-lg scale-100 hover:bg-[#008f72] active:scale-95"
+                        : "bg-gray-300 dark:bg-gray-700 opacity-50 cursor-not-allowed scale-90"
                         }`}
                     >
-                      <div
-                        className={`max-w-[80%] px-3 py-1.5 sm:px-4 sm:p-2 rounded-lg text-xs sm:text-sm mt-2 ${message.type === "user"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          }`}
-                      >
-                        {message.type === "ai" && (
-                          <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
-                            <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="text-xs sm:text-sm font-medium">
-                              AI Tutor
-                            </span>
-                          </div>
-                        )}
-                        {message.html ? (
-                          <div
-                            className="prose prose-sm dark:prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{
-                              __html: message.message,
-                            }}
-                          />
-                        ) : (
-                          <p className="sm:text-sm">{message.message}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex space-x-1 sm:space-x-2">
-                    <input
-                      type="text"
-                      value={aiQuestion}
-                      onChange={(e) => setAiQuestion(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          sendAiQuestion();
-                        }
-                      }}
-                      placeholder="Ask a question..."
-                      className="flex-1 px-2 py-1.5 sm:p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      dir="ltr"
-                      style={{ direction: "ltr", unicodeBidi: "plaintext" }}
-                    />
-                    <button
-                      onClick={sendAiQuestion}
-                      disabled={!aiQuestion.trim()}
-                      className="px-2 py-1.5 sm:p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <Send className={`w-5 h-5 text-white ${aiQuestion.trim() ? "translate-x-0.5 -translate-y-0.5" : ""}`} />
                     </button>
                   </div>
                 </div>

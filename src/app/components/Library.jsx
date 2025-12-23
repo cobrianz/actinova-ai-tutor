@@ -320,7 +320,7 @@ export default function Library({ setActiveContent }) {
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 text-center">
             Your Learning Progress
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <motion.div
               className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
@@ -329,10 +329,10 @@ export default function Library({ setActiveContent }) {
                 <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.courses || 0}
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
                   Total Courses
                 </div>
               </div>
@@ -345,10 +345,10 @@ export default function Library({ setActiveContent }) {
                 <Trophy className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.completedCourses || 0}
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
                   Completed
                 </div>
               </div>
@@ -361,10 +361,10 @@ export default function Library({ setActiveContent }) {
                 <Pin className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.pinnedCourses || 0}
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
                   Pinned
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function Library({ setActiveContent }) {
                 <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {courses.length > 0
                     ? Math.round(
                       courses.reduce(
@@ -388,7 +388,7 @@ export default function Library({ setActiveContent }) {
                     : 0}
                   %
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
                   Avg Progress
                 </div>
               </div>
@@ -516,17 +516,17 @@ export default function Library({ setActiveContent }) {
                 </div>
 
                 <div className="p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {course.title}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                         {course.description}
                       </p>
                     </div>
 
-                    <div className="flex gap-1 ml-4">
+                    <div className="flex gap-1 sm:ml-4">
                       {course.format !== "questions" && course.format !== "flashcards" && (
                         <button
                           onClick={() => {
@@ -557,7 +557,7 @@ export default function Library({ setActiveContent }) {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <div className="flex flex-wrap gap-2 sm:gap-3 text-sm text-gray-600 dark:text-gray-400 mb-4">
                     <span className="flex items-center gap-1">
                       <BookOpen className="w-4 h-4" />
                       {course.completedLessons}/{course.totalLessons}
@@ -566,18 +566,18 @@ export default function Library({ setActiveContent }) {
                       <Clock className="w-4 h-4" />
                       {course.estimatedTime}
                     </span>
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-xs">
+                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-[10px] sm:text-xs">
                       {course.difficulty || "Beginner"}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                    <div className="text-sm flex-1">
                       <div className="flex justify-between mb-1">
                         <span>Progress</span>
                         <span>{course.progress}%</span>
                       </div>
-                      <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="w-full sm:w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-600 rounded-full transition-all duration-1000"
                           style={{ width: `${course.progress}%` }}
@@ -591,7 +591,7 @@ export default function Library({ setActiveContent }) {
                           ? `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`
                           : `/learn/${course.id}`
                       }
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
                     >
                       <Play className="w-4 h-4" />
                       {course.progress === 100 ? "Review" : "Continue"}

@@ -24,7 +24,7 @@ export default function DashboardLayout({
         <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
           <Navbar toggleSidebar={toggleSidebar} />
           <div className="flex flex-1 overflow-hidden">
-            <div className="sticky top-0 h-full">
+            <div className="relative h-full z-50">
               <Sidebar
                 setActiveContent={setActiveContent}
                 sidebarOpen={sidebarOpen}

@@ -142,7 +142,6 @@ export default function Chat({ topic: propTopic }) {
   const [chatTopics, setChatTopics] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -440,123 +439,99 @@ export default function Chat({ topic: propTopic }) {
     <div className="flex w-full h-[calc(100vh-12rem)] min-h-[800px] max-h-[1000px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
       {/* Chat History Sidebar */}
       <div
-        className={`${sidebarOpen ? (sidebarMinimized ? "w-16" : "w-64") : "w-0"} transition-all duration-300 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden`}
+        className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden`}
       >
         {sidebarOpen && (
           <>
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              {!sidebarMinimized ? (
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-                    <MessageSquare className="w-5 h-5" />
-                    <span>Chat History</span>
-                  </h3>
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => setSidebarMinimized(true)}
-                      className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      title="Minimize"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                  </div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Chat History</span>
+                </h3>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {loadingTopics ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Loading...
+                  </p>
+                </div>
+              ) : chatTopics.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No chat history</p>
+                  <p className="text-xs mt-1">
+                    Start a conversation to see it here
+                  </p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center space-y-2">
-                  <button
-                    onClick={() => setSidebarMinimized(false)}
-                    className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    title="Expand"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <div className="space-y-1">
+                  {chatTopics.map((chat) => (
+                    <div
+                      key={chat.id || chat.topic}
+                      className={`group relative w-full rounded-xl transition-all duration-200 ${topic === chat.topic
+                        ? "bg-blue-600 text-white"
+                        : "bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent"
+                        }`}
+                    >
+                      <button
+                        onClick={() => handleLoadTopic(chat.topic)}
+                        className="w-full text-left p-3 pr-10"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`text-sm font-medium truncate ${topic === chat.topic
+                                ? "text-white dark:text-white"
+                                : "text-gray-900 dark:text-gray-100"
+                                }`}
+                            >
+                              {chat.topic}
+                            </p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span
+                                className={`text-xs ${topic === chat.topic
+                                  ? "text-blue-100 dark:text-blue-200"
+                                  : "text-gray-500 dark:text-gray-400"
+                                  }`}
+                              >
+                                {chat.messageCount} messages
+                              </span>
+                              {chat.lastMessageAt && (
+                                <span
+                                  className={`text-xs flex items-center ${topic === chat.topic
+                                    ? "text-blue-100 dark:text-blue-200"
+                                    : "text-gray-400 dark:text-gray-500"
+                                    }`}
+                                >
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {new Date(
+                                    chat.lastMessageAt
+                                  ).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteTopic(chat.topic, e)}
+                        className={`absolute top-2 right-2 p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity ${topic === chat.topic
+                          ? "hover:bg-blue-600 text-white"
+                          : "hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
+                          }`}
+                        title="Delete chat"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            {!sidebarMinimized && (
-              <div className="flex-1 overflow-y-auto p-2">
-                {loadingTopics ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Loading...
-                    </p>
-                  </div>
-                ) : chatTopics.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No chat history</p>
-                    <p className="text-xs mt-1">
-                      Start a conversation to see it here
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {chatTopics.map((chat) => (
-                      <div
-                        key={chat.id || chat.topic}
-                        className={`group relative w-full rounded-xl transition-all duration-200 ${topic === chat.topic
-                          ? "bg-blue-600 text-white"
-                          : "bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent"
-                          }`}
-                      >
-                        <button
-                          onClick={() => handleLoadTopic(chat.topic)}
-                          className="w-full text-left p-3 pr-10"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className={`text-sm font-medium truncate ${topic === chat.topic
-                                  ? "text-white dark:text-white"
-                                  : "text-gray-900 dark:text-gray-100"
-                                  }`}
-                              >
-                                {chat.topic}
-                              </p>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <span
-                                  className={`text-xs ${topic === chat.topic
-                                    ? "text-blue-100 dark:text-blue-200"
-                                    : "text-gray-500 dark:text-gray-400"
-                                    }`}
-                                >
-                                  {chat.messageCount} messages
-                                </span>
-                                {chat.lastMessageAt && (
-                                  <span
-                                    className={`text-xs flex items-center ${topic === chat.topic
-                                      ? "text-blue-100 dark:text-blue-200"
-                                      : "text-gray-400 dark:text-gray-500"
-                                      }`}
-                                  >
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    {new Date(
-                                      chat.lastMessageAt
-                                    ).toLocaleDateString()}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteTopic(chat.topic, e)}
-                          className={`absolute top-2 right-2 p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity ${topic === chat.topic
-                            ? "hover:bg-blue-600 text-white"
-                            : "hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
-                            }`}
-                          title="Delete chat"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>
@@ -797,12 +772,7 @@ export default function Chat({ topic: propTopic }) {
               </button>
             </div>
           )}
-          {isPro && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-1">
-              Use <strong>**bold**</strong>, <em>*italics*</em>, or{" "}
-              <u>[u]underline[/u]</u> in your messages
-            </p>
-          )}
+
         </div>
       </div>
 

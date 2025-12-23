@@ -236,7 +236,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
 
   return (
     <div
-      className={`p-6 sm:p-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white min-h-screen transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
+      className={`p-4 sm:p-8 lg:p-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white min-h-screen transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
     >
       <div className="max-w-full mx-auto">
         {onBack ? (
@@ -321,7 +321,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
             </div>
           </div>
         </div>
-        <Card className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm border border-slate-200/50 dark:border-gray-700 rounded-3xl p-8 ring-1 ring-slate-200/20 dark:ring-gray-700/30">
+        <Card className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm">
           <CardContent className="space-y-12">
             <div className="space-y-10">
               {getCurrentPageQuestions().map((q, index) => {
@@ -330,7 +330,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                 return (
                   <div
                     key={`question-${globalIndex}`}
-                    className={`p-8 bg-white dark:bg-gray-800/50 rounded-2xl border border-slate-200/50 dark:border-gray-700 transition-opacity duration-500 ${questionsVisible ? "opacity-100" : "opacity-0"}`}
+                    className={`sm:p-4 bg-white dark:bg-gray-800/50 transition-opacity duration-500 ${questionsVisible ? "opacity-100" : "opacity-0"}`}
                   >
                     <div className="flex items-start space-x-4 mb-6">
                       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
