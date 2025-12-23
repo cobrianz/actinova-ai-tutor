@@ -17,6 +17,8 @@ import {
   Menu,
   Sparkles,
   X,
+  CheckCircle,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -185,6 +187,30 @@ export default function LearnContent() {
   }, [chatMessages]);
 
   const [activeRightPanel, setActiveRightPanel] = useState("notes");
+
+  // Handle responsive sidebar defaults
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width >= 1024) { // Large
+        setIsSidebarOpen(true);
+        setIsRightPanelOpen(true);
+      } else if (width >= 768) { // Medium
+        setIsSidebarOpen(true);
+        setIsRightPanelOpen(false);
+      } else { // Small
+        setIsSidebarOpen(false);
+        setIsRightPanelOpen(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // We only want to set the defaults once on mount or when the user hasn't manually toggled them?
+    // Actually, usually users expect themes/layouts to react to resize but manual toggles to persist.
+    // For now, let's just do it on mount to satisfy the "defaults" requirement.
+  }, []);
 
   const toggleModule = (moduleId) => {
     const newExpanded = new Set(expandedModules);
@@ -1445,28 +1471,123 @@ export default function LearnContent() {
   }
 
   return (
-    <div className=" h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-          </Link>
-          <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">
-            {courseData?.title || "Loading Course"}
-          </h2>
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {/* Permanent Navbar Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 z-50 shadow-sm relative">
+        <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+          {/* Left Group - Navigation */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-medium ${isSidebarOpen
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50"
+                : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                }`}
+            >
+              <Menu className="w-4 h-4" />
+              <span className="hidden md:inline">Toggle Modules</span>
+            </button>
+
+            <Link
+              href="/dashboard"
+              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 transition-all font-bold shadow-sm"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden md:inline">Dashboard</span>
+            </Link>
+          </div>
+
+          {/* Right Group - Controls */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <button
+              onClick={async () => {
+                if (!activeLesson || lessonContentLoading) return;
+                const lessonId = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+                const isCurrentlyCompleted = completedLessons.has(lessonId);
+                const action = isCurrentlyCompleted ? "incomplete" : "complete";
+                toast.loading(`Marking lesson as ${action}...`, { id: "mark-complete" });
+
+                try {
+                  await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
+                  toast.success(`Lesson marked as ${action}!`, { id: "mark-complete" });
+                } catch (error) {
+                  toast.error(`Error: ${error.message}`, { id: "mark-complete" });
+                }
+              }}
+              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-medium border ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+                ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-900/50"
+                : "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/50"
+                }`}
+              disabled={!currentLesson?.content || lessonContentLoading}
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span className="hidden md:inline">
+                {completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+                  ? "Mark Incomplete"
+                  : "Mark Complete"}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
+                const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
+                if (!isPro) {
+                  toast.error("Lesson PDF export is a Pro feature. Please upgrade.");
+                  router.push("/dashboard?tab=upgrade");
+                  return;
+                }
+                if (!currentLesson?.content) {
+                  toast.error("No lesson content to download.");
+                  return;
+                }
+                downloadCourseAsPDF({
+                  title: currentLesson.title,
+                  content: currentLesson.content
+                }, "notes");
+                toast.success("Download started!");
+              }}
+              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all font-medium"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden md:inline">Download Lesson</span>
+            </button>
+
+            <button
+              onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-medium ${isRightPanelOpen
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50"
+                : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                }`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden md:inline">{isRightPanelOpen ? "Hide Tools" : "Show Tools"}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main Layout Area below navbar */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Backdrops - moved outside to fix blur and hidden on large screens */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+        {isRightPanelOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
+            onClick={() => setIsRightPanelOpen(false)}
+          />
+        )}
+
         {/* Left Sidebar - Course Navigation */}
         <div
-          className={`${isSidebarOpen ? "block" : "hidden"
-            } lg:block w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar`}
+          className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute z-40 transition-transform duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar shadow-xl`}
         >
+
           <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between flex-wrap flex-col">
               <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
@@ -1622,128 +1743,6 @@ export default function LearnContent() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                  {currentLesson?.title || "Select a lesson"}
-                </h1>
-                <span className="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs sm:text-sm font-medium">
-                  {courseData.level}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2 flex-wrap gap-2">
-                <button
-                  onClick={async () => {
-                    const lessonId = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
-                    const isCurrentlyCompleted = completedLessons.has(lessonId);
-                    const action = isCurrentlyCompleted
-                      ? "incomplete"
-                      : "complete";
-
-                    // Show loading toast
-                    toast.loading(`Marking lesson as ${action}...`, {
-                      id: "mark-complete",
-                    });
-
-                    try {
-                      await toggleLessonCompletion(
-                        activeLesson.moduleId,
-                        activeLesson.lessonIndex
-                      );
-                      toast.success(`Lesson marked as ${action}!`, {
-                        id: "mark-complete",
-                      });
-                    } catch (error) {
-                      toast.error(
-                        `Failed to mark lesson as ${action}. Please try again.`,
-                        {
-                          id: "mark-complete",
-                        }
-                      );
-                      console.error("Error marking lesson complete:", error);
-                    }
-                  }}
-                  className={`px-3 py-1.5 text-sm rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 ${completedLessons.has(
-                    `${activeLesson.moduleId}-${activeLesson.lessonIndex}`
-                  )
-                    ? "bg-orange-600 text-white hover:bg-orange-700"
-                    : "bg-green-600 text-white hover:bg-green-700"
-                    }`}
-                  disabled={!currentLesson?.content || lessonContentLoading}
-                >
-                  {completedLessons.has(
-                    `${activeLesson.moduleId}-${activeLesson.lessonIndex}`
-                  )
-                    ? "Mark Incomplete"
-                    : "Mark Complete"}
-                </button>
-                <button
-                  onClick={() => {
-                    const isPro =
-                      user &&
-                      ((user.subscription &&
-                        user.subscription.plan === "pro" &&
-                        user.subscription.status === "active") ||
-                        user.isPremium);
-                    if (!isPro) {
-                      toast.error(
-                        "Notes PDF export is a Pro feature. Please upgrade."
-                      );
-                      router.push("/dashboard?tab=upgrade");
-                      return;
-                    }
-                    handleDownloadNotes();
-                  }}
-                  disabled={
-                    !notes.trim() ||
-                    !(
-                      user &&
-                      ((user.subscription &&
-                        user.subscription.plan === "pro" &&
-                        user.subscription.status === "active") ||
-                        user.isPremium)
-                    )
-                  }
-                  className={
-                    user &&
-                      ((user.subscription &&
-                        user.subscription.plan === "pro" &&
-                        user.subscription.status === "active") ||
-                        user.isPremium)
-                      ? "px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center space-x-1 bg-blue-600 text-white hover:bg-blue-700"
-                      : "px-3 py-1.5 text-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1 bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                  }
-                >
-                  <Download className="w-4 h-4" />
-                  <span>
-                    {user &&
-                      ((user.subscription &&
-                        user.subscription.plan === "pro" &&
-                        user.subscription.status === "active") ||
-                        user.isPremium)
-                      ? "Download Notes"
-                      : "Pro: Notes PDF"}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="flex lg:hidden items-center space-x-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  title={isSidebarOpen ? "Close outline" : "Open outline"}
-                >
-                  <Menu className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-                  className="flex items-center space-x-2 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  title={isRightPanelOpen ? "Close side panel" : "Open side panel"}
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>{isRightPanelOpen ? "Hide Tools" : "Show Tools"}</span>
-                </button>
-              </div>
-            </div>
-          </div>
           <div
             ref={contentRef}
             className="flex-1 overflow-y-auto hide-scrollbar bg-white dark:bg-gray-800"
@@ -1789,10 +1788,17 @@ export default function LearnContent() {
 
         {/* Right Panel - Notes & AI Tutor */}
         <div
-          className={`${isRightPanelOpen ? "flex" : "hidden"
-            } w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-col absolute lg:static z-20 lg:z-auto transition-all duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-[calc(100vh-6rem)] lg:h-full`}
+          className={`${isRightPanelOpen ? "translate-x-0" : "translate-x-full"
+            } w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col absolute z-40 transition-transform duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-full shadow-xl`}
         >
-          <div className="border-b border-gray-200 dark:border-gray-700">
+
+          <div className="border-b border-gray-200 dark:border-gray-700 relative">
+            <button
+              onClick={() => setIsRightPanelOpen(false)}
+              className="lg:hidden absolute -left-10 top-2 p-2 bg-white dark:bg-gray-800 rounded-l-lg border-l border-y border-gray-200 dark:border-gray-700 shadow-lg text-gray-500 hover:text-gray-900 dark:hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <div className="flex">
               <button
                 onClick={() => setActiveRightPanel("notes")}
@@ -1816,7 +1822,7 @@ export default function LearnContent() {
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden h-[calc(100vh-12rem)]">
+          <div className="flex-1 overflow-hidden">
             {activeRightPanel === "notes" ? (
               <div className="h-full flex flex-col">
                 <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
