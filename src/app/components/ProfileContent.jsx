@@ -704,7 +704,7 @@ export default function ProfileContent() {
                                       }}
                                       className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-semibold text-xs"
                                     >
-                                      <Download size={14} /> Download PDF
+                                      <Download size={14} />
                                     </button>
                                   )}
                                 </td>
