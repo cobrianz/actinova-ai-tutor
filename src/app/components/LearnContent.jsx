@@ -1474,7 +1474,7 @@ export default function LearnContent() {
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Permanent Navbar Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 z-50 shadow-sm relative">
-        <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+        <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
           {/* Left Group - Navigation */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <button
