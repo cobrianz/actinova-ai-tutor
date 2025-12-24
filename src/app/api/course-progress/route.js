@@ -155,10 +155,9 @@ async function handlePost(request) {
               arrayFilters: [{ "m.id": moduleId }, { "l.id": lessonId }],
             }
           );
-          console.log(`Updated lesson ${lessonId} to ${isLessonDone}, result:`, updateResult.modifiedCount);
         }
       } catch (e) {
-        console.warn("Failed to persist lesson completion to library:", e);
+        // Silent fail
       }
     }
 

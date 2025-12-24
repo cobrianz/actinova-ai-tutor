@@ -101,7 +101,7 @@ export default function LearnContent() {
     try {
       localStorage.setItem(conversationKey(), JSON.stringify(messages));
     } catch (e) {
-      console.warn("Failed to persist conversation", e);
+      // Silent fail for conversation persistence
     }
     // Also persist to backend library for reloads
     try {
@@ -122,7 +122,7 @@ export default function LearnContent() {
         }),
       }).catch(() => { });
     } catch (e) {
-      console.warn("Failed to persist conversation to backend", e);
+      // Silent fail for backend conversation persistence
     }
   };
 
@@ -239,7 +239,6 @@ export default function LearnContent() {
       cachedContent.trim() !== "" &&
       cachedContent.trim() !== "Content for this lesson is coming soon..."
     ) {
-      console.log("✅ Using cached lesson content from localStorage");
       // Update course data with cached content
       setCourseData((prevData) => {
         const newData = { ...prevData };
@@ -268,8 +267,6 @@ export default function LearnContent() {
         lesson.title,
         module.title
       );
-    } else {
-      console.log("Using cached lesson content");
     }
   };
 
@@ -328,13 +325,12 @@ export default function LearnContent() {
           window.dispatchEvent(new Event("usageUpdated"));
         }
       } catch (storageError) {
-        console.warn("Failed to save to localStorage:", storageError);
+        // Silent fail for localStorage
       }
 
       // Show typing animation
       setTypingContent(data.content);
     } catch (error) {
-      console.error("Error fetching lesson content:", error);
       toast.error("Failed to load lesson content");
       // Set a fallback message
       setCourseData((prevData) => {
@@ -397,13 +393,10 @@ export default function LearnContent() {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Progress save error:", errorData);
           throw new Error(`Failed to save progress: ${response.statusText}`);
         }
       }
     } catch (err) {
-      console.error("Error saving progress:", err);
       toast.error("Failed to save progress to the cloud.");
     }
   };
@@ -558,7 +551,6 @@ export default function LearnContent() {
         return next;
       });
     } catch (error) {
-      console.error("Error getting AI response:", error);
 
       // Remove loading message and add error response
       setChatMessages((prev) => {
@@ -1485,7 +1477,7 @@ export default function LearnContent() {
                 }`}
             >
               <Menu className="w-4 h-4" />
-              <span className="hidden md:inline">Toggle Modules</span>
+              <span className="hidden md:inline">Modules</span>
             </button>
 
             <Link
