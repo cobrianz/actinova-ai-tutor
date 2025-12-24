@@ -1195,16 +1195,20 @@ export default function LearnContent() {
         }
 
         const data = await response.json();
+        console.log("Actinova Generate Response:", { format, success: data.success, hasContent: !!data.content, hasRootModules: !!data.modules });
+
         const courseDataToSet = data.content || data;
 
         // Only validate modules for course format, not quiz
         if (format === "course") {
           const hasModules =
-            Array.isArray(courseDataToSet.modules) &&
-            courseDataToSet.modules.length > 0;
+            (Array.isArray(courseDataToSet.modules) && courseDataToSet.modules.length > 0) ||
+            (Array.isArray(courseDataToSet.topics) && courseDataToSet.topics.length > 0);
+
           if (!hasModules) {
+            console.error("Course Data missing modules:", courseDataToSet);
             throw new Error(
-              "Generated course has no modules. Please try again."
+              "Generated course structure is invalid. Please try again."
             );
           }
         } else if (format === "quiz") {

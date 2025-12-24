@@ -160,7 +160,7 @@ export async function POST(request) {
       // Scenario 1: Course exists, user is premium, but course is NOT premium. Upgrade it.
       if (isPremium && !existingCourse.isPremium) {
         // Regenerate as a premium course and update
-        const { modules, lessonsPerModule, totalLessons } = LIMITS.premium;
+        const { modules, lessonsPerModule, totalLessons } = LEGACY_LIMITS.premium;
 
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -350,9 +350,11 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
 
     let course;
     try {
-      course = JSON.parse(completion.choices[0].message.content.trim());
+      const aiContent = completion.choices[0].message.content.trim();
+      console.log("AI Generation Response Length:", aiContent.length);
+      course = JSON.parse(aiContent);
     } catch (e) {
-      console.warn("AI JSON failed, using fallback");
+      console.warn("AI JSON failed, using fallback:", e.message);
       course = fallbackCourse(topic, difficulty, modules, lessonsPerModule);
     }
 

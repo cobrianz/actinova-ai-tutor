@@ -1,5 +1,3 @@
-// src/app/api/library/route.js
-
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
@@ -12,7 +10,6 @@ export async function GET(request) {
   let token = request.headers.get("authorization")?.split("Bearer ")[1];
   let userId;
 
-  // Allow explicit user id header as a fallback for client-side flows
   const headerUserId = request.headers.get("x-user-id");
 
   if (token) {
@@ -20,7 +17,6 @@ export async function GET(request) {
       const decoded = verifyToken(token);
       userId = decoded.id;
     } catch {
-      // Header token invalid, try cookies
       token = (await cookies()).get("token")?.value;
       if (token) {
         try {
@@ -85,16 +81,13 @@ export async function GET(request) {
 
   const page = Math.max(1, parseInt(searchParams.get("page")) || 1);
   const limit = Math.min(50, parseInt(searchParams.get("limit")) || 10);
-  const type = searchParams.get("type"); // "all" | "courses" | "questions" | "flashcards"
+  const type = searchParams.get("type");
   const search = searchParams.get("search")?.toLowerCase();
-
-  console.log(`Library API: Extracted userId: ${userId}`);
 
   try {
     const { db } = await connectToDatabase();
     const userObjId = new ObjectId(userId);
 
-    // Fetch all user content
     const [courses, questions, cardSets, library, userProgress] =
       await Promise.all([
         db.collection("library").find({ userId: userObjId }).toArray(),
@@ -107,7 +100,6 @@ export async function GET(request) {
           .findOne({ _id: userObjId }, { projection: { courses: 1 } }),
       ]);
 
-    // Create progress map for quick lookup
     const progressMap = new Map();
     if (userProgress?.courses) {
       userProgress.courses.forEach((course) => {
@@ -118,11 +110,6 @@ export async function GET(request) {
       });
     }
 
-    console.log(
-      `Library API: Fetched ${courses.length} courses, ${questions.length} questions, ${cardSets.length} cardSets`
-    );
-
-    // Map to unified format
     const items = [];
 
     courses.forEach((c) => {
@@ -147,7 +134,6 @@ export async function GET(request) {
       });
     });
 
-    // Include flashcard/card sets
     cardSets.forEach((cs) => {
       items.push({
         id: `cards_${cs._id}`,
@@ -164,7 +150,6 @@ export async function GET(request) {
       });
     });
 
-    // Search
     let filtered = items;
     if (search) {
       filtered = items.filter(
@@ -174,12 +159,10 @@ export async function GET(request) {
       );
     }
 
-    // Type filter
     if (type && type !== "all") {
       filtered = filtered.filter((i) => i.type === type);
     }
 
-    // Sort: pinned first, then last accessed
     filtered.sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
@@ -188,10 +171,6 @@ export async function GET(request) {
 
     const total = filtered.length;
     const paginated = filtered.slice((page - 1) * limit, page * limit);
-
-    console.log(
-      `Library API: Returning ${paginated.length} items (total ${total})`
-    );
 
     return NextResponse.json({
       success: true,
@@ -236,7 +215,6 @@ export async function POST(request) {
       const decoded = verifyToken(token);
       userId = decoded.id;
     } catch {
-      // Header token invalid, try cookies
       token = (await cookies()).get("token")?.value;
       if (token) {
         try {
@@ -294,7 +272,6 @@ export async function POST(request) {
       const alreadyPinned = library.pinned?.includes(itemId) || false;
 
       if (alreadyPinned) {
-        // Unpin
         await db
           .collection("user_library")
           .updateOne({ userId: userObjId }, { $pull: { pinned: itemId } });
@@ -317,7 +294,6 @@ export async function POST(request) {
       const alreadyBookmarked = library.bookmarks?.includes(itemId) || false;
 
       if (alreadyBookmarked) {
-        // Remove bookmark
         await db
           .collection("user_library")
           .updateOne({ userId: userObjId }, { $pull: { bookmarks: itemId } });
@@ -330,14 +306,6 @@ export async function POST(request) {
       }
     }
 
-    if (action === "add") {
-      // For adding generated courses to library (already saved by generate-course, so just acknowledge)
-      return NextResponse.json({
-        success: true,
-        message: "Course added to library",
-      });
-    }
-
     if (action === "addPersonalized") {
       const { course } = body;
       if (!course || !course.id || !course.title) {
@@ -347,7 +315,6 @@ export async function POST(request) {
         );
       }
 
-      // Check if course already exists in library
       const existingCourse = await db.collection("library").findOne({
         userId: userObjId,
         "courseData.title": course.title,
@@ -355,7 +322,6 @@ export async function POST(request) {
       });
 
       if (!existingCourse) {
-        // Add personalized course to library
         const personalizedCourse = {
           userId: userObjId,
           type: "course",
@@ -382,7 +348,6 @@ export async function POST(request) {
 
         await db.collection("library").insertOne(personalizedCourse);
 
-        // Add to user's library tracking
         const itemId = `course_${personalizedCourse._id}`;
         await db.collection("user_library").updateOne(
           { userId: userObjId },
@@ -427,7 +392,6 @@ export async function POST(request) {
         userId: userObjId,
       });
 
-      // Clean up from library
       await db.collection("user_library").updateOne(
         { userId: userObjId },
         {
@@ -455,7 +419,6 @@ export async function POST(request) {
         );
       }
 
-      // Save to course document if courseId provided, else to user_library
       if (courseId) {
         await db.collection("library").updateOne(
           { _id: new ObjectId(courseId), userId: userObjId },
@@ -467,7 +430,6 @@ export async function POST(request) {
           }
         );
       } else {
-        // Save to user_library with topic key
         const conversationKey = `conversation_${topic}_${difficulty}_${format}`;
         await db.collection("user_library").updateOne(
           { userId: userObjId },
@@ -514,7 +476,6 @@ export async function POST(request) {
   }
 }
 
-// Auto-create user library on first access
 async function seedLibrary(db, userId) {
   const userObjId = new ObjectId(userId);
   const library = {
