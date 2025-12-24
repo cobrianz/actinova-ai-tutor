@@ -52,6 +52,37 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const singleId = searchParams.get("id");
+
+  if (singleId) {
+    try {
+      const { db } = await connectToDatabase();
+      const userObjId = new ObjectId(userId);
+      const cleanId = singleId.replace(/^(course|guide|cards)_/, "");
+
+      const prefix = singleId.split("_")[0];
+      const collection = {
+        course: "library",
+        guide: "guides",
+        cards: "cardSets",
+      }[prefix] || "library";
+
+      const item = await db.collection(collection).findOne({
+        _id: new ObjectId(cleanId),
+        userId: userObjId
+      });
+
+      if (!item) {
+        return NextResponse.json({ error: "Item not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, item });
+    } catch (err) {
+      console.error("Library single fetch error:", err);
+      return NextResponse.json({ error: "Failed to fetch item" }, { status: 500 });
+    }
+  }
+
   const page = Math.max(1, parseInt(searchParams.get("page")) || 1);
   const limit = Math.min(50, parseInt(searchParams.get("limit")) || 10);
   const type = searchParams.get("type"); // "all" | "courses" | "questions" | "flashcards"

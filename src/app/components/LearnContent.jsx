@@ -199,7 +199,7 @@ export default function LearnContent() {
         setIsSidebarOpen(true);
         setIsRightPanelOpen(false);
       } else { // Small
-        setIsSidebarOpen(false);
+        setIsSidebarOpen(true); // Open by default as requested
         setIsRightPanelOpen(false);
       }
     };
@@ -224,7 +224,11 @@ export default function LearnContent() {
 
   const selectLesson = async (moduleId, lessonIndex) => {
     setActiveLesson({ moduleId, lessonIndex });
-    setIsSidebarOpen(false);
+
+    // Only auto-close sidebar on smaller screens
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
 
     // Fetch lesson content if not already loaded
     const module = courseData?.modules?.find((m) => m.id === moduleId);
@@ -407,11 +411,11 @@ export default function LearnContent() {
     // Ask backend to classify relevance to the course before generating
 
     const isPro =
-      user &&
-      ((user.subscription &&
-        user.subscription.plan === "pro" &&
-        user.subscription.status === "active") ||
-        user.isPremium);
+      !!(
+        user?.subscription &&
+        (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
+        user.subscription.status === "active"
+      ) || !!user?.isPremium;
 
     if (!isPro) {
       const key = `ai_responses_${new Date().toDateString()}`;
@@ -900,8 +904,11 @@ export default function LearnContent() {
 
       // Check if free user is trying to use non-beginner difficulty
       const isPro =
-        user?.subscription?.plan === "pro" &&
-        user?.subscription?.status === "active";
+        !!(
+          user?.subscription &&
+          (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
+          user.subscription.status === "active"
+        ) || !!user?.isPremium;
 
       // Clean up local storage on component mount
       cleanupLocalStorage();

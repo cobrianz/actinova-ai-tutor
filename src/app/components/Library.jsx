@@ -266,6 +266,39 @@ export default function Library({ setActiveContent }) {
     }
   };
 
+  const isPremium =
+    !!(
+      user?.subscription &&
+      (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
+      user.subscription.status === "active"
+    ) || !!user?.isPremium;
+
+  const handleDownload = async (course) => {
+    if (!isPremium) {
+      toast.error("PDF downloads are a Pro feature. Please upgrade to download courses.");
+      return;
+    }
+
+    const toastId = toast.loading(`Preparing PDF for ${course.title}...`);
+    try {
+      const res = await fetch(`/api/library?id=${course.id}`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch full course data");
+
+      const data = await res.json();
+      if (!data.item) throw new Error("Course data not found");
+
+      // Use the full item (which contains modules/lessons) for PDF generation
+      await downloadCourseAsPDF(data.item, course.format);
+      toast.success("Download started!", { id: toastId });
+    } catch (err) {
+      console.error("Library download error:", err);
+      toast.error("Failed to generate PDF. Please try again.", { id: toastId });
+    }
+  };
+
   const handlePageChange = (page) => setCurrentPage(page);
 
   if (authLoading) {
@@ -529,12 +562,9 @@ export default function Library({ setActiveContent }) {
                     <div className="flex gap-1 sm:ml-4">
                       {course.format !== "questions" && course.format !== "flashcards" && (
                         <button
-                          onClick={() => {
-                            downloadCourseAsPDF(course, course.format);
-                            toast.success("Download started!");
-                          }}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="Download PDF"
+                          onClick={() => handleDownload(course)}
+                          className={`p-2 rounded-lg transition-colors ${isPremium ? "hover:bg-slate-100 dark:hover:bg-slate-800" : "opacity-50 cursor-not-allowed"}`}
+                          title={isPremium ? "Download PDF" : "Pro Feature: Download PDF"}
                         >
                           <Download className="w-4 h-4" />
                         </button>

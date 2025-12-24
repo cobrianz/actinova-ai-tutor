@@ -228,14 +228,12 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
       checkNewPage(12);
 
       if (trimmedLine.startsWith("# ")) {
-        const headerText = trimmedLine.substring(2).trim();
-        // Skip if it matches the specified title (e.g. lesson title or course title)
-        if (!hasSkippedTitle && titleToSkip && headerText.toLowerCase() === titleToSkip.toLowerCase()) {
-          hasSkippedTitle = true;
-          return;
-        }
-        // Also skip if it exactly matches data.title (fallback)
-        if (!hasSkippedTitle && headerText.toLowerCase() === data.title?.toLowerCase()) {
+        const headerText = trimmedLine.substring(2).trim().replace(/[\*_]/g, '');
+        // Skip if it matches the specified title
+        const lowerH = headerText.toLowerCase();
+        const lowerT = titleToSkip?.toLowerCase() || "";
+
+        if (!hasSkippedTitle && (lowerH === lowerT || lowerT.includes(lowerH) || lowerH.includes(lowerT))) {
           hasSkippedTitle = true;
           return;
         }
@@ -244,43 +242,49 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(26);
         pdf.setTextColor(...COLORS.primary);
-        const headerLines = pdf.splitTextToSize(headerText, contentWidth - 20);
-        pdf.text(headerLines, pageWidth / 2, y, { align: "center" });
-        y += (headerLines.length * 10) + 5;
+
+        const headerLines = pdf.splitTextToSize(headerText, contentWidth - 10);
+        headerLines.forEach(line => {
+          checkNewPage(12);
+          pdf.text(line, margin, y);
+          y += 12;
+        });
+
+        y += 8;
         hasSkippedTitle = true; // Still mark as skipped if we did print one, to avoid skipping subsequent ones (though usually only one H1)
       } else if (trimmedLine.startsWith("## ")) {
         y += 5;
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(20);
         pdf.setTextColor(...COLORS.primary);
-        const headerText = trimmedLine.substring(3).toUpperCase();
-        const lines = pdf.splitTextToSize(headerText, contentWidth);
-        pdf.text(lines, margin, y);
+        const headerText2 = trimmedLine.substring(3).replace(/[\*_]/g, '').toUpperCase();
+        const lines2 = pdf.splitTextToSize(headerText2, contentWidth);
+        pdf.text(lines2, margin, y);
 
-        const lastLineW = pdf.getTextWidth(lines[lines.length - 1]);
+        const lastLineW = pdf.getTextWidth(lines2[lines2.length - 1]);
         pdf.setDrawColor(...COLORS.primary);
         pdf.setLineWidth(0.8);
-        const lineY = y + (lines.length * 7) - 4;
+        const lineY = y + (lines2.length * 7) - 4;
         pdf.line(margin, lineY, margin + lastLineW, lineY);
-        y += (lines.length * 7) + 5;
+        y += (lines2.length * 7) + 5;
       } else if (trimmedLine.startsWith("### ")) {
         y += 3;
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(15);
         pdf.setTextColor(...COLORS.text);
-        const headerText = trimmedLine.substring(4);
-        const lines = pdf.splitTextToSize(headerText, contentWidth);
-        pdf.text(lines, margin, y);
-        y += (lines.length * 7) + 2;
+        const hText3 = trimmedLine.substring(4).replace(/[\*_]/g, '');
+        const h3Lines = pdf.splitTextToSize(hText3, contentWidth - 10);
+        pdf.text(h3Lines, margin, y);
+        y += (h3Lines.length * 7) + 2;
       } else if (trimmedLine.startsWith("#### ")) {
         y += 2;
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(13);
         pdf.setTextColor(...COLORS.text);
-        const headerText = trimmedLine.substring(5);
-        const lines = pdf.splitTextToSize(headerText, contentWidth);
-        pdf.text(lines, margin, y);
-        y += (lines.length * 6) + 2;
+        const hText4 = trimmedLine.substring(5).replace(/[\*_]/g, '');
+        const h4Lines = pdf.splitTextToSize(hText4, contentWidth - 10);
+        pdf.text(h4Lines, margin, y);
+        y += (h4Lines.length * 6) + 2;
       } else if (trimmedLine.startsWith("> ")) {
         const quoteText = trimmedLine.substring(2).trim();
         pdf.setFont("helvetica", "italic");
@@ -408,7 +412,9 @@ export const downloadQuizAsPDF = async (data) => {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.setTextColor(...COLORS.textLight);
-    pdf.text(`Actinova AI Tutor - Assessment: ${data.title}`, margin, 12);
+    const brandingText = `Actinova AI Tutor - Assessment: ${data.title}`;
+    const brandingLines = pdf.splitTextToSize(brandingText, contentWidth - 20);
+    pdf.text(brandingLines, margin, 12);
     if (pageNum) pdf.text(`Page ${pageNum} of ${total}`, pageWidth - margin, 12, { align: "right" });
   };
 
