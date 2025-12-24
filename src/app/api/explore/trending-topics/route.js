@@ -16,9 +16,12 @@ export async function GET(request) {
   const user = request.user || null;
 
   try {
-    // === 1. Check Cache (7-day freshness) ===
+    // === 1. Check Cache (7-day freshness, user-specific) ===
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const userId = user?._id?.toString() || "anonymous";
+
     const cached = await db.collection("explore_trending").findOne({
+      userId,
       createdAt: { $gte: weekAgo },
     });
 
@@ -242,9 +245,10 @@ Make them feel fresh, actionable, and impossible to ignore.${personalization}`,
       ];
     }
 
-    // === 5. Cache Results ===
-    await db.collection("explore_trending").deleteMany({});
+    // === 5. Cache Results (user-specific) ===
+    await db.collection("explore_trending").deleteMany({ userId });
     await db.collection("explore_trending").insertOne({
+      userId,
       topics: topics.slice(0, 6),
       createdAt: new Date(),
       generatedForUser: user?._id?.toString() || "anonymous",

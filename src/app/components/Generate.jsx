@@ -483,32 +483,75 @@ export default function Generate({ setActiveContent }) {
         <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 px-1">
           Popular Learning Tracks
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-          {[
-            "Artificial Intelligence",
-            "Frontend Development",
-            "Backend Development",
-            "Data Science",
-            "Machine Learning",
-            "Web Development",
-            "Mobile Development",
-            "DevOps",
-          ].map((topicOption) => (
-            <button
-              key={topicOption}
-              onClick={() => {
-                setTopic(topicOption);
-                setLocalTopic(topicOption);
-              }}
-              className="p-3 sm:p-4 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all"
-            >
-              <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
-                {topicOption}
-              </span>
-            </button>
-          ))}
-        </div>
+        <PopularTopics setTopic={setTopic} setLocalTopic={setLocalTopic} />
       </div>
+    </div>
+  );
+}
+
+// Separate component for popular topics with API fetch
+function PopularTopics({ setTopic, setLocalTopic }) {
+  const [topics, setTopics] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchTopics() {
+      try {
+        const res = await fetch("/api/popular-topics", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setTopics(data.topics || []);
+      } catch (error) {
+        // Fallback to defaults on error
+        setTopics([
+          "Artificial Intelligence",
+          "Frontend Development",
+          "Backend Development",
+          "Data Science",
+          "Machine Learning",
+          "Web Development",
+          "Mobile Development",
+          "DevOps",
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTopics();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="p-3 sm:p-4 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg animate-pulse"
+          >
+            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+      {topics.map((topicOption) => (
+        <button
+          key={topicOption}
+          onClick={() => {
+            setTopic(topicOption);
+            setLocalTopic(topicOption);
+          }}
+          className="p-3 sm:p-4 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all"
+        >
+          <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+            {topicOption}
+          </span>
+        </button>
+      ))}
     </div>
   );
 }

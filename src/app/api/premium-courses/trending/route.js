@@ -18,16 +18,23 @@ export const dynamic = "force-dynamic";
 async function generateTrendingCourses(user = null) {
   const { db } = await connectToDatabase();
   const col = db.collection("premium_trending_courses");
+  const userId = user?._id?.toString() || user?.id?.toString() || "anonymous";
 
-  // Try cache first
+  // Try cache first (user-specific)
   if (cachedCourses && cacheTime && Date.now() - cacheTime < CACHE_TTL) {
-    return cachedCourses;
+    // Check if cached courses belong to this user
+    if (cachedCourses[0]?.userId === userId) {
+      return cachedCourses;
+    }
   }
 
-  // Try fresh DB entries (last 24h)
+  // Try fresh DB entries (last 24h, user-specific)
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const recent = await col
-    .find({ generatedAt: { $gte: oneDayAgo } })
+    .find({
+      userId,
+      generatedAt: { $gte: oneDayAgo }
+    })
     .limit(6)
     .toArray();
   if (recent.length >= 6) {
@@ -101,6 +108,7 @@ Prioritize 2025 trends across ALL fields, not just tech: AI agents, sustainable 
     courses = courses.slice(0, 6).map((c, i) => ({
       ...c,
       id: `trending-${Date.now()}-${i}`,
+      userId,
       isPremium: true,
       isTrending: true,
       price: 0,
@@ -176,7 +184,7 @@ export async function cleanupOldTrendingCourses() {
     const result = await db.collection("premium_trending_courses").deleteMany({
       generatedAt: { $lt: oneDayAgo },
     });
-    console.log(`Cleaned ${result.deletedCount} old trending courses`);
+    console.log(`Cleaned ${result.deletedCount} old trending courses (all users)`);
   } catch (e) {
     console.error("Cleanup failed:", e);
   }
