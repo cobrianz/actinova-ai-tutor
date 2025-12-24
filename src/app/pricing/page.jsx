@@ -10,6 +10,8 @@ import { toast } from "sonner";
 export default function PricingPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState({});
+  const [plans, setPlans] = useState([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,79 +30,107 @@ export default function PricingPage() {
         console.error("Error fetching user:", error);
       }
     };
+
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch("/api/plans");
+        if (res.ok) {
+          const data = await res.json();
+          setPlans(data.plans || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans:", error);
+        toast.error("Failed to load plans");
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+
     fetchUser();
+    fetchPlans();
   }, []);
 
-  // FIXED & ROBUST PRO DETECTION
-  const isPro = !!(
-    user &&
-    // Main subscription check
-    ((user.subscription?.plan?.toLowerCase() === "pro" &&
-      (user.subscription?.status?.toLowerCase() === "active" ||
-        !user.subscription.status)) || // Handle missing status
-      // Legacy fields
-      user.isPremium === true ||
-      user.plan?.toLowerCase() === "pro" ||
-      // Any active subscription
-      (user.subscription?.status?.toLowerCase() === "active" &&
-        user.subscription.plan))
-  );
+  // Determine current user plan ID
+  const getUserPlanId = () => {
+    if (!user) return null;
+    if (user?.subscription?.plan === 'enterprise' && user?.subscription?.status === 'active') return 'enterprise';
+    if (((user?.subscription?.plan === 'pro' || user?.subscription?.plan === 'premium') && user?.subscription?.status === 'active') || user?.isPremium) return 'premium';
+    return 'basic';
+  };
 
-  // Debug logging
-  useEffect(() => {
-    if (user) {
-      console.log("PRO STATUS DEBUG:", {
-        userId: user._id,
-        subscription: user.subscription,
-        plan: user.subscription?.plan,
-        status: user.subscription?.status,
-        expiresAt: user.subscription?.expiresAt,
-        isPremium: user.isPremium,
-        userPlan: user.plan,
-        computedIsPro: isPro,
-        rawIsPro: !!user?.subscription?.plan,
-      });
+  const currentPlanId = getUserPlanId();
+  const isPro = currentPlanId === 'premium' || currentPlanId === 'enterprise';
+
+  const handlePayment = async (planName, amount) => {
+    if (currentPlanId === 'enterprise') {
+      toast.success("You are already on the Enterprise plan!");
+      return;
     }
-  }, [user, isPro]);
 
-  const plans = [
-    {
-      name: "Free",
-      description: "Perfect for getting started",
-      price: 0,
-      icon: Sparkles,
-      features: [
-        "5 AI-generated learning paths per month",
-        "3 modules per course (6 total lessons)",
-        "Access to basic courses",
-        "Community support",
-        "Progress tracking",
-        "Mobile app access",
-      ],
-      cta: isPro ? "Current Plan" : "Get Started",
-      popular: false,
-    },
-    {
-      name: "Pro",
-      description: "For serious learners",
-      price: 35,
-      icon: Zap,
-      features: [
-        "15 AI-generated learning paths per month",
-        "12 modules per course (48 total lessons)",
-        "Access to all courses",
-        "Priority email & chat support",
-        "Advanced progress analytics",
-        "Offline course downloads",
-        "Professional certificates",
-        "1-on-1 mentorship sessions",
-        "Custom learning goals",
-        "AI tutor chat agent",
-      ],
-      cta: isPro ? "Current Plan" : "Start Pro Trial",
-      popular: true,
-    },
-  ];
+    if (currentPlanId === 'premium' && planName === 'premium') {
+      toast.success("You are already on the Premium plan!");
+      return;
+    }
+
+    if (amount === 0) {
+      if (!user) {
+        router.push("/auth/signup");
+      } else {
+        toast.success("You are already on the Basic plan.");
+      }
+      return;
+    }
+
+    if (!user) {
+      toast.error("Please login to subscribe");
+      router.push("/auth/login");
+      return;
+    }
+
+    setLoading({ ...loading, [planName]: true });
+
+    try {
+      const response = await fetch("/api/billing/create-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          plan: planName === 'premium' ? 'pro' : planName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.sessionUrl) {
+        window.location.href = data.sessionUrl;
+      } else {
+        toast.error(data.error || "Failed to initialize payment");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Failed to initialize payment");
+    } finally {
+      setLoading({ ...loading, [planName]: false });
+    }
+  };
+
+  const getPlanIcon = (planId) => {
+    switch (planId) {
+      case 'basic': return Sparkles;
+      case 'premium': return Zap;
+      case 'enterprise': return Crown;
+      default: return Sparkles;
+    }
+  };
+
+  const getCtaText = (plan, isLoading) => {
+    if (isLoading) return "Processing...";
+    if (plan.id === currentPlanId) return "Current Plan";
+    if (plan.price === 0) return user ? "Current Plan" : "Get Started";
+    return `Subscribe to ${plan.name}`;
+  };
 
   const faqs = [
     {
@@ -124,85 +154,19 @@ export default function PricingPage() {
     },
   ];
 
-  const handlePayment = async (planName, amount) => {
-    if (isPro && planName.toLowerCase() === "pro") {
-      toast.success("You are already on the Pro plan!");
-      return;
-    }
-
-    if (amount === 0) {
-      router.push("/auth/signup");
-      return;
-    }
-
-    if (!user) {
-      toast.error("Please login to subscribe");
-      router.push("/auth/login");
-      return;
-    }
-
-    setLoading({ ...loading, [planName]: true });
-
-    try {
-      const response = await fetch("/api/billing/create-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          plan: planName.toLowerCase(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.sessionUrl) {
-        window.location.href = data.sessionUrl;
-      } else {
-        toast.error(data.error || "Failed to initialize payment");
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      toast.error("Failed to initialize payment");
-    } finally {
-      setLoading({ ...loading, [planName]: false });
-    }
-  };
-
-  // Debug display (remove after fixing)
-  const debugInfo = user ? (
-    <div className="fixed top-4 right-4 bg-black text-white p-4 rounded-lg text-xs max-w-sm z-50">
-      <h4>DEBUG INFO</h4>
-      <p>
-        <strong>User ID:</strong> {user._id}
-      </p>
-      <p>
-        <strong>Plan:</strong> {user.subscription?.plan || "None"}
-      </p>
-      <p>
-        <strong>Status:</strong> {user.subscription?.status || "None"}
-      </p>
-      <p>
-        <strong>Expires:</strong> {user.subscription?.expiresAt || "Never"}
-      </p>
-      <p>
-        <strong>isPro:</strong> {isPro ? "YES" : "NO"}
-      </p>
-      <button
-        onClick={() => setUser(null)}
-        className="ml-2 text-red-300 hover:text-red-100"
-      >
-        Clear
-      </button>
-    </div>
-  ) : null;
+  if (isLoadingPlans) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <HeroNavbar />
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Debug Info */}
-      {debugInfo}
-
       <HeroNavbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -214,7 +178,7 @@ export default function PricingPage() {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             {isPro ? (
               <>
-                Welcome back, <strong>Pro Member! </strong>
+                Welcome back, <strong>{user?.name || 'Member'}! </strong>
                 Manage your subscription below.
               </>
             ) : (
@@ -222,15 +186,13 @@ export default function PricingPage() {
             )}
           </p>
 
-          {/* Show current plan badge */}
           {isPro && (
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold mb-8">
               <Crown className="w-4 h-4 mr-2" />
-              <span>You're on the Pro Plan</span>
+              <span>You're on the {currentPlanId === 'enterprise' ? 'Enterprise' : 'Premium'} Plan</span>
             </div>
           )}
 
-          {/* Billing Description - Removed toggle, just show monthly */}
           <div className="mb-8">
             <span className="text-gray-600 dark:text-gray-400">
               Simple, transparent monthly pricing. Cancel anytime.
@@ -239,32 +201,33 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          {plans.map((plan, index) => {
-            const Icon = plan.icon;
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {plans.map((plan) => {
+            const Icon = getPlanIcon(plan.id);
+            const isCurrentPlan = plan.id === currentPlanId;
+            const isPopular = plan.popular;
 
             return (
               <div
-                key={index}
-                className={`relative bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 ${
-                  plan.popular && !isPro
-                    ? "border-blue-500 scale-105 ring-2 ring-blue-500/20"
-                    : isPro && plan.name === "Pro"
-                      ? "border-green-500 scale-105 ring-2 ring-green-500/20"
+                key={plan.id}
+                className={`relative bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 ${isPopular
+                    ? "border-blue-500 scale-105 ring-2 ring-blue-500/20 z-10"
+                    : isCurrentPlan
+                      ? "border-green-500 ring-2 ring-green-500/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                }`}
+                  }`}
               >
-                {isPro && plan.name === "Pro" && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                {isCurrentPlan && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
                     <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
                       Current Plan
                     </span>
                   </div>
                 )}
 
-                {plan.popular && !isPro && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                {isPopular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
                       Most Popular
                     </span>
                   </div>
@@ -273,27 +236,22 @@ export default function PricingPage() {
                 <div className="p-8">
                   <div className="flex items-center space-x-3 mb-4">
                     <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        (isPro && plan.name === "Pro") || plan.popular
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${isPopular
                           ? "bg-gradient-to-r from-green-500 to-blue-600"
                           : "bg-gray-100 dark:bg-gray-700"
-                      }`}
+                        }`}
                     >
                       <Icon
-                        className={`w-5 h-5 ${
-                          (isPro && plan.name === "Pro") || plan.popular
+                        className={`w-5 h-5 ${isPopular
                             ? "text-white"
                             : "text-gray-600 dark:text-gray-400"
-                        }`}
+                          }`}
                       />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                         {plan.name}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {plan.description}
-                      </p>
                     </div>
                   </div>
 
@@ -302,58 +260,46 @@ export default function PricingPage() {
                       <span className="text-4xl font-bold text-gray-900 dark:text-white">
                         ${plan.price}
                       </span>
-                      {plan.price > 0 && (
-                        <span className="text-gray-600 dark:text-gray-400 ml-1">
-                          /month
-                        </span>
-                      )}
+                      <span className="text-gray-600 dark:text-gray-400 ml-1">
+                        /month
+                      </span>
                     </div>
                   </div>
 
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
+                  <ul className="space-y-3 mb-8 min-h-[200px]">
+                    {plan.features?.slice(0, 10).map((feature, featureIndex) => (
                       <li
                         key={featureIndex}
                         className="flex items-start space-x-3"
                       >
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">
+                        <span className="text-gray-600 dark:text-gray-300 text-sm">
                           {feature}
                         </span>
                       </li>
                     ))}
+                    {plan.features?.length > 10 && (
+                      <li className="text-xs text-gray-500 italic">
+                        + {plan.features.length - 10} more features
+                      </li>
+                    )}
                   </ul>
 
                   <button
                     onClick={() =>
-                      handlePayment(plan.name.toLowerCase(), plan.price)
+                      handlePayment(plan.id, plan.price)
                     }
                     disabled={
-                      loading[plan.name] || (isPro && plan.name === "Pro")
+                      loading[plan.id] || isCurrentPlan
                     }
-                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-all group ${
-                      isPro && plan.name === "Pro"
-                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg cursor-default"
-                        : plan.popular
+                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-all group ${isCurrentPlan
+                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg cursor-default opacity-80"
+                        : isPopular
                           ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg"
                           : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
-                    }`}
+                      }`}
                   >
-                    {loading[plan.name] ? (
-                      <span className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Processing...
-                      </span>
-                    ) : isPro && plan.name === "Pro" ? (
-                      <span className="flex items-center justify-center">
-                        <Crown className="w-4 h-4 mr-2" />
-                        Current Plan
-                      </span>
-                    ) : plan.price === 0 ? (
-                      "Get Started"
-                    ) : (
-                      `Subscribe to ${plan.name}`
-                    )}
+                    {getCtaText(plan, loading[plan.id])}
                   </button>
                 </div>
               </div>

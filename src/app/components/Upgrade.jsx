@@ -19,7 +19,7 @@ import { useAuth } from "./AuthProvider";
 
 export default function Upgrade() {
   const { user, loading } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState("pro");
+  const [selectedPlan, setSelectedPlan] = useState("premium");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [usage, setUsage] = useState({
@@ -29,6 +29,8 @@ export default function Upgrade() {
     isPremium: false,
     remaining: 5
   });
+  const [plans, setPlans] = useState([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -45,62 +47,35 @@ export default function Upgrade() {
       }
     };
 
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch("/api/plans");
+        if (res.ok) {
+          const data = await res.json();
+          setPlans(data.plans || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans:", error);
+        toast.error("Failed to load plans");
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+
     if (user) {
       fetchUsage();
     }
+    fetchPlans();
   }, [user]);
 
-  const plans = {
-    free: {
-      name: "Free",
-      price: 0,
-      description: "Perfect for getting started",
-      icon: Sparkles,
-      color: "gray",
-      features: [
-        "5 AI-generated learning paths per month",
-        "3 modules per course (6 total lessons)",
-        "Access to basic courses",
-        "Community support",
-        "Progress tracking",
-        "Mobile app access",
-      ],
-      limitations: [
-        "Limited AI interactions",
-        "No offline access",
-        "No certificates",
-        "Basic analytics only",
-      ],
-    },
-    pro: {
-      name: "Pro",
-      price: 35,
-      description: "For serious learners",
-      icon: Zap,
-      color: "blue",
-      popular: true,
-      features: [
-        "15 AI-generated learning paths per month",
-        "12 modules per course (48 total lessons)",
-        "Access to all courses",
-        "Priority email & chat support",
-        "Advanced progress analytics",
-        "Offline course downloads",
-        "Professional certificates",
-        "1-on-1 mentorship sessions",
-        "Custom learning goals",
-        "AI tutor chat agent",
-      ],
-      limitations: [],
-    },
+  // Determine current user plan ID
+  const getUserPlanId = () => {
+    if (user?.subscription?.plan === 'enterprise' && user?.subscription?.status === 'active') return 'enterprise';
+    if ((user?.subscription?.plan === 'pro' && user?.subscription?.status === 'active') || user?.isPremium) return 'premium';
+    return 'basic';
   };
 
-  const isPro = !!(
-    (user?.subscription?.plan === "pro" && user?.subscription?.status === "active") ||
-    user?.isPremium
-  );
-
-  const currentPlan = isPro ? "pro" : "free";
+  const currentPlanId = getUserPlanId();
 
   const handleUpgrade = async (planName) => {
     setIsProcessing(true);
@@ -111,7 +86,7 @@ export default function Upgrade() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: planName,
+          plan: planName === 'premium' ? 'pro' : planName, // Map premium to pro for legacy compatibility if needed, or update backend to accept 'premium'
           paymentMethod: paymentMethod,
         }),
       });
@@ -143,36 +118,50 @@ export default function Upgrade() {
     }
   };
 
+  // Helper to map icon string or defaults
+  const getPlanIcon = (planId) => {
+    switch (planId) {
+      case 'basic': return Sparkles;
+      case 'premium': return Zap;
+      case 'enterprise': return Crown;
+      default: return Sparkles;
+    }
+  };
+
   const comparisonFeatures = [
+    {
+      category: "Limits",
+      features: [
+        { name: "Course Generations", basic: "2/month", premium: "15/month", enterprise: "Unlimited" },
+        { name: "Quiz Generations", basic: "1/month", premium: "20/month", enterprise: "Unlimited" },
+        { name: "Flashcard Sets", basic: "8/month", premium: "40/month", enterprise: "Unlimited" },
+      ]
+    },
     {
       category: "Learning Features",
       features: [
-        {
-          name: "AI-generated learning paths",
-          free: "5/month",
-          pro: "15/month",
-        },
-        {
-          name: "Course structure",
-          free: "3 modules (6 lessons)",
-          pro: "12 modules (48 lessons)",
-        },
-        { name: "Course access", free: "Basic only", pro: "All courses" },
-        { name: "Offline downloads", free: false, pro: true },
-        { name: "Certificates", free: false, pro: true },
-        { name: "Custom learning goals", free: false, pro: true },
+        { name: "Modules per Course", basic: "3", premium: "20", enterprise: "Unlimited" },
+        { name: "Lessons per Module", basic: "3", premium: "5", enterprise: "Unlimited" },
+        { name: "Difficulty Levels", basic: "Beginner only", premium: "All Levels", enterprise: "All Levels" },
       ],
     },
     {
-      category: "Support & Analytics",
+      category: "Support & Access",
       features: [
-        { name: "Support", free: "Community", pro: "Priority" },
-        { name: "Progress analytics", free: "Basic", pro: "Advanced" },
-        { name: "Mentorship sessions", free: false, pro: "1-on-1" },
-        { name: "AI tutor chat agent", free: false, pro: true },
+        { name: "Support", basic: "Community", premium: "Priority", enterprise: "Dedicated Agent" },
+        { name: "Analytics", basic: "Basic", premium: "Advanced", enterprise: "Advanced + Reports" },
+        { name: "Mentorship", basic: false, premium: "1-on-1", enterprise: "Priority Access" },
       ],
     },
   ];
+
+  if (isLoadingPlans) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -188,8 +177,7 @@ export default function Upgrade() {
             Upgrade Your Learning Experience
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Unlock advanced features, unlimited access, and personalized support
-            to accelerate your learning journey.
+            Choose the perfect plan for your learning journey (or your organization).
           </p>
         </motion.div>
 
@@ -202,40 +190,32 @@ export default function Upgrade() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                Current Plan: {usage.isPremium ? "Pro" : "Free"}
+              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 uppercase">
+                Current Plan: {currentPlanId}
               </h3>
               <p className="text-blue-700 dark:text-blue-300">
-                You're using {usage.used} out of {usage.limit} monthly AI interactions
+                You're using {usage.used} out of {usage.limit === -1 ? 'Unlimited' : usage.limit} monthly course generations
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                {usage.percentage}%
+            {usage.limit !== -1 && (
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                  {usage.percentage}%
+                </div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  Usage this month
+                </div>
               </div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">
-                Usage this month
-              </div>
+            )}
+          </div>
+          {usage.limit !== -1 && (
+            <div className="mt-4 w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${usage.percentage}%` }}
+              ></div>
             </div>
-          </div>
-          <div className="mt-4 w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${usage.percentage}%` }}
-            ></div>
-          </div>
-        </motion.div>
-
-        {/* Billing Description */}
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <span className="text-gray-600 dark:text-gray-400">
-            Simple, transparent monthly pricing. Cancel anytime.
-          </span>
+          )}
         </motion.div>
 
         {/* Payment Method Selection */}
@@ -296,21 +276,21 @@ export default function Upgrade() {
 
         {/* Pricing Cards */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          {Object.entries(plans).map(([key, plan]) => {
-            const Icon = plan.icon;
-            const isCurrentPlan = key === currentPlan;
+          {plans.map((plan) => {
+            const Icon = getPlanIcon(plan.id);
+            const isCurrentPlan = plan.id === currentPlanId;
             const isPopular = plan.popular;
 
             return (
               <motion.div
-                key={key}
+                key={plan.id}
                 className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${isPopular
-                  ? "border-blue-500 scale-105"
+                  ? "border-blue-500 scale-105 z-10"
                   : isCurrentPlan
                     ? "border-green-500"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -318,16 +298,16 @@ export default function Upgrade() {
                 whileHover={{ y: -5 }}
               >
                 {isPopular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
                       Most Popular
                     </span>
                   </div>
                 )}
 
                 {isCurrentPlan && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
+                    <span className="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
                       Current Plan
                     </span>
                   </div>
@@ -349,9 +329,8 @@ export default function Upgrade() {
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                         {plan.name}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {plan.description}
-                      </p>
+                      {/* Optional description if you added it to DB, otherwise placeholder */}
+                      {/* <p className="text-sm text-gray-600 dark:text-gray-400">{plan.description}</p> */}
                     </div>
                   </div>
 
@@ -360,38 +339,30 @@ export default function Upgrade() {
                       <span className="text-4xl font-bold text-gray-900 dark:text-white">
                         ${plan.price}
                       </span>
-                      {plan.price > 0 && (
-                        <span className="text-gray-600 dark:text-gray-400 ml-1">
-                          /month
-                        </span>
-                      )}
+                      <span className="text-gray-600 dark:text-gray-400 ml-1">
+                        /month
+                      </span>
                     </div>
                   </div>
 
                   <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, index) => (
+                    {plan.features.slice(0, 8).map((feature, index) => (
                       <li key={index} className="flex items-start space-x-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300">
+                        <span className="text-gray-600 dark:text-gray-300 text-sm">
                           {feature}
                         </span>
                       </li>
                     ))}
-                    {plan.limitations.map((limitation, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start space-x-3 opacity-60"
-                      >
-                        <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-500 dark:text-gray-400">
-                          {limitation}
-                        </span>
+                    {plan.features.length > 8 && (
+                      <li className="text-xs text-gray-500 italic">
+                        + {plan.features.length - 8} more features
                       </li>
-                    ))}
+                    )}
                   </ul>
 
                   <motion.button
-                    onClick={() => !isCurrentPlan && handleUpgrade(key)}
+                    onClick={() => !isCurrentPlan && handleUpgrade(plan.id)}
                     disabled={isCurrentPlan || isProcessing}
                     whileHover={{ scale: isCurrentPlan ? 1 : 1.02 }}
                     whileTap={{ scale: isCurrentPlan ? 1 : 0.98 }}
@@ -416,7 +387,7 @@ export default function Upgrade() {
 
         {/* Feature Comparison */}
         <motion.div
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-16"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-16 overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
@@ -433,10 +404,13 @@ export default function Upgrade() {
                     Features
                   </th>
                   <th className="text-center py-4 px-4 text-gray-900 dark:text-white font-semibold">
-                    Free
+                    Basic
                   </th>
                   <th className="text-center py-4 px-4 text-gray-900 dark:text-white font-semibold">
-                    Pro
+                    Premium
+                  </th>
+                  <th className="text-center py-4 px-4 text-gray-900 dark:text-white font-semibold">
+                    Enterprise
                   </th>
                 </tr>
               </thead>
@@ -444,7 +418,7 @@ export default function Upgrade() {
                 {comparisonFeatures.map((category, categoryIndex) => (
                   <React.Fragment key={categoryIndex}>
                     <tr>
-                      <td colSpan={3} className="py-4 px-4">
+                      <td colSpan={4} className="py-4 px-4">
                         <h4 className="font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded">
                           {category.category}
                         </h4>
@@ -455,34 +429,23 @@ export default function Upgrade() {
                         key={featureIndex}
                         className="border-b border-gray-100 dark:border-gray-700"
                       >
-                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+                        <td className="py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">
                           {feature.name}
                         </td>
                         <td className="py-3 px-4 text-center">
-                          {typeof feature.free === "boolean" ? (
-                            feature.free ? (
-                              <Check className="w-5 h-5 text-green-500 mx-auto" />
-                            ) : (
-                              <X className="w-5 h-5 text-red-500 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-gray-600 dark:text-gray-400">
-                              {feature.free}
-                            </span>
-                          )}
+                          {typeof feature.basic === "boolean" ? (
+                            feature.basic ? <Check className="w-5 h-5 text-green-500 mx-auto" /> : <X className="w-5 h-5 text-red-500 mx-auto" />
+                          ) : <span className="text-gray-600 dark:text-gray-400">{feature.basic}</span>}
                         </td>
                         <td className="py-3 px-4 text-center">
-                          {typeof feature.pro === "boolean" ? (
-                            feature.pro ? (
-                              <Check className="w-5 h-5 text-green-500 mx-auto" />
-                            ) : (
-                              <X className="w-5 h-5 text-red-500 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-gray-600 dark:text-gray-400">
-                              {feature.pro}
-                            </span>
-                          )}
+                          {typeof feature.premium === "boolean" ? (
+                            feature.premium ? <Check className="w-5 h-5 text-green-500 mx-auto" /> : <X className="w-5 h-5 text-red-500 mx-auto" />
+                          ) : <span className="text-gray-600 dark:text-gray-400 font-medium">{feature.premium}</span>}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {typeof feature.enterprise === "boolean" ? (
+                            feature.enterprise ? <Check className="w-5 h-5 text-green-500 mx-auto" /> : <X className="w-5 h-5 text-red-500 mx-auto" />
+                          ) : <span className="text-gray-600 dark:text-gray-400 font-bold">{feature.enterprise}</span>}
                         </td>
                       </tr>
                     ))}
