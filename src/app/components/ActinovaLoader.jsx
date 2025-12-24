@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain } from "lucide-react";
 
 export default function ActinovaLoader({ text = "course" }) {
   const loadingText =
@@ -87,7 +86,11 @@ export default function ActinovaLoader({ text = "course" }) {
             className="relative z-10 w-24 h-24 flex items-center justify-center bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-blue-100 dark:border-blue-900/50"
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-3xl" />
-            <Brain className="w-12 h-12 text-blue-600 dark:text-blue-400 relative z-20" />
+            <img
+              src="/logo.png"
+              alt="Actinova Logo"
+              className="w-16 h-16 object-contain relative z-20"
+            />
 
             {/* Spinning Orbitals */}
             <motion.div
