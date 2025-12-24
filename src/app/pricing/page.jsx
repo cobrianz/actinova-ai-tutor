@@ -62,6 +62,11 @@ export default function PricingPage() {
   const isPro = currentPlanId === 'premium' || currentPlanId === 'enterprise';
 
   const handlePayment = async (planName, amount) => {
+    if (!planName) {
+      console.error("Plan ID is missing");
+      return;
+    }
+
     if (currentPlanId === 'enterprise') {
       toast.success("You are already on the Enterprise plan!");
       return;
@@ -87,7 +92,7 @@ export default function PricingPage() {
       return;
     }
 
-    setLoading({ ...loading, [planName]: true });
+    setLoading(prev => ({ ...prev, [planName]: true }));
 
     try {
       const response = await fetch("/api/billing/create-session", {
@@ -112,7 +117,7 @@ export default function PricingPage() {
       console.error("Payment error:", error);
       toast.error("Failed to initialize payment");
     } finally {
-      setLoading({ ...loading, [planName]: false });
+      setLoading(prev => ({ ...prev, [planName]: false }));
     }
   };
 
@@ -211,10 +216,10 @@ export default function PricingPage() {
               <div
                 key={plan.id}
                 className={`relative bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 ${isPopular
-                    ? "border-blue-500 scale-105 ring-2 ring-blue-500/20 z-10"
-                    : isCurrentPlan
-                      ? "border-green-500 ring-2 ring-green-500/20"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  ? "border-blue-500 scale-105 ring-2 ring-blue-500/20 z-10"
+                  : isCurrentPlan
+                    ? "border-green-500 ring-2 ring-green-500/20"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                   }`}
               >
                 {isCurrentPlan && (
@@ -237,14 +242,14 @@ export default function PricingPage() {
                   <div className="flex items-center space-x-3 mb-4">
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center ${isPopular
-                          ? "bg-gradient-to-r from-green-500 to-blue-600"
-                          : "bg-gray-100 dark:bg-gray-700"
+                        ? "bg-gradient-to-r from-green-500 to-blue-600"
+                        : "bg-gray-100 dark:bg-gray-700"
                         }`}
                     >
                       <Icon
                         className={`w-5 h-5 ${isPopular
-                            ? "text-white"
-                            : "text-gray-600 dark:text-gray-400"
+                          ? "text-white"
+                          : "text-gray-600 dark:text-gray-400"
                           }`}
                       />
                     </div>
@@ -293,10 +298,10 @@ export default function PricingPage() {
                       loading[plan.id] || isCurrentPlan
                     }
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-all group ${isCurrentPlan
-                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg cursor-default opacity-80"
-                        : isPopular
-                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
+                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg cursor-default opacity-80"
+                      : isPopular
+                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
                       }`}
                   >
                     {getCtaText(plan, loading[plan.id])}
