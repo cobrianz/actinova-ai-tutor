@@ -6,10 +6,13 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+import { getUserPlanLimits, checkLimit, getUserPlanName } from "@/lib/planLimits";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const LIMITS = {
+
+// Legacy constants - now using planLimits.js
+const LEGACY_LIMITS = {
   free: { modules: 3, lessonsPerModule: 3, totalLessons: 9, cards: 8, monthlyGenerations: 2 },
   premium: { modules: 20, lessonsPerModule: 5, totalLessons: 100, cards: 40, monthlyGenerations: 20 },
 };
@@ -67,20 +70,23 @@ export async function POST(request) {
         .collection("users")
         .findOne({ _id: new ObjectId(userId) });
 
+      // Determine user's plan
+      const isEnterprise = user?.subscription?.plan === "enterprise" && user?.subscription?.status === "active";
       isPremium =
         user?.isPremium ||
-        (user?.subscription?.plan === "pro" &&
-          user?.subscription?.status === "active");
+        (user?.subscription?.plan === "pro" && user?.subscription?.status === "active");
+
+      const planName = getUserPlanName(user);
+      const planLimits = getUserPlanLimits(user);
 
       const now = new Date();
       const resetOn = user?.usageResetDate
         ? new Date(user.usageResetDate)
         : null;
-      const shouldReset = !resetOn || now >= resetOn; // reset if no date or we've reached/passed the reset date
+      const shouldReset = !resetOn || now >= resetOn;
 
       if (shouldReset) {
         monthlyUsage = 0;
-        // schedule next reset for the first day of the next month
         resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         await db
           .collection("users")
@@ -95,7 +101,7 @@ export async function POST(request) {
 
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // If it's a course generation, check course limits
+      // Check course generation limits
       if (format === "course") {
         const courseCount = await db.collection("library").countDocuments({
           userId: new ObjectId(userId),
@@ -103,24 +109,25 @@ export async function POST(request) {
           createdAt: { $gte: startOfMonth }
         });
 
-        const limit = isPremium ? MONTHLY.premium : MONTHLY.free;
-        if (courseCount >= limit) {
+        const limitCheck = checkLimit(user, "courses", courseCount);
+
+        if (!limitCheck.allowed) {
           return NextResponse.json(
             {
-              error: `Monthly course limit reached (${limit}). Upgrade for more!`,
+              error: `Monthly course limit reached (${limitCheck.limit}). ${isEnterprise ? "Contact support." : "Upgrade for more!"}`,
               used: courseCount,
-              limit,
+              limit: limitCheck.limit,
+              remaining: limitCheck.remaining,
+              plan: planName,
               isPremium,
+              isEnterprise,
               resetsOn: resetDate.toLocaleDateString(),
-              upgrade: !isPremium,
+              upgrade: !isPremium && !isEnterprise,
             },
             { status: 429 }
           );
         }
       }
-      // Quiz limits are checked within the generateQuiz function below
-
-      // Note: We now increment usage only when a NEW course is created (see below)
     }
 
     if (format === "quiz") {
@@ -285,9 +292,14 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
     }
 
     // ─── GENERATE NEW COURSE ───
-    const { modules, lessonsPerModule, totalLessons } = isPremium
-      ? LIMITS.premium
-      : LIMITS.free;
+    // Get user object for plan limits
+    let user = null;
+    if (userId) {
+      user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+    }
+
+    const planLimits = getUserPlanLimits(user);
+    const { modules, lessonsPerModule, totalLessons } = planLimits;
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.7,

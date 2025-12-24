@@ -7,7 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "seed:plans": "node scripts/seed-plans.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
