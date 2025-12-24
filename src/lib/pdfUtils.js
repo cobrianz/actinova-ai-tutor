@@ -244,8 +244,9 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(26);
         pdf.setTextColor(...COLORS.primary);
-        pdf.text(headerText, pageWidth / 2, y, { align: "center" });
-        y += 15;
+        const headerLines = pdf.splitTextToSize(headerText, contentWidth - 20);
+        pdf.text(headerLines, pageWidth / 2, y, { align: "center" });
+        y += (headerLines.length * 10) + 5;
         hasSkippedTitle = true; // Still mark as skipped if we did print one, to avoid skipping subsequent ones (though usually only one H1)
       } else if (trimmedLine.startsWith("## ")) {
         y += 5;
@@ -327,12 +328,13 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     y += 15;
 
     modules.forEach((mod, idx) => {
-      checkNewPage(10);
+      checkNewPage(12);
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(...COLORS.text);
-      pdf.text(`Module ${idx + 1}: ${mod.title}`, margin, y);
-      y += 8;
+      const tocLines = pdf.splitTextToSize(`Module ${idx + 1}: ${mod.title}`, contentWidth - 10);
+      pdf.text(tocLines, margin, y);
+      y += (tocLines.length * 6) + 2;
     });
 
     // Process Modules
@@ -341,13 +343,16 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
       y = 30;
 
       // Module Title
+      const moduleTitleLines = pdf.splitTextToSize(`Module ${idx + 1}: ${mod.title}`, contentWidth - 10);
+      const boxH = Math.max(15, moduleTitleLines.length * 8);
+
       pdf.setFillColor(...COLORS.primaryLight);
-      pdf.rect(margin, y - 8, contentWidth, 15, "F");
+      pdf.rect(margin, y - 8, contentWidth, boxH, "F");
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(20);
       pdf.setTextColor(...COLORS.primary);
-      pdf.text(`Module ${idx + 1}: ${mod.title}`, margin + 5, y + 2);
-      y += 20;
+      pdf.text(moduleTitleLines, margin + 5, y + 2);
+      y += boxH + 10;
 
       mod.lessons?.forEach((lesson, lIdx) => {
         checkNewPage(20);
