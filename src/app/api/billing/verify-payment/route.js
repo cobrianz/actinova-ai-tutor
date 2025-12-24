@@ -95,7 +95,7 @@ export async function GET(request) {
     // Extra fallback: native driver lookup in case Mongoose models/connection mismatch
     if (!user) {
       try {
-          // Attempt native DB lookup for userId fallback
+        // Attempt native DB lookup for userId fallback
         const { db } = await connectToDatabase();
         let objId = null;
         try {
@@ -163,6 +163,7 @@ export async function GET(request) {
       gatewayResponse: data.gateway_response,
       paidAt: data.paid_at ? new Date(data.paid_at) : now,
       metadata: {
+        ...metadata, // Preserve custom fields (userId, paymentMethod, plan, etc.)
         authorization_code: data.authorization?.authorization_code,
         card_type: data.authorization?.card_type,
         last4: data.authorization?.last4,

@@ -190,16 +190,36 @@ const ReceiptDocument = ({ transaction }) => {
     minute: '2-digit',
   });
 
-  // Format amount correctly (assuming transaction.amount is in cents)
-  const rawAmount = transaction.amount ? transaction.amount / 100 : 4515;
-  const amount = new Intl.NumberFormat('en-KE', {
+  // Determine amount and currency
+  // Prioritize USD from metadata if available (to show standard $ price)
+  let rawAmount = transaction.metadata?.usdAmount
+    ? transaction.metadata.usdAmount
+    : (transaction.amount || 0);
+
+  // If using generic amount, ensure we don't divide by 100 if it's already main units (DB saves main units)
+  // Previous code divided by 100, assuming cents. We remove that.
+
+  let currency = transaction.metadata?.usdAmount ? 'USD' : (transaction.currency || transaction.metadata?.currency || 'USD');
+
+  // If payment was Mobile Money but we want to show $ (usdAmount present), we use USD. 
+  // Otherwise respect transaction.currency (e.g. KES).
+  // User explicitly asked "fix the currency in the receipt to be in $".
+
+  const amount = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'KES',
+    currency: currency,
+    minimumFractionDigits: 2
   }).format(rawAmount);
 
   const planName = transaction.plan
     ? transaction.plan.charAt(0).toUpperCase() + transaction.plan.slice(1)
     : 'Pro';
+
+  const isMobileMoney = transaction.metadata?.paymentMethod === 'mobile_money' || transaction.currency === 'KES';
+
+  const paymentMethodDisplay = isMobileMoney
+    ? 'Mobile Money (M-Pesa)'
+    : 'Credit/Debit Card';
 
   return (
     <Document>
@@ -238,7 +258,7 @@ const ReceiptDocument = ({ transaction }) => {
             </View>
             <View style={styles.detailRow}>
               <Text style={styles.label}>Payment Method:</Text>
-              <Text style={styles.value}>Credit/Debit Card</Text>
+              <Text style={styles.value}>{paymentMethodDisplay}</Text>
             </View>
           </View>
 

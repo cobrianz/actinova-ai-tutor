@@ -5,47 +5,22 @@ import { findUserById } from "@/lib/db";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
-// Pricing in KES cents (Paystack requires smallest currency unit)
-const PLANS = {
-  pro: {
-    monthly: {
-      amount: 451500, // KES 4,515.00 (approx $35 USD)
-      name: "Pro Plan - Monthly",
-      kes: 4515,
-      usd: 35,
-      interval: "monthly",
-    },
-    yearly: {
-      amount: 4979400, // KES 49,794.00 (approx $386 USD, 7% off)
-      name: "Pro Plan - Yearly (Save 7%)",
-      kes: 49794,
-      usd: 386,
-      interval: "yearly",
-    },
-  },
-};
-
 async function createCheckoutSessionHandler(request) {
-  // Checkout handler invoked
-
   let user = request.user;
 
-  // Helper: robust token extraction from several places (Request cookies API, cookie header, Authorization)
+  // Helper: robust token extraction
   const extractToken = () => {
     try {
-      // 1. Try Request cookies API (available in some runtimes)
       const cookieApiToken = request.cookies?.get?.("token")?.value;
       if (cookieApiToken) return cookieApiToken;
-    } catch (e) {}
+    } catch (e) { }
 
-    // 2. Try Authorization header
     try {
       const ah = request.headers.get("authorization");
       if (ah && ah.startsWith("Bearer ")) return ah.replace("Bearer ", "");
       if (ah) return ah;
-    } catch (e) {}
+    } catch (e) { }
 
-    // 3. Parse raw Cookie header
     try {
       const raw = request.headers.get("cookie");
       if (raw) {
@@ -54,7 +29,7 @@ async function createCheckoutSessionHandler(request) {
           if (p.startsWith("token=")) return p.slice("token=".length);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     return null;
   };
@@ -64,11 +39,9 @@ async function createCheckoutSessionHandler(request) {
       const token = extractToken();
       if (token) {
         let decoded;
-          try {
-            decoded = verifyToken(token);
-          } catch (e) {
-            // token verification failed
-          }
+        try {
+          decoded = verifyToken(token);
+        } catch (e) { }
 
         if (decoded?.id) {
           let found = null;
@@ -78,13 +51,11 @@ async function createCheckoutSessionHandler(request) {
             console.warn("Checkout: findUserById threw", e.message || e);
           }
 
-          // If Mongoose lookup didn't find user, try native driver lookup
           if (!found) {
             try {
               const { db } = await connectToDatabase();
               const objId = new ObjectId(decoded.id);
               found = await db.collection("users").findOne({ _id: objId });
-              // if found via native driver, attach user (no logging of PII)
             } catch (e) {
               console.warn("Checkout: native DB lookup failed", e.message || e);
             }
@@ -119,16 +90,89 @@ async function createCheckoutSessionHandler(request) {
       paymentMethod = "card",
     } = await request.json();
 
-    const cycle =
-      billingCycle.toLowerCase() === "yearly" ? "yearly" : "monthly";
-    const planConfig = PLANS.pro[cycle];
+    // ------------------------------------------------------------------
+    // 1. Fetch Plan Details from DB
+    // ------------------------------------------------------------------
+    const { db } = await connectToDatabase();
+    const dbPlans = await db.collection("plans").find({ status: "active" }).toArray();
 
-    if (!planConfig) {
+    // Logic to match the requested plan ID
+    const targetPlanId = plan || "pro";
+
+    console.log("Debug Plan Selection:", {
+      targetPlanId,
+      dbPlansCount: dbPlans.length,
+      dbPlans: dbPlans.map(p => ({ id: p.id, name: p.name }))
+    });
+
+    const selectedPlan = dbPlans.find(p => {
+      const pId = p.id || p.name.toLowerCase().split(' ')[0];
+      // Match exact ID OR if we requested 'pro' but found a 'premium' plan (alias)
+      return pId === targetPlanId || (targetPlanId === 'pro' && (pId === 'premium' || p.name.toLowerCase().includes('premium')));
+    });
+
+    if (!selectedPlan) {
       return NextResponse.json(
-        { error: "Invalid billing cycle" },
+        { error: "Invalid plan selected" },
         { status: 400 }
       );
     }
+
+    // ------------------------------------------------------------------
+    // 2. Calculate Amounts & Determine Currency
+    // ------------------------------------------------------------------
+    const cycle = billingCycle.toLowerCase() === "yearly" ? "yearly" : "monthly";
+    const isYearly = cycle === "yearly";
+
+    // Base USD Price
+    const monthlyUsd = selectedPlan.price || 0;
+
+    let finalUsd = monthlyUsd;
+    let planNameDisplay = `${selectedPlan.name} - Monthly`;
+
+    if (isYearly) {
+      // If DB has a specific yearly price, use it; otherwise apply 7% discount
+      const yearlyUsd = selectedPlan.yearlyPrice || (monthlyUsd * 12 * 0.93);
+      finalUsd = yearlyUsd;
+      planNameDisplay = `${selectedPlan.name} - Yearly (Save 7%)`;
+    }
+
+    let currency = "USD";
+    let amountToSend = Math.round(finalUsd * 100); // Default USD cents
+    let finalKesAmount = 0;
+    let channels = ["card"];
+
+    // handle payment method specific logic
+    if (paymentMethod === "mobile_money") {
+      currency = "KES";
+      channels = ["mobile_money"];
+
+      // Dynamic exchange rate fetch
+      let exchangeRate = 129; // Fallback
+      try {
+        const rateRes = await fetch("https://api.exchangerate-api.com/v4/latest/USD", { next: { revalidate: 3600 } });
+        if (rateRes.ok) {
+          const rateData = await rateRes.json();
+          if (rateData?.rates?.KES) {
+            exchangeRate = rateData.rates.KES;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch exchange rate, using fallback:", err);
+      }
+
+      const exactKes = finalUsd * exchangeRate;
+      amountToSend = Math.round(exactKes * 100); // KES cents
+      finalKesAmount = Math.ceil(exactKes);
+    }
+
+    const planConfig = {
+      amount: amountToSend,
+      name: planNameDisplay,
+      usd: Number(finalUsd.toFixed(2)),
+      kes: finalKesAmount,
+      interval: cycle
+    };
 
     // Dynamic origin for callback URL
     const host = request.headers.get("host") || "localhost:3000";
@@ -138,7 +182,7 @@ async function createCheckoutSessionHandler(request) {
     const origin = `${protocol}://${host}`;
     const callbackUrl = `${origin}/api/billing/verify-payment`;
 
-    console.warn(`[Checkout] ${user.email} → KES ${planConfig.kes} ${cycle}`);
+    console.warn(`[Checkout] ${user.email} → ${currency} ${planConfig.amount / 100} ${cycle}`);
 
     const response = await fetch(
       "https://api.paystack.co/transaction/initialize",
@@ -150,17 +194,18 @@ async function createCheckoutSessionHandler(request) {
         },
         body: JSON.stringify({
           email: user.email,
-          amount: planConfig.amount, // in cents
-          currency: "KES", // Kenyan Shilling
+          amount: planConfig.amount,
+          currency: currency,
           callback_url: callbackUrl,
           metadata: {
             userId: user._id.toString(),
-            plan: "pro",
+            plan: targetPlanId,
             billingCycle: cycle,
-            kesAmount: planConfig.kes,
             usdAmount: planConfig.usd,
+            kesAmount: planConfig.kes || undefined,
+            paymentMethod,
           },
-          channels: paymentMethod === "card" ? ["card"] : undefined,
+          channels: channels,
           custom_fields: [
             {
               display_name: "Customer",
@@ -170,7 +215,7 @@ async function createCheckoutSessionHandler(request) {
             {
               display_name: "Plan",
               variable_name: "plan",
-              value: `${planConfig.name} ($${planConfig.usd})`,
+              value: `${planConfig.name} (${currency === 'USD' ? '$' : 'KES '}${planConfig.amount / 100})`,
             },
           ],
         }),
@@ -197,7 +242,7 @@ async function createCheckoutSessionHandler(request) {
     }
 
     console.warn(
-      `Success: Paystack session created → KES ${planConfig.kes} | Ref: ${data.reference}`
+      `Success: Paystack session created → ${currency} ${planConfig.amount / 100} | Ref: ${data.reference}`
     );
 
     // Provide safe user info alongside session so UI can use it immediately
@@ -217,8 +262,8 @@ async function createCheckoutSessionHandler(request) {
       success: true,
       sessionUrl: data.authorization_url,
       reference: data.reference,
-      amount: planConfig.kes,
-      currency: "KES",
+      amount: planConfig.amount,
+      currency: currency,
       billingCycle: cycle,
       user: safeUser,
     });

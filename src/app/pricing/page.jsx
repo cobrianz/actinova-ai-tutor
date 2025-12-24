@@ -7,11 +7,21 @@ import { useRouter } from "next/navigation";
 import HeroNavbar from "../components/heroNavbar";
 import { toast } from "sonner";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../components/ui/dialog";
+import { CreditCard, Smartphone } from "lucide-react";
+
 export default function PricingPage() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState({});
+  const [processingPlanId, setProcessingPlanId] = useState(null); // Changed from loading object to single ID
   const [plans, setPlans] = useState([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [selectedPlanForModal, setSelectedPlanForModal] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,7 +46,13 @@ export default function PricingPage() {
         const res = await fetch("/api/plans");
         if (res.ok) {
           const data = await res.json();
-          setPlans(data.plans || []);
+          // Ensure every plan has a unique ID
+          const robustPlans = (data.plans || []).map((p, index) => ({
+            ...p,
+            id: p.id || p.name.toLowerCase().split(' ')[0] || `plan-${index}`
+          }));
+          console.log("[Pricing] Loaded plans:", robustPlans);
+          setPlans(robustPlans);
         }
       } catch (error) {
         console.error("Failed to fetch plans:", error);
@@ -61,9 +77,10 @@ export default function PricingPage() {
   const currentPlanId = getUserPlanId();
   const isPro = currentPlanId === 'premium' || currentPlanId === 'enterprise';
 
-  const handlePayment = async (planName, amount) => {
-    if (!planName) {
-      console.error("Plan ID is missing");
+  // Step 1: User clicks "Subscribe" -> Check auth & plan status -> Open Modal
+  const initiatePaymentSelection = (plan) => {
+    if (!plan.id) {
+      console.error("Plan ID missing");
       return;
     }
 
@@ -72,12 +89,12 @@ export default function PricingPage() {
       return;
     }
 
-    if (currentPlanId === 'premium' && planName === 'premium') {
+    if (currentPlanId === 'premium' && (plan.id === 'premium' || plan.name.toLowerCase().includes('pro'))) {
       toast.success("You are already on the Premium plan!");
       return;
     }
 
-    if (amount === 0) {
+    if (plan.price === 0) {
       if (!user) {
         router.push("/auth/signup");
       } else {
@@ -92,7 +109,18 @@ export default function PricingPage() {
       return;
     }
 
-    setLoading(prev => ({ ...prev, [planName]: true }));
+    // Open modal
+    setSelectedPlanForModal(plan);
+  };
+
+  // Step 2: User selects method -> API call
+  const executePayment = async (method) => {
+    const plan = selectedPlanForModal;
+    if (!plan) return;
+
+    // Reset processing state first (good practice)
+    setSelectedPlanForModal(null);
+    setProcessingPlanId(plan.id);
 
     try {
       const response = await fetch("/api/billing/create-session", {
@@ -102,7 +130,8 @@ export default function PricingPage() {
         },
         credentials: "include",
         body: JSON.stringify({
-          plan: planName === 'premium' ? 'pro' : planName,
+          plan: plan.id === 'premium' ? 'pro' : plan.id,
+          paymentMethod: method, // 'card' or 'mobile_money'
         }),
       });
 
@@ -112,12 +141,12 @@ export default function PricingPage() {
         window.location.href = data.sessionUrl;
       } else {
         toast.error(data.error || "Failed to initialize payment");
+        setProcessingPlanId(null);
       }
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Failed to initialize payment");
-    } finally {
-      setLoading(prev => ({ ...prev, [planName]: false }));
+      setProcessingPlanId(null);
     }
   };
 
@@ -291,11 +320,9 @@ export default function PricingPage() {
                   </ul>
 
                   <button
-                    onClick={() =>
-                      handlePayment(plan.id, plan.price)
-                    }
+                    onClick={() => initiatePaymentSelection(plan)}
                     disabled={
-                      loading[plan.id] || isCurrentPlan
+                      processingPlanId === plan.id || isCurrentPlan
                     }
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-all group ${isCurrentPlan
                       ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg cursor-default opacity-80"
@@ -304,7 +331,7 @@ export default function PricingPage() {
                         : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
                       }`}
                   >
-                    {getCtaText(plan, loading[plan.id])}
+                    {getCtaText(plan, processingPlanId === plan.id)}
                   </button>
                 </div>
               </div>
@@ -348,6 +375,43 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+
+      <Dialog open={!!selectedPlanForModal} onOpenChange={() => setSelectedPlanForModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Payment Method</DialogTitle>
+            <DialogDescription>
+              Select how you would like to pay for the <strong>{selectedPlanForModal?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <button
+              onClick={() => executePayment('card')}
+              className="flex items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            >
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-800">
+                <CreditCard className="w-5 h-5" />
+              </div>
+              <div className="ml-4 text-left">
+                <p className="font-semibold text-gray-900 dark:text-white">Pay with Card</p>
+                <p className="text-sm text-gray-500">Bill in USD ($)</p>
+              </div>
+            </button>
+            <button
+              onClick={() => executePayment('mobile_money')}
+              className="flex items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            >
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:bg-green-200 dark:group-hover:bg-green-800">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div className="ml-4 text-left">
+                <p className="font-semibold text-gray-900 dark:text-white">Pay with M-Pesa</p>
+                <p className="text-sm text-gray-500">Bill in KES (via Mobile Money)</p>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
