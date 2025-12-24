@@ -62,10 +62,10 @@ export async function POST() {
   // Optional: clear any UI/session cookies
   cookieStore.delete("session", { path: "/" });
 
-  // Clear secure user cookie
-  cookieStore.delete("user", {
+  // Clear CSRF token
+  cookieStore.delete("csrfToken", {
     path: "/",
-    httpOnly: true,
+    httpOnly: false,
     secure,
     sameSite: secure ? "strict" : "lax",
   });

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -126,8 +127,12 @@ export async function POST() {
 
     cookieStore.set("refreshToken", newRefreshToken, {
       ...cookieOptions,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      maxAge: 30 * 24 * 60 * 60, // 30 days (in seconds, not milliseconds)
     });
+
+    // Rotate CSRF token on refresh for added security
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(cookieStore, csrfToken, isProd);
 
     // 6. Usage calculation
     const isPremium =

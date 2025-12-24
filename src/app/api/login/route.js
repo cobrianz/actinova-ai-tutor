@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyPassword, generateTokenPair, sanitizeUser } from "@/lib/auth";
+import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 const RATE_LIMIT = { max: 8, windowMs: 15 * 60 * 1000 }; // 8 attempts per 15 min
 const loginAttempts = new Map(); // In-memory rate limiting (or use Redis in prod)
@@ -183,18 +184,26 @@ export async function POST(request) {
       maxAge: 30 * 24 * 60 * 60, // Always 30 days
     });
 
-    // Convenience flags for middleware routing
+    // Generate and set CSRF token (non-HttpOnly so JavaScript can read it)
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(cookieStore, csrfToken, isProd);
+
+    // Convenience flags for middleware routing (non-HttpOnly for client-side checks)
     cookieStore.set("emailVerified", user.emailVerified ? "true" : "false", {
-      ...cookieConfig,
       httpOnly: false,
+      secure: isProd,
+      sameSite: isProd ? "strict" : "lax",
+      path: "/",
       maxAge: 30 * 24 * 60 * 60,
     });
     cookieStore.set(
       "onboardingCompleted",
       user.onboardingCompleted ? "true" : "false",
       {
-        ...cookieConfig,
         httpOnly: false,
+        secure: isProd,
+        sameSite: isProd ? "strict" : "lax",
+        path: "/",
         maxAge: 30 * 24 * 60 * 60,
       }
     );
@@ -255,29 +264,8 @@ export async function POST(request) {
       onboardingCompleted: user.onboardingCompleted || false,
     });
 
-    // Also set a minimal, secure HttpOnly user cookie for server-driven auth state
-    try {
-      const userCookiePayload = {
-        id: safeUser.id,
-        name: safeUser.name,
-        email: safeUser.email,
-        avatar: safeUser.avatar || null,
-        emailVerified: !!safeUser.emailVerified,
-        status: safeUser.status,
-        onboardingCompleted: !!safeUser.onboardingCompleted,
-        isPremium: !!safeUser.isPremium,
-      };
-
-      cookieStore.set("user", JSON.stringify(userCookiePayload), {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? "strict" : "lax",
-        path: "/",
-        maxAge: rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60,
-      });
-    } catch (cookieErr) {
-      // Failed to set user cookie
-    }
+    // User data is fetched from /api/me endpoint - no need for user cookie
+    // This prevents PII exposure in cookies
 
     return NextResponse.json({
       success: true,

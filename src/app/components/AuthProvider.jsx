@@ -13,6 +13,16 @@ import { useRouter, usePathname } from "next/navigation";
 
 const AuthContext = createContext();
 
+/**
+ * Get CSRF token from cookies for API requests
+ * @returns {string|null} CSRF token or null if not found
+ */
+function getCsrfToken() {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/csrfToken=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -237,16 +247,15 @@ export function AuthProvider({ children }) {
       await fetch("/api/logout", {
         method: "POST",
         credentials: "include",
+        headers: {
+          "X-CSRF-Token": getCsrfToken(),
+        },
       });
     } catch (err) {
       console.error("Logout failed:", err);
     }
 
     setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
     setShowInactivityModal(false);
     router.push("/?loggedOut=inactivity");
   }, [router]);
@@ -393,15 +402,14 @@ export function AuthProvider({ children }) {
       await fetch("/api/logout", {
         method: "POST",
         credentials: "include",
+        headers: {
+          "X-CSRF-Token": getCsrfToken(),
+        },
       });
     } catch (err) {
       console.error("Logout failed:", err);
     } finally {
       setUser(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("user");
-      sessionStorage.removeItem("token");
       setError(null);
       router.push("/");
     }

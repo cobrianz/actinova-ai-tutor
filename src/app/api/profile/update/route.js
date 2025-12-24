@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { withCsrf } from "@/lib/withCsrf";
 
 async function getUserId(request) {
   try {
@@ -114,7 +115,7 @@ export async function GET(request) {
   }
 }
 
-export async function PUT(request) {
+async function putHandler(request) {
   try {
     const userId = await getUserId(request);
     if (!userId) {
@@ -193,7 +194,9 @@ export async function PUT(request) {
   }
 }
 
-export async function POST(request) {
+export const PUT = withCsrf(putHandler);
+
+async function postHandler(request) {
   try {
     console.log("[POST /profile/update] Starting profile update");
     const userId = await getUserId(request);
@@ -324,31 +327,7 @@ export async function POST(request) {
       );
     }
 
-    // Also update a secure HttpOnly `user` cookie so client state can be sourced from server
-    try {
-      const cookieStore = await cookies();
-      const isProd = process.env.NODE_ENV === "production";
-      const userCookie = {
-        id: updatedUser._id.toString(),
-        name: updatedUser.name,
-        email: updatedUser.email,
-        avatar: updatedUser.avatar || null,
-        emailVerified: !!updatedUser.emailVerified,
-        status: updatedUser.status,
-        onboardingCompleted: !!updatedUser.onboardingCompleted,
-        isPremium: !!(updatedUser.isPremium || (updatedUser.subscription && updatedUser.subscription.plan === 'pro' && updatedUser.subscription.status === 'active')),
-      };
-
-      cookieStore.set("user", JSON.stringify(userCookie), {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? "strict" : "lax",
-        path: "/",
-        maxAge: 30 * 24 * 60 * 60,
-      });
-    } catch (err) {
-      console.warn("[POST /profile/update] Failed to set user cookie:", err);
-    }
+    // User data is fetched from /api/me - no need for user cookie
 
     return NextResponse.json({
       success: true,
@@ -382,3 +361,5 @@ export async function POST(request) {
     );
   }
 }
+
+export const POST = withCsrf(postHandler);
