@@ -1,9 +1,11 @@
+```javascript
 // src/app/api/verify-email/route.js
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { generateTokenPair } from "@/lib/auth";
+import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 const RATE_LIMIT = { max: 10, windowMs: 15 * 60 * 1000 };
 const attempts = new Map();
@@ -126,6 +128,10 @@ export async function POST(request) {
       ...cookieConfig,
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
+
+    // Generate and set CSRF token (non-HttpOnly so JavaScript can read it)
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(cookieStore, csrfToken, isProd);
 
     // Convenience flags for middleware routing
     cookieStore.set("emailVerified", "true", {

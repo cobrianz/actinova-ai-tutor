@@ -261,7 +261,7 @@ const getPasswordResetTemplate = (firstName, resetLink) => `
 // Email sending functions
 export async function sendVerificationEmail({ to, name, token, code }) {
   try {
-    const verificationLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"
+    const verificationLink = `${process.env.CORS_ORIGIN || process.env.NEXTAUTH_URL || "http://localhost:3000"
       }/auth/verify-email?token=${token}`;
 
     const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
@@ -314,7 +314,7 @@ The Actinova AI Tutor Team`,
 
 export async function sendPasswordResetEmail({ to, name, token }) {
   try {
-    const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"
+    const resetLink = `${process.env.CORS_ORIGIN || process.env.NEXTAUTH_URL || "http://localhost:3000"
       }/auth/reset-password?token=${token}`;
 
     const fromAddress = process.env.SMTP_FROM || "Actinova AI Tutor <nonereply@actinova.com>";
