@@ -74,7 +74,7 @@ export async function POST(request) {
       const isEnterprise = user?.subscription?.plan === "enterprise" && user?.subscription?.status === "active";
       isPremium =
         user?.isPremium ||
-        (user?.subscription?.plan === "pro" && user?.subscription?.status === "active");
+        ((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") && user?.subscription?.status === "active");
 
       const planName = getUserPlanName(user);
       const planLimits = getUserPlanLimits(user);

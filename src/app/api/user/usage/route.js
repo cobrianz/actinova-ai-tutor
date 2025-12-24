@@ -102,10 +102,14 @@ export async function GET(request) {
       (user.subscription?.plan === "pro" &&
         user.subscription?.status === "active");
 
+    const isEnterprise =
+      user.subscription?.plan === "enterprise" &&
+      user.subscription?.status === "active";
+
     const limits = {
-      courses: isPremium ? 15 : 2,
-      flashcards: isPremium ? 20 : 2,
-      quizzes: isPremium ? 20 : 1
+      courses: isEnterprise ? Infinity : (isPremium ? 15 : 2),
+      flashcards: isEnterprise ? Infinity : (isPremium ? 20 : 2),
+      quizzes: isEnterprise ? Infinity : (isPremium ? 20 : 1)
     };
 
     const coursePercent = Math.min(100, Math.round((courseUsed / limits.courses) * 100));

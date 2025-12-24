@@ -45,6 +45,7 @@ export default function DashboardContent() {
   }, [searchParams, router, fetchUser]);
 
   const activeContent = searchParams.get("tab") || "generate";
+  const isChat = activeContent === 'chat';
 
   const setActiveContent = (tab) => {
     const params = new URLSearchParams(searchParams);
@@ -66,22 +67,35 @@ export default function DashboardContent() {
   const ContentComponent =
     routeComponents[activeContent] || routeComponents.generate;
 
+  const ComponentWrapper = isChat ? "div" : "div"; // Keep div for now
+
   return (
-    <div className="relative bg-gray-50 dark:bg-gray-900">
+    <div className={`relative bg-gray-50 dark:bg-gray-900 ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
       <div
-        className="max-w-[90rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide"
-        style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-        }}
+        className={
+          isChat
+            ? "w-full h-full"
+            : "max-w-[90rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide"
+        }
+        style={
+          isChat
+            ? {}
+            : {
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            }
+        }
       >
-        <style jsx>{`
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
-        <div className="grid grid-cols-1 gap-4 sm:gap-6">
-          <div className="w-full">
+        {!isChat && (
+          <style jsx>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+        )}
+
+        <div className={isChat ? "h-full" : "grid grid-cols-1 gap-4 sm:gap-6"}>
+          <div className="w-full h-full">
             {ContentComponent ? (
               <ContentComponent
                 key={activeContent}

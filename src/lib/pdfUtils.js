@@ -93,10 +93,22 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
   pdf.text("AI TUTOR PLATFORM", pageWidth / 2, y, { align: "center" });
 
   y = 150;
-  // Box for title
+
+  pdf.setTextColor(...COLORS.text);
+  pdf.setFontSize(28);
+  // Using a slightly narrower width to ensure generous margins
+  const titleLines = pdf.splitTextToSize(data.title || "Study Material", contentWidth - 20);
+
+  // Calculate dynamic height for the box based on title length
+  // Base height (top padding + subtitle + spacing) + title height + bottom padding
+  // Title approx 10mm per line at size 28
+  const titleHeight = titleLines.length * 12;
+  const boxHeight = 40 + titleHeight + 20; // 40mm top space/subtitle, title, 20mm bottom
+
+  // Box for title (Dynamic Height)
   pdf.setDrawColor(...COLORS.primary);
   pdf.setLineWidth(0.5);
-  pdf.roundedRect(margin - 5, y - 15, contentWidth + 10, 80, 2, 2, "D");
+  pdf.roundedRect(margin - 5, y - 15, contentWidth + 10, boxHeight, 2, 2, "D");
 
   pdf.setTextColor(...COLORS.primary);
   pdf.setFontSize(14);
@@ -105,10 +117,9 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
   y += 15;
   pdf.setTextColor(...COLORS.text);
   pdf.setFontSize(28);
-  const titleLines = pdf.splitTextToSize(data.title || "Study Material", contentWidth - 10);
   pdf.text(titleLines, pageWidth / 2, y, { align: "center" });
 
-  y += (titleLines.length * 10) + 10;
+  y += (titleLines.length * 12) + 10;
   pdf.setFontSize(12);
   pdf.setTextColor(...COLORS.textLight);
   pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: "center" });

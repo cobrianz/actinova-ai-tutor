@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Sparkles, Crown, Zap } from "lucide-react";
+import { Check, Sparkles, Crown, Zap, Lock, ShieldCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import HeroNavbar from "../components/heroNavbar";
@@ -377,38 +377,122 @@ export default function PricingPage() {
       </div>
 
       <Dialog open={!!selectedPlanForModal} onOpenChange={() => setSelectedPlanForModal(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Choose Payment Method</DialogTitle>
-            <DialogDescription>
-              Select how you would like to pay for the <strong>{selectedPlanForModal?.name}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <button
-              onClick={() => executePayment('card')}
-              className="flex items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-            >
-              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-800">
-                <CreditCard className="w-5 h-5" />
+        <DialogContent className="sm:max-w-2xl p-0 overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-2xl rounded-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-5 h-full">
+
+            {/* Left: Order Summary */}
+            <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800/50 p-6 flex flex-col justify-between border-r border-gray-100 dark:border-gray-800">
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+                  Order Summary
+                </h3>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                    {selectedPlanForModal?.name}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Billed Monthly
+                  </p>
+                </div>
+
+                <div className="mb-8">
+                  <div className="flex items-baseline mb-2">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                      ${selectedPlanForModal?.price}
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 ml-1">/mo</span>
+                  </div>
+                  {/* Currency conversion hint */}
+                  <div className="text-xs text-gray-400 p-2 bg-white dark:bg-gray-800 rounded border border-dashed border-gray-200 dark:border-gray-700">
+                    You will be charged the equivalent amount for non-USD payment methods.
+                  </div>
+                </div>
+
+                <ul className="space-y-3 mb-6">
+                  {selectedPlanForModal?.features?.slice(0, 3).map((f, i) => (
+                    <li key={i} className="flex items-start text-xs text-gray-600 dark:text-gray-300">
+                      <Check className="w-3 h-3 text-green-500 mr-2 mt-0.5" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="ml-4 text-left">
-                <p className="font-semibold text-gray-900 dark:text-white">Pay with Card</p>
-                <p className="text-sm text-gray-500">Bill in USD ($)</p>
+
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between text-sm font-medium">
+                  <span className="text-gray-900 dark:text-white">Total due today</span>
+                  <span className="text-gray-900 dark:text-white">${selectedPlanForModal?.price?.toFixed(2)}</span>
+                </div>
               </div>
-            </button>
-            <button
-              onClick={() => executePayment('mobile_money')}
-              className="flex items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-            >
-              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:bg-green-200 dark:group-hover:bg-green-800">
-                <Smartphone className="w-5 h-5" />
+            </div>
+
+            {/* Right: Payment Selection */}
+            <div className="md:col-span-3 p-6 bg-white dark:bg-gray-900">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Check out</DialogTitle>
+                  <div className="flex items-center text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
+                    <Lock className="w-3 h-3 mr-1" /> Secure
+                  </div>
+                </div>
+                <DialogDescription className="text-sm">
+                  Choose a payment method to activate your plan.
+                </DialogDescription>
               </div>
-              <div className="ml-4 text-left">
-                <p className="font-semibold text-gray-900 dark:text-white">Pay with M-Pesa</p>
-                <p className="text-sm text-gray-500">Bill in KES (via Mobile Money)</p>
+
+              <div className="space-y-3 mb-8">
+                <button
+                  onClick={() => executePayment('card')}
+                  className="w-full group relative flex items-center p-4 border-2 border-gray-100 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200 text-left"
+                >
+                  <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <CreditCard className="w-6 h-6" />
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-gray-900 dark:text-white">Pay with Card</span>
+                      <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-500">USD</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">Visa, Mastercard, Amex</p>
+                  </div>
+                  <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500">
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => executePayment('mobile_money')}
+                  className="w-full group relative flex items-center p-4 border-2 border-gray-100 dark:border-gray-700 rounded-xl hover:border-green-500 dark:hover:border-green-500 hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-all duration-200 text-left"
+                >
+                  <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-gray-900 dark:text-white">Pay with M-Pesa</span>
+                      <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-500">KES</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">Mobile Money automated</p>
+                  </div>
+                  <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-green-500">
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                </button>
               </div>
-            </button>
+
+              {/* Trust Footer */}
+              <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Encrypted & Secure</span>
+                </div>
+                <div className="flex items-center gap-1 opacity-70">
+                  <span>Powered by</span>
+                  <span className="font-bold text-gray-600 dark:text-gray-300">Paystack</span>
+                </div>
+              </div>
+
+            </div>
           </div>
         </DialogContent>
       </Dialog>

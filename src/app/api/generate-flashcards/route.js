@@ -65,7 +65,7 @@ export async function POST(request) {
 
       isPremium =
         user?.isPremium ||
-        (user?.subscription?.plan === "pro" &&
+        ((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
           user?.subscription?.status === "active");
 
       const now = new Date();

@@ -331,7 +331,9 @@ export default function ProfileContent() {
                       : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                       }`}>
                       {profileData?.usage?.isPremium ? <Crown size={12} /> : <Star size={12} />}
-                      {profileData?.usage?.isPremium ? "Pro Member" : "Free Plan"}
+                      {profileData?.user?.subscription?.plan === 'enterprise'
+                        ? "Enterprise Member"
+                        : profileData?.usage?.isPremium ? "Pro Member" : "Free Plan"}
                     </span>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${theme === 'dark' ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"}`}>
                       <Calendar size={12} />
@@ -430,13 +432,13 @@ export default function ProfileContent() {
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Course Generations</span>
                               <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                                {profileData?.usage?.details?.courses?.used || 0} / {profileData?.usage?.details?.courses?.limit || 0}
+                                {profileData?.usage?.details?.courses?.used || 0} / {profileData?.usage?.details?.courses?.limit === null ? "∞" : profileData?.usage?.details?.courses?.limit}
                               </span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-blue-600 transition-all duration-700 ease-out"
-                                style={{ width: `${profileData?.usage?.details?.courses?.percent || 0}%` }}
+                                style={{ width: `${profileData?.usage?.details?.courses?.limit === null ? 100 : profileData?.usage?.details?.courses?.percent || 0}%` }}
                               />
                             </div>
                             <p className="text-[10px] text-slate-500">Monthly course creation limit</p>
@@ -447,13 +449,13 @@ export default function ProfileContent() {
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Flashcard Sets</span>
                               <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
-                                {profileData?.usage?.details?.flashcards?.used || 0} / {profileData?.usage?.details?.flashcards?.limit || 0}
+                                {profileData?.usage?.details?.flashcards?.used || 0} / {profileData?.usage?.details?.flashcards?.limit === null ? "∞" : profileData?.usage?.details?.flashcards?.limit}
                               </span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-purple-600 transition-all duration-700 ease-out"
-                                style={{ width: `${profileData?.usage?.details?.flashcards?.percent || 0}%` }}
+                                style={{ width: `${profileData?.usage?.details?.flashcards?.limit === null ? 100 : profileData?.usage?.details?.flashcards?.percent || 0}%` }}
                               />
                             </div>
                             <p className="text-[10px] text-slate-500">Monthly flashcard set limit</p>
@@ -464,13 +466,13 @@ export default function ProfileContent() {
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Test / Exam Sets</span>
                               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                {profileData?.usage?.details?.quizzes?.used || 0} / {profileData?.usage?.details?.quizzes?.limit || 0}
+                                {profileData?.usage?.details?.quizzes?.used || 0} / {profileData?.usage?.details?.quizzes?.limit === null ? "∞" : profileData?.usage?.details?.quizzes?.limit}
                               </span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-emerald-600 transition-all duration-700 ease-out"
-                                style={{ width: `${profileData?.usage?.details?.quizzes?.percent || 0}%` }}
+                                style={{ width: `${profileData?.usage?.details?.quizzes?.limit === null ? 100 : profileData?.usage?.details?.quizzes?.percent || 0}%` }}
                               />
                             </div>
                             <p className="text-[10px] text-slate-500">Monthly assessment paper limit</p>
@@ -600,7 +602,11 @@ export default function ProfileContent() {
                       <div className="flex justify-between items-start mb-8">
                         <div>
                           <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${profileData?.usage?.isPremium ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"}`}>Current Plan</span>
-                          <h2 className="text-4xl font-black mt-8">{profileData?.usage?.isPremium ? "PRO PLAN" : "FREE PLAN"}</h2>
+                          <h2 className="text-4xl font-black mt-8">
+                            {profileData?.user?.subscription?.plan === 'enterprise'
+                              ? "ENTERPRISE PLAN"
+                              : profileData?.usage?.isPremium ? "PRO PLAN" : "FREE PLAN"}
+                          </h2>
                         </div>
                         {profileData?.usage?.isPremium ? <Crown className="text-amber-300" size={48} /> : <Star className="text-blue-500" size={48} />}
                       </div>

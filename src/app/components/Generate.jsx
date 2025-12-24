@@ -66,11 +66,15 @@ export default function Generate({ setActiveContent }) {
       }
     };
   }, [showLoader]);
+
+  // Strict check for Premium access (Pro or Enterprise)
+  // Ensure we check status is active.
   const isPremium =
     !!(
-      user?.subscription?.plan === "pro" &&
+      (user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
       user?.subscription?.status === "active"
     ) || !!user?.isPremium;
+
   const atLimit = !!(
     user?.usage?.isAtLimit ||
     (!isPremium && user?.usage?.remaining === 0)
@@ -370,28 +374,21 @@ export default function Generate({ setActiveContent }) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left px-1">
               Choose difficulty level
-              {user?.subscription?.plan !== "pro" &&
-                user?.subscription?.status !== "active" &&
-                !user?.isPremium && (
-                  <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
-                    (Free users: Beginner only)
-                  </span>
-                )}
+              {!isPremium && (
+                <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                  (Free users: Beginner only)
+                </span>
+              )}
             </label>
             <div className="relative">
               <select
                 value={difficulty}
                 onChange={(e) => {
                   const selectedDifficulty = e.target.value;
-                  const isPro =
-                    !!(
-                      user?.subscription?.plan === "pro" &&
-                      user?.subscription?.status === "active"
-                    ) || !!user?.isPremium;
 
-                  if (!isPro && selectedDifficulty !== "beginner") {
+                  if (!isPremium && selectedDifficulty !== "beginner") {
                     toast.error(
                       "Intermediate and Advanced levels require Pro subscription. Please upgrade to continue."
                     );
@@ -402,52 +399,36 @@ export default function Generate({ setActiveContent }) {
                   setDifficulty(selectedDifficulty);
                 }}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 appearance-none pr-10"
-                disabled={!isPremium}
+                disabled={!isPremium && atLimit} // Optionally block interaction if at limit, but better to allow selecting beginner if it's the only option. 
               >
                 <option value="beginner">
                   Beginner{" "}
-                  {user?.subscription?.plan !== "pro" &&
-                    user?.subscription?.status !== "active" &&
-                    !user?.isPremium
+                  {!isPremium
                     ? "(Free)"
                     : ""}
                 </option>
                 <option
                   value="intermediate"
-                  disabled={
-                    user?.subscription?.plan !== "pro" &&
-                    user?.subscription?.status !== "active" &&
-                    !user?.isPremium
-                  }
+                  disabled={!isPremium}
                 >
                   Intermediate{" "}
-                  {(user?.subscription?.plan === "pro" &&
-                    user?.subscription?.status === "active") ||
-                    user?.isPremium
+                  {isPremium
                     ? "(Pro)"
                     : "(Pro Only)"}
                 </option>
                 <option
                   value="advanced"
-                  disabled={
-                    user?.subscription?.plan !== "pro" &&
-                    user?.subscription?.status !== "active" &&
-                    !user?.isPremium
-                  }
+                  disabled={!isPremium}
                 >
                   Advanced{" "}
-                  {(user?.subscription?.plan === "pro" &&
-                    user?.subscription?.status === "active") ||
-                    user?.isPremium
+                  {isPremium
                     ? "(Pro)"
                     : "(Pro Only)"}
                 </option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
-            {user?.subscription?.plan !== "pro" &&
-              user?.subscription?.status !== "active" &&
-              !user?.isPremium &&
+            {!isPremium &&
               difficulty !== "beginner" && (
                 <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
                   <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start">

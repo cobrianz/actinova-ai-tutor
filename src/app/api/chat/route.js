@@ -17,7 +17,7 @@ async function requirePremium(userId) {
 
   const isPremium =
     user.isPremium ||
-    (user.subscription?.plan === "pro" &&
+    ((user.subscription?.plan === "pro" || user.subscription?.plan === "enterprise") &&
       user.subscription?.status === "active");
 
   if (!isPremium) {

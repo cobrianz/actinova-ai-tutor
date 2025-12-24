@@ -60,7 +60,7 @@ export default function PremiumCourses() {
   const isPro =
     user &&
     ((user.subscription &&
-      user.subscription.plan === "pro" &&
+      (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
       user.subscription.status === "active") ||
       user.isPremium);
 
@@ -288,7 +288,7 @@ export default function PremiumCourses() {
       }
 
       const responseData = await response.json();
-      
+
       toast.success(`Course "${course.title}" generated successfully!`, {
         id: "generating",
       });
@@ -949,11 +949,10 @@ export default function PremiumCourses() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer ${
-                      currentPage === page
+                    className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer ${currentPage === page
                         ? "bg-blue-600 text-white"
                         : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>

@@ -899,9 +899,9 @@ export default function LearnContent() {
       setError(null);
 
       // Check if free user is trying to use non-beginner difficulty
-      const isPro =
-        user?.subscription?.plan === "pro" &&
-        user?.subscription?.status === "active";
+      const isPremium =
+        !!((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
+          user?.subscription?.status === "active") || !!user?.isPremium;
 
       // Clean up local storage on component mount
       cleanupLocalStorage();
@@ -1108,7 +1108,7 @@ export default function LearnContent() {
         }
       }
 
-      if (!isPro && difficulty !== "beginner") {
+      if (!isPremium && difficulty !== "beginner") {
         toast.error(
           "Intermediate and Advanced levels require Pro subscription. Redirecting to upgrade..."
         );
@@ -1133,7 +1133,8 @@ export default function LearnContent() {
         requestBody = {
           topic: actualTopic,
           format: "quiz",
-          difficulty: isPro ? difficulty : "beginner",
+          format: "quiz",
+          difficulty: isPremium ? difficulty : "beginner",
           questions: parseInt(searchParams.get("questions")) || 10,
         };
       } else if (format === "flashcards") {
@@ -1141,7 +1142,7 @@ export default function LearnContent() {
         requestBody = {
           topic: actualTopic,
           format,
-          difficulty: isPro ? difficulty : "beginner",
+          difficulty: isPremium ? difficulty : "beginner",
         };
       } else {
         // Course generation
@@ -1150,12 +1151,12 @@ export default function LearnContent() {
           format === "guide"
             ? {
               topic: actualTopic,
-              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+              difficulty: (isPremium ? difficulty : "beginner").toLowerCase(),
             }
             : {
               topic: actualTopic,
               format,
-              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+              difficulty: (isPremium ? difficulty : "beginner").toLowerCase(),
             };
       }
 
@@ -1511,8 +1512,8 @@ export default function LearnContent() {
 
             <button
               onClick={() => {
-                const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
-                if (!isPro) {
+                const isPremium = !!((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") && user?.subscription?.status === "active") || !!user?.isPremium;
+                if (!isPremium) {
                   toast.error("Lesson PDF export is a Pro feature. Please upgrade.");
                   router.push("/dashboard?tab=upgrade");
                   return;
@@ -1522,7 +1523,7 @@ export default function LearnContent() {
                   return;
                 }
                 downloadCourseAsPDF({
-                  title: currentLesson.title,
+                  title: courseData.title ? `${courseData.title}: ${currentLesson.title}` : currentLesson.title,
                   content: currentLesson.content
                 }, "notes");
                 toast.success("Download started!");
@@ -1581,13 +1582,10 @@ export default function LearnContent() {
             </p>
             <button
               onClick={() => {
-                const isPro =
-                  user &&
-                  ((user.subscription &&
-                    user.subscription.plan === "pro" &&
-                    user.subscription.status === "active") ||
-                    user.isPremium);
-                if (!isPro) {
+                const isPremium =
+                  !!((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
+                    user?.subscription?.status === "active") || !!user?.isPremium;
+                if (!isPremium) {
                   toast.error(
                     "PDF downloads are a Pro feature. Please upgrade."
                   );

@@ -107,9 +107,9 @@ function getEnterpriseLimits() {
         courses: -1, // unlimited
         quizzes: -1, // unlimited
         flashcards: -1, // unlimited
-        modules: -1, // unlimited
-        lessonsPerModule: -1, // unlimited
-        totalLessons: -1, // unlimited
+        modules: 20, // Match Premium structure cap for generation
+        lessonsPerModule: 5, // Match Premium
+        totalLessons: 100, // Match Premium
         difficulties: ['beginner', 'intermediate', 'advanced'],
         aiResponses: -1, // unlimited
     };

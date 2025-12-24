@@ -37,7 +37,7 @@ export default function Sidebar({
     !authLoading &&
     user &&
     ((user.subscription &&
-      user.subscription.plan === "pro" &&
+      (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
       user.subscription.status === "active") ||
       user.isPremium);
 
@@ -245,20 +245,20 @@ export default function Sidebar({
                       </span>
                     </div>
                     <span className="text-xs text-blue-700 dark:text-blue-300">
-                      {usage.isPremium ? "Pro" : "Free"}
+                      {user?.subscription?.plan === 'enterprise' ? "Enterprise" : (usage.isPremium ? "Pro" : "Free")}
                     </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-blue-700 dark:text-blue-300">
-                      <span>Gens</span>
+                      <span>Generations</span>
                       <span>
-                        {usage.used}/{usage.limit}
+                        {usage.used}/{usage.limit === null ? "∞" : usage.limit}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${usage.percentage}%` }}
+                        style={{ width: `${usage.limit === null ? 100 : usage.percentage}%` }}
                       ></div>
                     </div>
                   </div>
