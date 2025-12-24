@@ -1,4 +1,3 @@
-```javascript
 // src/app/api/verify-email/route.js
 
 import { NextResponse } from "next/server";
