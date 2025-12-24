@@ -168,9 +168,19 @@ export async function POST(request) {
 IMPORTANT: This course can be in ANY field - Technology, Business, Health, Creative Arts, Humanities, Science, Lifestyle, Professional Skills, Trades, Education, etc. 
 Create comprehensive, engaging content appropriate for the topic's field.
 
+TITLE REQUIREMENTS:
+- Create a DESCRIPTIVE, SPECIFIC title that reflects the exact topic provided
+- Include relevant context from the topic (e.g., curriculum, grade level, specialization)
+- Examples:
+  * Input: "chemistry for kenyan curriculum form 2" → Title: "Kenya Curriculum Form 2 Chemistry"
+  * Input: "javascript for beginners" → Title: "JavaScript Fundamentals for Beginners"
+  * Input: "digital marketing" → Title: "Complete Digital Marketing Course"
+- DO NOT use generic titles like "Introduction to..." unless specifically requested
+- Make the title professional and clear
+
 Return ONLY valid JSON with this exact structure:
 {
-  "title": "string",
+  "title": "string (descriptive, specific title based on topic)",
   "level": "${difficulty}",
   "totalModules": ${modules},
   "totalLessons": ${totalLessons},
@@ -291,9 +301,19 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
 IMPORTANT: This course can be in ANY field - Technology, Business, Health, Creative Arts, Humanities, Science, Lifestyle, Professional Skills, Trades, Education, etc. 
 Create comprehensive, engaging content appropriate for the topic's field.
 
+TITLE REQUIREMENTS:
+- Create a DESCRIPTIVE, SPECIFIC title that reflects the exact topic provided
+- Include relevant context from the topic (e.g., curriculum, grade level, specialization)
+- Examples:
+  * Input: "chemistry for kenyan curriculum form 2" → Title: "Kenya Curriculum Form 2 Chemistry"
+  * Input: "javascript for beginners" → Title: "JavaScript Fundamentals for Beginners"
+  * Input: "digital marketing" → Title: "Complete Digital Marketing Course"
+- DO NOT use generic titles like "Introduction to..." unless specifically requested
+- Make the title professional and clear
+
 Return ONLY valid JSON with this exact structure:
 {
-  "title": "string",
+  "title": "string (descriptive, specific title based on topic)",
   "level": "${difficulty}",
   "totalModules": ${modules},
   "totalLessons": ${totalLessons},

@@ -1023,7 +1023,7 @@ export default function LearnContent() {
             initializedCoursesRef.current.add(courseKey);
             return;
           } else {
-            console.log("❌ Course not found in library or has no modules");
+            console.log("generating course...");
           }
         }
       } catch (libraryError) {
@@ -1159,10 +1159,6 @@ export default function LearnContent() {
             };
       }
 
-      console.log(
-        `🚀 Generating new ${format} for: ${actualTopic}/${difficulty}`
-      );
-
       try {
         const response = await fetch(apiEndpoint, {
           method: "POST",
@@ -1192,11 +1188,6 @@ export default function LearnContent() {
         }
 
         const data = await response.json();
-        console.log("API Response received:", data);
-        console.log("Data content:", data.content);
-        console.log("Data courseId:", data.courseId);
-        console.log("Data success:", data.success);
-        console.log("Setting course data:", data.content || data);
         const courseDataToSet = data.content || data;
 
         // Only validate modules for course format, not quiz
@@ -1225,7 +1216,6 @@ export default function LearnContent() {
         if (data.courseId) {
           courseDataToSet._id = data.courseId;
         }
-        console.log("Course data to set:", courseDataToSet);
         setCourseData(courseDataToSet);
         setIsLoading(false); // Ensure loader disappears immediately when course data is set
 
@@ -1380,7 +1370,6 @@ export default function LearnContent() {
 
   // Show loading state only if no course data yet
   if (isLoading && !courseData) {
-    console.log("Rendering ActinovaLoader in LearnContent", { isLoading, courseData });
     return (
       <ActinovaLoader
         text={
