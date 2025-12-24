@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
  * Enhanced PDF Generation Utility for Actinova AI Tutor
  * 
  * This utility generates professional, visually appealing PDFs for courses and notes.
- * It handles markdown-like formatting including bold, italics, headers, and lists.
+ * It handles markdown-like formatting including bold, italics, and lists.
  */
 
 // Brand Colors
@@ -48,7 +48,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     pdf.setFontSize(8);
     pdf.setTextColor(...COLORS.textLight);
     pdf.text("Actinova AI Tutor - Personalized Learning", margin, pageHeight - 10);
-    pdf.text(`Copyright © Actinova AI Tutor. All rights reserved.`, pageWidth / 2, pageHeight - 10, { align: "center" });
+    pdf.text("Copyright © Actinova AI Tutor. All rights reserved.", pageWidth / 2, pageHeight - 10, { align: "center" });
     pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: "right" });
   };
 
@@ -139,32 +139,56 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
       checkNewPage(8);
 
       let currentX = xPos;
-      // Improved splitting for **bold**, *italic*, and _underline_
+      // Improved splitting for bold, *italic*, and _underline_
       const segments = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g);
 
-      segments.forEach(segment => {
-        if (!segment) return;
+      let isCenteredBoldHeader = false;
+      if (segments.length === 3 && segments[0] === '' && segments[2] === '' && segments[1].startsWith('**') && segments[1].endsWith('**')) {
+        isCenteredBoldHeader = true;
+      }
 
-        let style = "normal";
-        let underline = false;
-        let cleanText = segment;
+      if (isCenteredBoldHeader) {
+        const cleanText = segments[1].substring(2, segments[1].length - 2);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(20);
+        pdf.setTextColor(...COLORS.primary);
+        const headerLines = pdf.splitTextToSize(cleanText, contentWidth);
+        headerLines.forEach(hLine => {
+          pdf.text(hLine, pageWidth / 2, y, { align: "center" });
+          y += 7;
+        });
+        const lastLineW = pdf.getTextWidth(headerLines[headerLines.length - 1]);
+        const lineY = y - 4;
+        const startX = (pageWidth / 2) - (lastLineW / 2);
+        pdf.setDrawColor(...COLORS.primary);
+        pdf.setLineWidth(0.8);
+        pdf.line(startX, lineY, startX + lastLineW, lineY);
+        y += 5;
+      } else {
+        segments.forEach(segment => {
+          if (!segment) return;
 
-        if (segment.startsWith("**") && segment.endsWith("**")) {
-          style = "bold";
-          cleanText = segment.substring(2, segment.length - 2);
-        } else if ((segment.startsWith("*") && segment.endsWith("*")) || (segment.startsWith("_") && segment.endsWith("_"))) {
-          // Support both * and _ for italics
-          style = "italic";
-          cleanText = segment.substring(1, segment.length - 1);
-        }
+          let style = "normal";
+          let underline = false;
+          let cleanText = segment;
 
-        pdf.setFont("helvetica", style);
-        pdf.text(cleanText, currentX, y);
+          if (segment.startsWith("**") && segment.endsWith("**")) {
+            style = "bold";
+            cleanText = segment.substring(2, segment.length - 2);
+          } else if ((segment.startsWith("*") && segment.endsWith("*")) || (segment.startsWith("_") && segment.endsWith("_"))) {
+            // Support both * and _ for italics
+            style = "italic";
+            cleanText = segment.substring(1, segment.length - 1);
+          }
 
-        const w = pdf.getTextWidth(cleanText);
-        currentX += w;
-      });
-      y += 7;
+          pdf.setFont("helvetica", style);
+          pdf.text(cleanText, currentX, y);
+
+          const w = pdf.getTextWidth(cleanText);
+          currentX += w;
+        });
+        y += 7;
+      }
     });
   };
 
@@ -246,7 +270,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         const headerLines = pdf.splitTextToSize(headerText, contentWidth - 10);
         headerLines.forEach(line => {
           checkNewPage(12);
-          pdf.text(line, margin, y);
+          pdf.text(line, pageWidth / 2, y, { align: "center" });
           y += 12;
         });
 
@@ -257,16 +281,20 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(20);
         pdf.setTextColor(...COLORS.primary);
-        const headerText2 = trimmedLine.substring(3).replace(/[\*_]/g, '').toUpperCase();
+        const headerText2 = trimmedLine.substring(3).replace(/[\*_]/g, '');
         const lines2 = pdf.splitTextToSize(headerText2, contentWidth);
-        pdf.text(lines2, margin, y);
+        lines2.forEach(line => {
+          pdf.text(line, pageWidth / 2, y, { align: "center" });
+          y += 7;
+        });
 
         const lastLineW = pdf.getTextWidth(lines2[lines2.length - 1]);
+        const lineY = y - 4;
+        const startX = (pageWidth / 2) - (lastLineW / 2);
         pdf.setDrawColor(...COLORS.primary);
         pdf.setLineWidth(0.8);
-        const lineY = y + (lines2.length * 7) - 4;
-        pdf.line(margin, lineY, margin + lastLineW, lineY);
-        y += (lines2.length * 7) + 5;
+        pdf.line(startX, lineY, startX + lastLineW, lineY);
+        y += 5;
       } else if (trimmedLine.startsWith("### ")) {
         y += 3;
         pdf.setFont("helvetica", "bold");
@@ -274,8 +302,11 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setTextColor(...COLORS.text);
         const hText3 = trimmedLine.substring(4).replace(/[\*_]/g, '');
         const h3Lines = pdf.splitTextToSize(hText3, contentWidth - 10);
-        pdf.text(h3Lines, margin, y);
-        y += (h3Lines.length * 7) + 2;
+        h3Lines.forEach(line => {
+          pdf.text(line, pageWidth / 2, y, { align: "center" });
+          y += 7;
+        });
+        y += 2;
       } else if (trimmedLine.startsWith("#### ")) {
         y += 2;
         pdf.setFont("helvetica", "bold");
@@ -283,8 +314,11 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setTextColor(...COLORS.text);
         const hText4 = trimmedLine.substring(5).replace(/[\*_]/g, '');
         const h4Lines = pdf.splitTextToSize(hText4, contentWidth - 10);
-        pdf.text(h4Lines, margin, y);
-        y += (h4Lines.length * 6) + 2;
+        h4Lines.forEach(line => {
+          pdf.text(line, pageWidth / 2, y, { align: "center" });
+          y += 6;
+        });
+        y += 2;
       } else if (trimmedLine.startsWith("> ")) {
         const quoteText = trimmedLine.substring(2).trim();
         pdf.setFont("helvetica", "italic");
@@ -328,7 +362,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(24);
     pdf.setTextColor(...COLORS.primary);
-    pdf.text("Table of Contents", margin, y);
+    pdf.text("Table of Contents", pageWidth / 2, y, { align: "center" });
     y += 15;
 
     modules.forEach((mod, idx) => {
@@ -355,7 +389,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(20);
       pdf.setTextColor(...COLORS.primary);
-      pdf.text(moduleTitleLines, margin + 5, y + 2);
+      pdf.text(moduleTitleLines, pageWidth / 2, y + 2, { align: "center" });
       y += boxH + 10;
 
       mod.lessons?.forEach((lesson, lIdx) => {
@@ -363,7 +397,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
         pdf.setTextColor(...COLORS.text);
-        pdf.text(`${idx + 1}.${lIdx + 1} ${lesson.title || lesson}`, margin, y);
+        pdf.text(`${idx + 1}.${lIdx + 1} ${lesson.title || lesson}`, pageWidth / 2, y, { align: "center" });
         y += 10;
 
         if (lesson.content) {
