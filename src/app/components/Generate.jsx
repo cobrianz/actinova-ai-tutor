@@ -33,7 +33,7 @@ export default function Generate({ setActiveContent }) {
   React.useEffect(() => {
     return () => {
       if (showLoader) {
-        console.log("Generate cleanup: clearing showLoader on unmount");
+
         try {
           setShowLoader(false);
         } catch (e) {
@@ -53,7 +53,7 @@ export default function Generate({ setActiveContent }) {
   React.useEffect(() => {
     const onDone = () => {
       if (showLoader) {
-        console.log("Generate: received actinova:loading-done, clearing showLoader");
+
         setShowLoader(false);
       }
     };
@@ -104,7 +104,7 @@ export default function Generate({ setActiveContent }) {
 
     // Handle flashcard generation directly
     if (format === "flashcards") {
-      console.log("Generate: showing loader for flashcard generation");
+
       setShowLoader(true);
       setIsSubmitting(true);
 
@@ -153,7 +153,7 @@ export default function Generate({ setActiveContent }) {
     // Handle quiz/test generation directly
     if (format === "quiz") {
       // For quiz, also show loader for consistency
-      console.log("Generate: showing loader for quiz generation");
+
       setShowLoader(true);
 
       try {
@@ -202,7 +202,7 @@ export default function Generate({ setActiveContent }) {
         console.error("Quiz generation failed:", error);
         toast.error(error.message || "Failed to generate quiz");
       } finally {
-        console.log("Generate: hiding loader (quiz flow)");
+
         setShowLoader(false);
         setIsSubmitting(false);
       }

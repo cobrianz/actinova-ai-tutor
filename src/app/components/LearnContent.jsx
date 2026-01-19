@@ -3,6 +3,8 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import {
   BookOpen,
   Play,
@@ -630,16 +632,90 @@ export default function LearnContent() {
       return placeholder;
     });
 
+    // Handle images - ![alt text](url)
+    // Use a more robust pattern that handles URLs with parentheses and special characters
+    html = html.replace(
+      /!\[([^\]]*)\]\(([^)\s]+(?:\([^)]*\)[^)\s]*)*)\)/g,
+      (match, alt, url) => {
+        // Decode URL if it contains encoded characters
+        const cleanUrl = url.trim();
+        return `<div class="my-4 flex justify-center"><img src="${cleanUrl}" alt="${alt}" class="max-w-full h-auto rounded-lg shadow-md" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg\\">Failed to load image: ${alt}</div>'" /></div>`;
+      }
+    );
+
+    // Handle LaTeX with \[ \] delimiters (display mode)
+    html = html.replace(
+      /\\\[([^\]]*?)\\\]/g,
+      (match, equation) => {
+        try {
+          const rendered = katex.renderToString(equation.trim(), {
+            displayMode: true,
+            throwOnError: false,
+            output: 'html'
+          });
+          return `<div class="my-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg overflow-x-auto">${rendered}</div>`;
+        } catch (e) {
+          return `<div class="my-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">LaTeX Error: ${equation}</div>`;
+        }
+      }
+    );
+
+    // Handle LaTeX with \( \) delimiters (inline mode)
+    html = html.replace(
+      /\\\(([^\)]*?)\\\)/g,
+      (match, equation) => {
+        try {
+          const rendered = katex.renderToString(equation.trim(), {
+            displayMode: false,
+            throwOnError: false,
+            output: 'html',
+            strict: false
+          });
+          return `<span class="inline-block align-middle mx-0.5">${rendered}</span>`;
+        } catch (e) {
+          return `<span class="text-red-600 dark:text-red-400 text-xs">LaTeX Error: ${equation}</span>`;
+        }
+      }
+    );
+
     // Handle equations - display mode $$...$$
     html = html.replace(
       /\$\$([\s\S]*?)\$\$/g,
-      '<div class="my-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center"><span class="text-lg font-serif italic text-gray-900 dark:text-gray-100">$1</span></div>'
+      (match, equation) => {
+        try {
+          const rendered = katex.renderToString(equation.trim(), {
+            displayMode: true,
+            throwOnError: false,
+            output: 'html'
+          });
+          return `<div class="my-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg overflow-x-auto">${rendered}</div>`;
+        } catch (e) {
+          return `<div class="my-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">LaTeX Error: ${equation}</div>`;
+        }
+      }
     );
 
     // Handle equations - inline mode $...$
+    // Use a more specific pattern to avoid matching dollar signs in regular text
     html = html.replace(
-      /\$([^\$\n]+)\$/g,
-      '<span class="font-serif italic text-blue-600 dark:text-blue-400 mx-1">$1</span>'
+      /\$([^\$\n]+?)\$/g,
+      (match, equation) => {
+        // Skip if it looks like a price (e.g., $100 or $5.99)
+        if (/^\d+(\.\d{2})?$/.test(equation.trim())) {
+          return match;
+        }
+        try {
+          const rendered = katex.renderToString(equation.trim(), {
+            displayMode: false,
+            throwOnError: false,
+            output: 'html',
+            strict: false
+          });
+          return `<span class="inline-block align-middle mx-0.5">${rendered}</span>`;
+        } catch (e) {
+          return `<span class="text-red-600 dark:text-red-400 text-xs">LaTeX Error: ${equation}</span>`;
+        }
+      }
     );
 
     // Handle headers
@@ -822,7 +898,7 @@ export default function LearnContent() {
       }
 
       const data = await response.json();
-      console.log("Notes saved:", data.message);
+
       toast.success("Notes saved");
     } catch (error) {
       console.error("Error saving notes:", error);
@@ -887,9 +963,7 @@ export default function LearnContent() {
           localStorage.removeItem(key);
         });
 
-        console.log(
-          `🧹 Cleaned up ${keysToRemove.length} old lesson entries from localStorage`
-        );
+
       }
     } catch (error) {
       console.warn("Failed to cleanup localStorage:", error);
@@ -908,12 +982,12 @@ export default function LearnContent() {
     const fetchCourseData = async () => {
       // Prevent multiple simultaneous calls (guards StrictMode double-effect)
       if (fetchInProgressRef.current) {
-        console.log("Fetch already in progress, skipping");
+
         return;
       }
 
       fetchInProgressRef.current = true;
-      console.log("Setting isLoading to true");
+
       setIsLoading(true);
       setError(null);
 

@@ -270,6 +270,7 @@ Include:
 - A specific "Further Reading" section with suggested topics
 
 Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
+CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.
 IMPORTANT: Avoid being concise. Dive deep into every sub-topic.`;
 
   const completion = await openai.chat.completions.create({

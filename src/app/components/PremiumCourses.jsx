@@ -365,7 +365,7 @@ export default function PremiumCourses() {
 
   const handleDelete = async (courseId) => {
     // TODO: Implement delete functionality
-    console.log("Delete course:", courseId);
+
   };
 
   // Filter and search logic
@@ -950,8 +950,8 @@ export default function PremiumCourses() {
                     key={page}
                     onClick={() => setCurrentPage(page)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer ${currentPage === page
-                        ? "bg-blue-600 text-white"
-                        : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
                   >
                     {page}

@@ -165,7 +165,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
       quizId.length > 0 &&
       /^[a-f\d]{24}$/i.test(quizId)
     ) {
-      console.log("Saving performance for quiz ID:", quizId);
+
       // Don't await this - make it non-blocking so quiz completion isn't delayed
       fetch(`/api/quizzes/${quizId}/performance`, {
         method: "POST",
@@ -184,7 +184,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
       })
         .then(async (response) => {
           if (response.ok) {
-            console.log("Performance data saved successfully");
+
           } else {
             const errorData = await response.json().catch(() => ({}));
             console.error(

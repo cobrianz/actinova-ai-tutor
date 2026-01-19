@@ -1126,7 +1126,7 @@ export default function Explore() {
 
       if (response.status === 401 && retryAfterRefresh) {
         // Try to refresh token and retry
-        console.log("Token expired, attempting to refresh...");
+
         const refreshSuccess = await refreshToken();
         if (refreshSuccess) {
           return handleExploreCategory(category, false);
