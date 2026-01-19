@@ -18,7 +18,7 @@ import {
   Sparkles,
   X,
   CheckCircle,
-  LayoutDashboard,
+  Home,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -40,7 +40,9 @@ export default function LearnContent() {
 
   if (authLoading) return <ActinovaLoader />;
   if (!user) return null;
-  const topic = decodeURIComponent(params.topic);
+  // Retrieve topic from either path params or query params
+  const topicParam = params.topic || searchParams.get("topic") || "";
+  const topic = decodeURIComponent(topicParam);
   const originalTopic = searchParams.get("originalTopic");
   const format = searchParams.get("format") || "course";
   const difficulty = searchParams.get("difficulty") || "beginner";
@@ -70,6 +72,7 @@ export default function LearnContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lessonContentLoading, setLessonContentLoading] = useState(false);
+  const [generatingLessons, setGeneratingLessons] = useState(new Set()); // Track lessons being generated in background
   const [typingContent, setTypingContent] = useState("");
   const fetchInProgressRef = useRef(false); // Prevent duplicate API calls
   const initializedCoursesRef = useRef(new Set()); // Track initialized courses
@@ -265,7 +268,8 @@ export default function LearnContent() {
         lesson.content ===
         "Content will be generated when you start the lesson.")
     ) {
-      await fetchLessonContent(
+      // Trigger background generation without blocking navigation
+      fetchLessonContent(
         moduleId,
         lessonIndex,
         lesson.title,
@@ -280,8 +284,14 @@ export default function LearnContent() {
     lessonTitle,
     moduleTitle
   ) => {
+    const lessonKey = `${moduleId}-${lessonIndex}`;
+
+    // Prevent duplicate background generations for the same lesson
+    if (generatingLessons.has(lessonKey)) return;
+
     try {
-      setLessonContentLoading(true);
+      setGeneratingLessons((prev) => new Set(prev).add(lessonKey));
+      setLessonContentLoading(true); // Still used for initial active lesson loading if desired, or we can use it more granularly
       setTypingContent("");
 
       const response = await fetch("/api/course-agent", {
@@ -348,6 +358,11 @@ export default function LearnContent() {
         return newData;
       });
     } finally {
+      setGeneratingLessons((prev) => {
+        const next = new Set(prev);
+        next.delete(lessonKey);
+        return next;
+      });
       setLessonContentLoading(false);
     }
   };
@@ -913,6 +928,15 @@ export default function LearnContent() {
       // Clean up local storage on component mount
       cleanupLocalStorage();
 
+      // Validate topic existence before proceeding
+      if (!actualTopic || actualTopic.trim() === "") {
+        console.error("No topic provided for learning content");
+        setError("A topic is required to generate or load content. Please go back to the dashboard and try again.");
+        setIsLoading(false);
+        fetchInProgressRef.current = false;
+        return;
+      }
+
       // First, try to get from library (saves tokens!)
       try {
         const libraryResponse = await fetch("/api/library", {
@@ -991,7 +1015,7 @@ export default function LearnContent() {
                 // Merge DB and localStorage progress
                 parsed.forEach((lessonId) => completedLessonsFromDB.add(lessonId));
                 console.log(
-                  "✅ Restored completed lessons from DB and localStorage:",
+                  "Restored completed lessons from DB and localStorage:",
                   Array.from(completedLessonsFromDB)
                 );
               } catch (e) {
@@ -999,7 +1023,7 @@ export default function LearnContent() {
               }
             } else {
               console.log(
-                "✅ Restored completed lessons from DB:",
+                "Restored completed lessons from DB:",
                 Array.from(completedLessonsFromDB)
               );
             }
@@ -1007,7 +1031,7 @@ export default function LearnContent() {
             setCompletedLessons(completedLessonsFromDB);
 
             console.log(
-              "✅ Found course in library, setting isLoading to false"
+              "Found course in library, setting isLoading to false"
             );
             console.log("Setting isLoading to false (library)");
             setIsLoading(false);
@@ -1195,9 +1219,18 @@ export default function LearnContent() {
         }
 
         const data = await response.json();
-        console.log("Actinova Generate Response:", { format, success: data.success, hasContent: !!data.content, hasRootModules: !!data.modules });
 
-        const courseDataToSet = data.content || data;
+        // Extract course data - API can return in different formats
+        let courseDataToSet;
+        if (data.content) {
+          courseDataToSet = data.content;
+        } else if (data.modules) {
+          // Data is at root level
+          courseDataToSet = data;
+        } else {
+          // Fallback - use the whole data object
+          courseDataToSet = data;
+        }
 
         // Only validate modules for course format, not quiz
         if (format === "course") {
@@ -1206,7 +1239,8 @@ export default function LearnContent() {
             (Array.isArray(courseDataToSet.topics) && courseDataToSet.topics.length > 0);
 
           if (!hasModules) {
-            console.error("Course Data missing modules:", courseDataToSet);
+            // Log for debugging but don't expose full data
+            console.error("Course generation failed: Invalid structure");
             throw new Error(
               "Generated course structure is invalid. Please try again."
             );
@@ -1469,6 +1503,14 @@ export default function LearnContent() {
         <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
           {/* Left Group - Navigation */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+
+            <Link
+              href="/dashboard"
+              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 transition-all font-bold shadow-sm"
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden md:inline">Dashboard</span>
+            </Link>
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-medium ${isSidebarOpen
@@ -1479,14 +1521,6 @@ export default function LearnContent() {
               <Menu className="w-4 h-4" />
               <span className="hidden md:inline">Modules</span>
             </button>
-
-            <Link
-              href="/dashboard"
-              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 transition-all font-bold shadow-sm"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden md:inline">Dashboard</span>
-            </Link>
           </div>
 
           {/* Right Group - Controls */}
@@ -1712,15 +1746,18 @@ export default function LearnContent() {
                                 {isCompleted ? "✓" : lessonIndex + 1}
                               </div>
                               <span
-                                className={`text-sm text-left ${isActive
+                                className={`text-sm text-left flex-1 ${isActive
                                   ? "text-blue-600 dark:text-blue-400 font-medium"
                                   : "text-gray-700 dark:text-gray-300"
                                   }`}
                               >
                                 {lessonTitle}
                               </span>
+                              {generatingLessons.has(lessonId) && (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 ml-2"></div>
+                              )}
                             </div>
-                            {!isCompleted && (
+                            {!isCompleted && !generatingLessons.has(lessonId) && (
                               <Play className="w-4 h-4 text-gray-400" />
                             )}
                           </button>
@@ -1740,7 +1777,7 @@ export default function LearnContent() {
             className="flex-1 overflow-y-auto hide-scrollbar bg-white dark:bg-gray-800"
           >
             <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
-              {lessonContentLoading ? (
+              {generatingLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
