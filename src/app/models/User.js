@@ -156,31 +156,41 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    subscription: {
-      plan: {
-        type: String,
-        enum: ["free", "pro", "team", "premium", "editors-choice"],
-        default: "free",
+      subscription: {
+        plan: {
+          type: String,
+          enum: ["free", "pro", "team", "premium", "editors-choice", "enterprise"],
+          default: "free",
+        },
+        tier: {
+          type: String,
+          enum: ["free", "pro", "enterprise"],
+          default: "free",
+        },
+        status: {
+          type: String,
+          enum: ["active", "inactive", "canceled", "pending", "expired", "suspended"],
+          default: "inactive",
+        },
+        paystackReference: String,
+        paystackTransactionId: String,
+        paystackCustomerCode: String,
+        paystackAuthorizationCode: String,
+        paystackCardType: String,
+        paystackLast4: String,
+        startedAt: Date,
+        startDate: Date,
+        expiresAt: Date,
+        expiryDate: Date,
+        canceledAt: Date,
+        downgradedAt: Date,
+        renewalReminderSent: Boolean,
+        renewalReminderSentAt: Date,
+        autoRenew: {
+          type: Boolean,
+          default: true,
+        },
       },
-      status: {
-        type: String,
-        enum: ["active", "inactive", "canceled", "pending"],
-        default: "inactive",
-      },
-      paystackReference: String,
-      paystackTransactionId: String,
-      paystackCustomerCode: String,
-      paystackAuthorizationCode: String,
-      paystackCardType: String,
-      paystackLast4: String,
-      startedAt: Date,
-      expiresAt: Date,
-      canceledAt: Date,
-      autoRenew: {
-        type: Boolean,
-        default: true,
-      },
-    },
     billingHistory: [
       {
         type: {

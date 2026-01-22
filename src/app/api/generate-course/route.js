@@ -61,73 +61,34 @@ export async function POST(request) {
 
     const { db } = await connectToDatabase();
 
-    // ─── USER & MONTHLY LIMITS (auto-reset) ───
-    let monthlyUsage = 0;
-    let resetDate = new Date();
-
+    // ─── USER & MONTHLY LIMITS (planMiddleware) ───
     if (userId) {
-      const user = await db
-        .collection("users")
-        .findOne({ _id: new ObjectId(userId) });
-
-      // Determine user's plan
-      const isEnterprise = user?.subscription?.plan === "enterprise" && user?.subscription?.status === "active";
-      isPremium =
-        user?.isPremium ||
-        ((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") && user?.subscription?.status === "active");
-
-      const planName = getUserPlanName(user);
-      const planLimits = getUserPlanLimits(user);
-
-      const now = new Date();
-      const resetOn = user?.usageResetDate
-        ? new Date(user.usageResetDate)
-        : null;
-      const shouldReset = !resetOn || now >= resetOn;
-
-      if (shouldReset) {
-        monthlyUsage = 0;
-        resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        await db
-          .collection("users")
-          .updateOne(
-            { _id: new ObjectId(userId) },
-            { $set: { monthlyUsage: 0, usageResetDate: resetDate } }
-          );
-      } else {
-        monthlyUsage = user?.monthlyUsage || 0;
-        resetDate = resetOn;
+      const { checkAPILimit, trackAPIUsage } = await import("@/lib/planMiddleware");
+      
+      const apiName = format === "quiz" ? "generate-quiz" : "generate-course";
+      const limitCheck = await checkAPILimit(userId, apiName);
+      
+      if (!limitCheck.withinLimit) {
+        return NextResponse.json(
+          {
+            error: "API rate limit exceeded",
+            message: `You have reached your monthly limit of ${limitCheck.limit} ${apiName.replace('generate-', '')}s`,
+            remaining: 0,
+            resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+          },
+          { status: 429 }
+        );
       }
+      
+      // Track usage
+      await trackAPIUsage(userId, apiName);
+    }
 
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      // Check course generation limits
-      if (format === "course") {
-        const courseCount = await db.collection("library").countDocuments({
-          userId: new ObjectId(userId),
-          format: "course",
-          createdAt: { $gte: startOfMonth }
-        });
-
-        const limitCheck = checkLimit(user, "courses", courseCount);
-
-        if (!limitCheck.allowed) {
-          return NextResponse.json(
-            {
-              error: `Monthly course limit reached (${limitCheck.limit}). ${isEnterprise ? "Contact support." : "Upgrade for more!"}`,
-              used: courseCount,
-              limit: limitCheck.limit,
-              remaining: limitCheck.remaining,
-              plan: planName,
-              isPremium,
-              isEnterprise,
-              resetsOn: resetDate.toLocaleDateString(),
-              upgrade: !isPremium && !isEnterprise,
-            },
-            { status: 429 }
-          );
-        }
-      }
+    // Determine premium status for generation logic
+    let isPremium = false;
+    if (userId) {
+      const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+      isPremium = user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
     }
 
     if (format === "quiz") {
