@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Sparkles, Crown, Zap, Lock, ShieldCheck, ArrowRight, Star, Heart, Rocket } from "lucide-react";
+import { Check, Sparkles, Crown, Zap, Lock, ShieldCheck, ArrowRight, Star, Heart, Rocket, Globe, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
