@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Jost, Bricolage_Grotesque } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AuthProvider } from "./components/AuthProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
@@ -26,18 +27,20 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning className={`${jost.variable} ${bricolage.variable}`}>
-      <body
-        className="font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground"
-        suppressHydrationWarning={true}
-      >
-        <AuthProvider>
-          <ThemeProvider>
-            {children}
-            <ToasterClient />
-          </ThemeProvider>
-        </AuthProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" dir="ltr" suppressHydrationWarning className={`${jost.variable} ${bricolage.variable}`}>
+        <body
+          className="font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground"
+          suppressHydrationWarning={true}
+        >
+          <AuthProvider>
+            <ThemeProvider>
+              {children}
+              <ToasterClient />
+            </ThemeProvider>
+          </AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

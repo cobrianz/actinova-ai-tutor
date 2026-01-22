@@ -3,12 +3,25 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 
-// === Seed Trending Topics (Only if collection is empty) ===
+// === Seed Trending Topics (Only if collection is empty or older than 1 week) ===
 async function seedTrendingIfEmpty(db) {
   const trendingCol = db.collection("explore_trending");
   const count = await trendingCol.countDocuments();
 
-  if (count === 0) {
+  let shouldReseed = count === 0;
+
+  if (count > 0) {
+    const latest = await trendingCol.findOne({}, { sort: { createdAt: -1 } });
+    if (latest && latest.createdAt) {
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      if (new Date(latest.createdAt) < oneWeekAgo) {
+        shouldReseed = true;
+        await trendingCol.deleteMany({}); // Delete old courses
+      }
+    }
+  }
+
+  if (shouldReseed) {
     await trendingCol.insertMany([
       {
         title: "Artificial Intelligence Fundamentals",
