@@ -27,8 +27,25 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.rewrite(url);
   }
 
-  if (!isPublicRoute(request)) {
-    await auth.protect();
+  // Check for custom auth token
+  const token = request.cookies.get("token")?.value;
+  const isPublic = isPublicRoute(request);
+
+  if (token) {
+    // If user has a token and is on a login/signup page, redirect to dashboard
+    if (url.pathname.startsWith("/auth/login") || url.pathname.startsWith("/auth/signup")) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (!isPublic) {
+    // If not public and no custom token, let Clerk handle it or redirect
+    try {
+      await auth.protect();
+    } catch (e) {
+      return NextResponse.redirect(new URL("/auth/login", request.url));
+    }
   }
 
   return NextResponse.next();
