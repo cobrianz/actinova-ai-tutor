@@ -40,15 +40,15 @@ export default function Sidebar({
       user.isPremium);
 
   const navigation = [
-    { name: "New", id: "generate", icon: Plus },
-    { name: "Explore", id: "explore", icon: Search },
-    { name: "Library", id: "library", icon: BookOpen },
-    { name: "Flashcards", id: "flashcards", icon: FileText },
-    { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
-    { name: "AI Chat", id: "chat", icon: MessageCircle },
-    { name: "Premium", id: "staff-picks", icon: Star },
+    { name: "New", id: "generate", icon: Plus, color: "text-blue-500" },
+    { name: "Explore", id: "explore", icon: Search, color: "text-purple-500" },
+    { name: "Library", id: "library", icon: BookOpen, color: "text-emerald-500" },
+    { name: "Flashcards", id: "flashcards", icon: FileText, color: "text-orange-500" },
+    { name: "Test Yourself", id: "quizzes", icon: HelpCircle, color: "text-red-500" },
+    { name: "AI Chat", id: "chat", icon: MessageCircle, color: "text-indigo-500" },
+    { name: "Premium", id: "staff-picks", icon: Star, color: "text-yellow-500" },
     // Only show upgrade when auth has finished loading and user is not pro
-    !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },
+    !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard, color: "text-pink-500" },
   ].filter(Boolean);
 
   useEffect(() => {
@@ -180,31 +180,37 @@ export default function Sidebar({
                 }
               `}</style>
               <ul className="space-y-4">
-                {navigation.map((item, index) => {
-                  const Icon = item.icon;
-                  const isActive = activeItem === item.id;
+                  {navigation.map((item, index) => {
+                    const Icon = item.icon;
+                    const isActive = activeItem === item.id;
 
-                  return (
-                    <motion.li
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="relative group"
-                    >
-                      <button
-                        onClick={() => handleItemClick(item.id)}
-                        className={`flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
-                          }`}
+                    return (
+                      <motion.li
+                        key={item.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="relative group"
                       >
-                        <Icon className="w-5 h-5" />
-                        <span>{item.name}</span>
-                      </button>
-                    </motion.li>
-                  );
-                })}
+                        <button
+                          onClick={() => handleItemClick(item.id)}
+                          className={`flex items-center w-full space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${isActive
+                            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            }`}
+                        >
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : item.color || 'text-gray-500'}`} />
+                          <span className="flex-1 text-left">{item.name}</span>
+                          {isActive && (
+                            <motion.div
+                              layoutId="active-pill"
+                              className="w-1.5 h-1.5 rounded-full bg-primary"
+                            />
+                          )}
+                        </button>
+                      </motion.li>
+                    );
+                  })}
               </ul>
             </nav>
 
@@ -232,40 +238,43 @@ export default function Sidebar({
                 </div>
               </div>
 
-              {/* Usage Section */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="w-4 h-4 text-blue-700 dark:text-blue-300" />
-                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                        Usage
+                {/* Usage Section */}
+                <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10 shadow-sm overflow-hidden relative group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500" />
+                  <div className="relative space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                          Usage
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase">
+                        {user?.subscription?.plan === 'enterprise' ? "Enterprise" : (usage.isPremium ? "Pro" : "Free")}
                       </span>
                     </div>
-                    <span className="text-xs text-blue-700 dark:text-blue-300">
-                      {user?.subscription?.plan === 'enterprise' ? "Enterprise" : (usage.isPremium ? "Pro" : "Free")}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-blue-700 dark:text-blue-300">
-                      <span>Generations</span>
-                      <span>
-                        {usage.used}/{usage.limit === null ? "∞" : usage.limit}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${usage.limit === null ? 100 : usage.percentage}%` }}
-                      ></div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+                        <span>Generations</span>
+                        <span>
+                          {usage.used}/{usage.limit === null ? "∞" : usage.limit}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${usage.limit === null ? 100 : usage.percentage}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="bg-primary h-1.5 rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                        ></motion.div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </motion.div>
-      </div>
-    </>
-  );
-}
+          </motion.div>
+        </div>
+      </>
+    );
+  }
