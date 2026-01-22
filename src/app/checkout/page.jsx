@@ -517,9 +517,8 @@ function CheckoutContent() {
         </motion.div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 export default function CheckoutPage() {
   return (
