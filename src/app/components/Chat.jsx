@@ -77,9 +77,9 @@ export default function Chat({ topic: propTopic }) {
   const [topicInput, setTopicInput] = useState("");
   const [showTopicInput, setShowTopicInput] = useState(!propTopic && !urlTopic);
   const messagesEndRef = useRef(null);
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (loading) return <ActinovaLoader />;
   if (!user) return null;
 
   // Load chat history from database
@@ -131,7 +131,7 @@ export default function Chat({ topic: propTopic }) {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [chatTopics, setChatTopics] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);

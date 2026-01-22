@@ -25,14 +25,14 @@ import { toast } from "sonner";
 
 export default function PremiumCourses() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (loading) return <ActinovaLoader />;
   if (!user) return null;
   const [courses, setCourses] = useState([]);
   const [trendingCourses, setTrendingCourses] = useState([]);
   const [featured, setFeatured] = useState(null);
-  const [isFetching, setIsFetching] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [generatingCourse, setGeneratingCourse] = useState(null);
