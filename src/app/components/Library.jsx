@@ -334,10 +334,10 @@ export default function Library({ setActiveContent }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           My Library
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Your personal learning space
         </p>
       </motion.div>
@@ -345,40 +345,40 @@ export default function Library({ setActiveContent }) {
       {/* Stats */}
       {stats && Object.keys(stats).length > 0 && (
         <motion.div
-          className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-6 my-8"
+          className="bg-secondary rounded-xl p-6 my-8 border border-border"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-4 text-center">
             Your Learning Progress
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 flex items-center gap-3"
+              className="bg-card rounded-lg p-3 border border-border flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="bg-blue-100 dark:bg-blue-900 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="bg-accent rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">
                   {stats.courses || 0}
                 </div>
-                <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-[10px] sm:text-xs text-muted-foreground font-medium">
                   Total Courses
                 </div>
               </div>
             </motion.div>
             <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 flex items-center gap-3"
+              className="bg-card rounded-lg p-3 border border-border flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
             >
               <div className="bg-green-100 dark:bg-green-900 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <Trophy className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">
                   {stats.completedCourses || 0}
                 </div>
                 <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
@@ -387,14 +387,14 @@ export default function Library({ setActiveContent }) {
               </div>
             </motion.div>
             <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 flex items-center gap-3"
+              className="bg-card rounded-lg p-3 border border-border flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
             >
               <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <Pin className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">
                   {stats.pinnedCourses || 0}
                 </div>
                 <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-medium">
@@ -403,14 +403,14 @@ export default function Library({ setActiveContent }) {
               </div>
             </motion.div>
             <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 flex items-center gap-3"
+              className="bg-card rounded-lg p-3 border border-border flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
             >
               <div className="bg-orange-100 dark:bg-orange-900 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">
                   {courses.length > 0
                     ? Math.round(
                       courses.reduce(
@@ -443,7 +443,7 @@ export default function Library({ setActiveContent }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search your library..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-white dark:bg-gray-800"
+            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background"
           />
         </div>
 
@@ -451,7 +451,7 @@ export default function Library({ setActiveContent }) {
           <select
             value={filterBy}
             onChange={(e) => setFilterBy(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white dark:bg-gray-800"
+            className="px-4 py-2 border border-input rounded-lg bg-background"
           >
             <option value="all">All Items</option>
             <option value="in-progress">In Progress</option>
@@ -459,16 +459,16 @@ export default function Library({ setActiveContent }) {
             <option value="pinned">Pinned</option>
           </select>
 
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${viewMode === "grid" ? "bg-white dark:bg-gray-600" : ""}`}
+              className={`p-2 rounded ${viewMode === "grid" ? "bg-background shadow-sm" : ""}`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${viewMode === "list" ? "bg-white dark:bg-gray-600" : ""}`}
+              className={`p-2 rounded ${viewMode === "list" ? "bg-background shadow-sm" : ""}`}
             >
               <List className="w-4 h-4" />
             </button>
@@ -482,7 +482,7 @@ export default function Library({ setActiveContent }) {
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="bg-white dark:bg-gray-800 border rounded-lg p-6 animate-pulse"
+              className="bg-card border border-border rounded-lg p-6 animate-pulse"
             >
               <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
               <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mb-6"></div>
@@ -500,10 +500,10 @@ export default function Library({ setActiveContent }) {
           animate={{ opacity: 1 }}
         >
           <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">
+          <h3 className="text-xl font-semibold mb-2 text-foreground">
             {searchQuery ? "No courses found" : "Your library is empty"}
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             {searchQuery
               ? `No results for "${searchQuery}"`
               : "Start learning by generating your first course!"}
@@ -539,7 +539,7 @@ export default function Library({ setActiveContent }) {
                   visible: { opacity: 1, y: 0 },
                 }}
                 whileHover={{ y: -4 }}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:border-blue-500/50 transition-all duration-300"
+                className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300"
               >
                 <div className="h-2 bg-gray-200 dark:bg-gray-700">
                   <div
@@ -551,10 +551,10 @@ export default function Library({ setActiveContent }) {
                 <div className="p-6">
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      <h3 className="text-lg font-semibold text-foreground truncate">
                         {course.title}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {course.description}
                       </p>
                     </div>
@@ -563,7 +563,7 @@ export default function Library({ setActiveContent }) {
                       {course.format !== "questions" && course.format !== "flashcards" && (
                         <button
                           onClick={() => handleDownload(course)}
-                          className={`p-2 rounded-lg transition-colors ${isPremium ? "hover:bg-slate-100 dark:hover:bg-slate-800" : "opacity-50 cursor-not-allowed"}`}
+                          className={`p-2 rounded-lg transition-colors ${isPremium ? "hover:bg-secondary" : "opacity-50 cursor-not-allowed"}`}
                           title={isPremium ? "Download PDF" : "Pro Feature: Download PDF"}
                         >
                           <Download className="w-4 h-4" />
@@ -571,7 +571,7 @@ export default function Library({ setActiveContent }) {
                       )}
                       <button
                         onClick={() => handlePin(course.id)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                        className="p-2 hover:bg-secondary rounded"
                         title={course.isPinned ? "Unpin" : "Pin (max 3)"}
                       >
                         <Pin
@@ -580,14 +580,14 @@ export default function Library({ setActiveContent }) {
                       </button>
                       <button
                         onClick={() => handleDelete(course.id)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-500"
+                        className="p-2 hover:bg-secondary rounded text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 sm:gap-3 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <div className="flex flex-wrap gap-2 sm:gap-3 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1">
                       <BookOpen className="w-4 h-4" />
                       {course.completedLessons}/{course.totalLessons}
@@ -596,7 +596,7 @@ export default function Library({ setActiveContent }) {
                       <Clock className="w-4 h-4" />
                       {course.estimatedTime}
                     </span>
-                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-[10px] sm:text-xs">
+                    <span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-[10px] sm:text-xs">
                       {course.difficulty || "Beginner"}
                     </span>
                   </div>
@@ -609,7 +609,7 @@ export default function Library({ setActiveContent }) {
                       </div>
                       <div className="w-full sm:w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-600 rounded-full transition-all duration-1000"
+                          className="h-full bg-primary rounded-full transition-all duration-1000"
                           style={{ width: `${course.progress}%` }}
                         />
                       </div>
@@ -621,7 +621,7 @@ export default function Library({ setActiveContent }) {
                           ? `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`
                           : `/learn/${course.id}`
                       }
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium whitespace-nowrap"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium whitespace-nowrap shadow-md shadow-primary/10"
                     >
                       <Play className="w-4 h-4" />
                       {course.progress === 100 ? "Review" : "Continue"}

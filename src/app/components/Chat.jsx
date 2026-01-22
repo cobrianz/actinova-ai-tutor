@@ -30,21 +30,21 @@ const renderFormattedContent = (content) => {
   // Handle bold **text** or __text__
   html = html.replace(
     /\*\*([^*]+?)\*\*/g,
-    '<strong class="font-bold text-gray-900 dark:text-gray-100">$1</strong>'
+    '<strong class="font-bold text-foreground">$1</strong>'
   );
   html = html.replace(
     /__([^_]+?)__/g,
-    '<strong class="font-bold text-gray-900 dark:text-gray-100">$1</strong>'
+    '<strong class="font-bold text-foreground">$1</strong>'
   );
 
   // Handle italics *text* or _text_
   html = html.replace(
     /\*([^*\n]+?)\*/g,
-    '<em class="italic text-gray-800 dark:text-gray-200">$1</em>'
+    '<em class="italic text-foreground/80">$1</em>'
   );
   html = html.replace(
     /_([^_\n]+?)_/g,
-    '<em class="italic text-gray-800 dark:text-gray-200">$1</em>'
+    '<em class="italic text-foreground/80">$1</em>'
   );
 
   // Handle underline
@@ -56,7 +56,7 @@ const renderFormattedContent = (content) => {
   // Handle inline code `code`
   html = html.replace(
     /`([^`]+)`/g,
-    '<code class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-red-500 dark:text-red-400 border border-gray-200 dark:border-gray-700">$1</code>'
+    '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary border border-border">$1</code>'
   );
 
   // Handle line breaks
@@ -375,34 +375,34 @@ export default function Chat({ topic: propTopic }) {
 
   // Modern "Tools" Chat Layout: Neutral, No Bubbles, Centered, Clean
   return (
-    <div className="flex w-full h-full bg-white dark:bg-gray-950 overflow-hidden relative">
+    <div className="flex w-full h-full bg-background overflow-hidden relative">
 
       {/* Sidebar - Collapsible, Dark/Light */}
       <div
-        className={`${sidebarOpen ? "translate-x-0 w-[260px]" : "-translate-x-full w-0"} transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#171717] flex flex-col absolute md:relative z-20 h-full`}
+        className={`${sidebarOpen ? "translate-x-0 w-[260px]" : "-translate-x-full w-0"} transition-all duration-300 border-r border-border bg-muted/30 flex flex-col absolute md:relative z-20 h-full`}
       >
         <div className="p-3 mb-2 flex items-center justify-between">
-          <button onClick={handleNewChat} className="flex-1 flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm">
-            <Plus className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">New chat</span>
+          <button onClick={handleNewChat} className="flex-1 flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg hover:bg-secondary transition-colors shadow-sm">
+            <Plus className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">New chat</span>
           </button>
-          <button onClick={() => setSidebarOpen(false)} className="ml-2 p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white md:hidden">
+          <button onClick={() => setSidebarOpen(false)} className="ml-2 p-2 text-muted-foreground hover:text-foreground md:hidden">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-2">
-          <div className="text-xs font-medium text-gray-400 px-2 py-2">History</div>
+          <div className="text-xs font-medium text-muted-foreground px-2 py-2">History</div>
           {chatTopics.length === 0 ? (
-            <div className="text-xs text-gray-400 px-2">No previous chats</div>
+            <div className="text-xs text-muted-foreground px-2">No previous chats</div>
           ) : (
             chatTopics.map((chat) => (
               <div
                 key={chat.id || chat.topic}
                 onClick={() => { handleLoadTopic(chat.topic); if (window.innerWidth < 768) setSidebarOpen(false); }}
                 className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm mb-1 ${topic === chat.topic
-                    ? "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
               >
                 <MessageSquare className="w-4 h-4 flex-shrink-0" />
@@ -420,18 +420,18 @@ export default function Chat({ topic: propTopic }) {
       </div>
 
       {/* Main Chat Area - Minimalist Stream */}
-      <div className="flex-1 flex flex-col relative w-full h-full bg-white dark:bg-[#0f0f0f]">
+      <div className="flex-1 flex flex-col relative w-full h-full bg-background">
 
         {/* Header - Minimal */}
-        <div className="h-14 flex items-center justify-between px-4 fixed top-0 w-full md:relative bg-white/80 dark:bg-[#0f0f0f]/80 backdrop-blur z-10">
+        <div className="h-14 flex items-center justify-between px-4 fixed top-0 w-full md:relative bg-background/80 backdrop-blur z-10">
           <div className="flex items-center">
             {!sidebarOpen && (
-              <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg">
+              <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg">
                 <ChevronLeft className="w-5 h-5 mx-auto md:hidden" />
                 <MessageSquare className="w-5 h-5 hidden md:block" />
               </button>
             )}
-            <span className="font-medium text-gray-700 dark:text-gray-200 ml-2">{topic || "New Chat"}</span>
+            <span className="font-medium text-foreground ml-2">{topic || "New Chat"}</span>
           </div>
           <div className="flex items-center gap-1">
             {topic && (
@@ -446,10 +446,10 @@ export default function Chat({ topic: propTopic }) {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
           {showTopicInput && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto text-center px-4">
-              <div className="w-16 h-16 bg-black dark:bg-white rounded-full flex items-center justify-center mb-6">
-                <Sparkles className="w-8 h-8 text-white dark:text-black" />
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6">
+                <Sparkles className="w-8 h-8 text-primary-foreground" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">How can I help you learn today?</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">How can I help you learn today?</h2>
               <div className="w-full mt-8 relative">
                 <input
                   type="text"
@@ -519,7 +519,7 @@ export default function Chat({ topic: propTopic }) {
         </div>
 
         {/* Floating Input Area */}
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-white dark:from-[#0f0f0f] via-white dark:via-[#0f0f0f] to-transparent pt-10">
+        <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-background via-background to-transparent pt-10">
           <div className="max-w-3xl mx-auto relative">
             <div className="relative flex items-end gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-lg ring-1 ring-black/5 dark:ring-white/5">
               <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Attach (Demo)">
@@ -548,8 +548,8 @@ export default function Chat({ topic: propTopic }) {
                 onClick={handleSend}
                 disabled={authLoading || !input.trim()}
                 className={`p-1.5 rounded-lg transition-all ${input.trim()
-                    ? "bg-black dark:bg-white text-white dark:text-black"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                  ? "bg-black dark:bg-white text-white dark:text-black"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-400"
                   }`}
               >
                 <Send className="w-4 h-4" />

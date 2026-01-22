@@ -97,13 +97,13 @@ export default function Navbar({ toggleSidebar }) {
 
   return (
     <>
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 sm:px-6 py-3 sm:py-4 sticky top-0 left-0 right-0 z-40">
+      <header className="bg-card border-b border-border px-3 sm:px-6 py-3 sm:py-4 sticky top-0 left-0 right-0 z-40">
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={toggleSidebar}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -112,7 +112,7 @@ export default function Navbar({ toggleSidebar }) {
               {(!user || pathname !== "/") && (
                 <Link
                   href="/"
-                  className="flex items-center space-x-1 text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="flex items-center space-x-1 text-sm font-medium text-foreground hover:text-primary transition-colors"
                   aria-label="Home"
                 >
                   <Home className="w-4 h-4" />
@@ -121,11 +121,10 @@ export default function Navbar({ toggleSidebar }) {
               )}
               <Link
                 href="/dashboard"
-                className={`text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${
-                  pathname === "/dashboard"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-900 dark:text-gray-100"
-                }`}
+                className={`text-sm font-medium hover:text-primary transition-colors ${pathname === "/dashboard"
+                  ? "text-primary"
+                  : "text-foreground"
+                  }`}
               >
                 Dashboard
               </Link>
@@ -137,7 +136,7 @@ export default function Navbar({ toggleSidebar }) {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
@@ -152,26 +151,26 @@ export default function Navbar({ toggleSidebar }) {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors"
                   aria-label="User menu"
                   aria-expanded={showUserMenu}
                 >
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-600 text-white dark:bg-blue-500">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary text-primary-foreground">
                     <User className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   {/* Remove email/name; keep theme-styled user icon only */}
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="py-1">
-                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <div className="px-4 py-2 border-b border-border">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {user.firstName && user.lastName
                             ? `${user.firstName} ${user.lastName}`
                             : user.firstName || user.email || "User"}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        <p className="text-xs text-muted-foreground truncate">
                           {user.email}
                         </p>
                       </div>
@@ -190,15 +189,15 @@ export default function Navbar({ toggleSidebar }) {
                           }
                           setShowUserMenu(false);
                         }}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
                       >
                         <User className="w-4 h-4" />
                         <span>Profile</span>
                       </button>
-                      <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                      <hr className="my-1 border-border" />
                       <button
                         onClick={handleLogout}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
                         <span>Sign out</span>

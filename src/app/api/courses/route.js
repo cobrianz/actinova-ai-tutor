@@ -2,28 +2,12 @@
 
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
-
-// === Shared Auth Helper ===
-async function authenticate(request) {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-
-  const token = authHeader.split("Bearer ")[1];
-  if (!token) return null;
-
-  try {
-    const decoded = verifyToken(token);
-    return decoded?.id ? new ObjectId(decoded.id) : null;
-  } catch (err) {
-    console.warn("Invalid token in /api/courses:", err.message);
-    return null;
-  }
-}
+import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
+import { checkCourseAccess } from "@/lib/planMiddleware";
 
 // === GET: List & Search Courses ===
-export async function GET(request) {
+async function handleGet(request) {
   try {
     const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
@@ -43,7 +27,7 @@ export async function GET(request) {
     const search = searchParams.get("search")?.trim() || "";
 
     // Build MongoDB filter
-    const filter = { isPublished: true }; // Only show published courses
+    const filter = { isPublished: true };
 
     if (category) filter.category = category;
     if (difficulty) filter.difficulty = difficulty;
@@ -74,22 +58,23 @@ export async function GET(request) {
 
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Filter based on user's access
-    const authenticatedUserId = await authenticate(request);
-    const { checkCourseAccess } = await import("@/lib/planMiddleware");
+    // Check access if user is authenticated (using optional auth)
+    const user = request.user;
 
     const sanitizedCourses = await Promise.all(
       courses.map(async (course) => {
         let hasAccess = true;
         let accessError = null;
 
-        if (authenticatedUserId && course.isPremium) {
-          const access = await checkCourseAccess(authenticatedUserId.toString(), course._id.toString());
-          hasAccess = access.hasAccess;
-          accessError = access.reason;
-        } else if (!authenticatedUserId && course.isPremium) {
-          hasAccess = false;
-          accessError = "Authentication required for premium courses";
+        if (course.isPremium) {
+          if (user) {
+            const access = await checkCourseAccess(user._id.toString(), course._id.toString());
+            hasAccess = access.hasAccess;
+            accessError = access.reason;
+          } else {
+            hasAccess = false;
+            accessError = "Authentication required for premium courses";
+          }
         }
 
         return {
@@ -129,35 +114,17 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("GET /api/courses error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch courses" },
-      { status: 500 }
-    );
+    throw error;
   }
 }
 
 // === POST: Create New Course (Admin/Instructor Only) ===
-export async function POST(request) {
-  const userId = await authenticate(request);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+async function handlePost(request) {
+  const user = request.user;
 
   try {
     const { db } = await connectToDatabase();
     const coursesCol = db.collection("courses");
-
-    // Optional: Check if user is admin/instructor
-    const user = await db
-      .collection("users")
-      .findOne({ _id: userId }, { projection: { role: 1 } });
-
-    if (!user || !["admin", "instructor"].includes(user.role)) {
-      return NextResponse.json(
-        { error: "Forbidden: Only instructors can create courses" },
-        { status: 403 }
-      );
-    }
 
     const body = await request.json();
 
@@ -166,7 +133,7 @@ export async function POST(request) {
     for (const field of required) {
       if (!body[field]) {
         return NextResponse.json(
-          { error: `Missing required field: ${field}` },
+          { error: `Missing required field: ${field}`, code: "VALIDATION_ERROR" },
           { status: 400 }
         );
       }
@@ -174,7 +141,7 @@ export async function POST(request) {
 
     const newCourse = {
       ...body,
-      createdBy: userId,
+      createdBy: user._id,
       createdAt: new Date(),
       updatedAt: new Date(),
       students: 0,
@@ -184,6 +151,7 @@ export async function POST(request) {
       lessonsCount: body.lessonsCount || 0,
       tags: body.tags || [],
       isPremium: body.isPremium || false,
+      tierRequired: body.tierRequired || "pro",
     };
 
     const result = await coursesCol.insertOne(newCourse);
@@ -202,9 +170,28 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("POST /api/courses error:", error);
-    return NextResponse.json(
-      { error: "Failed to create course" },
-      { status: 500 }
-    );
+    throw error;
   }
 }
+
+// Apply middleware
+// GET uses optional auth, so we don't strictly require it but we handle it if present
+export const GET = withErrorHandling(async (req, ctx) => {
+  // Try to inject user but don't fail if not present
+  try {
+    const handler = withAuth(handleGet);
+    const resp = await handler(req, ctx);
+    if (resp.status === 401) {
+      // If 401 from withAuth, call handleGet without user
+      return handleGet(req, ctx);
+    }
+    return resp;
+  } catch (e) {
+    return handleGet(req, ctx);
+  }
+});
+
+export const POST = withErrorHandling(
+  withAuth(handlePost, { roles: ["admin", "instructor"] })
+);
+

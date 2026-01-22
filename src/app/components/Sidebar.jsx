@@ -151,11 +151,11 @@ export default function Sidebar({
             x: sidebarOpen ? 0 : -256,
           }}
           transition={{ duration: 0.3, type: "spring", damping: 25, stiffness: 200 }}
-          className={`absolute lg:static top-0 left-0 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden z-[60] lg:z-auto shadow-2xl lg:shadow-none`}
+          className={`absolute lg:static top-0 left-0 h-full bg-card border-r border-border overflow-hidden z-[60] lg:z-auto shadow-2xl lg:shadow-none`}
         >
           {/* Main Sidebar Content Wrapper to maintain width while animating */}
           <div className="w-64 h-full flex flex-col">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden">
                   <img
@@ -164,11 +164,11 @@ export default function Sidebar({
                     className="w-6 h-6 object-contain"
                   />
                 </div>
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                <span className="text-xl font-bold text-foreground">
                   Actinova AI Tutor
                 </span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-3">
+              <p className="text-sm text-muted-foreground mt-3">
                 Your personalized learning companion for any topic
               </p>
             </div>
@@ -195,8 +195,8 @@ export default function Sidebar({
                       <button
                         onClick={() => handleItemClick(item.id)}
                         className={`flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          ? "bg-accent text-accent-foreground border border-blue-200 dark:border-blue-800"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                           }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -209,15 +209,15 @@ export default function Sidebar({
             </nav>
 
             {/* Bottom sections */}
-            <div className="p-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 space-y-4 border-t border-border">
               {/* Profile Section */}
               <div>
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => handleItemClick("profile")}
                     className={`flex items-center space-x-3 flex-1 text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeItem === "profile"
-                      ? "text-blue-700 dark:text-blue-300"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                       }`}
                   >
                     <User className="w-5 h-5" />
@@ -225,7 +225,7 @@ export default function Sidebar({
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="p-2 text-red-400 hover:text-red-600 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer ml-2"
+                    className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer ml-2"
                   >
                     <LogOut className="w-4 h-4" />
                   </button>
@@ -233,7 +233,7 @@ export default function Sidebar({
               </div>
 
               {/* Usage Section */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="p-4 bg-accent/30 rounded-lg border border-border">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -247,15 +247,15 @@ export default function Sidebar({
                     </span>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-blue-700 dark:text-blue-300">
+                    <div className="flex justify-between text-xs text-accent-foreground">
                       <span>Generations</span>
                       <span>
                         {usage.used}/{usage.limit === null ? "∞" : usage.limit}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full transition-all duration-300"
+                        className="bg-primary h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${usage.limit === null ? 100 : usage.percentage}%` }}
                       ></div>
                     </div>

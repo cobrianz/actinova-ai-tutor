@@ -243,27 +243,27 @@ export default function Generate({ setActiveContent }) {
         </div>
       )}
       <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+        <h1 className="text-4xl font-bold text-foreground mb-3">
           {friendlyName
             ? `Welcome back, ${friendlyName}`
             : "Welcome to Actinova AI Tutor"}
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
+        <p className="text-lg text-muted-foreground">
           Ready to test your knowledge? Create comprehensive tests to challenge
           yourself and track your progress.
         </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-8 mb-10">
+      <div className="bg-card p-8 mb-10 border border-border rounded-xl">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h2 className="text-2xl font-semibold text-foreground mb-2">
             What can I help you learn today?
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Enter a topic below to generate a personalized course or flashcards
           </p>
           {!isPremium && atLimit && (
-            <div className="mt-4 mx-auto max-w-md p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 text-sm">
+            <div className="mt-4 mx-auto max-w-md p-3 rounded-lg border border-destructive bg-destructive/10 text-destructive text-sm">
               You hit free limits. Upgrade to get more generations.
             </div>
           )}
@@ -271,7 +271,7 @@ export default function Generate({ setActiveContent }) {
 
         <div className="max-w-3xl mx-auto space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left px-1">
+            <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
               What can I help you learn?
             </label>
             <textarea
@@ -286,7 +286,7 @@ export default function Generate({ setActiveContent }) {
                   Math.min(e.target.scrollHeight, 200) + "px";
               }}
               placeholder="Describe what you want to learn in detail... (e.g., I want to learn Python programming from scratch, including data structures, web development with Django, and machine learning basics)"
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 resize-none min-h-[100px] sm:min-h-[120px] max-h-[200px] shadow-sm hover:shadow-md"
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 text-base sm:text-lg border border-input rounded-lg sm:rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none min-h-[100px] sm:min-h-[120px] max-h-[200px] shadow-sm hover:shadow-md"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.ctrlKey) {
                   e.preventDefault();
@@ -299,7 +299,7 @@ export default function Generate({ setActiveContent }) {
               dir="ltr"
               style={{ direction: "ltr", unicodeBidi: "plaintext" }}
             />
-            <div className="mt-2 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 px-1">
+            <div className="mt-2 flex justify-between items-center text-xs text-muted-foreground px-1">
               <span className="flex items-center">
                 <Lightbulb className="w-4 h-4 mr-1" />
                 Tip: Press Ctrl + Enter to generate your course
@@ -313,15 +313,15 @@ export default function Generate({ setActiveContent }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3 text-left px-1">
+            <label className="block text-sm font-medium text-foreground mb-2 sm:mb-3 text-left px-1">
               Choose the format
             </label>
             <div className="grid grid-cols-3 gap-3 sm:gap-4">
               <button
                 onClick={() => setFormat("course")}
                 className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "course"
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  ? "border-primary bg-accent"
+                  : "border-border hover:border-foreground/30"
                   }`}
               >
                 <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
@@ -330,8 +330,8 @@ export default function Generate({ setActiveContent }) {
               <button
                 onClick={() => setFormat("flashcards")}
                 className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "flashcards"
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  ? "border-primary bg-accent"
+                  : "border-border hover:border-foreground/30"
                   }`}
               >
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
@@ -342,11 +342,11 @@ export default function Generate({ setActiveContent }) {
               <button
                 onClick={() => setFormat("quiz")}
                 className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "quiz"
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  ? "border-primary bg-accent"
+                  : "border-border hover:border-foreground/30"
                   }`}
               >
-                <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
+                <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
                 <span className="font-medium text-xs sm:text-sm">
                   Test Yourself
                 </span>
@@ -356,7 +356,7 @@ export default function Generate({ setActiveContent }) {
 
           {format === "quiz" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
+              <label className="block text-sm font-medium text-foreground mb-2 text-left">
                 Number of questions (up to 50)
               </label>
               <input
@@ -367,14 +367,14 @@ export default function Generate({ setActiveContent }) {
                     Math.min(50, parseInt(e.target.value, 10) || 10)
                   )
                 }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 max="50"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left px-1">
+            <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
               Choose difficulty level
               {!isPremium && (
                 <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
@@ -398,7 +398,7 @@ export default function Generate({ setActiveContent }) {
 
                   setDifficulty(selectedDifficulty);
                 }}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 appearance-none pr-10"
+                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
                 disabled={!isPremium && atLimit} // Optionally block interaction if at limit, but better to allow selecting beginner if it's the only option. 
               >
                 <option value="beginner">
@@ -430,7 +430,7 @@ export default function Generate({ setActiveContent }) {
             </div>
             {!isPremium &&
               difficulty !== "beginner" && (
-                <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <div className="mt-2 p-3 bg-accent/30 border border-accent rounded-lg">
                   <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start">
                     <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     Intermediate and Advanced levels require a Pro subscription.
@@ -448,7 +448,7 @@ export default function Generate({ setActiveContent }) {
           <button
             onClick={handleGenerate}
             disabled={!topic.trim() || (!!user && !isPremium && atLimit)}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]"
           >
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>
@@ -461,7 +461,7 @@ export default function Generate({ setActiveContent }) {
       </div>
 
       <div>
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 px-1">
+        <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4 px-1">
           Popular Learning Tracks
         </h3>
         <PopularTopics setTopic={setTopic} setLocalTopic={setLocalTopic} />
@@ -508,7 +508,7 @@ function PopularTopics({ setTopic, setLocalTopic }) {
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="p-3 sm:p-4 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg animate-pulse"
+            className="p-3 sm:p-4 bg-muted border border-border rounded-lg animate-pulse"
           >
             <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
           </div>
@@ -526,9 +526,9 @@ function PopularTopics({ setTopic, setLocalTopic }) {
             setTopic(topicOption);
             setLocalTopic(topicOption);
           }}
-          className="p-3 sm:p-4 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all"
+          className="p-3 sm:p-4 text-left bg-card border border-border rounded-lg hover:border-foreground/30 hover:shadow-md transition-all"
         >
-          <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+          <span className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">
             {topicOption}
           </span>
         </button>

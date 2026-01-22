@@ -217,7 +217,7 @@ export default function Flashcards({ cardData }) {
 
   if (!cardData) {
     return (
-      <section className="px-4 py-8 sm:px-6 lg:px-8 bg-white dark:bg-slate-900 min-h-screen">
+      <section className="px-4 py-8 sm:px-6 lg:px-8 bg-background min-h-screen">
         <div className="mx-auto max-w-7xl">
           {/* Centered Title and Description Skeleton */}
           <div className="text-center mb-12">
@@ -263,7 +263,7 @@ export default function Flashcards({ cardData }) {
           </div>
 
           {/* Study Tips Section Skeleton */}
-          <div className="p-6 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200 dark:border-cyan-800/50">
+          <div className="p-6 rounded-xl bg-accent border border-accent">
             <div className="flex gap-4">
               <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
               <div className="flex-1 space-y-3">
@@ -285,14 +285,14 @@ export default function Flashcards({ cardData }) {
   }
 
   return (
-    <section className="px-4 py-8 sm:px-6 lg:px-8 bg-white dark:bg-slate-900 min-h-screen">
+    <section className="px-4 py-8 sm:px-6 lg:px-8 bg-background min-h-screen">
       <div className="mx-auto max-w-7xl">
         {/* Centered Title and Description */}
         <div className="text-center mb-6">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-3 text-balance">
+          <h2 className="text-4xl font-bold text-foreground mb-3 text-balance">
             {cardData.title}
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 text-balance max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground text-balance max-w-3xl mx-auto">
             Master key concepts with interactive flashcards. Click each card to
             reveal detailed answers with explanations, key points, and
             real-world examples.
@@ -300,15 +300,15 @@ export default function Flashcards({ cardData }) {
         </div>
 
         {/* Cards Window */}
-        <div className="bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-8 mb-8">
+        <div className="bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-8 mb-8">
           <div className="flex flex-wrap gap-3 mb-6 justify-center">
             <button
               onClick={resetAll}
-              className="px-6 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-750 transition-all"
+              className="px-6 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm font-bold hover:bg-secondary/80 transition-all"
             >
               Reset All Progress
             </button>
-            <div className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="text-sm text-muted-foreground flex items-center gap-2 px-6 py-2.5 rounded-xl bg-secondary border border-border">
               <span className="font-bold text-blue-600 dark:text-blue-400">
                 {totalCards}
               </span>{" "}
@@ -334,7 +334,7 @@ export default function Flashcards({ cardData }) {
                 >
                   {/* Front of card */}
                   <div
-                    className={`absolute inset-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-blue-500/50 h-full ${flipped[card.id] ? "hidden" : ""}`}
+                    className={`absolute inset-0 bg-card border border-border rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-primary/50 h-full ${flipped[card.id] ? "hidden" : ""}`}
                     style={{ backfaceVisibility: "hidden" }}
                   >
                     {/* Header Section */}
@@ -355,17 +355,17 @@ export default function Flashcards({ cardData }) {
                       </div>
 
                       <div className="min-h-0 flex-1 overflow-hidden">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-widest font-semibold">
+                        <p className="text-xs text-muted-foreground mb-2 uppercase tracking-widest font-semibold">
                           {card.topic}
                         </p>
-                        <h3 className="text-lg sm:text-xl text-gray-900 dark:text-white leading-tight line-clamp-4 sm:line-clamp-6 overflow-hidden">
+                        <h3 className="text-lg sm:text-xl text-foreground leading-tight line-clamp-4 sm:line-clamp-6 overflow-hidden">
                           {renderFormattedText(card.question)}
                         </h3>
                       </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-center gap-2 text-xs font-bold text-white bg-blue-600 rounded-xl px-4 py-3 flex-shrink-0 transition-all group-hover:bg-blue-700">
+                    <div className="flex items-center justify-center gap-2 text-xs font-bold text-primary-foreground bg-primary rounded-xl px-4 py-3 flex-shrink-0 transition-all hover:bg-primary/90">
                       <Zap size={14} className="fill-current" />
                       <span>Flip to Master</span>
                     </div>
@@ -373,7 +373,7 @@ export default function Flashcards({ cardData }) {
 
                   {/* Back of card */}
                   <div
-                    className={`absolute inset-0 bg-slate-50 dark:bg-slate-950 border border-blue-500/30 dark:border-blue-500/20 rounded-3xl p-6 sm:p-8 flex flex-col transition-all h-full ${!flipped[card.id] ? "hidden" : ""}`}
+                    className={`absolute inset-0 bg-accent/5 border border-primary/30 rounded-3xl p-6 sm:p-8 flex flex-col transition-all h-full ${!flipped[card.id] ? "hidden" : ""}`}
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
@@ -403,41 +403,41 @@ export default function Flashcards({ cardData }) {
                           background: #94a3b8;
                         }
                       `}</style>
-                      <div className="flex items-center gap-2 pb-3 border-b border-gray-200 dark:border-slate-600 flex-shrink-0">
+                      <div className="flex items-center gap-2 pb-3 border-b border-border flex-shrink-0">
                         <Brain
                           size={18}
                           className="text-cyan-500 dark:text-cyan-400 flex-shrink-0"
                         />
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                        <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
                           Main Answer
                         </span>
                       </div>
 
-                      <div className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed font-medium">
+                      <div className="text-sm text-foreground leading-relaxed font-medium">
                         {renderFormattedText(card.answer)}
                       </div>
 
                       {card.explanation && (
-                        <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-slate-600">
-                          <p className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">
+                        <div className="space-y-2 pt-3 border-t border-border">
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wide">
                             Why This Matters
                           </p>
-                          <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                          <p className="text-xs text-foreground/80 leading-relaxed">
                             {card.explanation}
                           </p>
                         </div>
                       )}
 
                       {card.keyPoints && card.keyPoints.length > 0 && (
-                        <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-slate-600">
-                          <p className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">
+                        <div className="space-y-2 pt-3 border-t border-border">
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wide">
                             Key Points
                           </p>
                           <ul className="space-y-1">
                             {card.keyPoints.map((point, idx) => (
                               <li
                                 key={idx}
-                                className="text-xs text-gray-700 dark:text-gray-300 flex gap-2"
+                                className="text-xs text-foreground/80 flex gap-2"
                               >
                                 <span className="text-blue-500 dark:text-blue-400 flex-shrink-0">
                                   •
@@ -450,11 +450,11 @@ export default function Flashcards({ cardData }) {
                       )}
 
                       {card.example && (
-                        <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
-                          <p className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">
+                        <div className="space-y-2 pt-3 border-t border-border bg-muted rounded-lg p-3">
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wide">
                             Example
                           </p>
-                          <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-mono break-words">
+                          <p className="text-xs text-foreground/80 leading-relaxed font-mono break-words">
                             {card.example}
                           </p>
                         </div>
@@ -462,7 +462,7 @@ export default function Flashcards({ cardData }) {
                     </div>
 
                     {/* Back footer */}
-                    <div className="flex items-center justify-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 rounded-lg px-3 py-2 mt-4 border border-gray-200 dark:border-slate-600 flex-shrink-0">
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-secondary rounded-lg px-3 py-2 mt-4 border border-border flex-shrink-0">
                       <Zap size={14} />
                       <span>Click to see question</span>
                     </div>
@@ -477,7 +477,7 @@ export default function Flashcards({ cardData }) {
           <button
             onClick={handleGenerateMore}
             disabled={isGeneratingMore}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {isGeneratingMore ? (
               <>
@@ -494,17 +494,17 @@ export default function Flashcards({ cardData }) {
         </div>
 
         {/* Study Tips Section */}
-        <div className="p-6 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200 dark:border-cyan-800/50">
+        <div className="p-6 rounded-xl bg-accent border border-accent">
           <div className="flex gap-4">
             <Lightbulb
               size={24}
               className="text-cyan-600 dark:text-cyan-400 flex-shrink-0 mt-1"
             />
             <div className="flex-1">
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-3">
+              <h3 className="font-bold text-lg text-foreground mb-3">
                 Study Tips for Maximum Learning
               </h3>
-              <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <ul className="text-sm text-muted-foreground space-y-2">
                 <li className="flex gap-3">
                   <span className="text-cyan-600 dark:text-cyan-400 font-bold flex-shrink-0">
                     1.

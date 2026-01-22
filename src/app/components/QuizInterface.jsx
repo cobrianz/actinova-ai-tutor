@@ -226,8 +226,8 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
 
   if (!quizData || !quizData.questions) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-500 dark:text-gray-400">Loading test...</p>
+      <div className="flex justify-center items-center min-h-screen bg-background">
+        <p className="text-muted-foreground">Loading test...</p>
       </div>
     );
   }
@@ -236,7 +236,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
 
   return (
     <div
-      className={`p-4 sm:p-8 lg:p-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white min-h-screen transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
+      className={`p-4 sm:p-8 lg:p-12 bg-background text-foreground min-h-screen transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
     >
       <div className="max-w-full mx-auto">
         {onBack ? (
@@ -257,52 +257,52 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
           </Link>
         )}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-8">
             {quizData.title}
           </h1>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
-              <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+            <div className="bg-card border border-border rounded-xl p-6 text-center shadow-sm">
+              <div className="text-3xl font-bold text-foreground mb-2">
                 {loadedQuestions.length}/{totalQuestions}
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Loaded Questions
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
-              <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+            <div className="bg-card border border-border rounded-xl p-6 text-center shadow-sm">
+              <div className="text-3xl font-bold text-foreground mb-2">
                 {loadedQuestions.reduce((acc, q) => acc + q.points, 0)}
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Total Points
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
-              <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+            <div className="bg-card border border-border rounded-xl p-6 text-center shadow-sm">
+              <div className="text-3xl font-bold text-foreground mb-2">
                 {Object.keys(answers).length}/{loadedQuestions.length}
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Questions Answered
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
+            <div className="bg-card border border-border rounded-xl p-6 text-center shadow-sm">
               <div
-                className={`text-3xl font-bold mb-2 ${timeRemaining < 300 ? "text-red-600" : "text-slate-800 dark:text-slate-100"}`}
+                className={`text-3xl font-bold mb-2 ${timeRemaining < 300 ? "text-destructive" : "text-foreground"}`}
               >
                 {formatTime(timeRemaining)}
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Time Remaining
               </p>
             </div>
           </div>
 
           <div className="w-full">
-            <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
+            <div className="flex justify-between text-sm text-muted-foreground mb-2">
               <span>Progress (Page {currentPage})</span>
               <span>
                 {Math.round(
@@ -311,9 +311,9 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                 %
               </span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
+            <div className="w-full bg-muted rounded-full h-3">
               <div
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-300"
+                className="bg-primary h-3 rounded-full transition-all duration-300"
                 style={{
                   width: `${(Object.keys(answers).length / loadedQuestions.length) * 100}%`,
                 }}
@@ -321,7 +321,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
             </div>
           </div>
         </div>
-        <Card className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm">
+        <Card className="bg-card/80 backdrop-blur-sm border-border">
           <CardContent className="space-y-12">
             <div className="space-y-10">
               {getCurrentPageQuestions().map((q, index) => {
@@ -330,21 +330,21 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                 return (
                   <div
                     key={`question-${globalIndex}`}
-                    className={`sm:p-4 bg-white dark:bg-gray-800/50 transition-opacity duration-500 ${questionsVisible ? "opacity-100" : "opacity-0"}`}
+                    className={`sm:p-4 bg-card/50 rounded-xl border border-border transition-opacity duration-500 ${questionsVisible ? "opacity-100" : "opacity-0"}`}
                   >
                     <div className="flex items-start space-x-4 mb-6">
                       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                         {globalIndex + 1}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 leading-relaxed mb-2 select-none">
+                        <h3 className="text-base font-semibold text-foreground leading-relaxed mb-2 select-none">
                           {q.text}
                         </h3>
-                        <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
-                          <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full font-medium">
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <span className="px-3 py-1 bg-muted rounded-full font-medium">
                             {q.points} point{q.points !== 1 ? "s" : ""}
                           </span>
-                          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium capitalize">
+                          <span className="px-3 py-1 bg-accent text-accent-foreground rounded-full font-medium capitalize">
                             {q.type.replace("-", " ")}
                           </span>
                         </div>
@@ -361,7 +361,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                         {q.options.map((option, optIndex) => (
                           <div
                             key={option}
-                            className="flex items-center space-x-4 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 group cursor-pointer"
+                            className="flex items-center space-x-4 p-4 rounded-xl border-2 border-border hover:border-primary transition-all duration-200 group cursor-pointer"
                           >
                             <RadioGroupItem
                               value={option}
@@ -370,9 +370,9 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                             />
                             <Label
                               htmlFor={`${q._id}-${option}`}
-                              className="flex-1 cursor-pointer text-slate-700 dark:text-slate-300 text-xs italic leading-relaxed group-hover:text-slate-900 dark:group-hover:text-slate-100 select-none"
+                              className="flex-1 cursor-pointer text-muted-foreground text-xs italic leading-relaxed group-hover:text-foreground select-none"
                             >
-                              <span className="font-medium mr-2 text-slate-500 dark:text-slate-400">
+                              <span className="font-medium mr-2 text-muted-foreground">
                                 {String.fromCharCode(65 + optIndex)}.
                               </span>
                               {option}
@@ -400,9 +400,9 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                             />
                             <Label
                               htmlFor={`${q._id}-${option}`}
-                              className="flex-1 cursor-pointer text-slate-700 dark:text-slate-300 text-xs italic leading-relaxed group-hover:text-slate-900 dark:group-hover:text-slate-100 select-none"
+                              className="flex-1 cursor-pointer text-muted-foreground text-xs italic leading-relaxed group-hover:text-foreground select-none"
                             >
-                              <span className="font-medium mr-2 text-slate-500 dark:text-slate-400">
+                              <span className="font-medium mr-2 text-muted-foreground">
                                 {String.fromCharCode(65 + optIndex)}.
                               </span>
                               {option}
@@ -431,9 +431,9 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                             />
                             <Label
                               htmlFor={`${q._id}-${option}`}
-                              className="flex-1 cursor-pointer text-slate-700 dark:text-slate-300 text-xs italic leading-relaxed group-hover:text-slate-900 dark:group-hover:text-slate-100 select-none"
+                              className="flex-1 cursor-pointer text-muted-foreground text-xs italic leading-relaxed group-hover:text-foreground select-none"
                             >
-                              <span className="font-medium mr-2 text-slate-500 dark:text-slate-400">
+                              <span className="font-medium mr-2 text-muted-foreground">
                                 {String.fromCharCode(65 + optIndex)}.
                               </span>
                               {option}
@@ -540,7 +540,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                     {[...Array(3)].map((_, index) => (
                       <div
                         key={`skeleton-${index}`}
-                        className="p-8 bg-white dark:bg-gray-800/50 rounded-2xl border border-slate-200/50 dark:border-gray-700 animate-pulse"
+                        className="p-8 bg-card/50 rounded-2xl border border-border animate-pulse"
                       >
                         <div className="flex items-start space-x-4 mb-6">
                           <div className="flex-shrink-0 w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-xl"></div>
@@ -574,7 +574,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="px-10 py-4 text-lg border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 rounded-xl font-medium"
+                      className="px-10 py-4 text-lg border-2 border-border hover:bg-secondary transition-all duration-200 rounded-xl font-medium"
                     >
                       Cancel
                     </Button>
@@ -582,7 +582,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                   <Button
                     onClick={handleSubmit}
                     size="lg"
-                    className="px-10 py-4 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white hover:shadow-xl transition-all duration-200 rounded-xl font-semibold"
+                    className="px-10 py-4 text-lg bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-xl transition-all duration-200 rounded-xl font-semibold"
                   >
                     Submit Assessment
                   </Button>

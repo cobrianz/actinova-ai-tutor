@@ -70,7 +70,7 @@ export default function DashboardContent() {
   const ComponentWrapper = isChat ? "div" : "div"; // Keep div for now
 
   return (
-    <div className={`relative bg-gray-50 dark:bg-gray-900 ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
+    <div className={`relative bg-background ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
       <div
         className={
           isChat

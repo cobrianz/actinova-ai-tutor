@@ -41,7 +41,7 @@ export default function Hero({ handleGetStarted }) {
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
-        
+
         {/* Subtle Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
@@ -53,7 +53,7 @@ export default function Hero({ handleGetStarted }) {
           animate="visible"
           className="text-center"
         >
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-sm font-medium mb-8"
           >
@@ -61,7 +61,7 @@ export default function Hero({ handleGetStarted }) {
             <span>Next-Generation Personalized Learning</span>
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             variants={itemVariants}
             className="text-5xl md:text-8xl font-bold mb-8 leading-[1.1] tracking-tight"
           >
@@ -69,15 +69,15 @@ export default function Hero({ handleGetStarted }) {
             <span className="block text-gradient">AI-Powered Intelligence</span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             variants={itemVariants}
             className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
           >
-            Achieve your goals faster with a tutor that adapts to your unique learning style. 
+            Achieve your goals faster with a tutor that adapts to your unique learning style.
             Join thousands of students unlocking their full potential.
           </motion.p>
 
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
           >
@@ -90,16 +90,16 @@ export default function Hero({ handleGetStarted }) {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <button className="px-8 py-4 bg-secondary/50 hover:bg-secondary text-foreground rounded-2xl font-semibold text-lg border border-border-accent transition-all flex items-center gap-2">
+            <button className="px-8 py-4 bg-secondary hover:bg-secondary/80 text-foreground rounded-2xl font-semibold text-lg border border-border transition-all flex items-center gap-2">
               <Play className="w-5 h-5 fill-current" />
               See How It Works
             </button>
           </motion.div>
 
           {/* Floating Stats */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 border-t border-border-accent/50"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 border-t border-border"
           >
             {stats.map((stat, index) => {
               const Icon = [Users, BookOpen, Trophy, Star][index] || Star;

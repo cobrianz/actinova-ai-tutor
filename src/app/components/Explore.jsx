@@ -1246,10 +1246,10 @@ export default function Explore() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        <h1 className="text-3xl font-bold text-foreground mb-4">
           Explore Courses
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
+        <p className="text-lg text-muted-foreground">
           Discover Different Categories and latest trending topics across
           various fields
         </p>
@@ -1265,14 +1265,14 @@ export default function Explore() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search courses, topics, or instructors..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Categories</option>
               {staticCategories.map((category) => (
@@ -1284,7 +1284,7 @@ export default function Explore() {
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Levels</option>
               <option value="beginner">Beginner</option>
@@ -1294,7 +1294,7 @@ export default function Explore() {
             <select
               value={isPremium}
               onChange={(e) => setIsPremium(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Courses</option>
               <option value="true">Premium Only</option>
@@ -1309,13 +1309,13 @@ export default function Explore() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
             <TrendingUp className="w-6 h-6 text-orange-500" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h2 className="text-2xl font-bold text-foreground">
               Trending This Week
             </h2>
           </div>
           <button
             onClick={() => toggleSectionMinimized("trending-topics")}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
             title={
               minimizedSections.has("trending-topics")
                 ? "Expand section"
@@ -1337,7 +1337,7 @@ export default function Explore() {
                 {[...Array(6)].map((_, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 animate-pulse"
+                    className="bg-card border border-border rounded-lg p-6 animate-pulse"
                   >
                     <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded mb-3"></div>
                     <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
@@ -1352,7 +1352,7 @@ export default function Explore() {
             ) : filteredTrendingTopics.length === 0 && searchQuery ? (
               <div className="text-center py-12">
                 <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No trending topics found
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -1365,11 +1365,11 @@ export default function Explore() {
                 {filteredTrendingTopics.map((topic, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow relative group cursor-pointer"
+                    className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow relative group cursor-pointer"
                     onClick={() => handleGenerateCourse(topic)}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1">
+                      <h3 className="text-lg font-semibold text-foreground flex-1">
                         {topic.title}
                       </h3>
                       <div className="flex items-center space-x-2">
@@ -1386,20 +1386,20 @@ export default function Explore() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                       {topic.description}
                     </p>
 
                     {topic.whyTrending && (
-                      <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                      <div className="mb-4 p-2 bg-accent rounded-lg">
+                        <p className="text-xs text-primary">
                           <span className="font-semibold">🔥 Trending:</span>{" "}
                           {topic.whyTrending}
                         </p>
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center space-x-1">
                         <Clock className="w-4 h-4" />
                         <span>{topic.estimatedDuration || "6 weeks"}</span>
@@ -1415,7 +1415,7 @@ export default function Explore() {
                         {topic.tags?.slice(0, 3).map((tag, tagIndex) => (
                           <span
                             key={tagIndex}
-                            className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                            className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full"
                           >
                             {tag}
                           </span>
@@ -1423,14 +1423,14 @@ export default function Explore() {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="mt-4 pt-4 border-t border-border">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleGenerateCourse(topic);
                         }}
                         disabled={generatingCourse === topic.title}
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                       >
                         {generatingCourse === topic.title ? (
                           <>
@@ -1461,7 +1461,7 @@ export default function Explore() {
           </h2>
           <button
             onClick={() => toggleSectionMinimized("categories")}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
             title={
               minimizedSections.has("categories")
                 ? "Expand section"
@@ -1483,7 +1483,7 @@ export default function Explore() {
                 {[...Array(6)].map((_, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 animate-pulse"
+                    className="bg-card border border-border rounded-lg p-6 animate-pulse"
                   >
                     <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
                     <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
@@ -1512,22 +1512,22 @@ export default function Explore() {
                     .map((category, index) => (
                       <div
                         key={index}
-                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow relative"
+                        className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow relative"
                       >
                         {!userIsPremium && (
                           <div className="absolute top-3 right-3">
-                            <div className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full flex items-center space-x-1">
+                            <div className="bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full flex items-center space-x-1">
                               <span>⭐</span>
                               <span>Premium</span>
                             </div>
                           </div>
                         )}
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          <h3 className="text-lg font-semibold text-foreground">
                             {category.name}
                           </h3>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           {category.description}
                         </p>
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -1536,13 +1536,13 @@ export default function Explore() {
                             .map((topic, topicIndex) => (
                               <span
                                 key={topicIndex}
-                                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                                className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full"
                               >
                                 {topic}
                               </span>
                             ))}
                           {category.topics.length > 4 && (
-                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs rounded-full">
+                            <span className="px-2 py-1 bg-accent text-accent-foreground text-xs rounded-full">
                               +{category.topics.length - 4} more
                             </span>
                           )}
@@ -1550,7 +1550,7 @@ export default function Explore() {
                         <button
                           onClick={() => handleExploreCategory(category)}
                           disabled={exploringCategory === category.name}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                          className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                         >
                           {exploringCategory === category.name ? (
                             <>
@@ -1572,7 +1572,7 @@ export default function Explore() {
                   <div className="text-center mt-8">
                     <button
                       onClick={handleSeeMoreCategories}
-                      className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+                      className="bg-muted text-muted-foreground px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-medium"
                     >
                       See More Categories (
                       {filteredCategories.length - visibleCategoriesCount}{" "}
@@ -1584,17 +1584,17 @@ export default function Explore() {
                 {visibleCategoriesCount >= filteredCategories.length &&
                   filteredCategories.length > 9 && (
                     <div className="text-center mt-8">
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <div className="bg-accent border border-accent rounded-lg p-4">
                         <Sparkles className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                        <p className="text-blue-700 dark:text-blue-300 font-medium">
+                        <p className="text-primary font-medium">
                           Didn't find what you're looking for?
                         </p>
-                        <p className="text-blue-600 dark:text-blue-400 text-sm mt-1 mb-4">
+                        <p className="text-primary/80 text-sm mt-1 mb-4">
                           Try generating a custom course with our AI!
                         </p>
                         <button
                           onClick={() => router.push("/dashboard?tab=generate")}
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors font-medium flex items-center space-x-2 mx-auto"
+                          className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center space-x-2 mx-auto shadow-md"
                         >
                           <Sparkles className="w-4 h-4" />
                           <span>Generate Custom Course</span>
@@ -1614,7 +1614,7 @@ export default function Explore() {
           <div className="mb-12">
             <div className="flex items-center space-x-2 mb-6">
               <BookOpen className="w-6 h-6 text-blue-500" />
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="text-2xl font-bold text-foreground">
                 {exploringCategory} Courses
               </h2>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
@@ -1663,7 +1663,7 @@ export default function Explore() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <BookOpen className="w-6 h-6 text-blue-500" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <h2 className="text-2xl font-bold text-foreground">
                   {generatedSet.category} Courses
                 </h2>
                 <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
@@ -1674,7 +1674,7 @@ export default function Explore() {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => toggleSectionMinimized(generatedSet.id)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
                   title={
                     minimizedSections.has(generatedSet.id)
                       ? "Expand section"
@@ -1698,7 +1698,7 @@ export default function Explore() {
                     className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow relative group"
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1">
+                      <h3 className="text-lg font-semibold text-foreground flex-1">
                         {course.title}
                       </h3>
                       <div className="flex items-center space-x-2">
@@ -1715,11 +1715,11 @@ export default function Explore() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                       {course.description}
                     </p>
 
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center space-x-1">
                         <Clock className="w-4 h-4" />
                         <span>{course.estimatedDuration || "6 weeks"}</span>
@@ -1731,7 +1731,7 @@ export default function Explore() {
                         {course.tags?.slice(0, 3).map((tag, tagIndex) => (
                           <span
                             key={tagIndex}
-                            className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full"
+                            className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full"
                           >
                             {tag}
                           </span>
@@ -1739,14 +1739,14 @@ export default function Explore() {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="mt-4 pt-4 border-t border-border">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleGenerateCourse(course);
                         }}
                         disabled={generatingCourse === course.title}
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                       >
                         {generatingCourse === course.title ? (
                           <>
@@ -1848,7 +1848,7 @@ export default function Explore() {
                     setSelectedCategoryForModal(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700"
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
                   Upgrade Now
                 </button>
@@ -1893,7 +1893,7 @@ export default function Explore() {
                     setShowLimitModal(false);
                     setLimitModalData(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex-1 px-4 py-2 border border-input rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
                 >
                   Maybe Later
                 </button>
@@ -1903,7 +1903,7 @@ export default function Explore() {
                     setLimitModalData(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700"
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                 >
                   Upgrade to Pro
                 </button>

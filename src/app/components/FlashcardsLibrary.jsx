@@ -214,7 +214,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-40"></div>
         </div>
 
-        <div className="py-12 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl mb-12 border border-gray-200/50 dark:border-slate-700/50">
+        <div className="py-12 bg-accent rounded-2xl mb-12 border border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {[...Array(4)].map((_, index) => (
@@ -236,7 +236,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           {[...Array(6)].map((_, index) => (
             <div
               key={index}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 animate-pulse"
+              className="bg-card border border-border rounded-lg p-6 animate-pulse"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="p-2 bg-gray-300 dark:bg-gray-600 rounded-xl w-12 h-12"></div>
@@ -266,7 +266,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
   if (showFlashcards && selectedFlashcard) {
     return (
       <div
-        className={`min-h-screen bg-white dark:bg-slate-900 transition-opacity duration-300 ${transitioning ? "opacity-0" : "opacity-100"}`}
+        className={`min-h-screen bg-background transition-opacity duration-300 ${transitioning ? "opacity-0" : "opacity-100"}`}
       >
         <div className="p-4">
           <button
@@ -274,7 +274,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
               setShowFlashcards(false);
               setSelectedFlashcard(null);
             }}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Back to flashcards library"
           >
             <ArrowLeft size={20} />
@@ -291,16 +291,16 @@ export default function FlashcardsLibrary({ setActiveContent }) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             My Flashcards
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
             View and manage your generated flashcard sets
           </p>
         </div>
         <button
           onClick={() => setActiveContent("generate")}
-          className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           <span>Create New</span>
@@ -312,10 +312,10 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           <div className="text-gray-400 dark:text-gray-600 mb-4">
             <Sparkles className="w-16 h-16 mx-auto" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-xl font-semibold text-foreground mb-2">
             No flashcards yet
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-muted-foreground mb-6">
             Create your first flashcard set to get started
           </p>
         </div>
@@ -354,13 +354,13 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                 <div className="max-w-full mx-auto px-0 ">
                   <div className="flex flex-wrap justify-between gap-6">
                     {/* Tile: Total Sets */}
-                    <div className="relative overflow-hidden rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex-1 min-w-[240px]">
+                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
                       <div className="relative p-5 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">
                           {totalSets}
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             Total Sets
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-500">
@@ -371,13 +371,13 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     </div>
 
                     {/* Tile: Total Cards */}
-                    <div className="relative overflow-hidden rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex-1 min-w-[240px]">
+                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
                       <div className="relative p-5 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300 flex items-center justify-center font-bold">
                           {totalCards}
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             Total Cards
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-500">
@@ -388,7 +388,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     </div>
 
                     {/* Tile: Opened Cards */}
-                    <div className="relative overflow-hidden rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex-1 min-w-[240px]">
+                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
                       <div className="relative p-5 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
                           <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -396,7 +396,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             Opened Cards
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-500">
@@ -407,7 +407,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     </div>
 
                     {/* Tile: Bookmarked Sets */}
-                    <div className="relative overflow-hidden rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex-1 min-w-[240px]">
+                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
                       <div className="relative p-3 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-300 flex items-center justify-center">
                           <p className="text-2xl font-bold text-gray-900 dark:text:white">
@@ -415,7 +415,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             Bookmarked
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-500">
@@ -432,10 +432,10 @@ export default function FlashcardsLibrary({ setActiveContent }) {
 
           {/* Section Header */}
           <div className="mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-balance">
+            <h2 className="text-3xl font-bold text-foreground mb-2 text-balance">
               Your Flashcards Library
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-balance">
+            <p className="text-muted-foreground text-balance">
               Master key concepts with your personalized flashcard collections
             </p>
           </div>
@@ -462,7 +462,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
 
               return (
                 <div key={card._id} className="h-full">
-                  <div className="relative flex h-full flex-col rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors hover:border-blue-300 dark:hover:border-blue-500">
+                  <div className="relative flex h-full flex-col rounded-xl border border-border bg-card transition-colors hover:border-primary">
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0">
@@ -470,10 +470,10 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                             <Sparkles size={20} />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 text-balance">
+                            <h3 className="text-lg font-semibold text-foreground line-clamp-2 text-balance">
                               {card.title}
                             </h3>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                            <p className="mt-1 text-sm text-muted-foreground line-clamp-1">
                               {card.topic
                                 ? `Flashcards for ${card.topic}`
                                 : `Interactive flashcards to master key concepts.`}
@@ -547,7 +547,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                           }, 300);
                         }}
                         disabled={loadingFlashcards.has(card._id)}
-                        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-600/90 dark:hover:bg-blue-600 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                       >
                         <Sparkles size={16} />
                         <span>
@@ -574,11 +574,11 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                 <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
 
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
+              <h3 className="text-xl font-bold text-foreground text-center mb-2">
                 Delete Flashcard Set
               </h3>
 
-              <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
+              <p className="text-muted-foreground text-center mb-6">
                 Are you sure you want to delete{" "}
                 <strong>"{flashcardToDelete.title}"</strong>? This action cannot
                 be undone.
@@ -590,7 +590,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     setShowDeleteModal(false);
                     setFlashcardToDelete(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-input text-muted-foreground rounded-lg hover:bg-secondary transition-colors"
                 >
                   Cancel
                 </button>

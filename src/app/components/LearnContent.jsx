@@ -615,7 +615,7 @@ export default function LearnContent() {
     html = html.replace(/```(\w+)?\s*\n([\s\S]*?)```/g, (match, lang, code) => {
       const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
       codeBlocks.push(
-        `<pre class="bg-gray-900 dark:bg-gray-950 p-4 rounded-lg overflow-x-auto my-4 border border-gray-700"><code class="text-sm text-green-400 language-${lang || "plaintext"}">${code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`
+        `<pre class="bg-slate-900 p-4 rounded-lg overflow-x-auto my-4 border border-border"><code class="text-sm text-green-400 language-${lang || "plaintext"}">${code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`
       );
       return placeholder;
     });
@@ -625,7 +625,7 @@ export default function LearnContent() {
     html = html.replace(/`([^`]+)`/g, (match, code) => {
       const placeholder = `___INLINECODE_${inlineCodes.length}___`;
       inlineCodes.push(
-        `<code class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-sm font-mono text-blue-600 dark:text-blue-400">${code}</code>`
+        `<code class="bg-muted px-2 py-0.5 rounded text-sm font-mono text-primary">${code}</code>`
       );
       return placeholder;
     });
@@ -637,7 +637,7 @@ export default function LearnContent() {
       (match, alt, url) => {
         // Decode URL if it contains encoded characters
         const cleanUrl = url.trim();
-        return `<div class="my-4 flex justify-center"><img src="${cleanUrl}" alt="${alt}" class="max-w-full h-auto rounded-lg shadow-md" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg\\">Failed to load image: ${alt}</div>'" /></div>`;
+        return `<div class="my-4 flex justify-center"><img src="${cleanUrl}" alt="${alt}" class="max-w-full h-auto rounded-lg shadow-md" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"text-destructive p-4 bg-destructive/10 rounded-lg\\">Failed to load image: ${alt}</div>'" /></div>`;
       }
     );
 
@@ -651,9 +651,9 @@ export default function LearnContent() {
             throwOnError: false,
             output: 'html'
           });
-          return `<div class="my-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg overflow-x-auto">${rendered}</div>`;
+          return `<div class="my-4 p-4 bg-accent text-accent-foreground rounded-lg overflow-x-auto">${rendered}</div>`;
         } catch (e) {
-          return `<div class="my-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">LaTeX Error: ${equation}</div>`;
+          return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${equation}</div>`;
         }
       }
     );
@@ -671,7 +671,7 @@ export default function LearnContent() {
           });
           return `<span class="inline-block align-middle mx-0.5">${rendered}</span>`;
         } catch (e) {
-          return `<span class="text-red-600 dark:text-red-400 text-xs">LaTeX Error: ${equation}</span>`;
+          return `<span class="text-destructive text-xs">LaTeX Error: ${equation}</span>`;
         }
       }
     );
@@ -686,9 +686,9 @@ export default function LearnContent() {
             throwOnError: false,
             output: 'html'
           });
-          return `<div class="my-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg overflow-x-auto">${rendered}</div>`;
+          return `<div class="my-4 p-4 bg-accent text-accent-foreground rounded-lg overflow-x-auto">${rendered}</div>`;
         } catch (e) {
-          return `<div class="my-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">LaTeX Error: ${equation}</div>`;
+          return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${equation}</div>`;
         }
       }
     );
@@ -711,7 +711,7 @@ export default function LearnContent() {
           });
           return `<span class="inline-block align-middle mx-0.5">${rendered}</span>`;
         } catch (e) {
-          return `<span class="text-red-600 dark:text-red-400 text-xs">LaTeX Error: ${equation}</span>`;
+          return `<span class="text-destructive text-xs">LaTeX Error: ${equation}</span>`;
         }
       }
     );
@@ -719,37 +719,37 @@ export default function LearnContent() {
     // Handle headers
     html = html.replace(
       /^# (.*$)/gm,
-      '<h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 mt-8 border-b-2 border-blue-500 pb-2">$1</h1>'
+      '<h1 class="text-3xl font-bold text-foreground mb-6 mt-8 border-b-2 border-primary pb-2">$1</h1>'
     );
     html = html.replace(
       /^## (.*$)/gm,
-      '<h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 mt-6">$1</h2>'
+      '<h2 class="text-2xl font-semibold text-foreground mb-4 mt-6">$1</h2>'
     );
     html = html.replace(
       /^### (.*$)/gm,
-      '<h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3 mt-5">$1</h3>'
+      '<h3 class="text-xl font-semibold text-foreground/90 mb-3 mt-5">$1</h3>'
     );
     html = html.replace(
       /^#### (.*$)/gm,
-      '<h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">$1</h4>'
+      '<h4 class="text-lg font-semibold text-foreground/90 mb-2 mt-4">$1</h4>'
     );
 
     // Handle blockquotes
     html = html.replace(
       /^> (.*$)/gm,
-      '<blockquote class="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-900/20 text-gray-700 dark:text-gray-300 italic rounded-r">$1</blockquote>'
+      '<blockquote class="border-l-4 border-primary pl-4 py-2 my-4 bg-secondary text-muted-foreground italic rounded-r">$1</blockquote>'
     );
 
     // Handle bold - must come before italics
     html = html.replace(
       /\*\*([^\*\n]+?)\*\*/g,
-      '<strong class="font-bold text-gray-900 dark:text-gray-100">$1</strong>'
+      '<strong class="font-bold text-foreground">$1</strong>'
     );
 
     // Handle italics
     html = html.replace(
       /\*([^\*\n]+?)\*/g,
-      '<em class="italic text-gray-800 dark:text-gray-200">$1</em>'
+      '<em class="italic text-foreground/90">$1</em>'
     );
 
     // Handle numbered lists
@@ -762,7 +762,7 @@ export default function LearnContent() {
           if (!inOrderedList) {
             inOrderedList = true;
             return (
-              '<ol class="list-decimal list-inside mb-4 space-y-2 text-gray-700 dark:text-gray-300 ml-4"><li class="mb-2">' +
+              '<ol class="list-decimal list-inside mb-4 space-y-2 text-muted-foreground ml-4"><li class="mb-2">' +
               content +
               "</li>"
             );
@@ -789,7 +789,7 @@ export default function LearnContent() {
           if (!inUnorderedList) {
             inUnorderedList = true;
             return (
-              '<ul class="list-disc list-inside mb-4 space-y-2 text-gray-700 dark:text-gray-300 ml-4"><li class="mb-2">' +
+              '<ul class="list-disc list-inside mb-4 space-y-2 text-muted-foreground ml-4"><li class="mb-2">' +
               content +
               "</li>"
             );
