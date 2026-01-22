@@ -25,8 +25,6 @@ const PostSchema = new mongoose.Schema(
             index: true,
         },
         periodKey: { type: String, index: true }, // e.g., 2025-12 (monthly) or 2025-W49 (weekly)
-        likesCount: { type: Number, default: 0 },
-        commentsCount: { type: Number, default: 0 },
         viewsCount: { type: Number, default: 0 },
         readTime: { type: String, default: "5 min read" }, // e.g., "5 min read"
         publishedAt: { type: Date, default: Date.now, index: true },

@@ -20,7 +20,6 @@ import { useAuth } from "./AuthProvider";
 import { useSearchParams } from "next/navigation";
 import ConfirmModal from "./ConfirmModal";
 import ActinovaLoader from "./ActinovaLoader";
-import SessionGuard, { useEnsureSession } from "./SessionGuard";
 
 // Function to render markdown/rich text formatting
 const renderFormattedContent = (content) => {
@@ -78,9 +77,9 @@ export default function Chat({ topic: propTopic }) {
   const [topicInput, setTopicInput] = useState("");
   const [showTopicInput, setShowTopicInput] = useState(!propTopic && !urlTopic);
   const messagesEndRef = useRef(null);
-  const { user, authLoading } = useEnsureSession();
+  const { user, loading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (loading) return <ActinovaLoader />;
   if (!user) return null;
 
   // Load chat history from database

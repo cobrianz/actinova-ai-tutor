@@ -422,19 +422,6 @@ export default function ContactPage() {
               whileHover={{ y: -5 }}
               className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-800"
             >
-              <Sparkles className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                Watch Demo
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                See a quick overview of our platform
-              </p>
-              <Link
-                href="/demo"
-                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors inline-block"
-              >
-                Watch Demo
-              </Link>
             </motion.div>
           </div>
         </motion.div>

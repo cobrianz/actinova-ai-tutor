@@ -18,7 +18,6 @@ import {
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
-import { useEnsureSession } from "./SessionGuard";
 
 export default function Sidebar({
   setActiveContent,
@@ -30,11 +29,10 @@ export default function Sidebar({
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
 
-  const { user, logout } = useAuth();
-  const { authLoading } = useEnsureSession();
+  const { user, logout, loading } = useAuth();
 
   const isPro =
-    !authLoading &&
+    !loading &&
     user &&
     ((user.subscription &&
       (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&

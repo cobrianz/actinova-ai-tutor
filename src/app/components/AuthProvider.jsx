@@ -27,20 +27,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showInactivityModal, setShowInactivityModal] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(120); // 2 minutes in seconds
   const router = useRouter();
   const pathname = usePathname();
 
   // Refs for timers
-  const inactivityTimerRef = useRef(null);
-  const warningTimerRef = useRef(null);
-  const countdownTimerRef = useRef(null);
-  const lastActivityRef = useRef(Date.now());
   const refreshPromiseRef = useRef(null);
 
   // Do not hydrate user from localStorage; always source user from secure server-side cookie via `/api/me`
-  useEffect(() => { }, []);
+  useEffect(() => {}, []);
+
   // Refresh token function (declare before fetchUser to avoid reference errors)
   const refreshToken = useCallback(async () => {
     // If a refresh is already in progress, return the existing promise to avoid race conditions
@@ -137,8 +132,6 @@ export function AuthProvider({ children }) {
     }
   }, [refreshToken]);
 
-  // (refreshToken declared above)
-
   // Initial user fetch
   useEffect(() => {
     // Always fetch server-sourced user (reads secure HttpOnly cookies)
@@ -177,151 +170,6 @@ export function AuthProvider({ children }) {
       }
     }
   }, [user, loading, pathname, router]);
-
-  // Activity tracking and inactivity timeout
-  const resetInactivityTimer = useCallback(() => {
-    lastActivityRef.current = Date.now();
-
-    // Clear existing timers
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-    }
-    if (warningTimerRef.current) {
-      clearTimeout(warningTimerRef.current);
-    }
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-    }
-
-    // Hide modal if shown
-    setShowInactivityModal(false);
-    setTimeRemaining(120);
-
-    // Only set timers if user is logged in
-    if (user) {
-      // Set warning timer for 13 minutes (13 * 60 * 1000 = 780000ms)
-      warningTimerRef.current = setTimeout(
-        () => {
-          setShowInactivityModal(true);
-          setTimeRemaining(120);
-
-          // Start countdown timer
-          countdownTimerRef.current = setInterval(() => {
-            setTimeRemaining((prev) => {
-              if (prev <= 1) {
-                // Time's up - logout
-                handleInactivityLogout();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        },
-        13 * 60 * 1000
-      );
-
-      // Set final logout timer for 15 minutes (15 * 60 * 1000 = 900000ms)
-      inactivityTimerRef.current = setTimeout(
-        () => {
-          handleInactivityLogout();
-        },
-        15 * 60 * 1000
-      );
-    }
-  }, [user]);
-
-  const handleInactivityLogout = useCallback(async () => {
-    // Clear all timers
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-    }
-    if (warningTimerRef.current) {
-      clearTimeout(warningTimerRef.current);
-    }
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-    }
-
-    // Perform logout
-    try {
-      await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "X-CSRF-Token": getCsrfToken(),
-        },
-      });
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-
-    setUser(null);
-    setShowInactivityModal(false);
-    router.push("/?loggedOut=inactivity");
-  }, [router]);
-
-  const extendSession = useCallback(() => {
-    resetInactivityTimer();
-  }, [resetInactivityTimer]);
-
-  // Set up activity listeners
-  useEffect(() => {
-    if (!user) return;
-
-    const activityEvents = [
-      "mousedown",
-      "mousemove",
-      "keypress",
-      "scroll",
-      "touchstart",
-      "click",
-    ];
-
-    const handleActivity = () => {
-      resetInactivityTimer();
-    };
-
-    // Add event listeners
-    activityEvents.forEach((event) => {
-      document.addEventListener(event, handleActivity, true);
-    });
-
-    // Start the initial timer
-    resetInactivityTimer();
-
-    // Cleanup
-    return () => {
-      activityEvents.forEach((event) => {
-        document.removeEventListener(event, handleActivity, true);
-      });
-
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-      if (warningTimerRef.current) {
-        clearTimeout(warningTimerRef.current);
-      }
-      if (countdownTimerRef.current) {
-        clearInterval(countdownTimerRef.current);
-      }
-    };
-  }, [user, resetInactivityTimer]);
-
-  // Clear timers when user logs out
-  useEffect(() => {
-    if (!user) {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-      if (warningTimerRef.current) {
-        clearTimeout(warningTimerRef.current);
-      }
-      if (countdownTimerRef.current) {
-        clearInterval(countdownTimerRef.current);
-      }
-      setShowInactivityModal(false);
-    }
-  }, [user]);
 
   const login = async (credentials) => {
     try {
@@ -501,8 +349,6 @@ export function AuthProvider({ children }) {
         user,
         loading,
         error,
-        showInactivityModal,
-        timeRemaining,
         login,
         signup,
         logout,
@@ -513,8 +359,6 @@ export function AuthProvider({ children }) {
         setUserData,
         fetchUser,
         clearError,
-        extendSession,
-        handleInactivityLogout,
       }}
     >
       {children}

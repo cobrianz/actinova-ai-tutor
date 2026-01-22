@@ -26,7 +26,6 @@ import {
 import { toast } from "sonner";
 import { downloadCourseAsPDF } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
-import { useEnsureSession } from "./SessionGuard";
 import { useRouter } from "next/navigation";
 // D3 visualizations removed per policy: no interactive D3 visuals
 import ActinovaLoader from "./ActinovaLoader";
@@ -37,10 +36,9 @@ export default function LearnContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, refreshToken, fetchUser } = useAuth();
-  const { authLoading } = useEnsureSession();
+  const { user, refreshToken, fetchUser, loading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (loading) return <ActinovaLoader />;
   if (!user) return null;
   // Retrieve topic from either path params or query params
   const topicParam = params.topic || searchParams.get("topic") || "";

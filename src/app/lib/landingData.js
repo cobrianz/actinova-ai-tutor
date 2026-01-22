@@ -36,6 +36,42 @@ export const data = {
       description:
         "Discover trending courses and explore new topics with our smart recommendation system that matches content to your interests and learning goals.",
     },
+    {
+      icon: "Brain",
+      title: "Adaptive Learning Paths",
+      description:
+        "Our intelligent algorithm adjusts difficulty levels and pacing based on your performance, ensuring optimal learning speed for maximum retention.",
+    },
+    {
+      icon: "Award",
+      title: "Certifications & Badges",
+      description:
+        "Earn industry-recognized certificates and badges as you complete courses. Showcase your achievements on LinkedIn and stand out to employers.",
+    },
+    {
+      icon: "TrendingUp",
+      title: "Performance Analytics",
+      description:
+        "Detailed insights into your learning patterns, strengths, weaknesses, and improvement areas with actionable recommendations to accelerate growth.",
+    },
+    {
+      icon: "Rocket",
+      title: "Career Growth Tools",
+      description:
+        "Access resume builders, interview prep courses, and skill assessments designed to accelerate your career advancement and landing dream jobs.",
+    },
+    {
+      icon: "Users",
+      title: "Community & Networking",
+      description:
+        "Connect with millions of learners worldwide, join study groups, participate in discussions, and build valuable professional relationships.",
+    },
+    {
+      icon: "Zap",
+      title: "Real-Time Collaboration",
+      description:
+        "Study together with peers through live sessions, group projects, and collaborative learning experiences that make education more engaging.",
+    },
   ],
   testimonials: [
     {

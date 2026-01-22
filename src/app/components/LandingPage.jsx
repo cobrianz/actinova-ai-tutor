@@ -26,7 +26,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-gray-900 dark:via-blue-950/20 dark:to-gray-900 overflow-hidden">
       <HeroNavbar handleGetStarted={handleGetStarted} />
       <Hero handleGetStarted={handleGetStarted} />
       <Features />

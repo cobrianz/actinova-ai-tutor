@@ -21,14 +21,13 @@ import {
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import ActinovaLoader from "./ActinovaLoader";
-import { useEnsureSession } from "./SessionGuard";
 import { toast } from "sonner";
 
 export default function PremiumCourses() {
   const router = useRouter();
-  const { user, authLoading } = useEnsureSession();
+  const { user, loading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (loading) return <ActinovaLoader />;
   if (!user) return null;
   const [courses, setCourses] = useState([]);
   const [trendingCourses, setTrendingCourses] = useState([]);

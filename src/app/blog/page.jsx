@@ -10,6 +10,7 @@ import {
     Tag,
     TrendingUp,
     User,
+    Share2,
 } from "lucide-react";
 import Link from "next/link";
 import HeroNavbar from "../components/heroNavbar";
@@ -159,56 +160,97 @@ export default function BlogPage() {
                     filteredPosts.some((p) => p.slug === featuredPost.slug) && (
                         <motion.div
                             className="mb-16"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                         >
-                            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-                                <div className="flex items-center space-x-2 mb-4">
-                                    <TrendingUp className="w-5 h-5" />
-                                    <span className="text-sm font-medium">Featured Article</span>
-                                </div>
+                            <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                                {/* Decorative background */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900" />
+                                
+                                {/* Content */}
+                                <div className="relative p-8 lg:p-12">
+                                    {/* Featured badge */}
+                                    <motion.div 
+                                        className="inline-flex items-center space-x-2 mb-6 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full"
+                                        whileHover={{ scale: 1.05 }}
+                                    >
+                                        <TrendingUp className="w-4 h-4" />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Featured Article</span>
+                                    </motion.div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                                    <div>
-                                        <h2 className="text-3xl font-bold mb-4">
-                                            {featuredPost.title}
-                                        </h2>
-                                        <p className="text-blue-100 mb-6">{featuredPost.excerpt}</p>
+                                    {/* Title */}
+                                    <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                                        {featuredPost.title}
+                                    </h2>
 
-                                        <div className="flex items-center space-x-6 mb-6 text-sm">
-                                            <div className="flex items-center space-x-2">
-                                                <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                                                    <User className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                                    {/* Excerpt */}
+                                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+                                        {featuredPost.excerpt}
+                                    </p>
+
+                                    {/* Metadata and actions */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                                        <div className="flex items-center gap-6 flex-wrap">
+                                            {/* Author */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center flex-shrink-0">
+                                                    <User className="w-5 h-5 text-white" />
                                                 </div>
-                                                <span>{featuredPost.author?.name || "Admin"}</span>
+                                                <div className="text-sm">
+                                                    <p className="text-gray-500 dark:text-gray-400">By</p>
+                                                    <p className="font-semibold text-gray-900 dark:text-white">{featuredPost.author?.name || "Admin"}</p>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center space-x-1">
-                                                <Calendar className="w-4 h-4" />
+
+                                            {/* Date */}
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <Calendar className="w-4 h-4 flex-shrink-0" />
                                                 <span>{featuredPost.date}</span>
                                             </div>
-                                            <div className="flex items-center space-x-1">
-                                                <Clock className="w-4 h-4" />
+
+                                            {/* Read time */}
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <Clock className="w-4 h-4 flex-shrink-0" />
                                                 <span>{featuredPost.readTime}</span>
                                             </div>
                                         </div>
 
-                                        <Link
-                                            href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                            className="inline-flex items-center space-x-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                                        {/* Share button */}
+                                        <motion.button
+                                            onClick={() => {
+                                                if (navigator.share) {
+                                                    navigator.share({
+                                                        title: featuredPost.title,
+                                                        text: featuredPost.excerpt,
+                                                        url: `${window.location.origin}/blog/${featuredPost.slug}`,
+                                                    });
+                                                } else {
+                                                    navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
+                                                    toast.success("Link copied to clipboard!");
+                                                }
+                                            }}
+                                            className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors flex-shrink-0"
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.95 }}
                                         >
-                                            <span>Read Article</span>
-                                            <ArrowRight className="w-4 h-4" />
-                                        </Link>
+                                            <Share2 className="w-5 h-5" />
+                                        </motion.button>
                                     </div>
 
-                                    <div className="relative">
-                                        <div className="w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-2xl flex items-center justify-center">
-                                            <div className="text-gray-400 dark:text-gray-500 text-lg">
-                                                No Image
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {/* CTA Button */}
+                                    <motion.div 
+                                        className="mt-8"
+                                        whileHover={{ scale: 1.02 }}
+                                    >
+                                        <Link
+                                            href={`/blog/${featuredPost.slug || featuredPost._id}`}
+                                            className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                                        >
+                                            <span>Read Full Article</span>
+                                            <ArrowRight className="w-5 h-5" />
+                                        </Link>
+                                    </motion.div>
                                 </div>
                             </div>
                         </motion.div>
@@ -336,13 +378,37 @@ export default function BlogPage() {
                                                     </div>
                                                 </div>
 
-                                                <Link
-                                                    href={`/blog/${post.slug || post._id}`}
-                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm flex items-center space-x-1"
-                                                >
-                                                    <span>Read</span>
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </Link>
+                                                <div className="flex items-center gap-2">
+                                                    <motion.button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            if (navigator.share) {
+                                                                navigator.share({
+                                                                    title: post.title,
+                                                                    text: post.excerpt,
+                                                                    url: `${window.location.origin}/blog/${post.slug}`,
+                                                                }).catch(() => {});
+                                                            } else {
+                                                                navigator.clipboard.writeText(`${window.location.origin}/blog/${post.slug}`);
+                                                                toast.success("Link copied!");
+                                                            }
+                                                        }}
+                                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                                        title="Share article"
+                                                        whileHover={{ scale: 1.1 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                    >
+                                                        <Share2 className="w-4 h-4" />
+                                                    </motion.button>
+
+                                                    <Link
+                                                        href={`/blog/${post.slug || post._id}`}
+                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm flex items-center space-x-1"
+                                                    >
+                                                        <span>Read</span>
+                                                        <ArrowRight className="w-4 h-4" />
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
                                     </motion.article>

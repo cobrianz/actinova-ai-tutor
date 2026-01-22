@@ -48,11 +48,6 @@ export default function Footer() {
                 Testimonials
               </Link>
             </li>
-            <li>
-              <Link href="/demo" className="hover:text-white">
-                Demo
-              </Link>
-            </li>
           </ul>
         </div>
 
