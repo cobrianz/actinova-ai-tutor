@@ -53,70 +53,32 @@ export async function POST(request) {
 
     const { db } = await connectToDatabase();
 
-    // ─── USER & MONTHLY LIMITS (auto-reset on 1st of month) ───
-    let user = null;
-    let monthlyUsage = 0;
-    let usageResetDate = new Date();
-
+    // ─── USER & MONTHLY LIMITS (planMiddleware) ───
     if (userId) {
-      user = await db
-        .collection("users")
-        .findOne({ _id: new ObjectId(userId) });
-
-      isPremium =
-        user?.isPremium ||
-        ((user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
-          user?.subscription?.status === "active");
-
-      const now = new Date();
-      const lastReset = user?.usageResetDate
-        ? new Date(user.usageResetDate)
-        : null;
-      const isNewMonth =
-        !lastReset ||
-        lastReset.getMonth() !== now.getMonth() ||
-        lastReset.getFullYear() !== now.getFullYear();
-
-      if (isNewMonth) {
-        monthlyUsage = 0;
-        usageResetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1); // Next month 1st
-        await db
-          .collection("users")
-          .updateOne(
-            { _id: new ObjectId(userId) },
-            { $set: { monthlyUsage: 0, usageResetDate } }
-          );
-        // Refresh user data (db is already available in scope)
-        const updatedUser = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-        monthlyUsage = updatedUser?.monthlyUsage || 0;
-      }
-
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const flashcardCount = await db.collection("cardSets").countDocuments({
-        userId: new ObjectId(userId),
-        createdAt: { $gte: startOfMonth }
-      });
-
-      const limit = isPremium
-        ? LIMITS.premium.monthlyGenerations
-        : LIMITS.free.monthlyGenerations;
-      if (flashcardCount >= limit) {
+      const { checkAPILimit, trackAPIUsage } = await import("@/lib/planMiddleware");
+      
+      const limitCheck = await checkAPILimit(userId, "generate-flashcards");
+      
+      if (!limitCheck.withinLimit) {
         return NextResponse.json(
           {
-            error: `Monthly flashcard limit reached (${limit}). Upgrade for more!`,
-            used: flashcardCount,
-            limit,
-            isPremium,
-            resetsOn: usageResetDate.toLocaleDateString(),
-            upgrade: !isPremium,
+            error: "API rate limit exceeded",
+            message: `You have reached your monthly limit of ${limitCheck.limit} flashcard generations`,
+            remaining: 0,
+            resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
           },
           { status: 429 }
         );
       }
+      
+      // Track usage
+      await trackAPIUsage(userId, "generate-flashcards");
+    }
 
-      // Increment usage
-      await db.collection("users")
-        .updateOne({ _id: new ObjectId(userId) }, { $inc: { monthlyUsage: 1 } });
+    // Determine premium status for generation logic
+    if (userId) {
+      const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+      isPremium = user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
     }
 
     const cardCount =

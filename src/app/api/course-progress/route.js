@@ -39,6 +39,21 @@ async function handlePost(request) {
     const body = await request.json();
     const { courseId, progress, completed, lessonId } = body;
 
+    // === Plan Validation ===
+    const { checkCourseAccess } = await import("@/lib/planMiddleware");
+    const access = await checkCourseAccess(effectiveUser._id || effectiveUser.id, courseId);
+    
+    if (!access.hasAccess) {
+      return NextResponse.json(
+        {
+          error: "Access denied",
+          message: access.reason,
+          requiredTier: access.requiredTier,
+        },
+        { status: 403 }
+      );
+    }
+
     // === Input Validation ===
     if (!courseId || typeof courseId !== "string" || courseId.length < 12) {
       return NextResponse.json(

@@ -74,24 +74,46 @@ export async function GET(request) {
 
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Sanitize output (never leak internal fields)
-    const sanitizedCourses = courses.map((course) => ({
-      id: course._id.toString(),
-      title: course.title,
-      description: course.description,
-      instructor: course.instructor,
-      thumbnail: course.thumbnail,
-      category: course.category,
-      difficulty: course.difficulty,
-      duration: course.duration,
-      lessonsCount: course.lessonsCount,
-      rating: course.rating || 0,
-      students: course.students || 0,
-      isPremium: course.isPremium || false,
-      price: course.price,
-      tags: course.tags || [],
-      createdAt: course.createdAt,
-    }));
+    // Filter based on user's access
+    const authenticatedUserId = await authenticate(request);
+    const { checkCourseAccess } = await import("@/lib/planMiddleware");
+
+    const sanitizedCourses = await Promise.all(
+      courses.map(async (course) => {
+        let hasAccess = true;
+        let accessError = null;
+
+        if (authenticatedUserId && course.isPremium) {
+          const access = await checkCourseAccess(authenticatedUserId.toString(), course._id.toString());
+          hasAccess = access.hasAccess;
+          accessError = access.reason;
+        } else if (!authenticatedUserId && course.isPremium) {
+          hasAccess = false;
+          accessError = "Authentication required for premium courses";
+        }
+
+        return {
+          id: course._id.toString(),
+          title: course.title,
+          description: course.description,
+          instructor: course.instructor,
+          thumbnail: course.thumbnail,
+          category: course.category,
+          difficulty: course.difficulty,
+          duration: course.duration,
+          lessonsCount: course.lessonsCount,
+          rating: course.rating || 0,
+          students: course.students || 0,
+          isPremium: course.isPremium || false,
+          tierRequired: course.tierRequired || "free",
+          price: course.price,
+          tags: course.tags || [],
+          createdAt: course.createdAt,
+          hasAccess,
+          accessError,
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,
