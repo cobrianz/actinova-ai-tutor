@@ -68,7 +68,7 @@ export default function LoginPage() {
         
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transition-all group-hover:scale-110">
               <Sparkles className="w-7 h-7 text-purple-600" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
@@ -123,14 +123,14 @@ export default function LoginPage() {
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none"
-                  required
-                />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full bg-gray-50 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all outline-none"
+                    required
+                  />
               </div>
             </div>
 
@@ -143,14 +143,14 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 pl-12 pr-12 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none"
-                  required
-                />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-gray-50 rounded-xl py-3 pl-12 pr-12 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all outline-none"
+                    required
+                  />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -181,11 +181,11 @@ export default function LoginPage() {
             <span className="relative px-4 bg-white text-xs font-bold text-gray-400 uppercase tracking-widest">Or continue with</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleSocialLogin("oauth_google")}
-              className="flex items-center justify-center space-x-3 py-3 px-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors font-semibold"
-            >
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => handleSocialLogin("oauth_google")}
+                className="flex items-center justify-center space-x-3 py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors font-semibold"
+              >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -206,10 +206,10 @@ export default function LoginPage() {
               </svg>
               <span>Google</span>
             </button>
-            <button
-              onClick={() => handleSocialLogin("oauth_github")}
-              className="flex items-center justify-center space-x-3 py-3 px-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors font-semibold"
-            >
+              <button
+                onClick={() => handleSocialLogin("oauth_github")}
+                className="flex items-center justify-center space-x-3 py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors font-semibold"
+              >
               <Github className="w-5 h-5" />
               <span>GitHub</span>
             </button>

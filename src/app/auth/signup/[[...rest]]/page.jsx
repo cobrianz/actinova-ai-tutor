@@ -94,7 +94,7 @@ export default function SignupPage() {
         
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transition-all group-hover:scale-110">
               <Sparkles className="w-7 h-7 text-purple-600" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
@@ -147,7 +147,7 @@ export default function SignupPage() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <button
               onClick={() => handleSocialSignup("oauth_google")}
-              className="flex items-center justify-center space-x-3 py-3 px-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors font-semibold"
+              className="flex items-center justify-center space-x-3 py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors font-semibold"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
