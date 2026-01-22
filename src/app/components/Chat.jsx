@@ -131,7 +131,7 @@ export default function Chat({ topic: propTopic }) {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [chatTopics, setChatTopics] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
@@ -331,7 +331,7 @@ export default function Chat({ topic: propTopic }) {
     const updatedMessagesWithUser = [...messages, userMessage];
     setMessages(updatedMessagesWithUser);
     setInput("");
-    setLoading(true);
+    setIsSending(true);
 
     try {
       const conversationHistory = messages.map((msg) => ({
@@ -369,7 +369,7 @@ export default function Chat({ topic: propTopic }) {
       console.error("Chat error:", error);
       setMessages((prev) => prev.slice(0, -1));
     } finally {
-      setLoading(false);
+      setIsSending(false);
     }
   };
 
@@ -502,7 +502,7 @@ export default function Chat({ topic: propTopic }) {
                 </div>
               );
             })}
-            {loading && (
+            {isSending && (
               <div className="flex gap-4 md:gap-6">
                 <div className="w-8 h-8 bg-black dark:bg-white rounded-sm flex items-center justify-center mt-1">
                   <Bot className="w-5 h-5 text-white dark:text-black" />
@@ -537,7 +537,7 @@ export default function Chat({ topic: propTopic }) {
                 placeholder={isPro ? "Send a message..." : "Upgrade to Pro to chat"}
                 className="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[24px] py-2 text-gray-900 dark:text-white placeholder-gray-500"
                 rows={1}
-                disabled={!topic || !isPro || loading}
+                disabled={!topic || !isPro || isSending}
                 style={{ height: 'auto' }}
                 onInput={(e) => {
                   e.target.style.height = 'auto';

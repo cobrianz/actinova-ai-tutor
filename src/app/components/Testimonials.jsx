@@ -34,7 +34,7 @@ export default function Testimonials() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -5 }}
-              className="relative p-8 rounded-3xl border border-border bg-card hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300"
+              className="relative p-8 rounded-3xl border border-border-accent bg-card hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300"
             >
               <Quote className="absolute top-6 right-8 w-10 h-10 text-primary/10" />
               

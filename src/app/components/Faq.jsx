@@ -37,7 +37,7 @@ export default function Faq() {
         </div>
 
         <div className="space-y-4">
-          {faqs.map((faq, index) => (
+          {(faqs || []).map((faq, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 10 }}
@@ -48,7 +48,7 @@ export default function Faq() {
                 "rounded-2xl border transition-all duration-300",
                 openIndex === index 
                   ? "border-primary/30 bg-background shadow-xl shadow-primary/5" 
-                  : "border-border bg-background/50 hover:bg-background"
+                  : "border-border-accent bg-background/50 hover:bg-background"
               )}
             >
               <button

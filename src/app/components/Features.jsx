@@ -77,15 +77,15 @@ export default function Features() {
           viewport={{ once: true, margin: "-100px" }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {features.map((feature, index) => {
-            const Icon = iconMap[feature.title] || Zap;
-            return (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                whileHover={{ y: -5 }}
-                className="group relative p-8 rounded-3xl border border-border bg-card/50 hover:bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
-              >
+            {(features || []).map((feature, index) => {
+              const Icon = iconMap[feature.title] || Zap;
+              return (
+                <motion.div
+                  key={index}
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  className="group relative p-8 rounded-3xl border border-border-accent bg-card/50 hover:bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                >
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                   <Icon className="w-6 h-6" />
                 </div>

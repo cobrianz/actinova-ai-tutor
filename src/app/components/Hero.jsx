@@ -90,7 +90,7 @@ export default function Hero({ handleGetStarted }) {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <button className="px-8 py-4 bg-secondary/50 hover:bg-secondary text-foreground rounded-2xl font-semibold text-lg border border-border transition-all flex items-center gap-2">
+            <button className="px-8 py-4 bg-secondary/50 hover:bg-secondary text-foreground rounded-2xl font-semibold text-lg border border-border-accent transition-all flex items-center gap-2">
               <Play className="w-5 h-5 fill-current" />
               See How It Works
             </button>
@@ -99,7 +99,7 @@ export default function Hero({ handleGetStarted }) {
           {/* Floating Stats */}
           <motion.div 
             variants={itemVariants}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 border-t border-border/50"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 border-t border-border-accent/50"
           >
             {stats.map((stat, index) => {
               const Icon = [Users, BookOpen, Trophy, Star][index] || Star;

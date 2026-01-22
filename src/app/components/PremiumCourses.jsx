@@ -32,7 +32,7 @@ export default function PremiumCourses() {
   const [courses, setCourses] = useState([]);
   const [trendingCourses, setTrendingCourses] = useState([]);
   const [featured, setFeatured] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [generatingCourse, setGeneratingCourse] = useState(null);
@@ -74,7 +74,7 @@ export default function PremiumCourses() {
 
   // Ensure there's always one featured course
   useEffect(() => {
-    if (!featured && !loading) {
+    if (!featured && !isDataLoading) {
       // If no featured course is set and we're not loading, pick one
       if (personalizedCourses.length > 0) {
         const featuredCourse =
@@ -89,7 +89,7 @@ export default function PremiumCourses() {
         setFeatured(trendingCourses[0]);
       }
     }
-  }, [featured, loading, personalizedCourses, courses, trendingCourses]);
+  }, [featured, isDataLoading, personalizedCourses, courses, trendingCourses]);
 
   const fetchCourses = async () => {
     try {
@@ -107,7 +107,7 @@ export default function PremiumCourses() {
     } catch (error) {
       console.error("Error fetching premium courses:", error);
     } finally {
-      setLoading(false);
+      setIsDataLoading(false);
     }
   };
 
@@ -202,7 +202,7 @@ export default function PremiumCourses() {
       // Fallback to regular courses
       fetchCourses();
     } finally {
-      setLoading(false);
+      setIsDataLoading(false);
       setGeneratingPersonalized(false);
     }
   };
@@ -765,7 +765,7 @@ export default function PremiumCourses() {
       )}
 
       {/* Premium Courses Grid */}
-      {loading || generatingPersonalized ? (
+      {isDataLoading || generatingPersonalized ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">

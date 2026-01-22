@@ -27,7 +27,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-background pt-24 pb-12 border-t border-border relative overflow-hidden">
+    <footer className="bg-background pt-24 pb-12 border-t border-border-accent relative overflow-hidden">
       {/* Decorative Blur */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
@@ -98,7 +98,7 @@ export default function Footer() {
                 <input
                   type="email"
                   placeholder="your@email.com"
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border-accent focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                 />
               </div>
               <button className="w-full px-4 py-3 bg-foreground text-background rounded-xl font-bold text-sm hover:bg-foreground/90 transition-all">
@@ -109,7 +109,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="pt-12 border-t border-border-accent flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-muted-foreground text-sm font-medium">
             © {new Date().getFullYear()} Actinova AI Tutor. All rights reserved.
           </p>

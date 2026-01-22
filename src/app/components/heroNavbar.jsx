@@ -135,7 +135,7 @@ export default function HeroNavbar({ handleGetStarted }) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-xl bg-secondary/50 border border-border transition-colors"
+            className="md:hidden p-2 rounded-xl bg-secondary/50 border border-border-accent transition-colors"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -162,7 +162,7 @@ export default function HeroNavbar({ handleGetStarted }) {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-4 border-t border-border flex flex-col gap-4">
+              <div className="pt-4 border-t border-border-accent flex flex-col gap-4">
                 {user ? (
                   <button
                     onClick={() => router.push("/dashboard")}

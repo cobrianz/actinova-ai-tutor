@@ -44,7 +44,7 @@ export default function HowItWorks() {
                   className="relative group flex flex-col items-center text-center"
                 >
                   <div className="relative mb-8">
-                    <div className="w-20 h-20 rounded-[2rem] bg-background border border-border flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 group-hover:border-primary group-hover:shadow-primary/20 duration-500">
+                    <div className="w-20 h-20 rounded-[2rem] bg-background border border-border-accent flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 group-hover:border-primary group-hover:shadow-primary/20 duration-500">
                       <Icon className="w-10 h-10 text-primary" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-foreground text-background text-sm font-bold flex items-center justify-center border-4 border-background">
@@ -91,7 +91,7 @@ export default function HowItWorks() {
                 Learn more about adaptive learning <ChevronRight className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 w-full max-w-md bg-secondary/50 rounded-3xl aspect-video relative overflow-hidden border border-border shadow-2xl">
+            <div className="flex-1 w-full max-w-md bg-secondary/50 rounded-3xl aspect-video relative overflow-hidden border border-border-accent shadow-2xl">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-full p-6 space-y-4">
                   {[1,2,3].map(i => (
@@ -101,7 +101,7 @@ export default function HowItWorks() {
                       whileInView={{ x: 0, opacity: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.5 + i*0.2 }}
-                      className="h-12 bg-background rounded-xl border border-border flex items-center px-4 gap-3"
+                      className="h-12 bg-background rounded-xl border border-border-accent flex items-center px-4 gap-3"
                     >
                       <div className="w-6 h-6 rounded-full bg-primary/20" />
                       <div className="h-2 flex-1 bg-muted rounded-full" />
