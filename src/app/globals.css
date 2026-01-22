@@ -1,72 +1,49 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@theme {
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
 
-@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Jost", var(--font-geist-sans);
-  --font-heading: "Bricolage Grotesque", sans-serif;
-  --font-mono: var(--font-geist-mono);
-  --color-primary-50: #f0f2ff;
-  --color-primary-100: #e0e4ff;
-  --color-primary-200: #c7ceff;
-  --color-primary-300: #a3afff;
-  --color-primary-400: #7a87ff;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
-  --color-accent-light: #a855f7;
-  --color-accent: #8b5cf6;
-  --color-accent-dark: #7c3aed;
-  
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
 }
 
 :root {
-  --radius: 0.75rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.585 0.233 277.117);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --foreground: oklch(0.15 0.02 264);
+  --primary: oklch(0.6 0.2 277);
+  --primary-foreground: oklch(0.98 0.01 247);
+  --accent: oklch(0.92 0.04 277);
+  --border: oklch(0.92 0.01 255);
+  --input: oklch(0.92 0.01 255);
+  --ring: oklch(0.6 0.2 277 / 0.5);
 }
 
 .dark {
   --background: oklch(0.12 0.02 264);
   --foreground: oklch(0.98 0.01 247);
-  --card: oklch(0.15 0.02 264);
-  --card-foreground: oklch(0.98 0.01 247);
   --primary: oklch(0.65 0.22 277);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 10%);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-    direction: ltr !important;
-  }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
@@ -76,25 +53,13 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
-  }
-  .glass-dark {
-    @apply bg-black/20 backdrop-blur-xl border border-white/5;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-500 via-accent to-pink-500 bg-clip-text text-transparent;
+    background: linear-gradient(to right, oklch(0.6 0.2 277), oklch(0.65 0.22 277));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  .hide-scrollbar {
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 5s ease-in-out infinite;
 }

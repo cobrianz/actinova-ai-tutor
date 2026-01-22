@@ -1,10 +1,10 @@
 "use client";
 
-import { Sparkles, Play } from "lucide-react";
-import Link from "next/link";
+import { Sparkles, Play, ArrowRight, BookOpen, Users, Trophy, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { data } from "../lib/landingData";
+import { motion } from "framer-motion";
 
 export default function Hero({ handleGetStarted }) {
   const { stats } = data;
@@ -19,138 +19,107 @@ export default function Hero({ handleGetStarted }) {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+  };
+
   return (
-    <section className="relative overflow-hidden pt-32 pb-20 lg:pb-32">
-      {/* Animated Background Gradient */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-500 via-blue-400 to-transparent opacity-60 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-500 via-purple-400 to-transparent opacity-60 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-gradient-to-br from-pink-500 via-purple-400 to-transparent opacity-60 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-32 pb-20">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+        
+        {/* Subtle Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
-      {/* SVG Background Elements */}
-      <svg
-        className="absolute top-20 left-10 w-32 h-32 opacity-10 animate-float"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M50 10 L90 90 L10 90 Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="text-blue-700"
-        />
-        <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-700" />
-      </svg>
-
-      <svg
-        className="absolute bottom-20 right-10 w-40 h-40 opacity-10 animate-float animation-delay-1000"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-700" />
-        <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-700" />
-        <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-700" />
-      </svg>
-
-      <svg
-        className="absolute top-1/2 right-20 w-32 h-32 opacity-10 animate-pulse"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect x="10" y="10" width="80" height="80" fill="none" stroke="currentColor" strokeWidth="2" className="text-pink-700" rx="10" />
-        <line x1="50" y1="10" x2="50" y2="90" stroke="currentColor" strokeWidth="2" className="text-pink-700" />
-        <line x1="10" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="2" className="text-pink-700" />
-      </svg>
-
-      {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-900/60 dark:to-purple-900/60 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-blue-300/70 dark:border-blue-600/70">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="text-center"
+        >
+          <motion.div 
+            variants={itemVariants}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-sm font-medium mb-8"
+          >
             <Sparkles className="w-4 h-4" />
-            <span>Powered by Advanced AI</span>
-          </div>
+            <span>Next-Generation Personalized Learning</span>
+          </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            Master Any Skill with
-            <span className="bg-gradient-to-r from-blue-700 via-purple-700 to-pink-600 bg-clip-text text-transparent">
-              {" "}
-              AI-Powered
-            </span>
-            <br />
-            Learning
-          </h1>
+          <motion.h1 
+            variants={itemVariants}
+            className="text-5xl md:text-8xl font-bold mb-8 leading-[1.1] tracking-tight"
+          >
+            Master any skill with
+            <span className="block text-gradient">AI-Powered Intelligence</span>
+          </motion.h1>
 
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Get personalized learning paths, track your progress, and achieve
-            your goals faster with our intelligent tutoring system. Join over
-            100,000 learners worldwide.
-          </p>
+          <motion.p 
+            variants={itemVariants}
+            className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
+          >
+            Achieve your goals faster with a tutor that adapts to your unique learning style. 
+            Join thousands of students unlocking their full potential.
+          </motion.p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
+          >
             <button
               onClick={handleCTAClick}
-              className="bg-gradient-to-r from-blue-700 via-purple-700 to-pink-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:shadow-purple-600/60 transition-all flex items-center space-x-2 shadow-lg transform hover:scale-105"
+              className="group relative px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-semibold text-lg overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Play className="w-5 h-5" />
-              <span>{user ? "Continue Learning" : "Start Learning Free"}</span>
+              <span className="relative z-10 flex items-center gap-2">
+                {user ? "Continue Your Journey" : "Start Learning Free"}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
             </button>
-          </div>
+            <button className="px-8 py-4 bg-secondary/50 hover:bg-secondary text-foreground rounded-2xl font-semibold text-lg border border-border transition-all flex items-center gap-2">
+              <Play className="w-5 h-5 fill-current" />
+              See How It Works
+            </button>
+          </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center p-4 rounded-xl bg-gradient-to-br from-white/60 to-white/30 dark:from-gray-800/70 dark:to-gray-800/30 backdrop-blur-md border border-white/40 dark:border-gray-700/40">
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-700 via-purple-700 to-pink-600 bg-clip-text text-transparent mb-1">
-                  {stat.value}
+          {/* Floating Stats */}
+          <motion.div 
+            variants={itemVariants}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 border-t border-border/50"
+          >
+            {stats.map((stat, index) => {
+              const Icon = [Users, BookOpen, Trophy, Star][index] || Star;
+              return (
+                <div key={index} className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center mb-3">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="text-2xl md:text-3xl font-bold text-foreground">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-muted-foreground uppercase tracking-wider font-medium">
+                    {stat.label}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
       </div>
-
-      <style jsx>{`
-        @keyframes blob {
-          0%,
-          100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-        }
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animation-delay-1000 {
-          animation-delay: 1s;
-        }
-      `}</style>
     </section>
   );
 }

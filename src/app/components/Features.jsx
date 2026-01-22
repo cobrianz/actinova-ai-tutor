@@ -1,40 +1,18 @@
-import {
-  Sparkles,
-  BookOpen,
-  Users,
-  Target,
-  Clock,
-  Award,
-  MessageCircle,
-  TrendingUp,
-  Search,
-  FileText,
-  Zap,
-  Brain,
-  Rocket,
-  Star,
-  CheckCircle,
-  ArrowRight,
-  Play,
+"use client";
+
+import { motion } from "framer-motion";
+import { 
+  Zap, 
+  Brain, 
+  Target, 
+  TrendingUp, 
+  Clock, 
+  Shield, 
+  BookOpen, 
+  Smartphone,
+  ChevronRight
 } from "lucide-react";
 import { data } from "../lib/landingData";
-import { motion } from "framer-motion";
-
-const iconMap = {
-  Sparkles: Sparkles,
-  BookOpen: BookOpen,
-  Users: Users,
-  Target: Target,
-  Clock: Clock,
-  Award: Award,
-  MessageCircle: MessageCircle,
-  TrendingUp: TrendingUp,
-  Search: Search,
-  FileText: FileText,
-  Zap: Zap,
-  Brain: Brain,
-  Rocket: Rocket,
-};
 
 export default function Features() {
   const { features } = data;
@@ -42,132 +20,168 @@ export default function Features() {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
-      opacity: 1, 
+      opacity: 1,
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.2,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { y: 20, opacity: 0 },
     visible: {
-      opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut",
-      },
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" },
     },
   };
 
+  // Map icons to features (fallback to Zap if not found)
+  const iconMap = {
+    "Personalized Paths": Brain,
+    "Smart Progress": TrendingUp,
+    "Real-time Feedback": Zap,
+    "Expert Content": BookOpen,
+    "Learn Anywhere": Smartphone,
+    "Secure & Private": Shield,
+  };
+
   return (
-    <section id="features" className="py-24 bg-gradient-to-b from-white to-blue-50/20 dark:from-gray-900 dark:to-blue-950/10 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-200/30 to-transparent rounded-full blur-3xl -z-10"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-200/30 to-transparent rounded-full blur-3xl -z-10"></div>
-
+    <section id="features" className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Professional Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-20"
-        >
-          <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-blue-700 dark:text-blue-300 rounded-full text-sm font-semibold mb-8 border border-blue-200/50 dark:border-blue-800/50">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Why Choose Actinova AI Tutor?
-          </div>
+        <div className="text-center mb-20">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold mb-6 tracking-tight"
+          >
+            Supercharge Your <span className="text-gradient">Learning Experience</span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-muted-foreground max-w-2xl mx-auto"
+          >
+            Discover a suite of intelligent tools designed to help you learn faster, 
+            retain more, and achieve your educational goals with ease.
+          </motion.p>
+        </div>
 
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            Revolutionize Your{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Learning Experience
-            </span>
-          </h2>
-
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Experience the future of education with our AI-powered platform that
-            adapts to your needs, tracks your progress, and connects you with a
-            global community of learners.
-          </p>
-        </motion.div>
-
-        {/* Clean Feature Grid */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {features.map((feature, index) => {
-            const Icon = iconMap[feature.icon];
+            const Icon = iconMap[feature.title] || Zap;
             return (
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="group relative bg-gradient-to-br from-white/80 to-blue-50/40 dark:from-gray-800/60 dark:to-gray-900/40 p-6 rounded-2xl border border-white/50 dark:border-gray-700/50 hover:border-blue-300/60 dark:hover:border-blue-600/60 backdrop-blur-sm shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 h-full flex flex-col"
+                whileHover={{ y: -5 }}
+                className="group relative p-8 rounded-3xl border border-border bg-card/50 hover:bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-blue-500/5 group-hover:via-purple-500/5 group-hover:to-pink-500/5 rounded-2xl transition-all duration-300 -z-10"></div>
-
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all flex-shrink-0">
-                  <Icon className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <Icon className="w-6 h-6" />
                 </div>
-
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 flex-grow">
+                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
                   {feature.title}
                 </h3>
-
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
+                
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                </div>
               </motion.div>
             );
           })}
         </motion.div>
 
-        {/* Enhanced Stats Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+        {/* Highlight Section / Social Proof */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="bg-gradient-to-r from-white/80 to-blue-50/60 dark:from-gray-800/60 dark:to-gray-900/40 rounded-3xl p-12 border border-white/50 dark:border-gray-700/50 backdrop-blur-sm shadow-lg"
+          className="mt-20 p-8 md:p-12 rounded-[2.5rem] bg-foreground text-background relative overflow-hidden group"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="group">
-              <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2 group-hover:from-blue-700 group-hover:to-blue-800 transition-all">
-                10K+
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-semibold">
-                Active Learners
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-colors" />
+          
+          <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+                Ready to transform your learning journey?
+              </h3>
+              <p className="text-background/80 text-lg mb-8">
+                Join 50,000+ students who are already using Actinova AI to accelerate their growth.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex -space-x-2">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-foreground bg-secondary-foreground overflow-hidden">
+                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col justify-center">
+                  <div className="flex items-center gap-1 text-primary">
+                    {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
+                  </div>
+                  <span className="text-sm font-medium">4.9/5 from 2,000+ reviews</span>
+                </div>
               </div>
             </div>
-
-            <div className="group border-l border-r border-gray-200 dark:border-gray-700">
-              <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent mb-2 group-hover:from-purple-700 group-hover:to-purple-800 transition-all">
-                500+
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-semibold">
-                AI Courses
-              </div>
-            </div>
-
-            <div className="group">
-              <div className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-pink-700 bg-clip-text text-transparent mb-2 group-hover:from-pink-700 group-hover:to-pink-800 transition-all">
-                98%
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-semibold">
-                Satisfaction Rate
+            <div className="bg-background/10 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+              <div className="space-y-4">
+                {[
+                  { label: "Adaptive Learning Rate", value: "94%" },
+                  { label: "Retention Improvement", value: "2.4x" },
+                  { label: "Completion Rate", value: "88%" }
+                ].map((stat, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <span className="text-sm font-medium opacity-80">{stat.label}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-32 h-2 bg-background/20 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "100%" }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.5 + i*0.1, duration: 1 }}
+                          className="h-full bg-primary"
+                        />
+                      </div>
+                      <span className="text-lg font-bold">{stat.value}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </motion.div>
       </div>
     </section>
+  );
+}
+
+function Star({ className }) {
+  return (
+    <svg 
+      className={className} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
   );
 }
