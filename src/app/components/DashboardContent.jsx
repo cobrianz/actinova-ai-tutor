@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Generate from "./Generate";
 import Explore from "./Explore";
@@ -95,34 +95,40 @@ export default function DashboardContent() {
             : "relative max-w-[90rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 z-10"
         }
       >
-        {!isChat && (
-          <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                  {greeting}, <span className="text-primary">{user?.firstName || "Learner"}</span>
-                </h1>
-                <p className="mt-2 text-muted-foreground text-lg">
-                  What would you like to master today?
-                </p>
+          {!isChat && (
+            <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                      Personalized Learning
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                    {greeting}, <span className="text-primary">{user?.firstName || "Learner"}</span>
+                  </h1>
+                  <p className="mt-3 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+                    Ready to expand your knowledge? Choose a path below to begin your journey.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-muted/30 backdrop-blur-md border border-border/40 p-1.5 rounded-2xl shadow-sm">
+                  <button 
+                    onClick={() => setActiveContent('generate')}
+                    className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeContent === 'generate' ? 'bg-background text-primary shadow-lg shadow-primary/5 border border-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                  >
+                    Create
+                  </button>
+                  <button 
+                    onClick={() => setActiveContent('explore')}
+                    className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeContent === 'explore' ? 'bg-background text-primary shadow-lg shadow-primary/5 border border-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                  >
+                    Explore
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 bg-muted/50 backdrop-blur-sm border border-border/40 p-1.5 rounded-2xl shadow-sm">
-                <button 
-                  onClick={() => setActiveContent('generate')}
-                  className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${activeContent === 'generate' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  Create
-                </button>
-                <button 
-                  onClick={() => setActiveContent('explore')}
-                  className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${activeContent === 'explore' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  Explore
-                </button>
-              </div>
-            </div>
-          </header>
-        )}
+            </header>
+          )}
 
         <div className={isChat ? "h-full" : "relative"}>
           {ContentComponent ? (

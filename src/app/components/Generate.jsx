@@ -403,18 +403,19 @@ function PopularTopics({ setTopic, setLocalTopic }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {topics.map((topicOption) => (
-        <button
-          key={topicOption}
-          onClick={() => {
-            setTopic(topicOption);
-            setLocalTopic(topicOption);
-          }}
-          className="p-4 text-left bg-card hover:bg-muted/50 border border-border/40 rounded-2xl hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all group/topic"
-        >
-          <span className="text-sm font-semibold text-foreground line-clamp-2 group-hover/topic:text-primary transition-colors">
-            {topicOption}
-          </span>
-        </button>
+          <button
+            key={topicOption}
+            onClick={() => {
+              setTopic(topicOption);
+              setLocalTopic(topicOption);
+            }}
+            className="p-4 text-left bg-card hover:bg-primary/5 border border-border/40 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group/topic relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 rounded-full -mr-6 -mt-6 blur-xl opacity-0 group-hover/topic:opacity-100 transition-opacity" />
+            <span className="text-sm font-bold text-foreground line-clamp-2 group-hover/topic:text-primary transition-colors relative z-10">
+              {topicOption}
+            </span>
+          </button>
       ))}
     </div>
   );
