@@ -7,12 +7,12 @@ import { ObjectId } from "mongodb";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Cache: 6 trending courses, refreshed every 24 hours
+// Cache: 6 trending courses, refreshed every 30 days
 let cachedCourses = null;
 let cacheTime = null;
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// Daily cleanup at 3 AM UTC
+// Monthly cleanup logic
 export const dynamic = "force-dynamic";
 
 async function generateTrendingCourses(user = null) {
@@ -28,12 +28,12 @@ async function generateTrendingCourses(user = null) {
     }
   }
 
-  // Try fresh DB entries (last 24h, user-specific)
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  // Try fresh DB entries (last 30 days, user-specific)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const recent = await col
     .find({
       userId,
-      generatedAt: { $gte: oneDayAgo }
+      generatedAt: { $gte: thirtyDaysAgo }
     })
     .limit(6)
     .toArray();
@@ -176,13 +176,13 @@ function getFallbackCourses() {
   ];
 }
 
-// Daily cleanup (run via cron or Vercel Cron)
+// Monthly cleanup (run via cron or Vercel Cron)
 export async function cleanupOldTrendingCourses() {
   try {
     const { db } = await connectToDatabase();
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const result = await db.collection("premium_trending_courses").deleteMany({
-      generatedAt: { $lt: oneDayAgo },
+      generatedAt: { $lt: thirtyDaysAgo },
     });
     console.log(`Cleaned ${result.deletedCount} old trending courses (all users)`);
   } catch (e) {

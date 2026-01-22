@@ -259,7 +259,7 @@ export function withAPIRateLimit(handler, apiName) {
             return response;
         } catch (error) {
             console.error(`Rate limit error in ${apiName}:`, error);
-            return handler(request, context); // Fail open on error
+            throw error; // Re-throw the error instead of trying to call handler again
         }
     };
 }

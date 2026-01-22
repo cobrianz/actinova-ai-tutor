@@ -8,7 +8,10 @@ import { getUserPlanLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withAPIRateLimit } from "@/lib/planMiddleware";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "https://api.openai.com/v1"
+});
 
 async function handlePost(request) {
   const user = request.user;
@@ -67,7 +70,7 @@ async function handlePost(request) {
           messages: [
             {
               role: "system",
-              content: `Generate a complete course outline for "${topic}" at ${difficulty} level.
+              content: `Generate a complete course outline in JSON format for "${topic}" at ${difficulty} level.
               ... (rest of the prompt remains the same) ...`,
             },
             {
@@ -154,7 +157,7 @@ async function handlePost(request) {
       messages: [
         {
           role: "system",
-          content: `Generate a complete course outline for "${topic}" at ${difficulty} level.
+          content: `Generate a complete course outline in JSON format for "${topic}" at ${difficulty} level.
           ... (rest of prompt) ...`,
         },
         {
@@ -224,7 +227,13 @@ async function handlePost(request) {
       isPremium,
     });
   } catch (error) {
-    console.error("Course generation failed:", error);
+    console.error("Course generation failed! Error details:", {
+      message: error.message,
+      code: error.code,
+      type: error.type,
+      stack: error.stack,
+      cause: error.cause
+    });
     throw error; // Handled by withErrorHandling
   }
 }

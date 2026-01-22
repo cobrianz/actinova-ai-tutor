@@ -20,6 +20,12 @@ export async function GET(request) {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const userId = user?._id?.toString() || "anonymous";
 
+    // Strictly enforce weekly cleanup of user's exploration history
+    await db.collection("exploredCourses").deleteMany({
+      userId,
+      generatedAt: { $lt: weekAgo }
+    });
+
     const cached = await db.collection("explore_trending").findOne({
       userId,
       createdAt: { $gte: weekAgo },
