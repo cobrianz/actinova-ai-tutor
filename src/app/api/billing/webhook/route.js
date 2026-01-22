@@ -42,7 +42,7 @@ async function addBillingEntry(userId, data, source = "webhook") {
 
   const entry = {
     type: "subscription",
-    plan: data.metadata?.plan || "pro",
+    plan: data.metadata?.plan || "premium",
     billingCycle: data.metadata?.billingCycle || "monthly",
     amount: data.amount / 100,
     currency: data.currency,

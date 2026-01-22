@@ -111,11 +111,15 @@ function CheckoutContent() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/stripe/create-checkout", {
+      const res = await fetch("/api/billing/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ planId: selectedPlan }),
+        body: JSON.stringify({ 
+          plan: selectedPlan,
+          billingCycle: "monthly",
+          paymentMethod: "card"
+        }),
       });
 
       const data = await res.json();
@@ -350,14 +354,14 @@ function CheckoutContent() {
               transition={{ delay: 0.4 }}
               className="sticky top-8 bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-800">
-                <h2 className="text-xl font-semibold text-white mb-1">
-                  Order Summary
-                </h2>
-                <p className="text-slate-400 text-sm">
-                  Secure checkout powered by Stripe
-                </p>
-              </div>
+                <div className="p-6 border-b border-slate-800">
+                  <h2 className="text-xl font-semibold text-white mb-1">
+                    Order Summary
+                  </h2>
+                  <p className="text-slate-400 text-sm">
+                    Secure checkout powered by Paystack
+                  </p>
+                </div>
 
               <div className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
@@ -505,10 +509,10 @@ function CheckoutContent() {
               <span>PCI Compliant</span>
             </div>
             <div className="h-4 w-px bg-slate-700"></div>
-            <div className="flex items-center gap-2 text-slate-400 text-sm">
-              <CreditCard className="w-4 h-4" />
-              <span>Powered by Stripe</span>
-            </div>
+              <div className="flex items-center gap-2 text-slate-400 text-sm">
+                <CreditCard className="w-4 h-4" />
+                <span>Powered by Paystack</span>
+              </div>
           </div>
         </motion.div>
         </div>

@@ -57,14 +57,6 @@ export default function AboutPage() {
     },
   ]
 
-  const milestones = [
-    { year: "2022", event: "Company founded with a vision to revolutionize online learning" },
-    { year: "2023", event: "Launched beta version with 1,000 early adopters" },
-    { year: "2023", event: "Raised $5M Series A funding" },
-    { year: "2024", event: "Reached 100,000+ active learners worldwide" },
-    { year: "2024", event: "Launched AI-powered personalized learning paths" },
-  ]
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

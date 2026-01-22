@@ -91,13 +91,26 @@ async function createCheckoutSessionHandler(request) {
     } = await request.json();
 
     // ------------------------------------------------------------------
-    // 1. Fetch Plan Details from DB
+    // 1. Fetch Plan Details (DB with hardcoded fallback)
     // ------------------------------------------------------------------
     const { db } = await connectToDatabase();
-    const dbPlans = await db.collection("plans").find({ status: "active" }).toArray();
+    let dbPlans = [];
+    try {
+      dbPlans = await db.collection("plans").find({ status: "active" }).toArray();
+    } catch (e) {
+      console.warn("Could not fetch plans from DB, using fallbacks");
+    }
+
+    // Hardcoded fallbacks if DB is empty
+    if (dbPlans.length === 0) {
+      dbPlans = [
+        { id: "premium", name: "Premium", price: 9.99, status: "active" },
+        { id: "enterprise", name: "Enterprise", price: 29.99, status: "active" }
+      ];
+    }
 
     // Logic to match the requested plan ID
-    const targetPlanId = plan || "pro";
+    const targetPlanId = plan || "premium";
 
     console.log("Debug Plan Selection:", {
       targetPlanId,

@@ -256,7 +256,7 @@ export async function GET(request) {
       .catch(() => console.warn("Email module not available"));
 
     // === 9. Success! ===
-    const successUrl = `/dashboard?payment=success&plan=${plan}&cycle=${billingCycle}&ref=${data.reference}&amount=${data.amount / 100}`;
+    const successUrl = `/checkout/success?plan=${plan}&cycle=${billingCycle}&ref=${data.reference}&amount=${data.amount / 100}`;
     // verification complete
     return redirectTo(request, successUrl);
   } catch (error) {
