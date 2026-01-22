@@ -1,9 +1,17 @@
 import "./globals.css";
-import { Jost } from "next/font/google";
+import { Inter, Bricolage_Grotesque } from "next/font/google";
 import { AuthProvider } from "./components/AuthProvider";
 import ToasterClient from "./components/ToasterClient";
 
-const jost = Jost({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+});
 
 export const metadata = {
   title: "Actinova AI Tutor - Personalized Learning Platform",
@@ -15,9 +23,9 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
+    <html lang="en" dir="ltr" className={`${inter.variable} ${bricolage.variable}`} suppressHydrationWarning>
       <body
-        className={jost.className}
+        className="font-sans antialiased"
         suppressHydrationWarning={true}
         dir="ltr"
       >
