@@ -27,16 +27,7 @@ export default function Navbar({ toggleSidebar }) {
   const [usageStats, setUsageStats] = useState(null);
   const userMenuRef = useRef(null);
 
-    const [greeting, setGreeting] = useState("");
-
-    useEffect(() => {
-        const hour = new Date().getHours();
-        if (hour < 12) setGreeting("Good morning");
-        else if (hour < 17) setGreeting("Good afternoon");
-        else setGreeting("Good evening");
-    }, []);
-
-    const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await fetch("/api/logout", { method: "POST" });
       logout();
@@ -104,67 +95,55 @@ export default function Navbar({ toggleSidebar }) {
     checkUsageStats();
   }, [user]);
 
-    return (
+  return (
     <>
-      <header className="sticky top-0 left-0 right-0 z-[100] border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 sm:px-6 py-3 sm:py-4 sticky top-0 left-0 right-0 z-40">
+        <div className="flex items-center justify-between">
           {/* Left Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={toggleSidebar}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/40 bg-background/50 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground lg:hidden"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="Toggle sidebar"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="w-5 h-5" />
             </button>
-            
-            <div className="flex items-center gap-2">
-              <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/20">
-                  <img src="/logo.png" alt="Logo" className="h-5 w-5 brightness-0 invert" />
-                </div>
-                <span className="hidden text-lg font-bold tracking-tight text-foreground sm:inline-block">
-                  Actinova
-                </span>
-              </Link>
-            </div>
-
-            <nav className="hidden lg:ml-6 lg:flex lg:items-center lg:gap-4">
+            <nav className="hidden sm:flex items-center space-x-3 md:space-x-4">
+              {(!user || pathname !== "/") && (
+                <Link
+                  href="/"
+                  className="flex items-center space-x-1 text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  aria-label="Home"
+                >
+                  <Home className="w-4 h-4" />
+                  {/* Home text removed; icon remains */}
+                </Link>
+              )}
               <Link
                 href="/dashboard"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"
+                className={`text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${
+                  pathname === "/dashboard"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-900 dark:text-gray-100"
                 }`}
               >
                 Dashboard
-              </Link>
-              <Link
-                href="/explore"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                Explore
               </Link>
             </nav>
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden items-center gap-1 sm:flex">
-              <span className="text-xs font-medium text-muted-foreground">{greeting},</span>
-              <span className="text-xs font-semibold text-foreground">
-                {user?.firstName || "Learner"}
-              </span>
-            </div>
-
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/40 bg-background/50 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
-                <Moon className="h-4 w-4" />
+                <Moon className="w-5 h-5" />
               ) : (
-                <Sun className="h-4 w-4" />
+                <Sun className="w-5 h-5" />
               )}
             </button>
 
@@ -173,57 +152,58 @@ export default function Navbar({ toggleSidebar }) {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="group flex items-center gap-2 rounded-full border border-border/40 bg-background/50 p-1 pr-2 transition-colors hover:bg-accent"
+                  className="flex items-center space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="User menu"
+                  aria-expanded={showUserMenu}
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm">
-                    {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-600 text-white dark:bg-blue-500">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div className="hidden flex-col items-start gap-0 sm:flex">
-                    <span className="text-[10px] font-medium leading-none text-muted-foreground group-hover:text-foreground">
-                      Account
-                    </span>
-                  </div>
+                  {/* Remove email/name; keep theme-styled user icon only */}
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-border/40 bg-background/95 p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-3 py-2">
-                      <p className="text-xs font-medium text-muted-foreground">Logged in as</p>
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {user.email}
-                      </p>
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="py-1">
+                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {user.firstName && user.lastName
+                            ? `${user.firstName} ${user.lastName}`
+                            : user.firstName || user.email || "User"}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (pathname.startsWith("/dashboard")) {
+                            // If on dashboard, navigate to profile tab
+                            const params = new URLSearchParams(
+                              window.location.search
+                            );
+                            params.set("tab", "profile");
+                            router.push(`/dashboard?${params.toString()}`);
+                          } else {
+                            // Otherwise, go to dashboard with profile tab
+                            router.push("/dashboard?tab=profile");
+                          }
+                          setShowUserMenu(false);
+                        }}
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Profile</span>
+                      </button>
+                      <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign out</span>
+                      </button>
                     </div>
-                    <div className="my-1 h-px bg-border/40" />
-                    <button
-                      onClick={() => {
-                        const params = new URLSearchParams(window.location.search);
-                        params.set("tab", "profile");
-                        router.push(`/dashboard?${params.toString()}`);
-                        setShowUserMenu(false);
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <User className="h-4 w-4" />
-                      <span>Profile Settings</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        router.push("/help");
-                        setShowUserMenu(false);
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span>Help & Support</span>
-                    </button>
-                    <div className="my-1 h-px bg-border/40" />
-                    <button
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign out</span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -232,5 +212,5 @@ export default function Navbar({ toggleSidebar }) {
         </div>
       </header>
     </>
-    );
+  );
 }
