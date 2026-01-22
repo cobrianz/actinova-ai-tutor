@@ -66,7 +66,7 @@ export async function POST(request) {
     }
     // Enforce per-user test limits using planLimits.js
     const user = await User.findById(userId);
-    const { getUserPlanLimits } = await import("@/app/lib/planLimits");
+    const { getUserPlanLimits } = await import("@/lib/planLimits");
     const planLimits = getUserPlanLimits(user);
     const testLimit = planLimits.quizzes;
 

@@ -82,7 +82,7 @@ export async function GET() {
       (user.subscription?.plan === "premium" &&
         user.subscription?.status === "active");
 
-    const { getUserPlanLimits } = await import("@/app/lib/planLimits");
+    const { getUserPlanLimits } = await import("@/lib/planLimits");
     const limits = getUserPlanLimits(user);
 
     const usage = {
