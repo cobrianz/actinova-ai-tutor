@@ -68,7 +68,7 @@ export async function POST(request) {
     const user = await User.findById(userId);
     const isPremium =
       user?.isPremium === true ||
-      (user?.subscription?.plan === "pro" &&
+      (user?.subscription?.plan === "premium" &&
         user?.subscription?.status === "active");
     // Count tests created in current month
     const now = new Date();

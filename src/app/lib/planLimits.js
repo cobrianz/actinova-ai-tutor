@@ -12,7 +12,7 @@ export function getUserPlanLimits(user) {
     }
 
     const subscription = user.subscription;
-    const isPremium = user.isPremium || (subscription?.plan === 'pro' && subscription?.status === 'active');
+    const isPremium = user.isPremium || (subscription?.plan === 'premium' && subscription?.status === 'active');
     const isEnterprise = subscription?.plan === 'enterprise' && subscription?.status === 'active';
 
     if (isEnterprise) {
@@ -68,7 +68,7 @@ export function getUserPlanName(user) {
 
     const subscription = user.subscription;
     const isEnterprise = subscription?.plan === 'enterprise' && subscription?.status === 'active';
-    const isPremium = user.isPremium || (subscription?.plan === 'pro' && subscription?.status === 'active');
+    const isPremium = user.isPremium || (subscription?.plan === 'premium' && subscription?.status === 'active');
 
     if (isEnterprise) return 'Enterprise';
     if (isPremium) return 'Premium';

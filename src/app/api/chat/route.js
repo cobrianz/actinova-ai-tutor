@@ -15,10 +15,11 @@ async function requirePremium(userId) {
   const user = await User.findById(userId).lean();
   if (!user) throw new Error("User not found");
 
-  const isPremium =
-    user.isPremium ||
-    ((user.subscription?.plan === "pro" || user.subscription?.plan === "enterprise") &&
-      user.subscription?.status === "active");
+    const isPremium =
+      user.isPremium ||
+      ((user.subscription?.plan === "premium" || user.subscription?.plan === "enterprise") &&
+        user.subscription?.status === "active");
+
 
   if (!isPremium) {
     throw new Error("Premium subscription required for AI Tutor");

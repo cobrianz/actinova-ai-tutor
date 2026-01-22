@@ -79,14 +79,17 @@ export async function GET() {
 
     const isPremium =
       user.isPremium ||
-      (user.subscription?.plan === "pro" &&
+      (user.subscription?.plan === "premium" &&
         user.subscription?.status === "active");
+
+    const { getUserPlanLimits } = await import("@/app/lib/planLimits");
+    const limits = getUserPlanLimits(user);
 
     const usage = {
       used: monthlyUsage,
-      limit: isPremium ? 15 : 5,
-      remaining: Math.max(0, (isPremium ? 15 : 5) - monthlyUsage),
-      percentage: Math.round((monthlyUsage / (isPremium ? 15 : 5)) * 100),
+      limit: limits.courses,
+      remaining: Math.max(0, limits.courses - monthlyUsage),
+      percentage: Math.round((monthlyUsage / limits.courses) * 100),
       isPremium,
       resetsOn: new Date(
         now.getFullYear(),

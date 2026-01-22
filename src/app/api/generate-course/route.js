@@ -85,7 +85,7 @@ export async function POST(request) {
     let isPremium = false;
     if (userId) {
       const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-      isPremium = user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
+      isPremium = user?.isPremium || (user?.subscription?.plan === "premium" || user?.subscription?.plan === "enterprise") && user?.subscription?.status === "active";
     }
 
     if (format === "quiz") {
