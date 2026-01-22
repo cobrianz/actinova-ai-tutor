@@ -178,6 +178,9 @@ const userSchema = new mongoose.Schema(
         paystackAuthorizationCode: String,
         paystackCardType: String,
         paystackLast4: String,
+        stripeCustomerId: String,
+        stripeSubscriptionId: String,
+        stripeSessionId: String,
         startedAt: Date,
         startDate: Date,
         expiresAt: Date,
@@ -191,6 +194,10 @@ const userSchema = new mongoose.Schema(
           default: true,
         },
       },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
     billingHistory: [
       {
         type: {

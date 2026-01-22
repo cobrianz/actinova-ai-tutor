@@ -77,7 +77,6 @@ export default function PricingPage() {
   const currentPlanId = getUserPlanId();
   const isPro = currentPlanId === 'premium' || currentPlanId === 'enterprise';
 
-  // Step 1: User clicks "Subscribe" -> Check auth & plan status -> Open Modal
   const initiatePaymentSelection = (plan) => {
     if (!plan.id) {
       console.error("Plan ID missing");
@@ -105,12 +104,11 @@ export default function PricingPage() {
 
     if (!user) {
       toast.error("Please login to subscribe");
-      router.push("/auth/login");
+      router.push("/auth/login?redirect=/checkout");
       return;
     }
 
-    // Open modal
-    setSelectedPlanForModal(plan);
+    router.push(`/checkout?plan=${plan.id}`);
   };
 
   // Step 2: User selects method -> API call

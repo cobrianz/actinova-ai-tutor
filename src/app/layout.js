@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Jost, Bricolage_Grotesque } from "next/font/google";
 import { AuthProvider } from "./components/AuthProvider";
+import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
 
 const jost = Jost({ 
@@ -31,8 +32,10 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning={true}
       >
         <AuthProvider>
-          {children}
-          <ToasterClient />
+          <ThemeProvider>
+            {children}
+            <ToasterClient />
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

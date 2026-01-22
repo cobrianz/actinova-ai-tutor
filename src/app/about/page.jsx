@@ -220,37 +220,39 @@ export default function AboutPage() {
           </div>
         </motion.div>
 
-        {/* Timeline Section */}
+        {/* Mission & Vision Section */}
         <motion.div
           className="mb-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Journey</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Key milestones in our mission to transform education
-            </p>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-stretch">
+            <motion.div 
+              className="p-8 rounded-3xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 backdrop-blur-sm"
+              whileHover={{ scale: 1.02 }}
+            >
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                <Target className="w-8 h-8 text-blue-500" />
+                Our Mission
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                To empower every individual on the planet with a personalized AI tutor that understands their unique learning style, accelerates their growth, and unlocks their full potential through the power of adaptive technology.
+              </p>
+            </motion.div>
 
-          <div className="max-w-3xl mx-auto">
-            {milestones.map((milestone, index) => (
-              <motion.div
-                key={index}
-                className="flex items-start space-x-4 mb-8 last:mb-0"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">{milestone.year}</span>
-                </div>
-                <div className="flex-1 pt-3">
-                  <p className="text-gray-900 dark:text-white font-medium">{milestone.event}</p>
-                </div>
-              </motion.div>
-            ))}
+            <motion.div 
+              className="p-8 rounded-3xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 backdrop-blur-sm"
+              whileHover={{ scale: 1.02 }}
+            >
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                <Sparkles className="w-8 h-8 text-purple-500" />
+                Our Vision
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                A world where high-quality, personalized education is a universal right, not a privilege—where geographical and economic barriers to learning are dismantled by intelligent, accessible, and empathetic AI companions.
+              </p>
+            </motion.div>
           </div>
         </motion.div>
 
