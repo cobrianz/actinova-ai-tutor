@@ -25,9 +25,9 @@ import { toast } from "sonner";
 
 export default function PremiumCourses() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
-  if (loading) return <ActinovaLoader />;
+  if (authLoading) return <ActinovaLoader />;
   if (!user) return null;
   const [courses, setCourses] = useState([]);
   const [trendingCourses, setTrendingCourses] = useState([]);
@@ -157,9 +157,9 @@ export default function PremiumCourses() {
           new Date() - new Date(parsed.generatedAt) < 24 * 60 * 60 * 1000
         ) {
           // 24 hours
-          setPersonalizedCourses(parsed.courses);
-          setLoading(false);
-          setGeneratingPersonalized(false);
+            setPersonalizedCourses(parsed.courses);
+            setIsDataLoading(false);
+            setGeneratingPersonalized(false);
           return;
         }
       }

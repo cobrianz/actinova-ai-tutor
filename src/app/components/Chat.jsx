@@ -77,9 +77,9 @@ export default function Chat({ topic: propTopic }) {
   const [topicInput, setTopicInput] = useState("");
   const [showTopicInput, setShowTopicInput] = useState(!propTopic && !urlTopic);
   const messagesEndRef = useRef(null);
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
-  if (loading) return <ActinovaLoader />;
+  if (authLoading) return <ActinovaLoader />;
   if (!user) return null;
 
   // Load chat history from database
@@ -546,7 +546,7 @@ export default function Chat({ topic: propTopic }) {
               />
               <button
                 onClick={handleSend}
-                disabled={loading || !input.trim()}
+                disabled={authLoading || !input.trim()}
                 className={`p-1.5 rounded-lg transition-all ${input.trim()
                     ? "bg-black dark:bg-white text-white dark:text-black"
                     : "bg-gray-200 dark:bg-gray-700 text-gray-400"
