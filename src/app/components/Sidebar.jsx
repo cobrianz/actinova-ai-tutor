@@ -29,10 +29,10 @@ export default function Sidebar({
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
 
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
 
   const isPro =
-    !loading &&
+    !authLoading &&
     user &&
     ((user.subscription &&
       (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
