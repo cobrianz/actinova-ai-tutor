@@ -61,9 +61,17 @@ export async function POST(request) {
 
     const { db } = await connectToDatabase();
 
-    // ─── USER & MONTHLY LIMITS (planMiddleware) ───
+    // ─── USER & PLAN LIMITS ───
+    let user = null;
     if (userId) {
-      const { checkAPILimit, trackAPIUsage } = await import("@/lib/planMiddleware");
+      user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+    }
+
+    const planLimits = getUserPlanLimits(user);
+    const isPremium = user?.isPremium || (user?.subscription?.plan === "premium" || user?.subscription?.plan === "enterprise") && user?.subscription?.status === "active";
+
+    if (userId) {
+      const { checkAPILimit } = await import("@/lib/planMiddleware");
       
       const apiName = format === "quiz" ? "generate-quiz" : "generate-course";
       const limitCheck = await checkAPILimit(userId, apiName);
@@ -81,15 +89,11 @@ export async function POST(request) {
       }
     }
 
-    // Determine premium status for generation logic
-    let isPremium = false;
-    if (userId) {
-      const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-      isPremium = user?.isPremium || (user?.subscription?.plan === "premium" || user?.subscription?.plan === "enterprise") && user?.subscription?.status === "active";
-    }
-
     if (format === "quiz") {
-      return generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium);
+      const now = new Date();
+      const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const monthlyUsage = user?.monthlyUsage || 0;
+      return generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits);
     }
 
     const normalizedTopic = topic.trim().toLowerCase();
@@ -106,7 +110,7 @@ export async function POST(request) {
       // Scenario 1: Course exists, user is premium, but course is NOT premium. Upgrade it.
       if (isPremium && !existingCourse.isPremium) {
         // Regenerate as a premium course and update
-        const { modules, lessonsPerModule, totalLessons } = LEGACY_LIMITS.premium;
+        const { modules, lessonsPerModule, totalLessons } = planLimits;
 
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -238,13 +242,6 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
     }
 
     // ─── GENERATE NEW COURSE ───
-    // Get user object for plan limits
-    let user = null;
-    if (userId) {
-      user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-    }
-
-    const planLimits = getUserPlanLimits(user);
     const { modules, lessonsPerModule, totalLessons } = planLimits;
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -379,6 +376,9 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
           difficulty,
         });
         if (existing) {
+          const now = new Date();
+          const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          const monthlyUsage = user?.monthlyUsage || 0;
           return NextResponse.json({
             success: true,
             courseId: existing._id.toString(),
@@ -394,7 +394,7 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
             isPremium,
             monthly: {
               used: monthlyUsage + 1, // may have been incremented by the other insert
-              limit: isPremium ? MONTHLY.premium : MONTHLY.free,
+              limit: planLimits.courses,
               resetsOn: resetDate.toLocaleDateString(),
             },
             features: [
@@ -410,6 +410,10 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
       }
       console.error("Failed to save course", e);
     }
+
+    const now = new Date();
+    const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const monthlyUsage = user?.monthlyUsage || 0;
 
     return NextResponse.json({
       success: true,
@@ -427,7 +431,7 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
       isPremium,
       monthly: {
         used: monthlyUsage + 1,
-        limit: isPremium ? MONTHLY.premium : MONTHLY.free,
+        limit: planLimits.courses,
         resetsOn: resetDate.toLocaleDateString(),
       },
       features: [
@@ -452,7 +456,7 @@ Exactly ${modules} modules, exactly ${lessonsPerModule} lessons each. No content
   }
 }
 
-async function generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium) {
+async function generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits) {
   const questionsCount = questions || 10;
   try {
     // If db wasn't passed, connect now (fallback)
@@ -562,8 +566,8 @@ Return ONLY valid JSON with this exact structure:
         createdAt: { $gte: startOfMonth }
       });
 
-      const limit = isPremium ? 20 : 1;
-      if (quizCount >= limit) {
+      const limit = planLimits.quizzes;
+      if (limit !== -1 && quizCount >= limit) {
         return NextResponse.json(
           {
             error: `Monthly test limit reached (${limit}). ${!isPremium ? "Upgrade to premium for up to 20 tests/mo." : ""}`,
@@ -606,7 +610,7 @@ Return ONLY valid JSON with this exact structure:
       content: quiz,
       monthly: {
         used: (monthlyUsage || 0) + 1,
-        limit: isPremium ? MONTHLY.premium : MONTHLY.free,
+        limit: planLimits.quizzes,
         resetsOn: resetDate ? resetDate.toLocaleDateString() : new Date().toLocaleDateString(),
       },
     });

@@ -64,12 +64,12 @@ export async function POST(request) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Enforce per-user test limits (monthly strict: free: 1, premium: 30)
+    // Enforce per-user test limits using planLimits.js
     const user = await User.findById(userId);
-    const isPremium =
-      user?.isPremium === true ||
-      (user?.subscription?.plan === "premium" &&
-        user?.subscription?.status === "active");
+    const { getUserPlanLimits } = await import("@/app/lib/planLimits");
+    const planLimits = getUserPlanLimits(user);
+    const testLimit = planLimits.quizzes;
+
     // Count tests created in current month
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -77,14 +77,14 @@ export async function POST(request) {
       createdBy: userId,
       createdAt: { $gte: monthStart },
     });
-    const testLimit = isPremium ? 20 : 1;
-    if (currentMonthTests >= testLimit) {
+
+    if (testLimit !== -1 && currentMonthTests >= testLimit) {
       return NextResponse.json(
         {
           error: "Monthly test limit reached",
           limit: testLimit,
           used: currentMonthTests,
-          isPremium,
+          isPremium: user?.isPremium || (user?.subscription?.plan === "premium" && user?.subscription?.status === "active"),
         },
         { status: 429 }
       );
