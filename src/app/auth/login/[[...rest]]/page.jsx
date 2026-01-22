@@ -70,34 +70,36 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <SignIn 
-            appearance={{
-              elements: {
-                formButtonPrimary: 
-                  "bg-purple-600 hover:bg-purple-700 text-sm normal-case font-bold py-3 rounded-xl shadow-md transition-all active:scale-95",
-                card: "bg-white border border-gray-100 shadow-2xl shadow-purple-500/5 rounded-3xl overflow-hidden",
-                headerTitle: "text-2xl font-bold text-gray-900 font-bricolage",
-                headerSubtitle: "text-gray-500 font-medium",
-                socialButtonsBlockButton: 
-                  "border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors font-semibold",
-                formFieldLabel: "text-sm font-semibold text-gray-700 mb-1.5",
-                formFieldInput: 
-                  "bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all",
-                footerActionLink: "text-purple-600 hover:text-purple-500 font-bold underline decoration-2 underline-offset-4",
-                identityPreviewText: "text-gray-900 font-medium",
-                identityPreviewEditButton: "text-purple-600 hover:text-purple-500",
-                dividerLine: "bg-gray-100",
-                dividerText: "text-gray-400 font-bold text-xs uppercase tracking-widest",
-              },
-              layout: {
-                socialButtonsPlacement: "bottom",
-                showOptionalFields: false,
-              }
-            }}
-            path="/auth/login"
-            routing="path"
-            signUpUrl="/auth/signup"
-          />
+            <SignIn 
+              appearance={{
+                elements: {
+                  formButtonPrimary: 
+                    "bg-purple-600 hover:bg-purple-700 text-sm normal-case font-bold py-3 rounded-xl shadow-md transition-all active:scale-95",
+                  card: "bg-white border-none shadow-none rounded-3xl overflow-hidden",
+                  headerTitle: "text-2xl font-bold text-gray-900 font-bricolage",
+                  headerSubtitle: "text-gray-500 font-medium",
+                  socialButtonsBlockButton: 
+                    "border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors font-semibold shadow-none",
+                  formFieldLabel: "text-sm font-semibold text-gray-700 mb-1.5",
+                  formFieldInput: 
+                    "bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all",
+                  footerActionLink: "text-purple-600 hover:text-purple-500 font-bold underline decoration-2 underline-offset-4",
+                  identityPreviewText: "text-gray-900 font-medium",
+                  identityPreviewEditButton: "text-purple-600 hover:text-purple-500",
+                  dividerLine: "bg-gray-100",
+                  dividerText: "text-gray-400 font-bold text-xs uppercase tracking-widest",
+                },
+                layout: {
+                  socialButtonsPlacement: "bottom",
+                  showOptionalFields: false,
+                }
+              }}
+              path="/auth/login"
+              routing="path"
+              signUpUrl="/auth/signup"
+              fallbackRedirectUrl="/dashboard"
+            />
+
         </div>
       </div>
     </div>
