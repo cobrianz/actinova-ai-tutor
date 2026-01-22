@@ -79,9 +79,6 @@ export async function POST(request) {
           { status: 429 }
         );
       }
-      
-      // Track usage
-      await trackAPIUsage(userId, apiName);
     }
 
     // Determine premium status for generation logic

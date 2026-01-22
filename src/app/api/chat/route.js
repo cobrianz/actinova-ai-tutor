@@ -57,7 +57,23 @@ async function handlePost(request) {
       );
     }
 
-    await requirePremium(user._id);
+    // === Plan & API Limit Validation ===
+    const { checkAPILimit } = await import("@/lib/planMiddleware");
+    const limitCheck = await checkAPILimit(user._id, "ai-tutor-chat");
+
+    if (!limitCheck.withinLimit) {
+      return NextResponse.json(
+        {
+          error: "API rate limit exceeded",
+          message: limitCheck.limit === 0 
+            ? "Premium subscription required for AI Tutor" 
+            : `You have reached your monthly limit of ${limitCheck.limit} AI Tutor messages`,
+          remaining: 0,
+          resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+        },
+        { status: 429 }
+      );
+    }
 
     // === Strict Topic Enforcement Prompt ===
     const systemPrompt = `You are an expert AI tutor specializing in **${topic}**.
