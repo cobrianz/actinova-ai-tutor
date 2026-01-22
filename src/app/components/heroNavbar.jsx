@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, Sun, Moon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
+import { useTheme } from "./ThemeProvider";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "../lib/utils";
@@ -13,6 +14,7 @@ export default function HeroNavbar({ handleGetStarted }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -104,9 +106,23 @@ export default function HeroNavbar({ handleGetStarted }) {
             ))}
           </div>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
-            {user ? (
+            {/* Desktop CTA */}
+            <div className="hidden md:flex items-center gap-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl bg-secondary/50 border border-border-accent hover:bg-secondary transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </button>
+
+              {user ? (
+
               <button
                 onClick={() => router.push("/dashboard")}
                 className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -162,8 +178,30 @@ export default function HeroNavbar({ handleGetStarted }) {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-4 border-t border-border-accent flex flex-col gap-4">
-                {user ? (
+                <div className="pt-4 border-t border-border-accent flex flex-col gap-4">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-sm font-medium text-muted-foreground">Appearance</span>
+                    <button
+                      onClick={toggleTheme}
+                      className="p-2.5 rounded-xl bg-secondary/50 border border-border-accent hover:bg-secondary transition-colors"
+                      aria-label="Toggle theme"
+                    >
+                      {theme === "dark" ? (
+                        <div className="flex items-center gap-2">
+                          <Sun className="w-5 h-5" />
+                          <span className="text-sm font-medium">Light</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Moon className="w-5 h-5" />
+                          <span className="text-sm font-medium">Dark</span>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+
+                  {user ? (
+
                   <button
                     onClick={() => router.push("/dashboard")}
                     className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold"

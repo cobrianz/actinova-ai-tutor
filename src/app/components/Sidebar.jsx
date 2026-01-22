@@ -40,15 +40,14 @@ export default function Sidebar({
       user.isPremium);
 
   const navigation = [
-    { name: "New", id: "generate", icon: Plus },
-    { name: "Explore", id: "explore", icon: Search },
-    { name: "Library", id: "library", icon: BookOpen },
-    { name: "Flashcards", id: "flashcards", icon: FileText },
-    { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
-    { name: "AI Chat", id: "chat", icon: MessageCircle },
-    { name: "Premium", id: "staff-picks", icon: Star },
-    // Only show upgrade when auth has finished loading and user is not pro
-    !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },
+    { name: "Create", id: "generate", icon: Plus, color: "text-emerald-500" },
+    { name: "Explore", id: "explore", icon: Search, color: "text-blue-500" },
+    { name: "My Library", id: "library", icon: BookOpen, color: "text-violet-500" },
+    { name: "Flashcards", id: "flashcards", icon: FileText, color: "text-orange-500" },
+    { name: "Quizzes", id: "quizzes", icon: HelpCircle, color: "text-rose-500" },
+    { name: "AI Tutor", id: "chat", icon: MessageCircle, color: "text-indigo-500" },
+    { name: "Staff Picks", id: "staff-picks", icon: Star, color: "text-amber-500" },
+    !authLoading && !isPro && { name: "Upgrade Plan", id: "upgrade", icon: CreditCard, color: "text-primary" },
   ].filter(Boolean);
 
   useEffect(() => {
@@ -154,24 +153,21 @@ export default function Sidebar({
           className={`absolute lg:static top-0 left-0 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden z-[60] lg:z-auto shadow-2xl lg:shadow-none`}
         >
           {/* Main Sidebar Content Wrapper to maintain width while animating */}
-          <div className="w-64 h-full flex flex-col">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden">
-                  <img
-                    src="/logo.png"
-                    alt="Actinova AI Tutor"
-                    className="w-6 h-6 object-contain"
-                  />
+            <div className="w-64 h-full flex flex-col bg-background">
+              <div className="p-6">
+                <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => router.push("/")}>
+                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+                    <span className="text-primary-foreground font-bold text-xl">A</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-bold tracking-tight text-foreground">
+                      Actinova<span className="text-primary">AI</span>
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Tutor</span>
+                  </div>
                 </div>
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
-                  Actinova AI Tutor
-                </span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-3">
-                Your personalized learning companion for any topic
-              </p>
-            </div>
+
 
             <nav className="p-4 overflow-y-auto scrollbar-hide flex-1">
               <style jsx>{`
@@ -192,16 +188,28 @@ export default function Sidebar({
                       transition={{ delay: index * 0.1 }}
                       className="relative group"
                     >
-                      <button
-                        onClick={() => handleItemClick(item.id)}
-                        className={`flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
-                          }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span>{item.name}</span>
-                      </button>
+                        <button
+                          onClick={() => handleItemClick(item.id)}
+                          className={`flex items-center w-full space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group/item ${isActive
+                            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                            }`}
+                        >
+                          <div className={cn(
+                            "p-1.5 rounded-lg transition-colors",
+                            isActive ? "bg-primary text-primary-foreground" : cn("bg-secondary group-hover/item:bg-secondary-accent", item.color)
+                          )}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className="flex-1 text-left">{item.name}</span>
+                          {isActive && (
+                            <motion.div
+                              layoutId="active-pill"
+                              className="w-1.5 h-1.5 rounded-full bg-primary"
+                            />
+                          )}
+                        </button>
+
                     </motion.li>
                   );
                 })}
