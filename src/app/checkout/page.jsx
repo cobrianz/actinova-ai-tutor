@@ -57,10 +57,13 @@ function CheckoutContent() {
     const fetchPlans = async () => {
       try {
         const res = await fetch("/api/plans");
-        if (res.ok) {
-          const data = await res.json();
-          const mappedPlans = (data.plans || []).map(plan => {
-            const metadata = PLAN_UI_METADATA[plan.id] || PLAN_UI_METADATA[plan.name.toLowerCase()] || PLAN_UI_METADATA.premium;
+          if (res.ok) {
+            const data = await res.json();
+            const filteredPlans = (data.plans || []).filter(plan => 
+              plan.id !== 'basic' && plan.name.toLowerCase() !== 'basic'
+            );
+            const mappedPlans = filteredPlans.map(plan => {
+              const metadata = PLAN_UI_METADATA[plan.id] || PLAN_UI_METADATA[plan.name.toLowerCase()] || PLAN_UI_METADATA.premium;
             return {
               ...plan,
               icon: metadata.icon,
