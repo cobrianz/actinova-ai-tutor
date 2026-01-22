@@ -70,12 +70,12 @@ export default function DashboardContent() {
   const ComponentWrapper = isChat ? "div" : "div"; // Keep div for now
 
   return (
-    <div className={`relative min-h-full bg-background/50 ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
+    <div className={`relative bg-gray-50 dark:bg-gray-900 ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
       <div
         className={
           isChat
             ? "w-full h-full"
-            : "max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 scrollbar-hide"
+            : "max-w-[90rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide"
         }
         style={
           isChat

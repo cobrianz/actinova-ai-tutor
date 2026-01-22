@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
-import { cn } from "../lib/utils";
 import ActinovaLoader from "./ActinovaLoader";
 import QuizInterface from "./QuizInterface";
 
@@ -34,6 +33,7 @@ export default function Generate({ setActiveContent }) {
   React.useEffect(() => {
     return () => {
       if (showLoader) {
+
         try {
           setShowLoader(false);
         } catch (e) {
@@ -53,6 +53,7 @@ export default function Generate({ setActiveContent }) {
   React.useEffect(() => {
     const onDone = () => {
       if (showLoader) {
+
         setShowLoader(false);
       }
     };
@@ -67,6 +68,7 @@ export default function Generate({ setActiveContent }) {
   }, [showLoader]);
 
   // Strict check for Premium access (Pro or Enterprise)
+  // Ensure we check status is active.
   const isPremium =
     !!(
       (user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
@@ -81,16 +83,18 @@ export default function Generate({ setActiveContent }) {
   const friendlyName =
     !loading && user ? user.firstName || user.name || "" : "";
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (retryCount = 0) => {
     if (!topic.trim()) return;
-    if (isSubmitting) return;
+    if (isSubmitting) return; // prevent double submissions
     setIsSubmitting(true);
     const subject = topic.trim();
 
+    // Local cache key for previously generated courses
     const cacheKey = `generated_${subject}_${format}_${difficulty}`;
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
+        // Route immediately to existing course
         router.push(
           `/learn/${encodeURIComponent(subject)}?format=${format}&difficulty=${difficulty}`
         );
@@ -98,14 +102,21 @@ export default function Generate({ setActiveContent }) {
       }
     } catch { }
 
+    // Handle flashcard generation directly
     if (format === "flashcards") {
+
       setShowLoader(true);
+      setIsSubmitting(true);
+
       try {
         const response = await fetch("/api/generate-flashcards", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ topic: subject, difficulty }),
+          body: JSON.stringify({
+            topic: subject,
+            difficulty,
+          }),
         });
 
         if (!response.ok) {
@@ -117,12 +128,20 @@ export default function Generate({ setActiveContent }) {
           throw new Error(errorData.error || "Failed to generate flashcards");
         }
 
+        const data = await response.json();
+
+        // Notify usage update
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("usageUpdated"));
         }
+
         toast.success("Flashcards generated successfully!");
+
+        // Redirect to flashcards tab
         setActiveContent("flashcards");
+
       } catch (error) {
+        console.error("Flashcard generation failed:", error);
         toast.error(error.message || "Failed to generate flashcards");
       } finally {
         setShowLoader(false);
@@ -131,12 +150,19 @@ export default function Generate({ setActiveContent }) {
       return;
     }
 
+    // Handle quiz/test generation directly
     if (format === "quiz") {
+      // For quiz, also show loader for consistency
+
       setShowLoader(true);
+
       try {
+        // Generate quiz directly via API
         const response = await fetch("/api/generate-course", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
           body: JSON.stringify({
             topic: subject,
@@ -156,33 +182,48 @@ export default function Generate({ setActiveContent }) {
         }
 
         const data = await response.json();
-        setGeneratedQuiz({ _id: data.quizId, ...data.content });
+
+        // Success - show the quiz directly
+        setGeneratedQuiz({
+          _id: data.quizId,
+          ...data.content,
+        });
         toast.success("Quiz generated successfully!");
+
+        // Update usage counter
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("usageUpdated"));
         }
+
+        // Reset form
         setTopic("");
         setLocalTopic("");
       } catch (error) {
+        console.error("Quiz generation failed:", error);
         toast.error(error.message || "Failed to generate quiz");
       } finally {
+
         setShowLoader(false);
         setIsSubmitting(false);
       }
       return;
     }
 
+    // Navigate to learn page where generation will happen
+    // Loader will stay visible during navigation and be cleared by LearnContent
     router.push(
       `/learn/${encodeURIComponent(subject)}?format=${format}&difficulty=${difficulty}`
     );
   };
 
+  // Keep hook order stable: always call effect, conditionally act inside it
   React.useEffect(() => {
     if (generatedQuiz) {
       setActiveContent("quizzes");
     }
   }, [generatedQuiz, setActiveContent]);
 
+  // If a quiz has been generated, show it directly
   if (generatedQuiz) {
     return (
       <QuizInterface
@@ -195,169 +236,265 @@ export default function Generate({ setActiveContent }) {
   }
 
   return (
-    <div className="space-y-10">
+    <div>
       {showLoader && (
-        <div data-actinova-loader-overlay="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div data-actinova-loader-overlay="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <ActinovaLoader text={format} />
         </div>
       )}
-
-      {/* Greeting Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight text-foreground mb-3">
-          {friendlyName ? `Welcome back, ${friendlyName}!` : "Welcome to Actinova AI"}
+      <div className="mb-10 text-center">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+          {friendlyName
+            ? `Welcome back, ${friendlyName}`
+            : "Welcome to Actinova AI Tutor"}
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl">
-          What would you like to master today? Our AI will create a personalized learning journey just for you.
+        <p className="text-lg text-gray-600 dark:text-gray-400">
+          Ready to test your knowledge? Create comprehensive tests to challenge
+          yourself and track your progress.
         </p>
       </div>
 
-      {/* Main Generation Card */}
-      <div className="bg-card border border-border rounded-3xl p-6 sm:p-10 shadow-sm overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" />
-        
-        <div className="max-w-3xl mx-auto space-y-8 relative z-10">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">Create New Learning Path</h2>
-            <p className="text-muted-foreground">Describe your goal and we'll handle the rest</p>
-            {!isPremium && atLimit && (
-              <div className="mt-4 p-3 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm font-medium">
-                You've reached your free limit. Upgrade to Pro for unlimited generations!
-              </div>
-            )}
+      <div className="bg-white dark:bg-gray-800 p-8 mb-10">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            What can I help you learn today?
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Enter a topic below to generate a personalized course or flashcards
+          </p>
+          {!isPremium && atLimit && (
+            <div className="mt-4 mx-auto max-w-md p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 text-sm">
+              You hit free limits. Upgrade to get more generations.
+            </div>
+          )}
+        </div>
+
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left px-1">
+              What can I help you learn?
+            </label>
+            <textarea
+              value={localTopic}
+              onChange={(e) => {
+                const value = e.target.value;
+                setLocalTopic(value);
+                setTopic(value);
+                // Auto-resize textarea
+                e.target.style.height = "auto";
+                e.target.style.height =
+                  Math.min(e.target.scrollHeight, 200) + "px";
+              }}
+              placeholder="Describe what you want to learn in detail... (e.g., I want to learn Python programming from scratch, including data structures, web development with Django, and machine learning basics)"
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 resize-none min-h-[100px] sm:min-h-[120px] max-h-[200px] shadow-sm hover:shadow-md"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.ctrlKey) {
+                  e.preventDefault();
+                  handleGenerate();
+                }
+              }}
+              autoFocus
+              rows={4}
+              maxLength={500}
+              dir="ltr"
+              style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+            />
+            <div className="mt-2 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 px-1">
+              <span className="flex items-center">
+                <Lightbulb className="w-4 h-4 mr-1" />
+                Tip: Press Ctrl + Enter to generate your course
+              </span>
+              <span
+                className={localTopic.length > 450 ? "text-orange-500" : ""}
+              >
+                {localTopic.length}/500
+              </span>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            {/* Topic Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground/80 px-1">What can I help you learn?</label>
-              <textarea
-                value={localTopic}
-                onChange={(e) => {
-                  setLocalTopic(e.target.value);
-                  setTopic(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
-                }}
-                placeholder="e.g. Master React.js hooks, Learn Python for Data Science, Advanced Chess strategies..."
-                className="w-full px-5 py-4 text-lg border border-border rounded-2xl bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none min-h-[120px] shadow-sm"
-                onKeyDown={(e) => e.key === "Enter" && e.ctrlKey && handleGenerate()}
-                maxLength={500}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3 text-left px-1">
+              Choose the format
+            </label>
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <button
+                onClick={() => setFormat("course")}
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "course"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+              >
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
+                <span className="font-medium text-xs sm:text-sm">Course</span>
+              </button>
+              <button
+                onClick={() => setFormat("flashcards")}
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "flashcards"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+              >
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
+                <span className="font-medium text-xs sm:text-sm">
+                  Flashcards
+                </span>
+              </button>
+              <button
+                onClick={() => setFormat("quiz")}
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "quiz"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+              >
+                <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
+                <span className="font-medium text-xs sm:text-sm">
+                  Test Yourself
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {format === "quiz" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">
+                Number of questions (up to 50)
+              </label>
+              <input
+                type="number"
+                value={questionsCount}
+                onChange={(e) =>
+                  setQuestionsCount(
+                    Math.min(50, parseInt(e.target.value, 10) || 10)
+                  )
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                max="50"
               />
-              <div className="flex justify-between items-center text-xs text-muted-foreground px-1">
-                <span className="flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5 text-amber-500" /> Tip: Ctrl + Enter to generate</span>
-                <span className={cn(localTopic.length > 450 && "text-destructive")}>{localTopic.length}/500</span>
-              </div>
             </div>
+          )}
 
-            {/* Format Selection */}
-            <div className="space-y-3">
-              <label className="text-sm font-semibold text-foreground/80 px-1">Choose your preferred format</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { id: "course", label: "Full Course", icon: BookOpen, desc: "Structured lessons" },
-                  { id: "flashcards", label: "Flashcards", icon: FileText, desc: "Quick recall" },
-                  { id: "quiz", label: "Assessment", icon: HelpCircle, desc: "Test knowledge" }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setFormat(item.id)}
-                    className={cn(
-                      "p-4 rounded-2xl border-2 transition-all flex flex-col items-start text-left gap-2",
-                      format === item.id
-                        ? "border-primary bg-primary/5 ring-4 ring-primary/5"
-                        : "border-border hover:border-border-accent bg-background"
-                    )}
-                  >
-                    <div className={cn("p-2 rounded-xl", format === item.id ? "bg-primary text-primary-foreground" : "bg-secondary")}>
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm">{item.label}</div>
-                      <div className="text-xs text-muted-foreground">{item.desc}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left px-1">
+              Choose difficulty level
+              {!isPremium && (
+                <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                  (Free users: Beginner only)
+                </span>
+              )}
+            </label>
+            <div className="relative">
+              <select
+                value={difficulty}
+                onChange={(e) => {
+                  const selectedDifficulty = e.target.value;
+
+                  if (!isPremium && selectedDifficulty !== "beginner") {
+                    toast.error(
+                      "Intermediate and Advanced levels require Pro subscription. Please upgrade to continue."
+                    );
+                    setActiveContent("upgrade");
+                    return;
+                  }
+
+                  setDifficulty(selectedDifficulty);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 appearance-none pr-10"
+                disabled={!isPremium && atLimit} // Optionally block interaction if at limit, but better to allow selecting beginner if it's the only option. 
+              >
+                <option value="beginner">
+                  Beginner{" "}
+                  {!isPremium
+                    ? "(Free)"
+                    : ""}
+                </option>
+                <option
+                  value="intermediate"
+                  disabled={!isPremium}
+                >
+                  Intermediate{" "}
+                  {isPremium
+                    ? "(Pro)"
+                    : "(Pro Only)"}
+                </option>
+                <option
+                  value="advanced"
+                  disabled={!isPremium}
+                >
+                  Advanced{" "}
+                  {isPremium
+                    ? "(Pro)"
+                    : "(Pro Only)"}
+                </option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
-
-            {/* Difficulty & Quiz Options */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground/80 px-1">Difficulty Level</label>
-                <div className="relative">
-                  <select
-                    value={difficulty}
-                    onChange={(e) => {
-                      if (!isPremium && e.target.value !== "beginner") {
-                        toast.error("Pro subscription required for this level");
-                        setActiveContent("upgrade");
-                        return;
-                      }
-                      setDifficulty(e.target.value);
-                    }}
-                    className="w-full px-4 py-3 border border-border rounded-xl bg-background appearance-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    <option value="beginner">Beginner {!isPremium && "(Free)"}</option>
-                    <option value="intermediate" disabled={!isPremium}>Intermediate {!isPremium && "(Pro Only)"}</option>
-                    <option value="advanced" disabled={!isPremium}>Advanced {!isPremium && "(Pro Only)"}</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-
-              {format === "quiz" && (
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground/80 px-1">Questions Count</label>
-                  <input
-                    type="number"
-                    min="5"
-                    max="50"
-                    value={questionsCount}
-                    onChange={(e) => setQuestionsCount(Math.min(50, parseInt(e.target.value) || 10))}
-                    className="w-full px-4 py-3 border border-border rounded-xl bg-background focus:ring-2 focus:ring-primary/20"
-                  />
+            {!isPremium &&
+              difficulty !== "beginner" && (
+                <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                  <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start">
+                    <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                    Intermediate and Advanced levels require a Pro subscription.
+                    <button
+                      onClick={() => setActiveContent("upgrade")}
+                      className="ml-1 font-semibold underline hover:text-orange-900 dark:hover:text-orange-100"
+                    >
+                      Upgrade to Pro
+                    </button>
+                  </p>
                 </div>
               )}
-            </div>
-
-            {/* CTA Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={!topic.trim() || isSubmitting || (!isPremium && atLimit)}
-              className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-lg hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span>{isSubmitting ? "Crafting your content..." : "Start Learning Now"}</span>
-            </button>
           </div>
+
+          <button
+            onClick={handleGenerate}
+            disabled={!topic.trim() || (!!user && !isPremium && atLimit)}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          >
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>
+              {!isPremium && atLimit
+                ? "You hit free limits — upgrade to get more generations"
+                : "Generate"}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Popular Tracks Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xl font-bold">Explore Popular Topics</h3>
-          <button onClick={() => setActiveContent("explore")} className="text-sm font-semibold text-primary hover:underline">View all</button>
-        </div>
+      <div>
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 px-1">
+          Popular Learning Tracks
+        </h3>
         <PopularTopics setTopic={setTopic} setLocalTopic={setLocalTopic} />
       </div>
     </div>
   );
 }
 
+// Separate component for popular topics with API fetch
 function PopularTopics({ setTopic, setLocalTopic }) {
-  const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [topics, setTopics] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function fetchTopics() {
       try {
-        const res = await fetch("/api/popular-topics", { credentials: "include" });
+        const res = await fetch("/api/popular-topics", {
+          credentials: "include",
+        });
         const data = await res.json();
-        setTopics(data.topics || ["AI", "Coding", "Science", "Business", "History", "Math", "Design", "Marketing"]);
+        setTopics(data.topics || []);
       } catch (error) {
-        setTopics(["AI", "Coding", "Science", "Business", "History", "Math", "Design", "Marketing"]);
+        // Fallback to defaults on error
+        setTopics([
+          "Artificial Intelligence",
+          "Frontend Development",
+          "Backend Development",
+          "Data Science",
+          "Machine Learning",
+          "Web Development",
+          "Mobile Development",
+          "DevOps",
+        ]);
       } finally {
         setLoading(false);
       }
@@ -367,23 +504,33 @@ function PopularTopics({ setTopic, setLocalTopic }) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="h-14 rounded-xl bg-secondary animate-pulse" />
+          <div
+            key={i}
+            className="p-3 sm:p-4 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg animate-pulse"
+          >
+            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+          </div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {topics.map((t) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+      {topics.map((topicOption) => (
         <button
-          key={t}
-          onClick={() => { setTopic(t); setLocalTopic(t); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          className="p-4 text-left bg-card border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
+          key={topicOption}
+          onClick={() => {
+            setTopic(topicOption);
+            setLocalTopic(topicOption);
+          }}
+          className="p-3 sm:p-4 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all"
         >
-          <span className="text-sm font-semibold group-hover:text-primary transition-colors">{t}</span>
+          <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+            {topicOption}
+          </span>
         </button>
       ))}
     </div>
