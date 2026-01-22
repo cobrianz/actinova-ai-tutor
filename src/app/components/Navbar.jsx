@@ -16,6 +16,8 @@ import { useTheme } from "./ThemeProvider";
 import { useAuth } from "./AuthProvider";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "../lib/utils";
 
 export default function Navbar({ toggleSidebar }) {
   const { theme, toggleTheme } = useTheme();
