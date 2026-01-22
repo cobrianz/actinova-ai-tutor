@@ -157,12 +157,29 @@ export async function POST(request) {
           break;
         }
 
-        // Idempotent billing + subscription update
-        const isNew = await addBillingEntry(userId, data, "webhook");
-        if (isNew) {
-          await updateSubscriptionPeriod(user, data);
-          console.log(`User ${user.email} upgraded via webhook`);
-        }
+          // Idempotent billing + subscription update
+          const isNew = await addBillingEntry(userId, data, "webhook");
+          if (isNew) {
+            await updateSubscriptionPeriod(user, data);
+            console.log(`User ${user.email} upgraded via webhook`);
+
+            // Send confirmation email (non-blocking)
+            try {
+              const { sendUpgradeEmail } = await import("@/lib/email");
+              await sendUpgradeEmail({
+                to: user.email,
+                name: user.firstName || user.name || user.email.split("@")[0],
+                plan: data.metadata?.plan || "premium",
+                billingCycle: data.metadata?.billingCycle || "monthly",
+                amount: data.amount / 100,
+                currency: data.currency,
+                expiresAt: user.subscription?.currentPeriodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                reference: data.reference,
+              });
+            } catch (emailError) {
+              console.error("Webhook failed to send upgrade email:", emailError);
+            }
+          }
         break;
       }
 
