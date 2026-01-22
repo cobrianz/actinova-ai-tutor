@@ -183,6 +183,98 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* NEW: Learning Ecosystem Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="order-2 lg:order-1 space-y-8">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white">A Complete Learning <span className="text-blue-600">Ecosystem</span></h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400">
+              We've built more than just a chatbot. Actinova is a comprehensive environment designed to support every stage of your educational journey.
+            </p>
+            <div className="space-y-6">
+              {[
+                { title: "Smart Notes", desc: "AI-generated summaries and key concepts from any topic.", icon: Rocket },
+                { title: "Progress Analytics", desc: "Visual data tracking your growth across subjects.", icon: Globe },
+                { title: "Interactive Quizzes", desc: "Dynamic assessments that adapt to your knowledge level.", icon: Zap }
+              ].map((item, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <item.icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">{item.title}</h4>
+                    <p className="text-gray-600 dark:text-gray-400">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="order-1 lg:order-2 grid grid-cols-2 gap-4">
+            <div className="space-y-4 pt-12">
+              <img 
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop" 
+                alt="Learning 1" 
+                className="rounded-2xl shadow-lg aspect-[3/4] object-cover"
+              />
+              <img 
+                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=600&auto=format&fit=crop" 
+                alt="Learning 2" 
+                className="rounded-2xl shadow-lg aspect-square object-cover"
+              />
+            </div>
+            <div className="space-y-4">
+              <img 
+                src="https://images.unsplash.com/photo-1523240715639-9a67a0e71d8b?q=80&w=600&auto=format&fit=crop" 
+                alt="Learning 3" 
+                className="rounded-2xl shadow-lg aspect-square object-cover"
+              />
+              <img 
+                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop" 
+                alt="Learning 4" 
+                className="rounded-2xl shadow-lg aspect-[3/4] object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NEW: Global Reach Section */}
+      <section className="py-24 bg-blue-900 text-white overflow-hidden relative">
+        <div className="absolute inset-0 opacity-10">
+          <img 
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop" 
+            alt="World Map" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <h2 className="text-4xl font-bold mb-16">Impacting Lives Globally</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+            {[
+              { label: "Active Learners", value: "100K+" },
+              { label: "Countries Reached", value: "150+" },
+              { label: "Lessons Delivered", value: "1.2M+" },
+              { label: "Teacher Hours Saved", value: "500K+" }
+            ].map((stat, i) => (
+              <motion.div 
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <div className="text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                  {stat.value}
+                </div>
+                <div className="text-blue-200 uppercase tracking-widest text-sm font-semibold">
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Values with Images */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center mb-16">
