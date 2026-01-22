@@ -44,19 +44,19 @@ export default function Testimonials() {
                 ))}
               </div>
 
-              <p className="text-lg text-foreground/90 italic mb-8 relative z-10">
-                "{testimonial.quote}"
-              </p>
+                <p className="text-lg text-foreground/90 italic mb-8 relative z-10">
+                  "{testimonial.content}"
+                </p>
 
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold border-2 border-background">
-                  {testimonial.author[0]}
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold border-2 border-background">
+                    {testimonial.name[0]}
+                  </div>
+                  <div>
+                    <div className="font-bold text-foreground">{testimonial.name}</div>
+                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-bold text-foreground">{testimonial.author}</div>
-                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                </div>
-              </div>
             </motion.div>
           ))}
         </div>

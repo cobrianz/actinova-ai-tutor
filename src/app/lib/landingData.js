@@ -73,12 +73,30 @@ export const data = {
         "Study together with peers through live sessions, group projects, and collaborative learning experiences that make education more engaging.",
     },
   ],
+  steps: [
+    {
+      title: "Create Your Profile",
+      description: "Set your learning goals and interests so our AI can understand your unique journey."
+    },
+    {
+      title: "Generate Your Path",
+      description: "Get a custom-built learning path with courses, quizzes, and resources tailored to you."
+    },
+    {
+      title: "Learn & Interact",
+      description: "Study with AI-powered tools, ask questions, and get instant feedback on your progress."
+    },
+    {
+      title: "Master & Achieve",
+      description: "Complete courses, earn certifications, and showcase your new skills to the world."
+    }
+  ],
   testimonials: [
     {
       name: "Sarah Chen",
       role: "Software Developer at Google",
       content:
-        "Actinova helped me transition from marketing to tech in just 6 months. The personalized roadmap was exactly what I needed. The AI tutor understood my learning style perfectly.",
+        "Actinova helped me transition from marketing to tech in just 6 months. The personalized roadmap was exactly what I needed.",
       avatar: "/avatar1.jpg",
       rating: 5,
     },
@@ -86,7 +104,7 @@ export const data = {
       name: "Marcus Johnson",
       role: "Data Scientist at Microsoft",
       content:
-        "The AI tutor understands my learning style perfectly. I've never been more engaged with online learning. The progress tracking kept me motivated throughout.",
+        "The AI tutor understands my learning style perfectly. I've never been more engaged with online learning. The progress tracking kept me motivated.",
       avatar: "/avatar2.jpg",
       rating: 5,
     },
@@ -96,30 +114,6 @@ export const data = {
       content:
         "Amazing platform! The progress tracking and adaptive content kept me motivated throughout my journey. I completed 5 courses in 3 months.",
       avatar: "/avatar3.jpg",
-      rating: 5,
-    },
-    {
-      name: "David Kim",
-      role: "Full Stack Developer",
-      content:
-        "The community aspect is incredible. I've made connections that helped me land my dream job. The courses are top-notch and always up-to-date.",
-      avatar: "/avatar4.jpg",
-      rating: 5,
-    },
-    {
-      name: "Lisa Wang",
-      role: "Product Manager at Stripe",
-      content:
-        "Actinova's AI recommendations are spot-on. It suggested exactly the skills I needed for my career transition. Highly recommend!",
-      avatar: "/avatar5.jpg",
-      rating: 5,
-    },
-    {
-      name: "Ahmed Hassan",
-      role: "DevOps Engineer",
-      content:
-        "The hands-on projects and real-world applications made all the difference. I went from beginner to confident professional in months.",
-      avatar: "/avatar6.jpg",
       rating: 5,
     },
   ],
@@ -149,16 +143,6 @@ export const data = {
       question: "Do you offer certificates?",
       answer:
         "Yes, you'll receive industry-recognized certificates upon course completion. These can be shared on LinkedIn and added to your resume.",
-    },
-    {
-      question: "How often is the content updated?",
-      answer:
-        "Our courses are updated monthly to reflect the latest industry trends and technologies. You'll always learn the most current skills.",
-    },
-    {
-      question: "Is there a mobile app?",
-      answer:
-        "Yes! Our mobile app is available for iOS and Android, allowing you to learn anywhere, anytime with full synchronization across devices.",
     },
   ],
 };
