@@ -19,52 +19,33 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 
-const plans = [
-  {
-    id: "premium",
-    name: "Premium",
-    price: 9.99,
-    originalPrice: 14.99,
+const PLAN_UI_METADATA = {
+  premium: {
     icon: Zap,
     gradient: "from-violet-600 via-purple-600 to-indigo-600",
     shadowColor: "shadow-purple-500/25",
-    popular: true,
-    features: [
-      "Unlimited AI-generated courses",
-      "Unlimited quizzes & flashcards",
-      "Advanced learning analytics",
-      "Priority customer support",
-      "Certificate generation",
-      "Offline course downloads",
-      "No ads experience",
-    ],
+    defaultOriginalPrice: 14.99,
   },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 29.99,
-    originalPrice: 49.99,
+  enterprise: {
     icon: Crown,
     gradient: "from-amber-500 via-orange-500 to-red-500",
     shadowColor: "shadow-orange-500/25",
-    popular: false,
-    features: [
-      "Everything in Premium",
-      "Team collaboration tools",
-      "Custom branding options",
-      "API access for integrations",
-      "Dedicated account manager",
-      "Advanced reporting & insights",
-      "SSO authentication",
-      "Custom course templates",
-    ],
+    defaultOriginalPrice: 49.99,
   },
-];
+  pro: {
+    icon: Zap,
+    gradient: "from-violet-600 via-purple-600 to-indigo-600",
+    shadowColor: "shadow-purple-500/25",
+    defaultOriginalPrice: 14.99,
+  }
+};
 
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState("premium");
+  const [plans, setPlans] = useState([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -73,9 +54,38 @@ function CheckoutContent() {
   const planFromQuery = searchParams.get("plan");
 
   useEffect(() => {
-    if (planFromQuery && ["premium", "enterprise"].includes(planFromQuery)) {
-      setSelectedPlan(planFromQuery);
-    }
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch("/api/plans");
+        if (res.ok) {
+          const data = await res.json();
+          const mappedPlans = (data.plans || []).map(plan => {
+            const metadata = PLAN_UI_METADATA[plan.id] || PLAN_UI_METADATA[plan.name.toLowerCase()] || PLAN_UI_METADATA.premium;
+            return {
+              ...plan,
+              icon: metadata.icon,
+              gradient: metadata.gradient,
+              shadowColor: metadata.shadowColor,
+              originalPrice: plan.originalPrice || metadata.defaultOriginalPrice,
+            };
+          });
+          setPlans(mappedPlans);
+          
+          // Update selected plan if needed
+          if (planFromQuery && mappedPlans.some(p => p.id === planFromQuery)) {
+            setSelectedPlan(planFromQuery);
+          } else if (mappedPlans.length > 0 && !mappedPlans.some(p => p.id === selectedPlan)) {
+            setSelectedPlan(mappedPlans[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans:", error);
+        toast.error("Failed to load plans");
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+    fetchPlans();
   }, [planFromQuery]);
 
   useEffect(() => {
@@ -139,10 +149,21 @@ function CheckoutContent() {
 
   const currentPlan = plans.find((p) => p.id === selectedPlan);
 
-  if (isLoadingUser) {
+  if (isLoadingUser || isLoadingPlans) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (plans.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center text-white">
+        <div className="text-center">
+          <p className="text-xl mb-4">No plans available at the moment.</p>
+          <Link href="/pricing" className="text-purple-400 hover:underline">Return to Pricing</Link>
+        </div>
       </div>
     );
   }
