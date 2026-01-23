@@ -404,7 +404,6 @@ function ResetPasswordForm() {
     </div>
   );
 }
-}
 
 export default function ResetPasswordPage() {
   return (

@@ -314,7 +314,6 @@ function VerifyEmailContent() {
     </div>
   );
 }
-}
 
 export default function VerifyEmailPage() {
   return (
