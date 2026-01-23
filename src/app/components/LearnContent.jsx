@@ -388,7 +388,8 @@ export default function LearnContent() {
       );
 
       // 2. Save to backend database
-      if (courseData?._id) {
+      const courseId = courseData?._id ? String(courseData._id) : null;
+      if (courseId) {
         const totalLessons = courseData?.totalLessons || 0;
         const progress =
           totalLessons > 0
@@ -403,7 +404,7 @@ export default function LearnContent() {
           },
           credentials: "include",
           body: JSON.stringify({
-            courseId: courseData._id,
+            courseId,
             progress,
             completed: progress === 100,
             isLessonCompleted: newCompleted.has(lessonId),
@@ -413,10 +414,11 @@ export default function LearnContent() {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to save progress: ${response.statusText}`);
+          throw new Error(`Server returned ${response.status}`);
         }
       }
     } catch (err) {
+      console.error("Progress save error:", err);
       toast.error("Failed to save progress to the cloud.");
     }
   };
@@ -1508,7 +1510,7 @@ export default function LearnContent() {
   // Show error state
   if (error) {
     return (
-      <div className="h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="h-[calc(100vh-6rem)] flex flex-col bg-background overflow-hidden">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md mx-auto p-6">
             <div className="text-red-500 mb-4">
@@ -1545,10 +1547,10 @@ export default function LearnContent() {
   // Ensure courseData exists or we're showing a limit modal
   if (!courseData && !showLimitModal) {
     return (
-      <div className="h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="h-[calc(100vh-6rem)] flex flex-col bg-background overflow-hidden">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-muted-foreground">
               No course data available
             </p>
           </div>
@@ -1574,7 +1576,7 @@ export default function LearnContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Permanent Navbar Header */}
       <div className="bg-card backdrop-blur-md border-b border-border p-3 sm:p-4 z-50 shadow-sm relative">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
@@ -1678,16 +1680,16 @@ export default function LearnContent() {
         {/* Left Sidebar - Course Navigation */}
         <div
           className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } w-full lg:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col absolute z-40 transition-transform duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar shadow-xl`}
+            } w-full lg:w-80 bg-card border-r border-border flex flex-col absolute z-40 transition-transform duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar shadow-xl`}
         >
 
-          <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4 lg:p-6 border-b border-border">
             <div className="flex justify-between flex-wrap flex-col">
-              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
+              <h2 className="font-bold text-lg text-foreground mb-2">
                 {courseData.title}
               </h2>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {courseData.totalModules} modules • {courseData.totalLessons}{" "}
               lessons
             </p>
@@ -1729,8 +1731,8 @@ export default function LearnContent() {
                     user.subscription.plan === "pro" &&
                     user.subscription.status === "active") ||
                     user.isPremium)
-                  ? "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
-                  : "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  ? "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+                  : "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               }
             >
               <Download className="w-4 h-4" />
@@ -1745,14 +1747,14 @@ export default function LearnContent() {
               </span>
             </button>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-sm font-semibold">
+              <div className="w-8 h-8 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center text-sm font-semibold">
                 {Math.round(progressPercentage)}%
               </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 Completed
               </span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-secondary rounded-full h-2">
               <div
                 className="bg-green-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercentage}%` }}
@@ -1764,28 +1766,28 @@ export default function LearnContent() {
               courseData.modules.map((module, moduleIndex) => (
                 <div
                   key={module?.id ?? moduleIndex}
-                  className="border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                  className="border-b border-border last:border-b-0"
                 >
                   <button
                     onClick={() => toggleModule(module.id)}
-                    className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-sm font-medium">
+                      <div className="w-8 h-8 bg-blue-500/10 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
                         {moduleIndex + 1}
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-left">
+                      <span className="text-sm font-medium text-foreground text-left">
                         {module.title}
                       </span>
                     </div>
                     {expandedModules.has(module.id) ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     )}
                   </button>
                   {expandedModules.has(module.id) && (
-                    <div className="bg-gray-50 dark:bg-gray-700">
+                    <div className="bg-secondary/30">
                       {module.lessons.map((lesson, lessonIndex) => {
                         const lessonTitle =
                           typeof lesson === "string" ? lesson : lesson.title;
@@ -1903,8 +1905,8 @@ export default function LearnContent() {
               <button
                 onClick={() => setActiveRightPanel("chat")}
                 className={`flex-1 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeRightPanel === "chat"
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
               >
                 <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
@@ -1915,11 +1917,11 @@ export default function LearnContent() {
           <div className="flex-1 overflow-hidden">
             {activeRightPanel === "notes" ? (
               <div className="h-full flex flex-col">
-                <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100">
+                <div className="p-3 sm:p-4 border-b border-border">
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">
                     My Notes
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Take notes while learning
                   </p>
                 </div>
@@ -1940,7 +1942,6 @@ export default function LearnContent() {
                 <div className="p-4 border-t border-border">
                   <button
                     onClick={() => {
-                      const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
                       if (!isPro) {
                         toast.error("Notes PDF export is a Pro feature. Please upgrade.");
                         router.push("/dashboard?tab=upgrade");
@@ -1976,7 +1977,7 @@ export default function LearnContent() {
 
                 <div
                   ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 z-10 bg-[radial-gradient(circle_at_top_right,_var(--primary),transparent)] opacity-5"
+                  className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 z-10 bg-[radial-gradient(circle_at_top_right,_var(--color-blue-600),transparent)] opacity-5"
                 >
                   {chatMessages.map((message, index) => {
                     const isUser = message.type === "user";

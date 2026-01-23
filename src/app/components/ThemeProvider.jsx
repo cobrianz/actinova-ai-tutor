@@ -21,7 +21,9 @@ export function ThemeProvider({ children, initialTheme }) {
       if (initialTheme === "system") {
         return getSystemTheme();
       }
-      return initialTheme || localStorage.getItem("theme") || "light";
+      const saved = localStorage.getItem("theme");
+      if (saved) return saved;
+      return initialTheme || "light";
     };
 
     const savedTheme = getInitialTheme();
@@ -61,7 +63,7 @@ export function ThemeProvider({ children, initialTheme }) {
     if (newTheme === "system") {
       const systemTheme =
         typeof window !== "undefined" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches
+          window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light";
       setTheme("system");

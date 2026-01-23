@@ -39,8 +39,8 @@ export default function Hero({ handleGetStarted }) {
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-32 pb-20">
       {/* Dynamic Background */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
         {/* Subtle Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
@@ -55,7 +55,7 @@ export default function Hero({ handleGetStarted }) {
         >
           <motion.div
             variants={itemVariants}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-sm font-medium mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600/5 border border-blue-600/10 text-blue-600 text-sm font-medium mb-8"
           >
             <Sparkles className="w-4 h-4" />
             <span>Next-Generation Personalized Learning</span>
@@ -105,8 +105,8 @@ export default function Hero({ handleGetStarted }) {
               const Icon = [Users, BookOpen, Trophy, Star][index] || Star;
               return (
                 <div key={index} className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center mb-3">
-                    <Icon className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-blue-600/5 flex items-center justify-center mb-3">
+                    <Icon className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="text-2xl md:text-3xl font-bold text-foreground">
                     {stat.value}

@@ -629,83 +629,79 @@ export default function PremiumCourses() {
       {/* Featured Course */}
       {featured && (
         <motion.div
-          className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-8 mb-12 text-white shadow-2xl"
-          initial={{ opacity: 0, y: 20 }}
+          className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/40 backdrop-blur-xl shadow-2xl shadow-primary/5 mb-16"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.8 }}
         >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -translate-y-48 translate-x-48"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400 rounded-full translate-y-32 -translate-x-32"></div>
-          </div>
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-background to-purple-600/10 opacity-50 dark:opacity-20" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/10 rounded-full blur-[80px]" />
 
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl">
-                  <Crown className="w-6 h-6 text-blue-500" />
+          <div className="relative z-10 p-8 md:p-12 lg:p-16">
+            <div className="flex flex-col lg:flex-row gap-12 items-center">
+              {/* Left Column - Content */}
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-8">
+                  <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-600/20">
+                    <Crown className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-black text-xs uppercase tracking-[0.2em]">
+                      Featured Curriculum
+                    </span>
+                    <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">
+                      {isPro ? "Premium Exclusive" : "Upgrade to Access"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-bold text-sm uppercase tracking-wider">
-                    Featured Course
-                  </span>
-                  <p className="text-slate-300 text-sm">
-                    {isPro ? "Premium Exclusive" : "Upgrade to Access"}
-                  </p>
-                </div>
-              </div>
-              <div className="hidden md:flex items-center space-x-2">
-                <span className="text-slate-300 text-sm">10k+ enrolled</span>
-              </div>
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              {/* Left Column - Main Content */}
-              <div>
-                <h2 className="text-3xl font-bold mb-3 leading-tight">
+                <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight tracking-tight">
                   {featured.title}
                 </h2>
-                <p className="text-slate-300 mb-4 text-base leading-relaxed">
+                <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-medium">
                   {featured.description}
                 </p>
 
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
-                  <p className="text-blue-300 text-xs leading-relaxed">
-                    This course is personalized based on your goals and
-                    interests. New courses will appear after 1 month.
+                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 mb-8 max-w-xl">
+                  <p className="text-primary text-xs font-bold leading-relaxed flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Personalized for your learning goals. Refreshes monthly.</span>
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 mb-4">
-                  <div className="flex items-center space-x-2 text-slate-300">
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="font-medium text-sm">
-                      {featured.duration}
-                    </span>
+                <div className="flex flex-wrap items-center gap-8 mb-8">
+                  <div className="flex items-center space-x-2 text-foreground/80 font-bold bg-secondary/50 px-4 py-2 rounded-xl border border-border">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span className="text-sm">{featured.duration}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-slate-300">
+                  <div className="flex items-center space-x-2 bg-secondary/50 px-4 py-2 rounded-xl border border-border">
                     <div className="flex items-center space-x-1">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className="w-3 h-3 text-blue-400 fill-blue-400"
+                          className="w-3 h-3 text-yellow-500 fill-yellow-500"
                         />
                       ))}
-                      <span className="ml-1 font-medium text-sm">
+                      <span className="ml-2 font-black text-sm text-foreground">
                         {featured.rating}
                       </span>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-2 text-muted-foreground font-bold">
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">10k+ Learners</span>
+                  </div>
                 </div>
 
                 {!isPro && (
-                  <div className="flex items-baseline space-x-2 mb-4">
-                    <span className="text-2xl font-bold text-white">
+                  <div className="flex items-baseline space-x-3 mb-8">
+                    <span className="text-3xl font-black text-foreground">
                       {featured.price}
                     </span>
                     {featured.originalPrice && (
-                      <span className="text-lg text-slate-400 line-through">
+                      <span className="text-xl text-muted-foreground line-through opacity-50">
                         {featured.originalPrice}
                       </span>
                     )}
@@ -713,50 +709,55 @@ export default function PremiumCourses() {
                 )}
               </div>
 
-              {/* Right Column - Testimonial and CTA */}
-              <div className="space-y-2">
-                <div className="flex justify-end">
-                  <div className="w-fit rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Crown className="w-4 h-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-slate-200 italic text-sm leading-relaxed">
-                          {featured.premiumNote || featured.staffNote}
-                        </p>
-                        <p className="text-slate-400 text-xs mt-1">
-                          - Premium Team
-                        </p>
-                      </div>
+              {/* Right Column - CTA & Premium Quote */}
+              <div className="w-full lg:w-1/3 flex flex-col gap-6">
+                <div className="bg-card/80 border border-border rounded-3xl p-8 relative group hover:border-primary/30 transition-colors shadow-xl shadow-primary/5">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Crown className="w-12 h-12" />
+                  </div>
+                  <p className="text-foreground font-bold italic text-lg leading-relaxed relative mb-4">
+                    "{featured.premiumNote || featured.staffNote}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-white" />
                     </div>
+                    <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">
+                      Actinova Premium Team
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="mt-4">
                   {isPro ? (
                     <button
                       onClick={() => handleStartLearning(featured)}
                       disabled={preparingCourse === featured.id}
-                      className="px-6 py-3 bg-white text-slate-900 font-normal rounded-lg hover:bg-slate-100 transition-all duration-200 transform hover:-translate-y-0.5 text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center space-x-2"
+                      className="w-full py-5 bg-primary text-primary-foreground font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center space-x-3"
                     >
                       {preparingCourse === featured.id ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900"></div>
-                          <span>Preparing your course...</span>
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div>
+                          <span>Preparing Curriculum</span>
                         </>
                       ) : (
-                        <span>Start Learning</span>
+                        <>
+                          <BookOpen className="w-6 h-6" />
+                          <span>Start Learning Now</span>
+                        </>
                       )}
                     </button>
                   ) : (
                     <button
                       onClick={() => handleUpgradePlan("premium-course")}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm cursor-pointer"
+                      className="w-full py-5 bg-foreground text-background font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-foreground/10"
                     >
-                      Get Premium Access
+                      Unlock Premium Now
                     </button>
                   )}
+                  <p className="text-center text-[10px] text-muted-foreground mt-4 font-bold uppercase tracking-[0.2em]">
+                    Instant Access to All Materials
+                  </p>
                 </div>
               </div>
             </div>
@@ -792,8 +793,8 @@ export default function PremiumCourses() {
                 {/* Visual Header */}
                 <div className="relative h-48 overflow-hidden">
                   <div className={`absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-110 ${index % 3 === 0 ? "from-blue-600 to-indigo-700" :
-                    index % 3 === 1 ? "from-purple-600 to-pink-700" :
-                      "from-orange-500 to-red-600"
+                    index % 3 === 1 ? "from-purple-600 to-indigo-700" :
+                      "from-blue-700 to-purple-600"
                     }`}>
                     <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
                   </div>

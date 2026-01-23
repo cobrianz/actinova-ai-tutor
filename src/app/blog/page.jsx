@@ -158,98 +158,110 @@ export default function BlogPage() {
                 {featuredPost &&
                     filteredPosts.some((p) => p.slug === featuredPost.slug) && (
                         <motion.div
-                            className="mb-16"
-                            initial={{ opacity: 0, y: 20 }}
+                            className="mb-20 relative group"
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
                         >
-                            <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
-                                {/* Decorative background */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900" />
+                            <div className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/50 backdrop-blur-xl shadow-2xl shadow-primary/5">
+                                {/* Decorative elements */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-background/40 to-purple-600/10 opacity-50 dark:opacity-30" />
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
+                                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+
+                                {/* Grid Pattern */}
+                                <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.07]" style={{ backgroundImage: `radial-gradient(circle at 2px 2px, var(--foreground) 1px, transparent 0)`, backgroundSize: '40px 40px' }} />
 
                                 {/* Content */}
-                                <div className="relative p-8 lg:p-12">
-                                    {/* Featured badge */}
-                                    <motion.div
-                                        className="inline-flex items-center space-x-2 mb-6 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full"
-                                        whileHover={{ scale: 1.05 }}
-                                    >
-                                        <TrendingUp className="w-4 h-4" />
-                                        <span className="text-xs font-bold uppercase tracking-wider">Featured Article</span>
-                                    </motion.div>
+                                <div className="relative p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row gap-12 items-center">
+                                    <div className="flex-1 order-2 lg:order-1">
+                                        <motion.div
+                                            className="inline-flex items-center space-x-2 mb-8 px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-full"
+                                            whileHover={{ scale: 1.05 }}
+                                        >
+                                            <TrendingUp className="w-4 h-4" />
+                                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">Featured Article</span>
+                                        </motion.div>
 
-                                    {/* Title */}
-                                    <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4 leading-tight">
-                                        {featuredPost.title}
-                                    </h2>
+                                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-foreground mb-6 leading-[1.1] tracking-tight">
+                                            {featuredPost.title}
+                                        </h2>
 
-                                    {/* Excerpt */}
-                                    <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                                        {featuredPost.excerpt}
-                                    </p>
+                                        <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl line-clamp-3 font-medium">
+                                            {featuredPost.excerpt}
+                                        </p>
 
-                                    {/* Metadata and actions */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                                        <div className="flex items-center gap-6 flex-wrap">
-                                            {/* Author */}
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center flex-shrink-0">
-                                                    <User className="w-5 h-5 text-white" />
+                                        <div className="flex flex-wrap items-center gap-8 mb-10">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 p-[2px]">
+                                                    <div className="w-full h-full rounded-[14px] bg-card flex items-center justify-center overflow-hidden">
+                                                        {featuredPost.author?.avatar ? (
+                                                            <img src={featuredPost.author.avatar} alt={featuredPost.author.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-6 h-6 text-primary" />
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="text-sm">
-                                                    <p className="text-muted-foreground">By</p>
-                                                    <p className="font-semibold text-foreground">{featuredPost.author?.name || "Admin"}</p>
+                                                    <p className="text-muted-foreground font-bold uppercase tracking-wider text-[10px]">Author</p>
+                                                    <p className="font-black text-foreground text-base">{featuredPost.author?.name || "Admin"}</p>
                                                 </div>
                                             </div>
 
-                                            {/* Date */}
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <Calendar className="w-4 h-4 flex-shrink-0" />
-                                                <span>{featuredPost.date}</span>
-                                            </div>
+                                            <div className="h-10 w-px bg-border hidden sm:block" />
 
-                                            {/* Read time */}
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <Clock className="w-4 h-4 flex-shrink-0" />
-                                                <span>{featuredPost.readTime}</span>
+                                            <div className="flex items-center gap-6">
+                                                <div className="flex items-center gap-2 text-sm font-bold bg-secondary/50 dark:bg-secondary/20 px-4 py-2 rounded-xl border border-border">
+                                                    <Calendar className="w-4 h-4 text-primary" />
+                                                    <span className="text-muted-foreground">{featuredPost.date}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm font-bold bg-secondary/50 dark:bg-secondary/20 px-4 py-2 rounded-xl border border-border">
+                                                    <Clock className="w-4 h-4 text-accent" />
+                                                    <span className="text-muted-foreground">{featuredPost.readTime}</span>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Share button */}
-                                        <motion.button
-                                            onClick={() => {
-                                                if (navigator.share) {
-                                                    navigator.share({
-                                                        title: featuredPost.title,
-                                                        text: featuredPost.excerpt,
-                                                        url: `${window.location.origin}/blog/${featuredPost.slug}`,
-                                                    });
-                                                } else {
-                                                    navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
-                                                    toast.success("Link copied to clipboard!");
-                                                }
-                                            }}
-                                            className="p-3 bg-secondary hover:bg-secondary/80 text-muted-foreground rounded-lg transition-colors flex-shrink-0"
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.95 }}
-                                        >
-                                            <Share2 className="w-5 h-5" />
-                                        </motion.button>
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            <Link
+                                                href={`/blog/${featuredPost.slug || featuredPost._id}`}
+                                                className="group/btn inline-flex items-center space-x-3 bg-foreground text-background px-10 py-5 rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-foreground/10 dark:shadow-none"
+                                            >
+                                                <span>Start Reading</span>
+                                                <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
+                                            </Link>
+
+                                            <motion.button
+                                                onClick={() => {
+                                                    if (navigator.share) {
+                                                        navigator.share({
+                                                            title: featuredPost.title,
+                                                            text: featuredPost.excerpt,
+                                                            url: `${window.location.origin}/blog/${featuredPost.slug}`,
+                                                        });
+                                                    } else {
+                                                        navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
+                                                        toast.success("Link copied to clipboard!");
+                                                    }
+                                                }}
+                                                className="p-5 bg-card border border-border hover:bg-secondary text-foreground rounded-[1.5rem] transition-all"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
+                                            </motion.button>
+                                        </div>
                                     </div>
 
-                                    {/* CTA Button */}
-                                    <motion.div
-                                        className="mt-8"
-                                        whileHover={{ scale: 1.02 }}
-                                    >
-                                        <Link
-                                            href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                            className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
-                                        >
-                                            <span>Read Full Article</span>
-                                            <ArrowRight className="w-5 h-5" />
-                                        </Link>
-                                    </motion.div>
+                                    {/* Visual Representation (Placeholder for future thumbnail) */}
+                                    <div className="hidden lg:block w-1/3 order-1 lg:order-2">
+                                        <div className="relative aspect-square">
+                                            <div className="absolute inset-0 bg-blue-600/20 rounded-[3rem] rotate-6 scale-95 blur-2xl animate-pulse" />
+                                            <div className="relative h-full w-full bg-gradient-to-br from-blue-600 to-purple-600 rounded-[3rem] flex items-center justify-center p-12 overflow-hidden shadow-inner">
+                                                <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")` }} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>

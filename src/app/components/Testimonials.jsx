@@ -11,7 +11,7 @@ export default function Testimonials() {
     <section className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -20,7 +20,7 @@ export default function Testimonials() {
             Loved by <span className="text-gradient">Learners Worldwide</span>
           </motion.h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Don't just take our word for it. Hear from the students and professionals 
+            Don't just take our word for it. Hear from the students and professionals
             who have transformed their learning with Actinova AI.
           </p>
         </div>
@@ -37,32 +37,32 @@ export default function Testimonials() {
               className="relative p-8 rounded-3xl border border-border-accent bg-card hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300"
             >
               <Quote className="absolute top-6 right-8 w-10 h-10 text-primary/10" />
-              
+
               <div className="flex gap-1 mb-6">
-                {[1,2,3,4,5].map(i => (
+                {[1, 2, 3, 4, 5].map(i => (
                   <Star key={i} className="w-4 h-4 fill-primary text-primary" />
                 ))}
               </div>
 
-                <p className="text-lg text-foreground/90 italic mb-8 relative z-10">
-                  "{testimonial.content}"
-                </p>
+              <p className="text-lg text-foreground/90 italic mb-8 relative z-10">
+                "{testimonial.content}"
+              </p>
 
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold border-2 border-background">
-                    {testimonial.name[0]}
-                  </div>
-                  <div>
-                    <div className="font-bold text-foreground">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold border-2 border-background shadow-lg shadow-blue-500/10">
+                  {testimonial.name[0]}
                 </div>
+                <div>
+                  <div className="font-bold text-foreground">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
 
         {/* Feature Quote */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
