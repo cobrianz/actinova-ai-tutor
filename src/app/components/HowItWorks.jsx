@@ -270,7 +270,7 @@ function StepOne({
             whileHover={{ scale: 1.1, rotate: 5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-500/20 dark:to-cyan-500/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center shadow-lg shadow-blue-500/20"
           >
-            <Icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <Icon className="w-8 h-8 text-primary" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
@@ -300,7 +300,7 @@ function StepOne({
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
-              <span className="font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{text}</span>
+              <span className="font-medium text-foreground group-hover:text-primary dark:group-hover:text-blue-400 transition-colors">{text}</span>
             </motion.div>
           ))}
         </div>
@@ -348,14 +348,14 @@ function StepOne({
                     ],
                   }}
                   transition={{ duration: 2.5, repeat: Infinity }}
-                  className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-blue-500/40"
+                  className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-primary/40"
                 >
                   JD
                 </motion.div>
                 <div className="space-y-1">
                   <div className="text-sm font-semibold text-foreground">John Doe</div>
                   <div className="text-xs text-muted-foreground">john@example.com</div>
-                  <button className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                  <button className="text-xs text-primary font-medium hover:text-primary/80 transition-colors">
                     Change photo
                   </button>
                 </div>
@@ -430,7 +430,7 @@ function StepOne({
               >
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-foreground">Weekly learning goal</label>
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">10 hrs/week</span>
+                  <span className="text-sm font-bold text-primary">10 hrs/week</span>
                 </div>
                 <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <motion.div
@@ -516,7 +516,7 @@ function StepTwo({
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.1 }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-violet-500/40 cursor-pointer"
+                className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/40 cursor-pointer"
               >
                 <Compass className="w-5 h-5 text-white" />
               </motion.div>
@@ -557,7 +557,7 @@ function StepTwo({
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 dark:bg-violet-500/20 border border-violet-200 dark:border-violet-500/30"
                 >
                   <span className="text-xs text-muted-foreground">Progress:</span>
-                  <span className="font-bold text-violet-600 dark:text-violet-400">42%</span>
+                  <span className="font-bold text-primary dark:text-violet-400">42%</span>
                 </motion.div>
               </div>
 
@@ -606,7 +606,7 @@ function StepTwo({
                         className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${module.status === "completed"
                           ? "bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/40"
                           : module.status === "in-progress"
-                            ? "bg-gradient-to-r from-primary to-primary shadow-lg shadow-violet-500/40"
+                            ? "bg-gradient-to-r from-primary to-primary shadow-lg shadow-primary/40"
                             : "bg-slate-200 dark:bg-slate-600"
                           }`}
                       >
@@ -674,7 +674,7 @@ function StepTwo({
             whileHover={{ scale: 1.1, rotate: -5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/20 dark:to-purple-500/20 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center shadow-lg shadow-violet-500/20"
           >
-            <Icon className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+            <Icon className="w-8 h-8 text-primary dark:text-violet-400" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
@@ -704,7 +704,7 @@ function StepTwo({
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
-              <span className="font-medium text-foreground group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{text}</span>
+              <span className="font-medium text-foreground group-hover:text-primary dark:group-hover:text-violet-400 transition-colors">{text}</span>
             </motion.div>
           ))}
         </div>
@@ -735,7 +735,7 @@ function StepThree({
             whileHover={{ scale: 1.1, rotate: 5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-500/20 dark:to-blue-500/20 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-500/20"
           >
-            <Icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            <Icon className="w-8 h-8 text-primary dark:text-indigo-400" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
@@ -765,7 +765,7 @@ function StepThree({
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
-              <span className="font-medium text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{text}</span>
+              <span className="font-medium text-foreground group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">{text}</span>
             </motion.div>
           ))}
         </div>
@@ -793,7 +793,7 @@ function StepThree({
                     ],
                   }}
                   transition={{ duration: 2.5, repeat: Infinity }}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-indigo-500/40"
+                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/40"
                 >
                   <Brain className="w-5 h-5 text-white" />
                 </motion.div>
@@ -803,7 +803,7 @@ function StepThree({
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Question 3/10</div>
+                <div className="text-sm font-bold text-primary dark:text-indigo-400">Question 3/10</div>
                 <div className="text-xs text-muted-foreground">Score: 85%</div>
               </div>
             </div>
@@ -900,7 +900,7 @@ function StepThree({
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-indigo-500/40"
+                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/40"
                 >
                   <Zap className="w-5 h-5 text-white" />
                 </motion.div>
@@ -1030,7 +1030,7 @@ function StepFour({
                     whileHover={{ rotate: 10 }}
                     className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 mx-auto mb-2 flex items-center justify-center"
                   >
-                    <stat.icon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <stat.icon className="w-4 h-4 text-primary dark:text-purple-400" />
                   </motion.div>
                   <div className="text-lg font-bold text-foreground">
                     {typeof stat.value === "number" ? (
@@ -1062,7 +1062,7 @@ function StepFour({
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <CheckCircle2 className="w-4 h-4 text-primary dark:text-purple-400" />
                   </motion.div>
                   <span className="text-sm font-semibold text-foreground">Skills Mastered</span>
                 </div>
@@ -1117,7 +1117,7 @@ function StepFour({
             whileHover={{ scale: 1.1, rotate: -5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-500/20"
           >
-            <Icon className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+            <Icon className="w-8 h-8 text-primary dark:text-purple-400" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
@@ -1147,7 +1147,7 @@ function StepFour({
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
-              <span className="font-medium text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{text}</span>
+              <span className="font-medium text-foreground group-hover:text-primary dark:group-hover:text-purple-400 transition-colors">{text}</span>
             </motion.div>
           ))}
         </div>

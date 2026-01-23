@@ -71,3 +71,4 @@ Thumbs.db
 
 # generated type files (regenerated on build)
 /next-env.d.ts
+.env.local
