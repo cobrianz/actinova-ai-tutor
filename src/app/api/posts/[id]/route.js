@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
   try {
     const { db } = await connectToDatabase();
     const postsCollection = db.collection('posts');
-    const commentsCollection = db.collection('comments'); // Assuming a comments collection
+    // const commentsCollection = db.collection('comments'); // Removed comments collection
 
     // Fetch the post by ID
     const post = await postsCollection.findOne({ _id: new ObjectId(params.id), status: 'published' });
@@ -18,10 +18,7 @@ export async function GET(request, { params }) {
     }
 
     // Fetch comments for the post
-    const comments = await commentsCollection
-      .find({ postId: new ObjectId(params.id) })
-      .sort({ createdAt: -1 })
-      .toArray();
+    // Comments fetching removed
 
     // Fetch related posts (based on category, excluding current post)
     const relatedPosts = await postsCollection
@@ -52,14 +49,7 @@ export async function GET(request, { params }) {
     };
 
     // Format comments
-    const formattedComments = comments.map(comment => ({
-      id: comment._id.toString(),
-      author: comment.createdBy ? comment.createdBy.toString() : 'Anonymous',
-      avatar: '/placeholder.svg', // Since avatars were replaced with User icon
-      content: comment.content,
-      timeAgo: new Date(comment.createdAt).toLocaleString(), // Adjust time format as needed
-      likes: comment.likes || 0
-    }));
+    // Comments formatting removed
 
     // Format related posts
     const formattedRelatedPosts = relatedPosts.map(relatedPost => ({
@@ -72,7 +62,7 @@ export async function GET(request, { params }) {
 
     return new Response(JSON.stringify({
       post: formattedPost,
-      comments: formattedComments,
+      comments: [],
       relatedPosts: formattedRelatedPosts
     }), {
       status: 200,
