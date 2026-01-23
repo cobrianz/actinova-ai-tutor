@@ -97,7 +97,7 @@ export default function BlogPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-900">
+        <div className="min-h-screen bg-background">
             <HeroNavbar />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -108,10 +108,10 @@ export default function BlogPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                    <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
                         Learning Insights & Tips
                     </h1>
-                    <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Discover the latest trends in education, learning strategies, and
                         insights from our community of educators and learners.
                     </p>
@@ -127,12 +127,11 @@ export default function BlogPage() {
                     {/* Search */}
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search articles..."
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search articles..."
+                        className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                     </div>
 
@@ -145,8 +144,8 @@ export default function BlogPage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category.value
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                                     }`}
                             >
                                 {category.name} ({category.count})
@@ -164,7 +163,7 @@ export default function BlogPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
                         >
-                            <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                            <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
                                 {/* Decorative background */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900" />
 
@@ -180,12 +179,12 @@ export default function BlogPage() {
                                     </motion.div>
 
                                     {/* Title */}
-                                    <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                                    <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4 leading-tight">
                                         {featuredPost.title}
                                     </h2>
 
                                     {/* Excerpt */}
-                                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+                                    <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
                                         {featuredPost.excerpt}
                                     </p>
 
@@ -198,19 +197,19 @@ export default function BlogPage() {
                                                     <User className="w-5 h-5 text-white" />
                                                 </div>
                                                 <div className="text-sm">
-                                                    <p className="text-gray-500 dark:text-gray-400">By</p>
-                                                    <p className="font-semibold text-gray-900 dark:text-white">{featuredPost.author?.name || "Admin"}</p>
+                                                    <p className="text-muted-foreground">By</p>
+                                                    <p className="font-semibold text-foreground">{featuredPost.author?.name || "Admin"}</p>
                                                 </div>
                                             </div>
 
                                             {/* Date */}
-                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Calendar className="w-4 h-4 flex-shrink-0" />
                                                 <span>{featuredPost.date}</span>
                                             </div>
 
                                             {/* Read time */}
-                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Clock className="w-4 h-4 flex-shrink-0" />
                                                 <span>{featuredPost.readTime}</span>
                                             </div>
@@ -230,7 +229,7 @@ export default function BlogPage() {
                                                     toast.success("Link copied to clipboard!");
                                                 }
                                             }}
-                                            className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors flex-shrink-0"
+                                            className="p-3 bg-secondary hover:bg-secondary/80 text-muted-foreground rounded-lg transition-colors flex-shrink-0"
                                             whileHover={{ scale: 1.1 }}
                                             whileTap={{ scale: 0.95 }}
                                         >
@@ -245,7 +244,7 @@ export default function BlogPage() {
                                     >
                                         <Link
                                             href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                            className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                                            className="inline-flex items-center space-x-2 bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
                                         >
                                             <span>Read Full Article</span>
                                             <ArrowRight className="w-5 h-5" />
@@ -464,9 +463,9 @@ export default function BlogPage() {
                         <input
                             type="email"
                             placeholder="Enter your email"
-                            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 px-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
-                        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <button className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium">
                             Subscribe
                         </button>
                     </div>

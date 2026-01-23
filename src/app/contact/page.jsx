@@ -203,7 +203,7 @@ export default function ContactPage() {
                 <div>
                   <label
                     htmlFor="category"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     Category
                   </label>
@@ -225,7 +225,7 @@ export default function ContactPage() {
                 <div>
                   <label
                     htmlFor="subject"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     Subject
                   </label>
@@ -244,7 +244,7 @@ export default function ContactPage() {
                 <div>
                   <label
                     htmlFor="message"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     Message
                   </label>
@@ -255,7 +255,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     required
                     rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-border rounded-lg bg-secondary text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Tell us more about your inquiry..."
                   />
                 </div>
@@ -291,8 +291,8 @@ export default function ContactPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             {/* Contact Information */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+              <h3 className="text-xl font-bold text-foreground mb-6">
                 Contact Information
               </h3>
 
@@ -303,20 +303,20 @@ export default function ContactPage() {
                     <motion.a
                       key={index}
                       href={info.action}
-                      className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                      className="flex items-start space-x-4 p-4 rounded-lg hover:bg-secondary transition-colors group"
                       whileHover={{ x: 5 }}
                     >
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors">
-                        <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Icon className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                        <h4 className="font-semibold text-foreground">
                           {info.title}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        <p className="text-sm text-muted-foreground mb-1">
                           {info.description}
                         </p>
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        <p className="text-sm font-medium text-primary">
                           {info.contact}
                         </p>
                       </div>
@@ -327,36 +327,36 @@ export default function ContactPage() {
             </div>
 
             {/* Business Hours */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
               <div className="flex items-center space-x-2 mb-4">
-                <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                <Clock className="w-5 h-5 text-primary" />
+                <h3 className="text-xl font-bold text-foreground">
                   Business Hours
                 </h3>
               </div>
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-muted-foreground">
                     Monday - Friday
                   </span>
-                  <span className="text-gray-900 dark:text-white">
+                  <span className="text-foreground">
                     9:00 AM - 6:00 PM PST
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-muted-foreground">
                     Saturday
                   </span>
-                  <span className="text-gray-900 dark:text-white">
+                  <span className="text-foreground">
                     10:00 AM - 4:00 PM PST
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-muted-foreground">
                     Sunday
                   </span>
-                  <span className="text-gray-900 dark:text-white">Closed</span>
+                  <span className="text-foreground">Closed</span>
                 </div>
               </div>
             </div>
@@ -380,13 +380,13 @@ export default function ContactPage() {
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}
-              className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800"
+              className="bg-card rounded-xl p-6 border border-border"
             >
-              <MessageCircle className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+              <MessageCircle className="w-8 h-8 text-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">
                 Call Us
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Call our team for quick assistance
               </p>
               <a
@@ -400,9 +400,9 @@ export default function ContactPage() {
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}
-              className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800"
+              className="bg-card rounded-xl p-6 border border-border"
             >
-              <Users className="w-8 h-8 text-purple-600 mx-auto mb-4" />
+              <Users className="w-8 h-8 text-primary mx-auto mb-4" />
               <h3 className="font-semibold text-foreground mb-2">
                 Community (Coming Soon)
               </h3>
@@ -411,7 +411,7 @@ export default function ContactPage() {
               </p>
               <button
                 disabled
-                className="bg-purple-400/60 text-white px-4 py-2 rounded-lg text-sm cursor-not-allowed inline-block"
+                className="bg-secondary text-muted-foreground px-4 py-2 rounded-lg text-sm cursor-not-allowed inline-block border border-border"
               >
                 Coming Soon
               </button>
