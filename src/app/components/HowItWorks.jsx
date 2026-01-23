@@ -167,7 +167,7 @@ function BrowserWindow({
         </div>
       </div>
       {/* Content */}
-      <div className="bg-white/80 dark:bg-slate-800/80">{children}</div>
+      <div className="bg-white dark:bg-slate-800/80 dark:bg-slate-800/80">{children}</div>
     </motion.div>
   );
 }
@@ -216,7 +216,7 @@ function AppWindow({
         <div className="w-14" />
       </div>
       {/* Content */}
-      <div className="bg-white/80 dark:bg-slate-800/80">{children}</div>
+      <div className="bg-white dark:bg-slate-800/80 dark:bg-slate-800/80">{children}</div>
     </motion.div>
   );
 }
@@ -413,7 +413,7 @@ function StepOne({ step, icon: Icon }) {
                     <motion.div
                       animate={{ x: [0, 5, 0] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-2 border-blue-500 shadow-lg shadow-blue-500/50"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white dark:bg-slate-800 border-2 border-blue-500 shadow-lg shadow-blue-500/50"
                     />
                   </motion.div>
                 </div>
@@ -474,7 +474,7 @@ function StepTwo({ step, icon: Icon }) {
         <BrowserWindow url="actirova.com/learning-path" tiltDirection="right">
           <div className="flex min-h-[450px]">
             {/* Sidebar */}
-            <div className="w-16 border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/50 p-3 hidden md:flex flex-col items-center gap-4">
+            <div className="w-16 border-r border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-700/50/50 dark:bg-slate-800/50 p-3 hidden md:flex flex-col items-center gap-4">
               <motion.div
                 whileHover={{ scale: 1.1 }}
                 className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center cursor-pointer shadow-sm border border-slate-200 dark:border-slate-600"
@@ -514,7 +514,7 @@ function StepTwo({ step, icon: Icon }) {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h4 className="text-lg font-semibold text-slate-800 dark:text-white">Your Learning Path</h4>
-                  <p className="text-sm text-slate-500">React Developer Journey</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">React Developer Journey</p>
                 </div>
                 <motion.div
                   initial={{ scale: 0 }}
@@ -566,7 +566,7 @@ function StepTwo({ step, icon: Icon }) {
                           ? "bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200 dark:border-violet-500/30 shadow-md shadow-violet-500/10"
                           : module.status === "completed"
                             ? "bg-slate-50 dark:bg-slate-700/50"
-                            : "bg-slate-50/50 dark:bg-slate-800/30 opacity-60"
+                            : "bg-slate-50 dark:bg-slate-700/50/50 dark:bg-slate-800/30 opacity-60"
                       }`}
                     >
                       {/* Status Circle */}
@@ -598,7 +598,7 @@ function StepTwo({ step, icon: Icon }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
                           <span
-                            className={`font-semibold ${module.status === "locked" ? "text-slate-400 dark:text-slate-500" : "text-slate-800 dark:text-white"}`}
+                            className={`font-semibold ${module.status === "locked" ? "text-slate-400 dark:text-slate-500 dark:text-slate-400" : "text-slate-800 dark:text-white"}`}
                           >
                             {module.title}
                           </span>
@@ -767,12 +767,12 @@ function StepThree({ step, icon: Icon }) {
                 </motion.div>
                 <div>
                   <div className="font-semibold text-slate-800 dark:text-white">React Hooks Quiz</div>
-                  <div className="text-xs text-slate-500">Core Concepts - Lesson 5</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Core Concepts - Lesson 5</div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Question 3/10</div>
-                <div className="text-xs text-slate-500">Score: 85%</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Score: 85%</div>
               </div>
             </div>
 
@@ -876,7 +876,7 @@ function StepThree({ step, icon: Icon }) {
                 </motion.div>
                 <div>
                   <div className="text-sm font-medium text-indigo-700 dark:text-indigo-400">AI Hint Available</div>
-                  <div className="text-xs text-slate-500">Need help? Get a personalized hint</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Need help? Get a personalized hint</div>
                 </div>
               </div>
               <motion.button
@@ -968,11 +968,11 @@ function StepFour({ step, icon: Icon }) {
                     <Trophy className="w-10 h-10 text-white" />
                   </motion.div>
                 </motion.div>
-                <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                   Certificate of Completion
                 </div>
                 <div className="text-2xl font-bold text-slate-800 dark:text-white mb-1">React Developer</div>
-                <div className="text-sm text-slate-500">Issued to John Doe - Jan 2026</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Issued to John Doe - Jan 2026</div>
               </div>
             </motion.div>
 
@@ -1010,7 +1010,7 @@ function StepFour({ step, icon: Icon }) {
                     )}
                     {stat.suffix && typeof stat.value !== "number" && stat.suffix}
                   </div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">{stat.label}</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
