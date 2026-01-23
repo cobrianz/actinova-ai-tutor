@@ -259,11 +259,6 @@ export default function SignupPage() {
               )}
             </Button>
           </form>
-
-          <div className="relative my-6 text-center">
-            {/* Social signup removed */}
-          </div>
-
           <p className="mt-8 text-center text-sm font-medium text-gray-500">
             Already have an account?{" "}
             <Link

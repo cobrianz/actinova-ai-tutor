@@ -250,7 +250,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
         ) : (
           <Link
             href="/dashboard?tab=quizzes"
-            className="flex items-center text-sm text-blue-500 hover:underline mb-4"
+            className="flex items-center text-sm text-primary hover:underline mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Tests
@@ -366,7 +366,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                             <RadioGroupItem
                               value={option}
                               id={`${q._id}-${option}`}
-                              className="w-5 h-5 text-blue-600"
+                              className="w-5 h-5 text-primary"
                             />
                             <Label
                               htmlFor={`${q._id}-${option}`}
@@ -568,7 +568,6 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                   </div>
                 )}
 
-                {/* Submit/Cancel Buttons */}
                 <div className="flex justify-center space-x-6">
                   <Link href="/dashboard?tab=quizzes">
                     <Button
@@ -582,7 +581,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                   <Button
                     onClick={handleSubmit}
                     size="lg"
-                    className="px-10 py-4 text-lg bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-xl transition-all duration-200 rounded-xl font-semibold"
+                    className="px-10 py-4 text-lg bg-primary hover:bg-primary/95 text-primary-foreground hover:shadow-xl transition-all duration-200 rounded-xl font-semibold"
                   >
                     Submit Assessment
                   </Button>

@@ -400,7 +400,7 @@ export default function LearnContent() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-user-id": user?._id || user?.id || user?.idString || "",
+            "x-user-id": String(user?._id || user?.id || ""),
           },
           credentials: "include",
           body: JSON.stringify({
@@ -408,12 +408,16 @@ export default function LearnContent() {
             progress,
             completed: progress === 100,
             isLessonCompleted: newCompleted.has(lessonId),
-            userId: user?._id || user?.id || null,
+            userId: String(user?._id || user?.id || ""),
             lessonId: lessonId,
           }),
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            // Attempt a silent token refresh if we get a 401
+            await refreshToken?.();
+          }
           throw new Error(`Server returned ${response.status}`);
         }
       }
@@ -815,7 +819,7 @@ export default function LearnContent() {
       .map((para) => {
         para = para.trim();
         if (para && !para.startsWith("<")) {
-          return `<p class="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">${para}</p>`;
+          return `<p class="mb-4 text-foreground/90 leading-relaxed">${para}</p>`;
         }
         return para;
       })
@@ -824,7 +828,7 @@ export default function LearnContent() {
     // Handle horizontal rules
     html = html.replace(
       /^---+$/gm,
-      '<hr class="my-6 border-gray-300 dark:border-gray-600" />'
+      '<hr class="my-6 border-border" />'
     );
 
     // Restore code blocks
@@ -1800,8 +1804,8 @@ export default function LearnContent() {
                           <button
                             key={lessonIndex}
                             onClick={() => selectLesson(module.id, lessonIndex)}
-                            className={`w-full p-3 pl-12 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${isActive
-                              ? "bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500"
+                            className={`w-full p-3 pl-12 flex items-center justify-between hover:bg-secondary/20 transition-colors ${isActive
+                              ? "bg-primary/5 border-r-2 border-primary"
                               : ""
                               }`}
                           >
@@ -1809,15 +1813,15 @@ export default function LearnContent() {
                               <div
                                 className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium ${isCompleted
                                   ? "bg-green-500 border-green-500 text-white"
-                                  : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400"
+                                  : "border-border text-muted-foreground"
                                   }`}
                               >
                                 {isCompleted ? "✓" : lessonIndex + 1}
                               </div>
                               <span
                                 className={`text-sm text-left flex-1 ${isActive
-                                  ? "text-blue-600 dark:text-blue-400 font-medium"
-                                  : "text-gray-700 dark:text-gray-300"
+                                  ? "text-primary font-medium"
+                                  : "text-foreground/80"
                                   }`}
                               >
                                 {lessonTitle}
@@ -1827,7 +1831,7 @@ export default function LearnContent() {
                               )}
                             </div>
                             {!isCompleted && !generatingLessons.has(lessonId) && (
-                              <Play className="w-4 h-4 text-gray-400" />
+                              <Play className="w-4 h-4 text-muted-foreground" />
                             )}
                           </button>
                         );
@@ -1843,16 +1847,16 @@ export default function LearnContent() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto hide-scrollbar bg-white dark:bg-gray-800"
+            className="flex-1 overflow-y-auto hide-scrollbar bg-background"
           >
             <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
               {generatingLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Generating lesson content...
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-muted-foreground">
                     Please wait while we create personalized content for you
                   </p>
                 </div>
@@ -1871,11 +1875,11 @@ export default function LearnContent() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <BookOpen className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <BookOpen className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Select a lesson to start learning
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-muted-foreground">
                     Choose a lesson from the sidebar to begin
                   </p>
                 </div>
@@ -1887,16 +1891,16 @@ export default function LearnContent() {
         {/* Right Panel - Notes & AI Tutor */}
         <div
           className={`${isRightPanelOpen ? "translate-x-0" : "translate-x-full"
-            } w-full lg:w-80 xl:w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col absolute z-40 transition-transform duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-full shadow-xl`}
+            } w-full lg:w-80 xl:w-96 bg-card border-l border-border flex flex-col absolute z-40 transition-transform duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-full shadow-xl`}
         >
 
-          <div className="border-b border-gray-200 dark:border-gray-700 relative">
+          <div className="border-b border-border relative">
             <div className="flex">
               <button
                 onClick={() => setActiveRightPanel("notes")}
                 className={`flex-1 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeRightPanel === "notes"
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
               >
                 <FileText className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
@@ -1905,7 +1909,7 @@ export default function LearnContent() {
               <button
                 onClick={() => setActiveRightPanel("chat")}
                 className={`flex-1 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeRightPanel === "chat"
-                  ? "border-blue-600 text-blue-600"
+                  ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
               >
@@ -1965,19 +1969,26 @@ export default function LearnContent() {
                 {/* Chat Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")` }} />
 
-                <div className="p-4 border-b border-border bg-card/80 backdrop-blur-md z-10 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                      AI Tutor
-                    </h3>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Online Help</p>
+                <div className="p-4 border-b border-border bg-card/90 backdrop-blur-md z-10 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Bot className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-foreground">
+                        AI Tutor
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">AI Assistant</p>
+                    </div>
                   </div>
                 </div>
 
                 <div
                   ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 z-10 bg-[radial-gradient(circle_at_top_right,_var(--color-blue-600),transparent)] opacity-5"
+                  className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 z-10"
                 >
                   {chatMessages.map((message, index) => {
                     const isUser = message.type === "user";
@@ -2100,10 +2111,10 @@ export default function LearnContent() {
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              <h2 className="text-xl font-semibold text-foreground mb-2">
                 Monthly Limit Reached
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-muted-foreground mb-4">
                 You've used {limitModalData.used} of {limitModalData.limit} free{" "}
                 {format === "flashcards" ? "flashcard sets" : "courses"} this
                 month.

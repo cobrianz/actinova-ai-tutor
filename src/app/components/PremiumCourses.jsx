@@ -377,13 +377,9 @@ export default function PremiumCourses() {
     return matchesSearch;
   });
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
-  const startIndex = (currentPage - 1) * coursesPerPage;
-  const paginatedCourses = filteredCourses.slice(
-    startIndex,
-    startIndex + coursesPerPage
-  );
+  // Display all filtered courses without pagination
+  const paginatedCourses = filteredCourses;
+  const totalPages = 1;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -528,97 +524,76 @@ export default function PremiumCourses() {
             {trendingCourses.slice(1).map((course, index) => (
               <motion.div
                 key={course.id || index}
-                whileHover={{ y: -5 }}
-                className="bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-sm border border-gray-200 dark:border-slate-700/50 rounded-2xl overflow-hidden hover:border-gray-300 dark:hover:border-slate-600/70 transition-all duration-300"
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group bg-card/60 backdrop-blur-xl border border-border rounded-[2.5rem] overflow-hidden hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-500 flex flex-col h-full"
               >
-                <div className="relative">
-                  <div className="w-full h-48 bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                    <BookOpen className="w-16 h-16 text-white opacity-80" />
+                <div className="relative h-48 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 transition-transform duration-700 group-hover:scale-110">
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
                   </div>
-                  <div className="absolute top-3 left-3 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center space-x-1">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <TrendingUp size={64} className="text-white/20 transform -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                  </div>
+                  <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border border-white/20 ring-1 ring-white/10">
                     <TrendingUp className="w-3 h-3" />
-                    <span>Trending</span>
+                    <span>Trending Now</span>
                   </div>
                 </div>
 
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <div className="p-8 flex flex-col flex-1">
+                  <h3 className="text-xl font-black text-foreground mb-3 tracking-tight group-hover:text-primary transition-colors">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                  <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed font-medium">
                     {course.description}
                   </p>
 
-                  {course.whyTrending && (
-                    <div className="mb-3 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                      <p className="text-xs text-orange-700 dark:text-orange-300">
-                        <span className="font-semibold">🔥 Trending:</span>{" "}
-                        {course.whyTrending}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{course.estimatedDuration || "6 weeks"}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <BookOpen className="w-4 h-4" />
-                      <span>{course.category || "General"}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 mb-4 flex-wrap gap-2">
-                    {course.tags?.slice(0, 3).map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                        Premium
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleGenerateCourse(course)}
-                    disabled={
-                      generatingCourse === course.id ||
-                      preparingCourse === course.id
-                    }
-                    className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white py-2 px-4 rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors text-xs font-normal disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center space-x-2"
-                  >
-                    {generatingCourse === course.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Generating...</span>
-                      </>
-                    ) : preparingCourse === course.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Preparing your course...</span>
-                      </>
-                    ) : course.personalized ||
-                      personalizedCourses.some((pc) => pc.id === course.id) ? (
-                      <>
-                        <BookOpen className="w-4 h-4" />
-                        <span>Start Learning</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        <span>Generate Course</span>
-                      </>
+                  <div className="mt-auto space-y-6">
+                    {course.whyTrending && (
+                      <div className="p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10">
+                        <p className="text-[10px] text-orange-600 dark:text-orange-400 font-black uppercase tracking-[0.1em] leading-relaxed">
+                          <span className="opacity-60 mr-1">Status:</span> {course.whyTrending}
+                        </p>
+                      </div>
                     )}
-                  </button>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-border">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1.5">
+                          <Clock className="w-4 h-4 text-orange-500" />
+                          <span className="text-xs font-bold text-foreground">{course.estimatedDuration || "6 weeks"}</span>
+                        </div>
+                        <div className="w-1 h-1 rounded-full bg-border" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase">{course.category || "General"}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleGenerateCourse(course)}
+                      disabled={
+                        generatingCourse === course.id ||
+                        preparingCourse === course.id
+                      }
+                      className="w-full py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black rounded-2xl hover:shadow-xl hover:shadow-orange-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-3 text-xs uppercase tracking-widest cursor-pointer"
+                    >
+                      {generatingCourse === course.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                          <span>Generating...</span>
+                        </>
+                      ) : preparingCourse === course.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                          <span>Preparing Curriculum</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Generate Course</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -908,41 +883,7 @@ export default function PremiumCourses() {
             ))}
           </motion.div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-16">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-3 rounded-2xl bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-all cursor-pointer"
-              >
-                <ChevronLeft size={24} />
-              </button>
 
-              <div className="flex gap-2">
-                {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`w-12 h-12 rounded-2xl font-bold transition-all cursor-pointer ${currentPage === i + 1
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : "bg-card border border-border text-muted-foreground hover:bg-secondary"
-                      }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-3 rounded-2xl bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-all cursor-pointer"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>

@@ -1512,8 +1512,13 @@ export default function Explore() {
                     .map((category, index) => (
                       <div
                         key={index}
-                        className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow relative"
+                        className="group bg-card border border-border rounded-2xl p-6 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden border-t-4 border-t-primary/20 hover:border-t-primary"
                       >
+                        <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                          </div>
+                        </div>
                         {!userIsPremium && (
                           <div className="absolute top-3 right-3">
                             <div className="bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full flex items-center space-x-1">
@@ -1522,10 +1527,18 @@ export default function Explore() {
                             </div>
                           </div>
                         )}
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-foreground">
-                            {category.name}
-                          </h3>
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className={`w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500`}>
+                            <BookOpen className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black text-foreground tracking-tight">
+                              {category.name}
+                            </h3>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">
+                              {category.count || 0} Specializations
+                            </p>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">
                           {category.description}
@@ -1550,17 +1563,17 @@ export default function Explore() {
                         <button
                           onClick={() => handleExploreCategory(category)}
                           disabled={exploringCategory === category.name}
-                          className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                          className="w-full bg-secondary hover:bg-primary hover:text-primary-foreground text-foreground py-3 px-4 rounded-xl transition-all duration-300 text-xs font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 border border-border group-hover:border-primary/20"
                         >
                           {exploringCategory === category.name ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              <span>Exploring...</span>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current/30 border-t-current"></div>
+                              <span>Accessing...</span>
                             </>
                           ) : (
                             <>
                               <Sparkles className="w-4 h-4" />
-                              <span>Explore Courses</span>
+                              <span>Explore Curriculum</span>
                             </>
                           )}
                         </button>

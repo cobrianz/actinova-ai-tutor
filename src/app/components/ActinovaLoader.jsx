@@ -15,7 +15,7 @@ export default function ActinovaLoader({ text = "course" }) {
   return (
     <div
       data-actinova-loader="true"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-white dark:bg-gray-950"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-background"
     >
       {/* Dynamic Background Gradients */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20 dark:opacity-40">
@@ -83,7 +83,7 @@ export default function ActinovaLoader({ text = "course" }) {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="relative z-10 w-24 h-24 flex items-center justify-center bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-blue-100 dark:border-blue-900/50"
+            className="relative z-10 w-24 h-24 flex items-center justify-center bg-card rounded-3xl shadow-2xl border border-primary/20"
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-3xl" />
             <img

@@ -58,10 +58,10 @@ export default function Flashcards({ cardData }) {
   };
 
   const categoryBadge = {
-    concept: "bg-blue-900/60 text-blue-300 border border-blue-600/60",
-    tip: "bg-cyan-900/60 text-cyan-300 border border-cyan-600/60",
-    warning: "bg-amber-900/60 text-amber-300 border border-amber-600/60",
-    practice: "bg-emerald-900/60 text-emerald-300 border border-emerald-600/60",
+    concept: "bg-primary/20 text-primary border border-primary/30",
+    tip: "bg-cyan-600/20 text-cyan-600 dark:text-cyan-400 border border-cyan-600/30",
+    warning: "bg-amber-600/20 text-amber-600 dark:text-amber-400 border border-amber-600/30",
+    practice: "bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-600/30",
   };
 
   const difficultyConfig = {
@@ -205,7 +205,7 @@ export default function Flashcards({ cardData }) {
         return (
           <code
             key={index}
-            className="bg-slate-100 dark:bg-slate-800/50 px-1.5 py-0.5 rounded text-xs font-mono text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 backdrop-blur-sm"
+            className="bg-secondary/50 px-1.5 py-0.5 rounded text-xs font-mono text-foreground border border-border backdrop-blur-sm"
           >
             {codeContent}
           </code>
@@ -237,20 +237,20 @@ export default function Flashcards({ cardData }) {
               {[...Array(8)].map((_, index) => (
                 <div
                   key={index}
-                  className="h-96 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-2xl p-6 animate-pulse"
+                  className="h-96 bg-card border border-border rounded-2xl p-6 animate-pulse"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-xl"></div>
-                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded-full w-20"></div>
+                    <div className="w-12 h-12 bg-muted rounded-xl"></div>
+                    <div className="h-6 bg-muted rounded-full w-20"></div>
                   </div>
                   <div className="space-y-3 flex-1">
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
-                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
-                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+                    <div className="h-4 bg-muted rounded w-24"></div>
+                    <div className="h-6 bg-muted rounded w-full"></div>
+                    <div className="h-6 bg-muted rounded w-3/4"></div>
+                    <div className="h-4 bg-muted rounded w-1/2"></div>
                   </div>
                   <div className="mt-auto">
-                    <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded-lg w-full"></div>
+                    <div className="h-10 bg-muted rounded-lg w-full"></div>
                   </div>
                 </div>
               ))}
