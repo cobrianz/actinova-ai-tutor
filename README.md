@@ -1,9 +1,9 @@
 ```markdown
-# Actinova AI Tutor
+# Actirova AI Tutor
 
 A comprehensive AI-powered learning platform that creates personalized courses, flashcards, and quizzes to accelerate your learning journey.
 
-![Actinova AI Tutor](logo.png)
+![Actirova AI Tutor](logo.png)
 
 ## Features
 
@@ -72,8 +72,8 @@ A comprehensive AI-powered learning platform that creates personalized courses, 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/actinova-ai-tutor.git
-cd actinova-ai-tutor
+git clone https://github.com/yourusername/Actirova-ai-tutor.git
+cd Actirova-ai-tutor
 ```
 
 ### 2. Install Dependencies
@@ -88,8 +88,8 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # Database
-MONGODB_URI=mongodb://localhost:27017/actinova-ai-tutor
-MONGODB_DB_NAME=actinova-ai-tutor
+MONGODB_URI=mongodb://localhost:27017/Actirova-ai-tutor
+MONGODB_DB_NAME=Actirova-ai-tutor
 
 # Authentication
 JWT_SECRET=your-super-secure-jwt-secret-here
@@ -119,7 +119,7 @@ Ensure MongoDB is running, then create the database:
 
 ```bash
 mongosh
-use actinova-ai-tutor
+use Actirova-ai-tutor
 ```
 
 ### 5. Start the Development Server
@@ -133,7 +133,7 @@ The application will be available at [http://localhost:3000](http://localhost:30
 ## Project Structure
 
 ```
-actinova-ai-tutor/
+Actirova-ai-tutor/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── api/               # API routes
@@ -322,7 +322,7 @@ Initialize a subscription payment session.
 
 ```env
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/actinova-prod
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/Actirova-prod
 JWT_SECRET=your-production-jwt-secret
 OPENAI_API_KEY=sk-production-key
 PAYSTACK_SECRET_KEY=your-production-key
@@ -392,7 +392,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - **Documentation**: Refer to this README and code comments
 - **Issues**: Report bugs on GitHub Issues
 - **Discussions**: Ask questions in GitHub Discussions
-- **Email**: support@actinova.com
+- **Email**: support@Actirova.com
 
 ### Common Issues
 

@@ -18,13 +18,17 @@ import {
   Loader2,
   Github,
   User,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 export default function SignupPage() {
   const { signup } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -93,10 +97,10 @@ export default function SignupPage() {
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
             <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm overflow-hidden p-2">
-              <img src="/logo.png" alt="Actinova Logo" className="w-full h-full object-contain" />
+              <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
-              Actinova AI
+              Actirova AI
             </span>
           </Link>
 
@@ -142,7 +146,7 @@ export default function SignupPage() {
               <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
-              <span className="font-bricolage">Actinova AI</span>
+              <span className="font-bricolage">Actirova AI</span>
             </div>
           </div>
 
@@ -202,13 +206,24 @@ export default function SignupPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="At least 8 characters"
-                  className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 pr-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.password}
                   onChange={handleChange}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -218,9 +233,9 @@ export default function SignupPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Repeat your password"
-                  className={`pl-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
+                  className={`pl-10 pr-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
                     ? "border-red-300 bg-red-50/30"
                     : "border-gray-100"
                     }`}
@@ -228,6 +243,17 @@ export default function SignupPage() {
                   onChange={handleChange}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
                 <p className="text-[11px] font-bold text-red-500 mt-1 ml-1">Passwords do not match</p>

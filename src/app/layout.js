@@ -17,7 +17,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata = {
-  title: "Actinova AI Tutor - Personalized Learning Platform",
+  title: "Actirova AI Tutor - Personalized Learning Platform",
   description: "Master any skill with AI-powered personalized learning paths",
   icons: {
     icon: "/favicon.ico",

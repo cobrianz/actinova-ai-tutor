@@ -545,7 +545,7 @@ export default function ProfileContent() {
                   <div>
                     <h2 className="text-xl font-bold mb-2 text-foreground">App Preferences</h2>
                     <p className="text-sm mb-6 text-muted-foreground">
-                      Personalize your experience with Actinova
+                      Personalize your experience with Actirova
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

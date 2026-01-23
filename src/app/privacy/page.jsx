@@ -84,7 +84,7 @@ export default function PrivacyPage() {
         >
           <h2 className="text-2xl font-bold text-foreground mb-4">Introduction</h2>
           <p className="text-muted-foreground mb-4">
-            At Actinova AI Tutor, we are committed to protecting your privacy and ensuring the security of your personal
+            At Actirova AI Tutor, we are committed to protecting your privacy and ensuring the security of your personal
             information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when
             you use our AI-powered learning platform.
           </p>
@@ -172,7 +172,7 @@ export default function PrivacyPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:privacy@actinova.com"
+              href="mailto:privacy@actirova.com"
               className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
             >
               Email Privacy Team

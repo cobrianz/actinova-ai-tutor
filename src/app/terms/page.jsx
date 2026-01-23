@@ -11,13 +11,13 @@ export default function TermsPage() {
       title: "Acceptance of Terms",
       icon: CheckCircle,
       content:
-        "By accessing and using Actinova AI Tutor, you accept and agree to be bound by the terms and provision of this agreement. These terms apply to all users of the service, including without limitation users who are browsers, vendors, customers, merchants, and contributors of content.",
+        "By accessing and using Actirova AI Tutor, you accept and agree to be bound by the terms and provision of this agreement. These terms apply to all users of the service, including without limitation users who are browsers, vendors, customers, merchants, and contributors of content.",
     },
     {
       title: "Use License",
       icon: Scale,
       content:
-        "Permission is granted to temporarily access and use Actinova AI Tutor for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not: modify or copy the materials, use the materials for any commercial purpose or for any public display, attempt to reverse engineer any software contained on the website, or remove any copyright or other proprietary notations from the materials.",
+        "Permission is granted to temporarily access and use Actirova AI Tutor for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not: modify or copy the materials, use the materials for any commercial purpose or for any public display, attempt to reverse engineer any software contained on the website, or remove any copyright or other proprietary notations from the materials.",
     },
     {
       title: "User Accounts",
@@ -35,7 +35,7 @@ export default function TermsPage() {
       title: "Content and Intellectual Property",
       icon: Shield,
       content:
-        "Our service and its original content, features, and functionality are and will remain the exclusive property of Actinova AI Tutor and its licensors. The service is protected by copyright, trademark, and other laws. Our trademarks and trade dress may not be used in connection with any product or service without our prior written consent.",
+        "Our service and its original content, features, and functionality are and will remain the exclusive property of Actirova AI Tutor and its licensors. The service is protected by copyright, trademark, and other laws. Our trademarks and trade dress may not be used in connection with any product or service without our prior written consent.",
     },
     {
       title: "Termination",
@@ -76,8 +76,8 @@ export default function TermsPage() {
         >
           <h2 className="text-2xl font-bold text-foreground mb-4">Introduction</h2>
           <p className="text-muted-foreground mb-4">
-            Welcome to Actinova AI Tutor. These Terms of Service ("Terms") govern your use of our website and services
-            operated by Actinova AI Tutor ("us", "we", or "our").
+            Welcome to Actirova AI Tutor. These Terms of Service ("Terms") govern your use of our website and services
+            operated by Actirova AI Tutor ("us", "we", or "our").
           </p>
           <p className="text-muted-foreground">
             Your access to and use of the service is conditioned on your acceptance of and compliance with these Terms.
@@ -143,7 +143,7 @@ export default function TermsPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:legal@actinova.com"
+              href="mailto:legal@actirova.com"
               className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
             >
               Contact Legal Team

@@ -55,8 +55,9 @@ export async function GET(request) {
   // Premium check
   const userDoc = await User.findById(userId).lean();
   const isPremium =
-    userDoc?.subscription?.plan === "pro" &&
-    userDoc?.subscription?.status === "active";
+    (userDoc?.subscription?.status === "active" &&
+      ["pro", "enterprise", "premium"].includes(userDoc?.subscription?.plan)) ||
+    userDoc?.isPremium;
 
   if (!isPremium) {
     return NextResponse.json(

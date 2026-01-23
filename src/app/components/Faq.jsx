@@ -23,7 +23,7 @@ export default function Faq() {
             <HelpCircle className="w-4 h-4" />
             Support
           </motion.div>
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -32,7 +32,7 @@ export default function Faq() {
             Frequently Asked <span className="text-gradient">Questions</span>
           </motion.h2>
           <p className="text-lg text-muted-foreground">
-            Everything you need to know about Actinova AI Tutor.
+            Everything you need to know about Actirova AI Tutor.
           </p>
         </div>
 
@@ -46,8 +46,8 @@ export default function Faq() {
               transition={{ delay: index * 0.05 }}
               className={cn(
                 "rounded-2xl border transition-all duration-300",
-                openIndex === index 
-                  ? "border-primary/30 bg-background shadow-xl shadow-primary/5" 
+                openIndex === index
+                  ? "border-primary/30 bg-background shadow-xl shadow-primary/5"
                   : "border-border-accent bg-background/50 hover:bg-background"
               )}
             >
@@ -61,7 +61,7 @@ export default function Faq() {
                   openIndex === index && "rotate-180 text-primary"
                 )} />
               </button>
-              
+
               <AnimatePresence>
                 {openIndex === index && (
                   <motion.div
@@ -82,7 +82,7 @@ export default function Faq() {
         </div>
 
         {/* Still have questions? */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

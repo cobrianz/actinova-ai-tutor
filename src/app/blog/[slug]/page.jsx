@@ -130,7 +130,7 @@ export default function BlogPost() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">
-                  {post.author?.name || "Actinova AI"}
+                  {post.author?.name || "Actirova AI"}
                 </p>
                 <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center space-x-1">

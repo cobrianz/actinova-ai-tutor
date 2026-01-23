@@ -50,8 +50,8 @@ export function signAccessToken(user, options = {}) {
 
   return jwt.sign(payload, ensureSecret(), {
     expiresIn: options.expiresIn || JWT_EXPIRES_IN,
-    issuer: "actinova-ai-tutor",
-    audience: "actinova-ai-tutor-users",
+    issuer: "actirova-ai-tutor",
+    audience: "actirova-ai-tutor-users",
   });
 }
 
@@ -70,8 +70,8 @@ export function signRefreshToken(user) {
 
   return jwt.sign(payload, ensureSecret(), {
     expiresIn: JWT_REFRESH_EXPIRES_IN,
-    issuer: "actinova-ai-tutor",
-    audience: "actinova-ai-tutor-users",
+    issuer: "actirova-ai-tutor",
+    audience: "actirova-ai-tutor-users",
   });
 }
 
@@ -93,8 +93,8 @@ export function generateTokenPair(user, options = {}) {
 export function verifyToken(token) {
   try {
     return jwt.verify(token, ensureSecret(), {
-      issuer: "actinova-ai-tutor",
-      audience: "actinova-ai-tutor-users",
+      issuer: "actirova-ai-tutor",
+      audience: "actirova-ai-tutor-users",
     });
   } catch (error) {
     if (error.name === "TokenExpiredError") {
@@ -111,8 +111,8 @@ export function verifyToken(token) {
 export function verifyRefreshToken(token) {
   try {
     const decoded = jwt.verify(token, ensureSecret(), {
-      issuer: "actinova-ai-tutor",
-      audience: "actinova-ai-tutor-users",
+      issuer: "actirova-ai-tutor",
+      audience: "actirova-ai-tutor-users",
     });
 
     if (decoded.type !== "refresh") {

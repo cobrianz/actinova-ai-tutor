@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 
 /**
- * Enhanced PDF Generation Utility for Actinova AI Tutor
+ * Enhanced PDF Generation Utility for Actirova AI Tutor
  * 
  * This utility generates professional, visually appealing PDFs for courses and notes.
  * It handles markdown-like formatting including bold, italics, headers, and lists.
@@ -47,8 +47,8 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(8);
         pdf.setTextColor(...COLORS.textLight);
-        pdf.text("Actinova AI Tutor - Personalized Learning", margin, pageHeight - 10);
-        pdf.text(`Copyright © Actinova AI Tutor. All rights reserved.`, pageWidth / 2, pageHeight - 10, { align: "center" });
+        pdf.text("Actirova AI Tutor - Personalized Learning", margin, pageHeight - 10);
+        pdf.text(`Copyright © Actirova AI Tutor. All rights reserved.`, pageWidth / 2, pageHeight - 10, { align: "center" });
         pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: "right" });
     };
 
@@ -86,7 +86,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     pdf.setTextColor(...COLORS.text);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(48);
-    pdf.text("ACTINOVA", pageWidth / 2, y, { align: "center" });
+    pdf.text("ACTIROVA", pageWidth / 2, y, { align: "center" });
 
     y += 12;
     pdf.setFontSize(24);
@@ -355,7 +355,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         addPageDecoration(i, totalPages);
     }
 
-    const fileName = `${data.title?.replace(/\s+/g, "_").toLowerCase() || "actinova_study"}.pdf`;
+    const fileName = `${data.title?.replace(/\s+/g, "_").toLowerCase() || "actirova_study"}.pdf`;
     pdf.save(fileName);
 };
 
@@ -383,7 +383,7 @@ export const downloadQuizAsPDF = async (data) => {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(8);
         pdf.setTextColor(...COLORS.textLight);
-        pdf.text(`Actinova AI Tutor - Assessment: ${data.title}`, margin, 12);
+        pdf.text(`Actirova AI Tutor - Assessment: ${data.title}`, margin, 12);
         if (pageNum) pdf.text(`Page ${pageNum} of ${total}`, pageWidth - margin, 12, { align: "right" });
     };
 

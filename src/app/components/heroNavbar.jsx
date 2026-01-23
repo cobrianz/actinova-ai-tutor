@@ -76,16 +76,16 @@ export default function HeroNavbar({ handleGetStarted }) {
         <nav className={cn(
           "relative flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-500",
           scrolled
-            ? "glass shadow-xl border-white/20 dark:border-white/10"
+            ? "glass shadow-xl border-gray-500/20 dark:border-gray-700/40 backdrop-blur-3xl"
             : "bg-transparent border-transparent"
         )}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-              <span className="text-primary-foreground font-bold text-xl">A</span>
+            <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110 overflow-hidden p-1.5">
+              <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-heading text-xl font-bold tracking-tight">
-              Actinova<span className="text-primary">AI</span>
+              Actirova<span className="text-primary">AI</span>
             </span>
           </Link>
 

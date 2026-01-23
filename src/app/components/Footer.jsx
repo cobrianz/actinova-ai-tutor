@@ -40,11 +40,11 @@ export default function Footer() {
                 <span className="text-primary-foreground font-bold text-xl">A</span>
               </div>
               <span className="font-heading text-2xl font-bold tracking-tight">
-                Actinova<span className="text-primary">AI</span>
+                Actirova<span className="text-primary">AI</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
-              Empowering the next generation of learners with advanced AI-driven 
+              Empowering the next generation of learners with advanced AI-driven
               personalized education. Master any skill at your own pace.
             </p>
             <div className="flex gap-4">
@@ -111,7 +111,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-12 border-t border-border-accent flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-muted-foreground text-sm font-medium">
-            © {new Date().getFullYear()} Actinova AI Tutor. All rights reserved.
+            © {new Date().getFullYear()} Actirova AI Tutor. All rights reserved.
           </p>
           <div className="flex gap-8 text-sm font-medium text-muted-foreground">
             <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>

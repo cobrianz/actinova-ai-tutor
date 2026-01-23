@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
-import ActinovaLoader from "./ActinovaLoader";
+import ActirovaLoader from "./ActirovaLoader";
 import QuizInterface from "./QuizInterface";
 
 export default function Generate({ setActiveContent }) {
@@ -58,11 +58,11 @@ export default function Generate({ setActiveContent }) {
       }
     };
     if (typeof window !== "undefined") {
-      window.addEventListener("actinova:loading-done", onDone);
+      window.addEventListener("actirova:loading-done", onDone);
     }
     return () => {
       if (typeof window !== "undefined") {
-        window.removeEventListener("actinova:loading-done", onDone);
+        window.removeEventListener("actirova:loading-done", onDone);
       }
     };
   }, [showLoader]);
@@ -250,15 +250,15 @@ export default function Generate({ setActiveContent }) {
   return (
     <div>
       {showLoader && (
-        <div data-actinova-loader-overlay="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
-          <ActinovaLoader text={format} />
+        <div data-actirova-loader-overlay="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+          <ActirovaLoader text={format} />
         </div>
       )}
       <div className="mb-10 text-center">
         <h1 className="text-4xl font-bold text-foreground mb-3">
           {friendlyName
             ? `Welcome back, ${friendlyName}`
-            : "Welcome to Actinova AI Tutor"}
+            : "Welcome to Actirova AI Tutor"}
         </h1>
         <p className="text-lg text-muted-foreground">
           Ready to test your knowledge? Create comprehensive tests to challenge

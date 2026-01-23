@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "actinova-ai-tutor",
+      "name": "Actirova-ai-tutor",
       "dependencies": {
         "@clerk/nextjs": "^6.36.9",
         "@dnd-kit/core": "^6.3.1",

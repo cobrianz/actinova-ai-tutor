@@ -128,7 +128,7 @@ Return JSON with:
             content,
             category,
             tags: Array.isArray(data.tags) ? data.tags : [topic, "Learning", "Education"],
-            author: { name: "Actinova AI", role: "admin" },
+            author: { name: "Actirova AI", role: "admin" },
             featured: false,
             trending: Math.random() > 0.7, // 30% chance of being trending
             period: "weekly",
@@ -200,7 +200,7 @@ Return JSON with: title, excerpt, tags (array), content_markdown (very detailed 
         tags: Array.isArray(featuredData.tags)
             ? featuredData.tags
             : ["AI", "Tutoring", "Monthly"],
-        author: { name: "Actinova AI", role: "admin" },
+        author: { name: "Actirova AI", role: "admin" },
         featured: true,
         period: "monthly",
         periodKey: monthKey,
@@ -260,7 +260,7 @@ export async function ensurePeriodPost(period = "monthly") {
         content,
         category: "AI & Technology",
         tags: Array.isArray(data.tags) ? data.tags : ["AI", "Tutoring"],
-        author: { name: "Actinova AI", role: "admin" },
+        author: { name: "Actirova AI", role: "admin" },
         featured: period === "monthly",
         period,
         periodKey: key,

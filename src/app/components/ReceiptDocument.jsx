@@ -230,9 +230,9 @@ const ReceiptDocument = ({ transaction }) => {
         </View>
 
         {/* Company Info */}
-        <Text style={styles.title}>Actinova AI Tutor</Text>
+        <Text style={styles.title}>Actirova AI Tutor</Text>
         <Text style={styles.tagline}>Your Intelligent Learning Companion</Text>
-        <Text style={styles.website}>www.actinova.ai</Text>
+        <Text style={styles.website}>www.actirova.ai</Text>
 
         <Text style={styles.thankYou}>Thank you for your subscription!</Text>
         <View style={styles.accentLine} />
@@ -311,11 +311,11 @@ const ReceiptDocument = ({ transaction }) => {
             This is an auto-generated receipt. No signature required.
           </Text>
           <Text style={styles.contact}>
-            Questions? Contact us at support@actinova.ai
+            Questions? Contact us at support@actirova.ai
           </Text>
           <View style={styles.footerLine} />
           <Text style={styles.closing}>
-            Thank you for choosing Actinova AI Tutor!
+            Thank you for choosing Actirova AI Tutor!
           </Text>
         </View>
       </Page>

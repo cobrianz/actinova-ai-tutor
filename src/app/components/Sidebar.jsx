@@ -170,12 +170,12 @@ export default function Sidebar({
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden">
                   <img
                     src="/logo.png"
-                    alt="Actinova AI Tutor"
+                    alt="Actirova AI Tutor"
                     className="w-6 h-6 object-contain"
                   />
                 </div>
                 <span className="text-xl font-bold text-foreground">
-                  Actinova AI Tutor
+                  Actirova AI Tutor
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mt-3">

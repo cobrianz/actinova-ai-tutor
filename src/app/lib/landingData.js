@@ -96,7 +96,7 @@ export const data = {
       name: "Sarah Chen",
       role: "Software Developer at Google",
       content:
-        "Actinova helped me transition from marketing to tech in just 6 months. The personalized roadmap was exactly what I needed.",
+        "Actirova helped me transition from marketing to tech in just 6 months. The personalized roadmap was exactly what I needed.",
       avatar: "/avatar1.jpg",
       rating: 5,
     },

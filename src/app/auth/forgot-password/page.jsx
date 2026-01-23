@@ -152,10 +152,10 @@ export default function ForgotPasswordPage() {
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
             <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm overflow-hidden p-2">
-              <img src="/logo.png" alt="Actinova Logo" className="w-full h-full object-contain" />
+              <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
-              Actinova AI
+              Actirova AI
             </span>
           </Link>
 
@@ -187,7 +187,7 @@ export default function ForgotPasswordPage() {
               <span className="text-sm font-medium">Enterprise-grade protection</span>
             </div>
             <p className="text-gray-500 text-sm font-medium">
-              © 2026 Actinova AI. Secured by advanced encryption.
+              © 2026 Actirova AI. Secured by advanced encryption.
             </p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function ForgotPasswordPage() {
               <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
-              <span className="font-bricolage">Actinova AI</span>
+              <span className="font-bricolage">Actirova AI</span>
             </div>
           </div>
 

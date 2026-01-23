@@ -188,10 +188,10 @@ function VerifyEmailContent() {
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
             <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm overflow-hidden p-2">
-              <img src="/logo.png" alt="Actinova Logo" className="w-full h-full object-contain" />
+              <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
-              Actinova AI
+              Actirova AI
             </span>
           </Link>
 
@@ -234,7 +234,7 @@ function VerifyEmailContent() {
               <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
-              <span className="font-bricolage">Actinova AI</span>
+              <span className="font-bricolage">Actirova AI</span>
             </div>
           </div>
 

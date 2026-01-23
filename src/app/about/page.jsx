@@ -95,7 +95,7 @@ export default function AboutPage() {
               Democratizing <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Education</span> Through AI
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Actinova AI Tutor is building the future of learning. We combine cutting-edge artificial intelligence with proven pedagogical methods to unlock human potential everywhere.
+              Actirova AI Tutor is building the future of learning. We combine cutting-edge artificial intelligence with proven pedagogical methods to unlock human potential everywhere.
             </p>
           </motion.div>
         </div>
@@ -139,7 +139,7 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-4 text-lg text-muted-foreground">
               <p>
-                Founded in 2022 by a team of educators and engineers, Actinova AI Tutor was born from a simple observation: traditional one-size-fits-all education doesn't work for everyone.
+                Founded in 2022 by a team of educators and engineers, Actirova AI Tutor was born from a simple observation: traditional one-size-fits-all education doesn't work for everyone.
               </p>
               <p>
                 We witnessed countless talented individuals struggle with conventional learning methods, not because they lacked ability, but because the teaching approach didn't match their learning style.
@@ -189,7 +189,7 @@ export default function AboutPage() {
           <div className="order-2 lg:order-1 space-y-8">
             <h2 className="text-4xl font-bold text-foreground">A Complete Learning <span className="text-primary">Ecosystem</span></h2>
             <p className="text-xl text-muted-foreground">
-              We've built more than just a chatbot. Actinova is a comprehensive environment designed to support every stage of your educational journey.
+              We've built more than just a chatbot. Actirova is a comprehensive environment designed to support every stage of your educational journey.
             </p>
             <div className="space-y-6">
               {[
@@ -374,7 +374,7 @@ export default function AboutPage() {
           <div className="relative z-10">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Start Your Journey?</h2>
             <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-              Join 100,000+ learners who are already accelerating their careers and skills with Actinova AI.
+              Join 100,000+ learners who are already accelerating their careers and skills with Actirova AI.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link

@@ -67,8 +67,8 @@ export default function ContactPage() {
       icon: Mail,
       title: "Email Us",
       description: "Send us an email and we'll respond within 24 hours",
-      contact: "hello@actinova.ai",
-      action: "mailto:hello@actinova.ai",
+      contact: "hello@actirova.ai",
+      action: "mailto:hello@actirova.ai",
     },
     {
       icon: Phone,

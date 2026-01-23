@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmModal from "./ConfirmModal";
 import { useAuth } from "./AuthProvider";
-import ActinovaLoader from "./ActinovaLoader";
+import ActirovaLoader from "./ActirovaLoader";
 
 // Function to render markdown/rich text formatting
 const renderFormattedContent = (content) => {
@@ -80,7 +80,7 @@ export default function Chat({ topic: propTopic }) {
   const messagesEndRef = useRef(null);
   const { user, loading: authLoading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (authLoading) return <ActirovaLoader />;
   if (!user) return null;
 
   // Load chat history from database
@@ -493,7 +493,7 @@ export default function Chat({ topic: propTopic }) {
                   {/* Content */}
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-sm text-foreground mb-1">
-                      {isUser ? "You" : "Actinova AI"}
+                      {isUser ? "You" : "Actirova AI"}
                       <span className="text-xs font-normal text-muted-foreground ml-2">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div
@@ -558,7 +558,7 @@ export default function Chat({ topic: propTopic }) {
               </button>
             </div>
             <div className="text-center mt-2">
-              <p className="text-xs text-muted-foreground">Actinova can make mistakes. Verify important info.</p>
+              <p className="text-xs text-muted-foreground">Actirova can make mistakes. Verify important info.</p>
             </div>
           </div>
         </div>

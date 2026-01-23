@@ -32,9 +32,17 @@ export function AuthProvider({ children }) {
 
   // Refs for timers
   const refreshPromiseRef = useRef(null);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
 
   // Do not hydrate user from localStorage; always source user from secure server-side cookie via `/api/me`
-  useEffect(() => {}, []);
 
   // Refresh token function (declare before fetchUser to avoid reference errors)
   const refreshToken = useCallback(async () => {
@@ -63,7 +71,9 @@ export function AuthProvider({ children }) {
             });
             if (meRes.ok) {
               const meData = await meRes.json();
-              setUser(meData.user);
+              if (mounted.current) {
+                setUser(meData.user);
+              }
               return true;
             }
           } catch (err) {
@@ -99,8 +109,10 @@ export function AuthProvider({ children }) {
 
       if (res.ok) {
         data = await res.json();
-        setUser(data.user);
-        setLoading(false);
+        if (mounted.current) {
+          setUser(data.user);
+          setLoading(false);
+        }
         return data.user;
       }
 
@@ -114,15 +126,19 @@ export function AuthProvider({ children }) {
           });
           if (retryRes.ok) {
             data = await retryRes.json();
-            setUser(data.user);
-            setLoading(false);
+            if (mounted.current) {
+              setUser(data.user);
+              setLoading(false);
+            }
             return data.user;
           }
         }
       }
 
       // If everything failed, clear user
-      setUser(null);
+      if (mounted.current) {
+        setUser(null);
+      }
       return null;
     } catch (err) {
       console.error("Failed to fetch user:", err);

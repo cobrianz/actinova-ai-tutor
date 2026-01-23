@@ -17,7 +17,9 @@ import {
   Lock,
   Loader2,
   Github,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 export default function LoginPage() {
@@ -26,6 +28,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleEmailLogin = async (e) => {
@@ -76,7 +79,7 @@ export default function LoginPage() {
               <Sparkles className="w-7 h-7 text-purple-600" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
-              Actinova AI
+              Actirova AI
             </span>
           </Link>
 
@@ -108,7 +111,7 @@ export default function LoginPage() {
               <span className="text-sm font-medium">Secure authentication</span>
             </div>
             <p className="text-gray-500 text-sm font-medium">
-              © 2026 Actinova AI. The future of education is here.
+              © 2026 Actirova AI. The future of education is here.
             </p>
           </div>
         </div>
@@ -122,7 +125,7 @@ export default function LoginPage() {
               <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bricolage">Actinova AI</span>
+              <span className="font-bricolage">Actirova AI</span>
             </div>
           </div>
 
@@ -162,13 +165,24 @@ export default function LoginPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 h-12 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 pr-10 h-12 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 

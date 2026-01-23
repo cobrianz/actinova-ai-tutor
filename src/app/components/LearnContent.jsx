@@ -28,7 +28,7 @@ import { downloadCourseAsPDF } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 // D3 visualizations removed per policy: no interactive D3 visuals
-import ActinovaLoader from "./ActinovaLoader";
+import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
 
@@ -38,7 +38,7 @@ export default function LearnContent() {
   const router = useRouter();
   const { user, refreshToken, fetchUser, loading } = useAuth();
 
-  if (loading) return <ActinovaLoader />;
+  if (loading) return <ActirovaLoader />;
   if (!user) return null;
   // Retrieve topic from either path params or query params
   const topicParam = params.topic || searchParams.get("topic") || "";
@@ -1117,10 +1117,10 @@ export default function LearnContent() {
 
             // Notify other components that loading finished and perform a dev-time cleanup
             if (typeof window !== "undefined") {
-              window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+              window.dispatchEvent(new CustomEvent("actirova:loading-done"));
               setTimeout(() => {
                 const leftovers = document.querySelectorAll(
-                  "[data-actinova-loader-overlay], [data-actinova-loader]"
+                  "[data-actirova-loader-overlay], [data-actirova-loader]"
                 );
                 if (leftovers.length) {
                   console.warn("Detected leftover loaders after library load, removing...", leftovers.length);
@@ -1293,7 +1293,7 @@ export default function LearnContent() {
             fetchInProgressRef.current = false;
             // Notify global listeners that loading is officially "done" (even if it's a limit error)
             if (typeof window !== "undefined") {
-              window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+              window.dispatchEvent(new CustomEvent("actirova:loading-done"));
             }
             return;
           }
@@ -1350,13 +1350,13 @@ export default function LearnContent() {
         // Notify other components and check for lingering loaders (dev safeguard)
         if (typeof window !== "undefined") {
           // Dispatch event immediately and with a small delay to ensure listeners catch it
-          window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+          window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+            window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
           }, 50);
           setTimeout(() => {
             const leftovers = document.querySelectorAll(
-              "[data-actinova-loader-overlay], [data-actinova-loader]"
+              "[data-Actirova-loader-overlay], [data-Actirova-loader]"
             );
             if (leftovers.length) {
               console.warn("Detected leftover loaders after generation, removing...", leftovers.length);
@@ -1418,10 +1418,10 @@ export default function LearnContent() {
           setIsLoading(false);
 
           if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+            window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
             setTimeout(() => {
               const leftovers = document.querySelectorAll(
-                "[data-actinova-loader-overlay], [data-actinova-loader]"
+                "[data-Actirova-loader-overlay], [data-Actirova-loader]"
               );
               if (leftovers.length) {
                 console.warn("Detected leftover loaders in finally block, removing...", leftovers.length);
@@ -1441,10 +1441,10 @@ export default function LearnContent() {
           fetchInProgressRef.current = false;
 
           if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+            window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
             setTimeout(() => {
               const leftovers = document.querySelectorAll(
-                "[data-actinova-loader-overlay], [data-actinova-loader]"
+                "[data-Actirova-loader-overlay], [data-Actirova-loader]"
               );
               if (leftovers.length) {
                 console.warn("Detected leftover loaders from safety timeout, removing...", leftovers.length);
@@ -1499,7 +1499,7 @@ export default function LearnContent() {
   // Show loading state only if no course data yet and no limit modal
   if (isLoading && !courseData && !showLimitModal) {
     return (
-      <ActinovaLoader
+      <ActirovaLoader
         text={
           format === "quiz"
             ? "Generating your test"
@@ -1904,8 +1904,8 @@ export default function LearnContent() {
                 }}
                 disabled={!currentLesson?.content || lessonContentLoading}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all w-full justify-center ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                    ? "bg-secondary text-foreground border border-border"
-                    : "bg-primary text-primary-foreground"
+                  ? "bg-secondary text-foreground border border-border"
+                  : "bg-primary text-primary-foreground"
                   }`}
               >
                 <CheckCircle className="w-5 h-5" />

@@ -12,7 +12,7 @@ export default function HelpPage() {
 
   const faqs = [
     {
-      question: "How do I get started with Actinova AI Tutor?",
+      question: "How do I get started with Actirova AI Tutor?",
       answer:
         "Simply sign up for a free account, complete your profile, and start exploring our AI-generated learning paths. You can choose from various topics and difficulty levels to match your learning goals.",
     },
@@ -49,7 +49,7 @@ export default function HelpPage() {
     {
       question: "How do I contact support?",
       answer:
-        "You can reach our support team through the contact form below, email us at support@actinova.com, or use the live chat feature available to Pro and Enterprise users.",
+        "You can reach our support team through the contact form below, email us at support@actirova.com, or use the live chat feature available to Pro and Enterprise users.",
     },
   ]
 
@@ -200,7 +200,7 @@ export default function HelpPage() {
               <h3 className="font-semibold mb-2">Email Support</h3>
               <p className="text-sm opacity-80 mb-3">Get help via email</p>
               <a
-                href="mailto:support@actinova.com"
+                href="mailto:support@actirova.com"
                 className="bg-white text-primary px-4 py-2 rounded-lg hover:bg-white/90 transition-colors"
               >
                 Send Email

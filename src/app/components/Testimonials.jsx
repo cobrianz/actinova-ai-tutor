@@ -21,7 +21,7 @@ export default function Testimonials() {
           </motion.h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Don't just take our word for it. Hear from the students and professionals
-            who have transformed their learning with Actinova AI.
+            who have transformed their learning with Actirova AI.
           </p>
         </div>
 

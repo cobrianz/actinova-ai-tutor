@@ -20,14 +20,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
-import ActinovaLoader from "./ActinovaLoader";
+import ActirovaLoader from "./ActirovaLoader";
 import { toast } from "sonner";
 
 export default function PremiumCourses() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  if (authLoading) return <ActinovaLoader />;
+  if (authLoading) return <ActirovaLoader />;
   if (!user) return null;
   const [courses, setCourses] = useState([]);
   const [trendingCourses, setTrendingCourses] = useState([]);
@@ -708,7 +708,7 @@ export default function PremiumCourses() {
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
                       <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">
-                        Actinova Premium Team
+                        Actirova Premium Team
                       </p>
                     </div>
                   </div>

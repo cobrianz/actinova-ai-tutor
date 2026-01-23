@@ -120,7 +120,7 @@ export default function Features() {
                 Ready to transform your learning journey?
               </h3>
               <p className="text-background/80 text-lg mb-8">
-                Join 50,000+ students who are already using Actinova AI to accelerate their growth.
+                Join 50,000+ students who are already using Actirova AI to accelerate their growth.
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="flex -space-x-2">

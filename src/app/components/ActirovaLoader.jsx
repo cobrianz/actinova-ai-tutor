@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-export default function ActinovaLoader({ text = "course" }) {
+export default function ActirovaLoader({ text = "course" }) {
   const loadingText =
     text === "flashcards"
       ? "Preparing your flashcards..."
@@ -14,7 +14,7 @@ export default function ActinovaLoader({ text = "course" }) {
 
   return (
     <div
-      data-actinova-loader="true"
+      data-Actirova-loader="true"
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-background"
     >
       {/* Dynamic Background Gradients */}
@@ -88,7 +88,7 @@ export default function ActinovaLoader({ text = "course" }) {
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-3xl" />
             <img
               src="/logo.png"
-              alt="Actinova Logo"
+              alt="Actirova Logo"
               className="w-16 h-16 object-contain relative z-20"
             />
 
@@ -108,7 +108,7 @@ export default function ActinovaLoader({ text = "course" }) {
             animate={{ opacity: 1, y: 0 }}
             className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400"
           >
-            Actinova AI
+            Actirova AI
           </motion.h2>
 
           <motion.div
