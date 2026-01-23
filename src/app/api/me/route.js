@@ -3,21 +3,11 @@ import { cookies, headers } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
-import { getAuth, clerkClient } from "@clerk/nextjs/server";
 
 export async function GET(request) {
   let localToken = null;
-  let clerkUserId = null;
 
-  // 1. Check Clerk session
-  try {
-    const authData = getAuth(request);
-    clerkUserId = authData?.userId;
-  } catch (e) {
-    // Fail silently, maybe Clerk isn't configured or this isn't a Clerk request
-  }
-
-  // 2. Check local token
+  // 1. Check local token
   const authHeader = (await headers()).get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     localToken = authHeader.slice(7);
@@ -25,7 +15,7 @@ export async function GET(request) {
     localToken = (await cookies()).get("token")?.value;
   }
 
-  if (!localToken && !clerkUserId) {
+  if (!localToken) {
     return NextResponse.json({ user: null });
   }
 
@@ -34,50 +24,14 @@ export async function GET(request) {
     const usersCol = db.collection("users");
     let query = null;
 
-    // Use local token if valid
-    if (localToken) {
-      try {
-        const decoded = verifyToken(localToken);
-        if (decoded?.id) {
-          query = { _id: new ObjectId(decoded.id) };
-        }
-      } catch (err) {
-        // Token invalid, but maybe we have a Clerk session?
+    // Use local token
+    try {
+      const decoded = verifyToken(localToken);
+      if (decoded?.id) {
+        query = { _id: new ObjectId(decoded.id) };
       }
-    }
-
-    // Fallback to Clerk session if local token failed or wasn't provided
-    if (!query && clerkUserId) {
-      const client = await clerkClient();
-      const clerkUser = await client.users.getUser(clerkUserId);
-      const email = clerkUser.emailAddresses[0]?.emailAddress;
-
-      if (!email) return NextResponse.json({ user: null });
-
-      const existingUser = await usersCol.findOne({ email });
-      if (existingUser) {
-        query = { _id: existingUser._id };
-        if (!existingUser.clerkId) {
-          await usersCol.updateOne({ _id: existingUser._id }, { $set: { clerkId: clerkUserId } });
-        }
-      } else {
-        const newUser = {
-          _id: new ObjectId(),
-          clerkId: clerkUserId,
-          email,
-          name: clerkUser.firstName ? `${clerkUser.firstName} ${clerkUser.lastName || ""}`.trim() : email.split("@")[0],
-          avatar: clerkUser.imageUrl,
-          status: "active",
-          emailVerified: true,
-          onboardingCompleted: false,
-          monthlyUsage: 0,
-          usageResetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
-          createdAt: new Date(),
-          lastActive: new Date(),
-        };
-        await usersCol.insertOne(newUser);
-        query = { _id: newUser._id };
-      }
+    } catch (err) {
+      return NextResponse.json({ user: null });
     }
 
     if (!query) {
