@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
+
+// Icons import
 import {
   UserPlus,
   Compass,
@@ -16,34 +18,57 @@ import {
   Calendar,
   Clock,
   Award,
-  Search,
-  ChevronRight,
-  MoreHorizontal,
-  Plus,
-  Home,
-  BarChart3,
-  User,
-  Folder,
   Share2,
   Download,
   Loader2,
   ArrowRight,
   Shield,
   Lock,
+  Home,
+  BarChart3,
+  User,
+  Folder,
+  MoreHorizontal,
+  Plus,
 } from "lucide-react";
-import { data } from "../lib/landingData";
+
+// Data
+const data = {
+  steps: [
+    {
+      title: "Create Your Profile",
+      description:
+        "Tell us about yourself, your goals, and your learning preferences. Our AI analyzes your background to create a personalized starting point.",
+    },
+    {
+      title: "Get Your Custom Path",
+      description:
+        "Receive a tailored learning roadmap designed specifically for you. Our AI considers your goals, schedule, and learning style to optimize your journey.",
+    },
+    {
+      title: "Learn Interactively",
+      description:
+        "Engage with dynamic lessons, quizzes, and hands-on projects. Get real-time feedback and AI-powered hints when you need them.",
+    },
+    {
+      title: "Achieve & Certify",
+      description:
+        "Track your progress, earn achievements, and receive industry-recognized certificates. Showcase your skills to the world.",
+    },
+  ],
+};
 
 // Animated Counter Hook
-function useCounter(end  , duration   = 2000) {
+function useCounter(end, duration = 2000) {
   const [count, setCount] = useState(0);
-  const ref = React.useRef  (null);
+  const ref = React.useRef(null);
   const isInView = useInView(ref, { once: true });
 
   useEffect(() => {
     if (!isInView) return;
     
-    let startTime  ;
-    const animate = (currentTime  ) => {
+    let startTime;
+    const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
       setCount(Math.floor(progress * end));
@@ -92,94 +117,6 @@ function FloatingParticles() {
   );
 }
 
-export default function HowItWorks() {
-  const { steps } = data;
-  const icons = [UserPlus, Compass, BookOpen, GraduationCap];
-
-  return (
-    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* Animated Background */}
-      <div className="absolute inset-0 -z-10">
-        {/* Gradient Orbs */}
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.15, 0.25, 0.15],
-            x: [0, 50, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-40 right-1/4 w-[900px] h-[900px] bg-gradient-to-br from-blue-400/30 via-cyan-300/20 to-transparent rounded-full blur-[150px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.1, 0.2, 0.1],
-            x: [0, -30, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 left-1/4 w-[700px] h-[700px] bg-gradient-to-tr from-violet-400/25 via-purple-300/20 to-transparent rounded-full blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.15, 1],
-            opacity: [0.1, 0.18, 0.1],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-indigo-300/20 to-blue-300/15 rounded-full blur-[100px]"
-        />
-        {/* Subtle Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(99,102,241,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.04)_1px,transparent_1px)] bg-[size:80px_80px]" />
-        <FloatingParticles />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20 md:mb-28"
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-100 to-violet-100 dark:from-blue-500/15 dark:to-violet-500/15 border border-blue-200/50 dark:border-blue-500/20 text-sm font-medium mb-8 shadow-lg shadow-blue-500/10"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            >
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            </motion.div>
-            <span className="bg-gradient-to-r from-blue-700 to-violet-700 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent font-semibold">
-              Simple & Powerful
-            </span>
-          </motion.div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight text-balance text-slate-900 dark:text-white">
-            How it{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent bg-[size:200%] animate-gradient">
-              Works
-            </span>
-          </h2>
-          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed text-pretty">
-            Transform your learning journey in four simple steps. Our AI-powered
-            platform makes mastering any skill effortless.
-          </p>
-        </motion.div>
-
-        {/* Steps */}
-        <StepOne step={steps[0]} icon={icons[0]} />
-        <StepTwo step={steps[1]} icon={icons[1]} />
-        <StepThree step={steps[2]} icon={icons[2]} />
-        <StepFour step={steps[3]} icon={icons[3]} />
-      </div>
-    </section>
-  );
-}
-
 // Beautiful Tilted Browser Window
 function BrowserWindow({
   children,
@@ -197,7 +134,7 @@ function BrowserWindow({
         rotate: 0,
       }}
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className={`${tilt} rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/20 dark:shadow-violet-500/15 border border-blue-100 dark:border-white/10 bg-white dark:bg-gradient-to-b dark:from-slate-800 dark:to-slate-900 ${className}`}
+      className={`${tilt} rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/20 dark:shadow-violet-500/15 border border-blue-100 dark:border-white/10 bg-white dark:bg-slate-800 ${className}`}
     >
       {/* Title Bar - Light Theme */}
       <div className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-700 dark:via-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-white/5 px-4 py-3 flex items-center gap-3">
@@ -230,7 +167,7 @@ function BrowserWindow({
         </div>
       </div>
       {/* Content */}
-      <div className="bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">{children}</div>
+      <div className="bg-white/80 dark:bg-slate-800/80">{children}</div>
     </motion.div>
   );
 }
@@ -252,7 +189,7 @@ function AppWindow({
         rotate: 0,
       }}
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className={`${tilt} rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/20 dark:shadow-purple-500/15 border border-violet-100 dark:border-white/10 bg-white dark:bg-gradient-to-b dark:from-slate-800 dark:to-slate-900 ${className}`}
+      className={`${tilt} rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/20 dark:shadow-purple-500/15 border border-violet-100 dark:border-white/10 bg-white dark:bg-slate-800 ${className}`}
     >
       {/* Title Bar */}
       <div className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-700 dark:via-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-white/5 px-4 py-3 flex items-center">
@@ -279,19 +216,13 @@ function AppWindow({
         <div className="w-14" />
       </div>
       {/* Content */}
-      <div className="bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">{children}</div>
+      <div className="bg-white/80 dark:bg-slate-800/80">{children}</div>
     </motion.div>
   );
 }
 
 // Step 1: Profile Creation
-function StepOne({
-  step,
-  icon: Icon,
-}: {
-  step: { title  ; description   };
-  icon: React.ComponentType<{ className?   }>;
-}) {
+function StepOne({ step, icon: Icon }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 80 }}
@@ -523,13 +454,7 @@ function StepOne({
 }
 
 // Step 2: Path Generation
-function StepTwo({
-  step,
-  icon: Icon,
-}: {
-  step: { title  ; description   };
-  icon: React.ComponentType<{ className?   }>;
-}) {
+function StepTwo({ step, icon: Icon }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 80 }}
@@ -760,13 +685,7 @@ function StepTwo({
 }
 
 // Step 3: Learning - Quiz Interface
-function StepThree({
-  step,
-  icon: Icon,
-}: {
-  step: { title  ; description   };
-  icon: React.ComponentType<{ className?   }>;
-}) {
+function StepThree({ step, icon: Icon }) {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   return (
@@ -987,13 +906,7 @@ function StepThree({
 }
 
 // Step 4: Achievement Dashboard
-function StepFour({
-  step,
-  icon: Icon,
-}: {
-  step: { title  ; description   };
-  icon: React.ComponentType<{ className?   }>;
-}) {
+function StepFour({ step, icon: Icon }) {
   const scoreCounter = useCounter(98, 1500);
   const hoursCounter = useCounter(42, 1500);
 
@@ -1210,3 +1123,90 @@ function StepFour({
   );
 }
 
+export default function HowItWorks() {
+  const { steps } = data;
+  const icons = [UserPlus, Compass, BookOpen, GraduationCap];
+
+  return (
+    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Animated Background */}
+      <div className="absolute inset-0 -z-10">
+        {/* Gradient Orbs */}
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.15, 0.25, 0.15],
+            x: [0, 50, 0],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-40 right-1/4 w-[900px] h-[900px] bg-gradient-to-br from-blue-400/30 via-cyan-300/20 to-transparent rounded-full blur-[150px]"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.1, 0.2, 0.1],
+            x: [0, -30, 0],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-0 left-1/4 w-[700px] h-[700px] bg-gradient-to-tr from-violet-400/25 via-purple-300/20 to-transparent rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.15, 1],
+            opacity: [0.1, 0.18, 0.1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-indigo-300/20 to-blue-300/15 rounded-full blur-[100px]"
+        />
+        {/* Subtle Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(99,102,241,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.04)_1px,transparent_1px)] bg-[size:80px_80px]" />
+        <FloatingParticles />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-20 md:mb-28"
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-100 to-violet-100 dark:from-blue-500/15 dark:to-violet-500/15 border border-blue-200/50 dark:border-blue-500/20 text-sm font-medium mb-8 shadow-lg shadow-blue-500/10"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </motion.div>
+            <span className="bg-gradient-to-r from-blue-700 to-violet-700 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent font-semibold">
+              Simple & Powerful
+            </span>
+          </motion.div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight text-balance text-slate-900 dark:text-white">
+            How it{" "}
+            <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent bg-[size:200%] animate-gradient">
+              Works
+            </span>
+          </h2>
+          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed text-pretty">
+            Transform your learning journey in four simple steps. Our AI-powered
+            platform makes mastering any skill effortless.
+          </p>
+        </motion.div>
+
+        {/* Steps */}
+        <StepOne step={steps[0]} icon={icons[0]} />
+        <StepTwo step={steps[1]} icon={icons[1]} />
+        <StepThree step={steps[2]} icon={icons[2]} />
+        <StepFour step={steps[3]} icon={icons[3]} />
+      </div>
+    </section>
+  );
+}
