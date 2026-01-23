@@ -7,7 +7,6 @@ import Generate from "./Generate";
 import Explore from "./Explore";
 import Library from "./Library";
 import PremiumCourses from "./PremiumCourses";
-import Upgrade from "./Upgrade";
 import Chat from "./Chat";
 import FlashcardsLibrary from "./FlashcardsLibrary";
 import TestYourself from "./TestYourself";
@@ -60,7 +59,6 @@ export default function DashboardContent() {
     flashcards: FlashcardsLibrary,
     quizzes: TestYourself,
     "premium-courses": PremiumCourses,
-    upgrade: Upgrade,
     chat: Chat,
     profile: ProfileContent,
   };

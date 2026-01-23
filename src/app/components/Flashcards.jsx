@@ -581,7 +581,7 @@ export default function Flashcards({ cardData }) {
                   <button
                     onClick={() => {
                       setShowUpgradeModal(false);
-                      router.push("/dashboard?tab=upgrade");
+                      router.push("/pricing");
                     }}
                     className="flex-1 px-6 py-3 bg-white text-blue-600 rounded-xl hover:bg-gray-50 font-semibold shadow-lg transition-colors"
                   >

@@ -404,7 +404,7 @@ export default function Generate({ setActiveContent }) {
                     toast.error(
                       "Intermediate and Advanced levels require Pro subscription. Please upgrade to continue."
                     );
-                    setActiveContent("upgrade");
+                    router.push("/pricing");
                     return;
                   }
 
@@ -447,7 +447,7 @@ export default function Generate({ setActiveContent }) {
                     <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     Intermediate and Advanced levels require a Pro subscription.
                     <button
-                      onClick={() => setActiveContent("upgrade")}
+                      onClick={() => router.push("/pricing")}
                       className="ml-1 font-semibold underline hover:text-orange-900 dark:hover:text-orange-100"
                     >
                       Upgrade to Pro

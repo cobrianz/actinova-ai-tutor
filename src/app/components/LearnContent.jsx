@@ -1222,7 +1222,7 @@ export default function LearnContent() {
         toast.error(
           "Intermediate and Advanced levels require Pro subscription. Redirecting to upgrade..."
         );
-        router.push("/dashboard?tab=upgrade");
+        router.push("/pricing");
         console.log(
           "✅ Free user trying non-beginner difficulty, setting isLoading to false and redirecting"
         );
@@ -1709,7 +1709,7 @@ export default function LearnContent() {
                   toast.error(
                     "PDF downloads are a Pro feature. Please upgrade."
                   );
-                  router.push("/dashboard?tab=upgrade");
+                  router.push("/pricing");
                   return;
                 }
                 try {
@@ -1948,7 +1948,7 @@ export default function LearnContent() {
                     onClick={() => {
                       if (!isPro) {
                         toast.error("Notes PDF export is a Pro feature. Please upgrade.");
-                        router.push("/dashboard?tab=upgrade");
+                        router.push("/pricing");
                         return;
                       }
                       handleDownloadNotes();
@@ -2140,7 +2140,7 @@ export default function LearnContent() {
                   onClick={() => {
                     setShowLimitModal(false);
                     setLimitModalData(null);
-                    router.push("/dashboard?tab=upgrade");
+                    router.push("/pricing");
                   }}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >

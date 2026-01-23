@@ -16,8 +16,7 @@ import {
   Paperclip
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "./AuthProvider";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmModal from "./ConfirmModal";
 import ActinovaLoader from "./ActinovaLoader";
 
@@ -66,6 +65,7 @@ const renderFormattedContent = (content) => {
 };
 
 export default function Chat({ topic: propTopic }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlTopic = searchParams.get("topic");
 
@@ -315,6 +315,7 @@ export default function Chat({ topic: propTopic }) {
     if (!input.trim()) return;
     if (!isPro) {
       toast.error("Premium subscription required for AI tutor chat. Please upgrade.");
+      router.push("/pricing");
       return;
     }
     if (!topic) {

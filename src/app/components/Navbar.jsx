@@ -146,7 +146,7 @@ export default function Navbar({ toggleSidebar }) {
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/dashboard?tab=upgrade")}>
+                  <DropdownMenuItem onClick={() => router.push("/pricing")}>
                     <CreditCard className="mr-2 h-4 w-4" />
                     <span>Subscription</span>
                   </DropdownMenuItem>

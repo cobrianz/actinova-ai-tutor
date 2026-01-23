@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 
 export default function Sidebar({
@@ -25,6 +26,7 @@ export default function Sidebar({
   setSidebarOpen,
   activeContent,
 }) {
+  const router = useRouter();
   const [screenSize, setScreenSize] = useState("large");
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
@@ -98,6 +100,10 @@ export default function Sidebar({
   }, []);
 
   const handleItemClick = (id) => {
+    if (id === "upgrade") {
+      router.push("/pricing");
+      return;
+    }
     setActiveItem(id);
     setActiveContent(id);
 
