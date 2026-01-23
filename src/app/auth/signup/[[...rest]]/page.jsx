@@ -84,8 +84,8 @@ export default function SignupPage() {
 
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm">
-              <Sparkles className="w-7 h-7 text-purple-600" />
+            <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm overflow-hidden p-2">
+              <img src="/logo.png" alt="Actinova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
               Actinova AI
@@ -131,8 +131,8 @@ export default function SignupPage() {
         <div className="max-w-md w-full flex flex-col">
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
               <span className="font-bricolage">Actinova AI</span>
             </div>

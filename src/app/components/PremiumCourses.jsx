@@ -527,16 +527,17 @@ export default function PremiumCourses() {
                 whileHover={{ y: -8, scale: 1.02 }}
                 className="group bg-card/60 backdrop-blur-xl border border-border rounded-[2.5rem] overflow-hidden hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-500 flex flex-col h-full"
               >
-                <div className="relative h-48 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 transition-transform duration-700 group-hover:scale-110">
-                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 transition-transform duration-700 group-hover:scale-110">
+                    <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <TrendingUp size={64} className="text-white/20 transform -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse" />
+                    <TrendingUp size={80} className="text-white/30 transform -rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-700" />
                   </div>
-                  <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border border-white/20 ring-1 ring-white/10">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Trending Now</span>
+                  <div className="absolute top-5 left-5 bg-black/20 backdrop-blur-xl text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center space-x-2 border border-white/20 ring-1 ring-white/10 shadow-2xl">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-ping" />
+                    <span>Trending This Week</span>
                   </div>
                 </div>
 
@@ -550,21 +551,24 @@ export default function PremiumCourses() {
 
                   <div className="mt-auto space-y-6">
                     {course.whyTrending && (
-                      <div className="p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10">
-                        <p className="text-[10px] text-orange-600 dark:text-orange-400 font-black uppercase tracking-[0.1em] leading-relaxed">
-                          <span className="opacity-60 mr-1">Status:</span> {course.whyTrending}
+                      <div className="p-4 bg-orange-500/5 rounded-[1.5rem] border border-orange-500/10 group-hover:bg-orange-500/10 transition-colors">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Sparkles className="w-3 h-3 text-orange-500" />
+                          <span className="text-[10px] text-orange-600 dark:text-orange-400 font-black uppercase tracking-widest">Why it's hot</span>
+                        </div>
+                        <p className="text-xs text-foreground/80 font-medium leading-relaxed italic">
+                          "{course.whyTrending}"
                         </p>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-4 border-t border-border">
+                    <div className="flex items-center justify-between pt-5 border-t border-border">
                       <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1.5">
-                          <Clock className="w-4 h-4 text-orange-500" />
-                          <span className="text-xs font-bold text-foreground">{course.estimatedDuration || "6 weeks"}</span>
+                        <div className="flex items-center space-x-2 px-3 py-1 bg-secondary/50 rounded-lg">
+                          <Clock className="w-3.5 h-3.5 text-orange-500" />
+                          <span className="text-[11px] font-black text-foreground">{course.estimatedDuration || "6 weeks"}</span>
                         </div>
-                        <div className="w-1 h-1 rounded-full bg-border" />
-                        <span className="text-xs font-bold text-muted-foreground uppercase">{course.category || "General"}</span>
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{course.category || "General"}</span>
                       </div>
                     </div>
 
@@ -574,318 +578,326 @@ export default function PremiumCourses() {
                         generatingCourse === course.id ||
                         preparingCourse === course.id
                       }
-                      className="w-full py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black rounded-2xl hover:shadow-xl hover:shadow-orange-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-3 text-xs uppercase tracking-widest cursor-pointer"
+                      className="group/btn relative w-full h-14 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black rounded-[1.25rem] overflow-hidden hover:shadow-[0_0_30px_-5px_rgba(234,88,12,0.5)] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-3 text-[11px] uppercase tracking-[0.2em] cursor-pointer"
                     >
-                      {generatingCourse === course.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-                          <span>Generating...</span>
-                        </>
-                      ) : preparingCourse === course.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-                          <span>Preparing Curriculum</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          <span>Generate Course</span>
-                        </>
-                      )}
+                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                      <div className="relative flex items-center space-x-3">
+                        {generatingCourse === course.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                            <span>Analyzing...</span>
+                          </>
+                        ) : preparingCourse === course.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                            <span>Synthesizing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 group-hover/btn:animate-bounce" />
+                            <span>Enroll in Trend</span>
+                          </>
+                        )}
+                      </div>
                     </button>
                   </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+      ))}
+    </div>
+        </motion.div >
+      )
+}
 
-      {/* Featured Course */}
-      {featured && (
-        <motion.div
-          className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/40 backdrop-blur-xl shadow-2xl shadow-primary/5 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Decorative background elements */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-background to-purple-600/10 opacity-50 dark:opacity-20" />
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]" />
-          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/10 rounded-full blur-[80px]" />
+{/* Featured Course */ }
+{
+  featured && (
+    <motion.div
+      className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/40 backdrop-blur-xl shadow-2xl shadow-primary/5 mb-16"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-background to-purple-600/10 opacity-50 dark:opacity-20" />
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]" />
+      <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/10 rounded-full blur-[80px]" />
 
-          <div className="relative z-10 p-8 md:p-12 lg:p-16">
-            <div className="flex flex-col lg:flex-row gap-12 items-center">
-              {/* Left Column - Content */}
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-8">
-                  <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-600/20">
-                    <Crown className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-black text-xs uppercase tracking-[0.2em]">
-                      Featured Curriculum
-                    </span>
-                    <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">
-                      {isPro ? "Premium Exclusive" : "Upgrade to Access"}
-                    </p>
-                  </div>
-                </div>
-
-                <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight tracking-tight">
-                  {featured.title}
-                </h2>
-                <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-medium">
-                  {featured.description}
+      <div className="relative z-10 p-8 md:p-12 lg:p-16">
+        <div className="flex flex-col lg:flex-row gap-12 items-center">
+          {/* Left Column - Content */}
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-8">
+              <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-600/20">
+                <Crown className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-black text-xs uppercase tracking-[0.2em]">
+                  Featured Curriculum
+                </span>
+                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">
+                  {isPro ? "Premium Exclusive" : "Upgrade to Access"}
                 </p>
+              </div>
+            </div>
 
-                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 mb-8 max-w-xl">
-                  <p className="text-primary text-xs font-bold leading-relaxed flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Personalized for your learning goals. Refreshes monthly.</span>
-                  </p>
+            <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight tracking-tight">
+              {featured.title}
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-medium">
+              {featured.description}
+            </p>
+
+            <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 mb-8 max-w-xl">
+              <p className="text-primary text-xs font-bold leading-relaxed flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                <span>Personalized for your learning goals. Refreshes monthly.</span>
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-8 mb-8">
+              <div className="flex items-center space-x-2 text-foreground/80 font-bold bg-secondary/50 px-4 py-2 rounded-xl border border-border">
+                <Clock className="w-4 h-4 text-primary" />
+                <span className="text-sm">{featured.duration}</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-secondary/50 px-4 py-2 rounded-xl border border-border">
+                <div className="flex items-center space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-3 h-3 text-yellow-500 fill-yellow-500"
+                    />
+                  ))}
+                  <span className="ml-2 font-black text-sm text-foreground">
+                    {featured.rating}
+                  </span>
                 </div>
+              </div>
+              <div className="flex items-center space-x-2 text-muted-foreground font-bold">
+                <Users className="w-4 h-4" />
+                <span className="text-sm">10k+ Learners</span>
+              </div>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-8 mb-8">
-                  <div className="flex items-center space-x-2 text-foreground/80 font-bold bg-secondary/50 px-4 py-2 rounded-xl border border-border">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{featured.duration}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 bg-secondary/50 px-4 py-2 rounded-xl border border-border">
-                    <div className="flex items-center space-x-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className="w-3 h-3 text-yellow-500 fill-yellow-500"
-                        />
-                      ))}
-                      <span className="ml-2 font-black text-sm text-foreground">
-                        {featured.rating}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-muted-foreground font-bold">
-                    <Users className="w-4 h-4" />
-                    <span className="text-sm">10k+ Learners</span>
-                  </div>
-                </div>
-
-                {!isPro && (
-                  <div className="flex items-baseline space-x-3 mb-8">
-                    <span className="text-3xl font-black text-foreground">
-                      {featured.price}
-                    </span>
-                    {featured.originalPrice && (
-                      <span className="text-xl text-muted-foreground line-through opacity-50">
-                        {featured.originalPrice}
-                      </span>
-                    )}
-                  </div>
+            {!isPro && (
+              <div className="flex items-baseline space-x-3 mb-8">
+                <span className="text-3xl font-black text-foreground">
+                  {featured.price}
+                </span>
+                {featured.originalPrice && (
+                  <span className="text-xl text-muted-foreground line-through opacity-50">
+                    {featured.originalPrice}
+                  </span>
                 )}
               </div>
+            )}
+          </div>
 
-              {/* Right Column - CTA & Premium Quote */}
-              <div className="w-full lg:w-1/3 flex flex-col gap-6">
-                <div className="bg-card/80 border border-border rounded-3xl p-8 relative group hover:border-primary/30 transition-colors shadow-xl shadow-primary/5">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Crown className="w-12 h-12" />
-                  </div>
-                  <p className="text-foreground font-bold italic text-lg leading-relaxed relative mb-4">
-                    "{featured.premiumNote || featured.staffNote}"
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-white" />
-                    </div>
-                    <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">
-                      Actinova Premium Team
-                    </p>
-                  </div>
+          {/* Right Column - CTA & Premium Quote */}
+          <div className="w-full lg:w-1/3 flex flex-col gap-6">
+            <div className="bg-card/80 border border-border rounded-3xl p-8 relative group hover:border-primary/30 transition-colors shadow-xl shadow-primary/5">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Crown className="w-12 h-12" />
+              </div>
+              <p className="text-foreground font-bold italic text-lg leading-relaxed relative mb-4">
+                "{featured.premiumNote || featured.staffNote}"
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
                 </div>
+                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">
+                  Actinova Premium Team
+                </p>
+              </div>
+            </div>
 
-                <div className="mt-4">
-                  {isPro ? (
-                    <button
-                      onClick={() => handleStartLearning(featured)}
-                      disabled={preparingCourse === featured.id}
-                      className="w-full py-5 bg-primary text-primary-foreground font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center space-x-3"
-                    >
-                      {preparingCourse === featured.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div>
-                          <span>Preparing Curriculum</span>
-                        </>
-                      ) : (
-                        <>
-                          <BookOpen className="w-6 h-6" />
-                          <span>Start Learning Now</span>
-                        </>
-                      )}
-                    </button>
+            <div className="mt-4">
+              {isPro ? (
+                <button
+                  onClick={() => handleStartLearning(featured)}
+                  disabled={preparingCourse === featured.id}
+                  className="w-full py-5 bg-primary text-primary-foreground font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center space-x-3"
+                >
+                  {preparingCourse === featured.id ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div>
+                      <span>Preparing Curriculum</span>
+                    </>
                   ) : (
-                    <button
-                      onClick={() => handleUpgradePlan("premium-course")}
-                      className="w-full py-5 bg-foreground text-background font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-foreground/10"
-                    >
-                      Unlock Premium Now
-                    </button>
+                    <>
+                      <BookOpen className="w-6 h-6" />
+                      <span>Start Learning Now</span>
+                    </>
                   )}
-                  <p className="text-center text-[10px] text-muted-foreground mt-4 font-bold uppercase tracking-[0.2em]">
-                    Instant Access to All Materials
-                  </p>
-                </div>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleUpgradePlan("premium-course")}
+                  className="w-full py-5 bg-foreground text-background font-black rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-foreground/10"
+                >
+                  Unlock Premium Now
+                </button>
+              )}
+              <p className="text-center text-[10px] text-muted-foreground mt-4 font-bold uppercase tracking-[0.2em]">
+                Instant Access to All Materials
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+{/* Premium Courses Grid */ }
+{
+  isDataLoading || generatingPersonalized ? (
+    <div className="text-center py-12">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <p className="mt-4 text-gray-600 dark:text-gray-400">
+        {generatingPersonalized
+          ? "Creating your personalized premium courses..."
+          : "Loading premium courses..."}
+      </p>
+    </div>
+  ) : (
+  <>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      {paginatedCourses.map((course, index) => (
+        <motion.div
+          key={course.id || index}
+          variants={itemVariants}
+          whileHover={{ y: -8, scale: 1.02 }}
+          className="group relative bg-card/60 backdrop-blur-xl border border-border rounded-[2rem] overflow-hidden hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 flex flex-col h-full"
+        >
+          {/* Visual Header */}
+          <div className="relative h-48 overflow-hidden">
+            <div className={`absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-110 ${index % 3 === 0 ? "from-blue-600 to-indigo-700" :
+              index % 3 === 1 ? "from-purple-600 to-indigo-700" :
+                "from-blue-700 to-purple-600"
+              }`}>
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+            </div>
+
+            {/* Floating Icons for context */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 transition-opacity">
+              <BookOpen size={64} className="text-white transform -rotate-12" />
+            </div>
+
+            {/* Badges */}
+            <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+              <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg backdrop-blur-md ${getBadgeColor(course.badge)}`}>
+                {getBadgeIcon(course.badge)}
+                {course.badge}
               </div>
             </div>
           </div>
-        </motion.div>
-      )}
 
-      {/* Premium Courses Grid */}
-      {isDataLoading || generatingPersonalized ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            {generatingPersonalized
-              ? "Creating your personalized premium courses..."
-              : "Loading premium courses..."}
-          </p>
-        </div>
-      ) : (
-        <>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {paginatedCourses.map((course, index) => (
-              <motion.div
-                key={course.id || index}
-                variants={itemVariants}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="group relative bg-card/60 backdrop-blur-xl border border-border rounded-[2rem] overflow-hidden hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 flex flex-col h-full"
-              >
-                {/* Visual Header */}
-                <div className="relative h-48 overflow-hidden">
-                  <div className={`absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-110 ${index % 3 === 0 ? "from-blue-600 to-indigo-700" :
-                    index % 3 === 1 ? "from-purple-600 to-indigo-700" :
-                      "from-blue-700 to-purple-600"
-                    }`}>
-                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-                  </div>
+          {/* Content */}
+          <div className="p-6 flex flex-col flex-1">
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-1">
+                {course.title}
+              </h3>
+              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                {course.description}
+              </p>
+            </div>
 
-                  {/* Floating Icons for context */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 transition-opacity">
-                    <BookOpen size={64} className="text-white transform -rotate-12" />
-                  </div>
-
-                  {/* Badges */}
-                  <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg backdrop-blur-md ${getBadgeColor(course.badge)}`}>
-                      {getBadgeIcon(course.badge)}
-                      {course.badge}
-                    </div>
-                  </div>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2 mb-6 border-y border-border py-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                  <Users size={14} className="text-blue-500" />
+                  <span className="text-[10px] font-medium">Students</span>
                 </div>
+                <span className="text-sm font-bold">{course.students?.toLocaleString() || "1.2k"}</span>
+              </div>
+              <div className="text-center border-x border-border">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                  <Clock size={14} className="text-orange-500" />
+                  <span className="text-[10px] font-medium">Duration</span>
+                </div>
+                <span className="text-sm font-bold">{course.duration || "6w"}</span>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                  <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                  <span className="text-[10px] font-medium">Rating</span>
+                </div>
+                <span className="text-sm font-bold">{course.rating || "4.8"}</span>
+              </div>
+            </div>
 
-                {/* Content */}
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="mb-4">
-                    <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                      {course.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                      {course.description}
-                    </p>
-                  </div>
+            {/* Pricing/Access */}
+            {isPro && (
+              <div className="mb-6">
+                {(() => {
+                  const { daysLeft, progress } = getCourseExpiryInfo(course.createdAt);
+                  return (
+                    <div className="w-full">
+                      <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">
+                        <span>Course Access</span>
+                        <span className="text-primary">{daysLeft} days left</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-primary h-1.5 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 mb-6 border-y border-border py-4">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                        <Users size={14} className="text-blue-500" />
-                        <span className="text-[10px] font-medium">Students</span>
-                      </div>
-                      <span className="text-sm font-bold">{course.students?.toLocaleString() || "1.2k"}</span>
-                    </div>
-                    <div className="text-center border-x border-border">
-                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                        <Clock size={14} className="text-orange-500" />
-                        <span className="text-[10px] font-medium">Duration</span>
-                      </div>
-                      <span className="text-sm font-bold">{course.duration || "6w"}</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                        <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                        <span className="text-[10px] font-medium">Rating</span>
-                      </div>
-                      <span className="text-sm font-bold">{course.rating || "4.8"}</span>
-                    </div>
-                  </div>
-
-                  {/* Pricing/Access */}
-                  {isPro && (
-                    <div className="mb-6">
-                      {(() => {
-                        const { daysLeft, progress } = getCourseExpiryInfo(course.createdAt);
-                        return (
-                          <div className="w-full">
-                            <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">
-                              <span>Course Access</span>
-                              <span className="text-primary">{daysLeft} days left</span>
-                            </div>
-                            <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className="bg-primary h-1.5 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-                                style={{ width: `${progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
+            {/* Actions */}
+            <div className="mt-auto space-y-3">
+              {isPro ? (
+                <button
+                  onClick={() => handleStartLearning(course)}
+                  disabled={preparingCourse === course.id}
+                  className="w-full py-3.5 px-6 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
+                >
+                  {preparingCourse === course.id ? (
+                    <><div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div> Preparing...</>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
+                      <span>Start Learning Now</span>
+                    </>
                   )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleUpgradePlan("premium-course")}
+                  className="w-full py-3.5 px-6 rounded-2xl bg-foreground text-background font-bold shadow-lg hover:shadow-foreground/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <Crown className="w-5 h-5" />
+                  <span>Get Premium Access</span>
+                </button>
+              )}
 
-                  {/* Actions */}
-                  <div className="mt-auto space-y-3">
-                    {isPro ? (
-                      <button
-                        onClick={() => handleStartLearning(course)}
-                        disabled={preparingCourse === course.id}
-                        className="w-full py-3.5 px-6 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
-                      >
-                        {preparingCourse === course.id ? (
-                          <><div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div> Preparing...</>
-                        ) : (
-                          <>
-                            <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
-                            <span>Start Learning Now</span>
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleUpgradePlan("premium-course")}
-                        className="w-full py-3.5 px-6 rounded-2xl bg-foreground text-background font-bold shadow-lg hover:shadow-foreground/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2"
-                      >
-                        <Crown className="w-5 h-5" />
-                        <span>Get Premium Access</span>
-                      </button>
-                    )}
-
-                    <p className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-[0.1em]">
-                      AI-Powered Learning Experience
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+              <p className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-[0.1em]">
+                AI-Powered Learning Experience
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </motion.div>
 
 
-        </>
-      )}
-    </div>
+  </>
+)
+}
+    </div >
   );
 }

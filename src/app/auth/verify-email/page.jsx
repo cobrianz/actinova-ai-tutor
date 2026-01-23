@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, AlertCircle, Mail, ArrowLeft, Key } from "lucide-react";
+import { CheckCircle, AlertCircle, Mail, ArrowLeft, Key, ShieldCheck, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../components/AuthProvider";
 
@@ -169,112 +169,151 @@ function VerifyEmailContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <Link href="/" className="inline-flex items-center space-x-3 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Mail className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-white flex overflow-hidden font-sans">
+      {/* Left Section: Branding & Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-purple-50 overflow-hidden">
+        <div className="absolute inset-0 z-10 bg-gradient-to-br from-purple-100/50 to-white/50 backdrop-blur-[1px]" />
+        <img
+          src="https://images.unsplash.com/photo-1577563906417-45a11b3f9f75?q=80&w=2070&auto=format&fit=crop"
+          alt="Verification"
+          className="absolute inset-0 object-cover w-full h-full opacity-40 scale-105"
+        />
+
+        <div className="relative z-20 flex flex-col justify-between p-12 w-full">
+          <Link href="/" className="inline-flex items-center space-x-3 group">
+            <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm overflow-hidden p-2">
+              <img src="/logo.png" alt="Actinova Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">
-              Actinova AI Tutor
+            <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
+              Actinova AI
             </span>
           </Link>
 
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Verify Your Email
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Enter the verification code sent to your email address
-          </p>
-        </div>
+          <div className="max-w-md">
+            <h1 className="text-5xl font-extrabold text-gray-900 leading-tight mb-6 font-bricolage">
+              Security <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
+                checkpoint.
+              </span>
+            </h1>
 
-        {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="token"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Verification Code
-              </label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="token"
-                  name="token"
-                  type="text"
-                  required
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="pl-10 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                  placeholder="Enter the 6-digit verification code"
-                />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Enter the 6-digit code from your email
-              </p>
+            <div className="space-y-4">
+              {[
+                "Instant email authentication",
+                "Two-factor verification",
+                "Seamless account startup"
+              ].map((text, i) => (
+                <div key={i} className="flex items-center space-x-3 text-gray-700">
+                  <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                  <span className="text-lg font-medium">{text}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {verificationStatus === "error" && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-sm font-medium text-red-900 dark:text-red-100">
-                    Verification Failed
-                  </h4>
-                  <p className="text-sm text-red-800 dark:text-red-200">
-                    The code you entered is invalid or has expired. Please check
-                    your email and try again.
-                  </p>
+          <div className="pt-8 border-t border-purple-100">
+            <p className="text-gray-500 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+              <ShieldCheck size={16} className="text-purple-600" />
+              Identity Verification System
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Section: Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-20 overflow-y-auto bg-white">
+        <div className="max-w-md w-full flex flex-col">
+          <div className="lg:hidden text-center mb-10">
+            <div className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
+              </div>
+              <span className="font-bricolage">Actinova AI</span>
+            </div>
+          </div>
+
+          <div className="text-left mb-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-6">
+              <Mail className="w-6 h-6 text-purple-600" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">Verify Email</h2>
+            <p className="text-gray-500 font-medium leading-relaxed">
+              We've sent a code to <span className="font-black text-gray-900">{userEmail || "your email"}</span>. Please enter it below.
+            </p>
+          </div>
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-gray-700 ml-1">
+                  Verification Code
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="block w-full text-center text-3xl font-mono tracking-[0.5em] pl-10 h-14 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    placeholder="000000"
+                  />
                 </div>
               </div>
-            </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading || !code.trim()}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {loading ? "Verifying..." : "Verify Email"}
-          </button>
+              {verificationStatus === "error" && (
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                  <p className="text-xs font-bold text-red-600">
+                    The code you entered is invalid or has expired.
+                  </p>
+                </div>
+              )}
 
-          <div className="text-center space-y-3">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Didn't receive the code?{" "}
               <button
-                type="button"
-                onClick={handleResendEmail}
-                disabled={resendLoading || resendCooldown > 0}
-                className="text-blue-600 hover:text-blue-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={loading || !code.trim() || code.length < 6}
+                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
               >
-                {resendLoading
-                  ? "Sending..."
-                  : resendCooldown > 0
-                    ? `Resend in ${resendCooldown}s`
-                    : "Resend email"}
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
+                ) : (
+                  <span>Verify Account</span>
+                )}
               </button>
-            </p>
+            </div>
 
-            <div>
+            <div className="text-center space-y-6">
+              <p className="text-sm font-bold text-gray-500">
+                Didn't receive the email?{" "}
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={resendLoading || resendCooldown > 0}
+                  className="text-purple-600 hover:text-purple-700 disabled:opacity-50"
+                >
+                  {resendLoading
+                    ? "Sending..."
+                    : resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : "Resend Code"}
+                </button>
+              </p>
+
               <Link
                 href="/auth/login"
-                className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-purple-600 transition-colors"
               >
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Back to Sign In
+                <ArrowLeft size={16} className="mr-2" />
+                Back to sign in
               </Link>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
+}
 }
 
 export default function VerifyEmailPage() {

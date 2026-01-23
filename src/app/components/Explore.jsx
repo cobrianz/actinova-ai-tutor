@@ -1535,7 +1535,7 @@ export default function Explore() {
                             <h3 className="text-xl font-black text-foreground tracking-tight">
                               {category.name}
                             </h3>
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">
+                            <p className="text-[10px] text-muted-foreground font-bold tracking-widest leading-none mt-1">
                               {category.count || 0} Specializations
                             </p>
                           </div>
@@ -1563,7 +1563,7 @@ export default function Explore() {
                         <button
                           onClick={() => handleExploreCategory(category)}
                           disabled={exploringCategory === category.name}
-                          className="w-full bg-secondary hover:bg-primary hover:text-primary-foreground text-foreground py-3 px-4 rounded-xl transition-all duration-300 text-xs font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 border border-border group-hover:border-primary/20"
+                          className="w-full bg-secondary hover:bg-primary hover:text-primary-foreground text-foreground py-3 px-4 rounded-xl transition-all duration-300 text-xs font-black tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 border border-border group-hover:border-primary/20"
                         >
                           {exploringCategory === category.name ? (
                             <>
