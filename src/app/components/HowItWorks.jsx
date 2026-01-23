@@ -154,19 +154,19 @@ function BrowserWindow({
         </div>
         {/* URL Bar */}
         <div className="flex-1 flex justify-center">
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-sm text-slate-500 dark:text-slate-400 max-w-sm w-full shadow-inner">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 max-w-sm w-full shadow-inner">
             <Shield className="w-3.5 h-3.5 text-emerald-500" />
             <span className="truncate font-medium">{url}</span>
           </div>
         </div>
         {/* Right Icons */}
         <div className="flex items-center gap-3 text-slate-400">
-          <Share2 className="w-4 h-4 hover:text-blue-500 transition-colors cursor-pointer" />
-          <Download className="w-4 h-4 hover:text-blue-500 transition-colors cursor-pointer" />
+          <Share2 className="w-4 h-4 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer" />
+          <Download className="w-4 h-4 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer" />
         </div>
       </div>
       {/* Content */}
-      <div className="bg-white dark:bg-slate-800/80 dark:bg-slate-800/80">{children}</div>
+      <div className="bg-white dark:bg-slate-800">{children}</div>
     </motion.div>
   );
 }
@@ -215,7 +215,7 @@ function AppWindow({
         <div className="w-14" />
       </div>
       {/* Content */}
-      <div className="bg-white dark:bg-slate-800/80 dark:bg-slate-800/80">{children}</div>
+      <div className="bg-white dark:bg-slate-800">{children}</div>
     </motion.div>
   );
 }
@@ -250,7 +250,7 @@ function StepOne({ step, icon: Icon }) {
           </motion.div>
         </div>
         <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">{step.title}</h3>
-        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">{step.description}</p>
+        <p className="text-lg text-slate-600 dark:text-slate-400 dark:text-slate-500 leading-relaxed">{step.description}</p>
         <div className="space-y-4 pt-2">
           {["Set learning goals", "Choose skill level", "Personalize experience"].map((text, i) => (
             <motion.div
@@ -353,7 +353,7 @@ function StepOne({ step, icon: Icon }) {
                       whileHover={{ scale: 1.08, y: -2 }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all ${skill.selected
                           ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
-                          : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
+                          : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
                         }`}
                     >
                       {skill.name}
@@ -378,7 +378,7 @@ function StepOne({ step, icon: Icon }) {
                       whileHover={{ scale: 1.03, y: -2 }}
                       className={`p-3 rounded-xl text-center text-sm font-medium cursor-pointer transition-all ${i === 1
                           ? "bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-500/20 dark:to-cyan-500/20 border-2 border-blue-400 dark:border-blue-500 text-blue-700 dark:text-blue-400 shadow-md shadow-blue-500/20"
-                          : "bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500"
+                          : "bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-500"
                         }`}
                     >
                       {level}
@@ -592,7 +592,7 @@ function StepTwo({ step, icon: Icon }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
                           <span
-                            className={`font-semibold ${module.status === "locked" ? "text-slate-400 dark:text-slate-500 dark:text-slate-400" : "text-slate-800 dark:text-white"}`}
+                            className={`font-semibold ${module.status === "locked" ? "text-slate-400 dark:text-slate-500 dark:text-slate-500 dark:text-slate-400" : "text-slate-800 dark:text-white"}`}
                           >
                             {module.title}
                           </span>
@@ -651,7 +651,7 @@ function StepTwo({ step, icon: Icon }) {
           </motion.div>
         </div>
         <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">{step.title}</h3>
-        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">{step.description}</p>
+        <p className="text-lg text-slate-600 dark:text-slate-400 dark:text-slate-500 leading-relaxed">{step.description}</p>
         <div className="space-y-4 pt-2">
           {["Custom curriculum", "Adaptive difficulty", "Structured roadmap"].map((text, i) => (
             <motion.div
@@ -709,7 +709,7 @@ function StepThree({ step, icon: Icon }) {
           </motion.div>
         </div>
         <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">{step.title}</h3>
-        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">{step.description}</p>
+        <p className="text-lg text-slate-600 dark:text-slate-400 dark:text-slate-500 leading-relaxed">{step.description}</p>
         <div className="space-y-4 pt-2">
           {["Interactive lessons", "Instant feedback", "AI-powered hints"].map((text, i) => (
             <motion.div
@@ -959,7 +959,7 @@ function StepFour({ step, icon: Icon }) {
                     <Trophy className="w-10 h-10 text-white" />
                   </motion.div>
                 </motion.div>
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                   Certificate of Completion
                 </div>
                 <div className="text-2xl font-bold text-slate-800 dark:text-white mb-1">React Developer</div>
@@ -1001,7 +1001,7 @@ function StepFour({ step, icon: Icon }) {
                     )}
                     {stat.suffix && typeof stat.value !== "number" && stat.suffix}
                   </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
@@ -1024,7 +1024,7 @@ function StepFour({ step, icon: Icon }) {
                   </motion.div>
                   <span className="text-sm font-semibold text-slate-800 dark:text-white">Skills Mastered</span>
                 </div>
-                <MoreHorizontal className="w-4 h-4 text-slate-400 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors" />
+                <MoreHorizontal className="w-4 h-4 text-slate-400 dark:text-slate-500 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors" />
               </div>
               <div className="flex flex-wrap gap-2">
                 {["React Hooks", "State Management", "TypeScript", "Testing", "Performance"].map((skill, i) => (
@@ -1046,7 +1046,7 @@ function StepFour({ step, icon: Icon }) {
                   viewport={{ once: true }}
                   transition={{ delay: 1.5, type: "spring" }}
                   whileHover={{ scale: 1.1 }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-600 text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-600 text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs font-medium flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
                   12 more
@@ -1088,7 +1088,7 @@ function StepFour({ step, icon: Icon }) {
           </motion.div>
         </div>
         <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">{step.title}</h3>
-        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">{step.description}</p>
+        <p className="text-lg text-slate-600 dark:text-slate-400 dark:text-slate-500 leading-relaxed">{step.description}</p>
         <div className="space-y-4 pt-2">
           {["Earn certificates", "Track progress", "Showcase skills"].map((text, i) => (
             <motion.div
@@ -1187,7 +1187,7 @@ export default function HowItWorks() {
               Works
             </span>
           </h2>
-          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed text-pretty">
+          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 dark:text-slate-500 max-w-2xl mx-auto leading-relaxed text-pretty">
             Transform your learning journey in four simple steps. Our AI-powered
             platform makes mastering any skill effortless.
           </p>
