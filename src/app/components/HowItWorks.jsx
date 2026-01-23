@@ -88,10 +88,10 @@ function FloatingParticles() {
         <motion.div
           key={i}
           className={`absolute rounded-full ${i % 3 === 0
-              ? "w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400"
-              : i % 3 === 1
-                ? "w-1.5 h-1.5 bg-gradient-to-r from-violet-400 to-purple-400"
-                : "w-1 h-1 bg-gradient-to-r from-indigo-400 to-blue-400"
+            ? "w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400"
+            : i % 3 === 1
+              ? "w-1.5 h-1.5 bg-gradient-to-r from-violet-400 to-purple-400"
+              : "w-1 h-1 bg-gradient-to-r from-indigo-400 to-blue-400"
             }`}
           initial={{
             x: Math.random() * 100 + "%",
@@ -352,8 +352,8 @@ function StepOne({ step, icon: Icon }) {
                       transition={{ delay: 0.6 + i * 0.05, type: "spring" }}
                       whileHover={{ scale: 1.08, y: -2 }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all ${skill.selected
-                          ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
-                          : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
+                        : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
                         }`}
                     >
                       {skill.name}
@@ -377,8 +377,8 @@ function StepOne({ step, icon: Icon }) {
                       key={level}
                       whileHover={{ scale: 1.03, y: -2 }}
                       className={`p-3 rounded-xl text-center text-sm font-medium cursor-pointer transition-all ${i === 1
-                          ? "bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-500/20 dark:to-cyan-500/20 border-2 border-blue-400 dark:border-blue-500 text-blue-700 dark:text-blue-400 shadow-md shadow-blue-500/20"
-                          : "bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-500"
+                        ? "bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-500/20 dark:to-cyan-500/20 border-2 border-blue-400 dark:border-blue-500 text-blue-700 dark:text-blue-400 shadow-md shadow-blue-500/20"
+                        : "bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-500"
                         }`}
                     >
                       {level}
@@ -549,8 +549,8 @@ function StepTwo({ step, icon: Icon }) {
                         viewport={{ once: true }}
                         transition={{ delay: 0.6 + i * 0.15 }}
                         className={`absolute left-5 top-[52px] w-0.5 ${module.status === "completed" || module.status === "in-progress"
-                            ? "bg-gradient-to-b from-violet-500 to-violet-500/30"
-                            : "bg-slate-200 dark:bg-slate-600"
+                          ? "bg-gradient-to-b from-violet-500 to-violet-500/30"
+                          : "bg-slate-200 dark:bg-slate-600"
                           }`}
                       />
                     )}
@@ -558,20 +558,20 @@ function StepTwo({ step, icon: Icon }) {
                     <motion.div
                       whileHover={{ scale: 1.02, x: 6 }}
                       className={`flex items-start gap-4 p-4 rounded-xl transition-all cursor-pointer ${module.status === "in-progress"
-                          ? "bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200 dark:border-violet-500/30 shadow-md shadow-violet-500/10"
-                          : module.status === "completed"
-                            ? "bg-slate-50 dark:bg-slate-700/50"
-                            : "bg-slate-50 dark:bg-slate-700/50/50 dark:bg-slate-800/30 opacity-60"
+                        ? "bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200 dark:border-violet-500/30 shadow-md shadow-violet-500/10"
+                        : module.status === "completed"
+                          ? "bg-slate-50 dark:bg-slate-700/50"
+                          : "bg-slate-50 dark:bg-slate-700/50/50 dark:bg-slate-800/30 opacity-60"
                         }`}
                     >
                       {/* Status Circle */}
                       <motion.div
                         whileHover={{ scale: 1.1 }}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${module.status === "completed"
-                            ? "bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/40"
-                            : module.status === "in-progress"
-                              ? "bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/40"
-                              : "bg-slate-200 dark:bg-slate-600"
+                          ? "bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/40"
+                          : module.status === "in-progress"
+                            ? "bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/40"
+                            : "bg-slate-200 dark:bg-slate-600"
                           }`}
                       >
                         {module.status === "completed" ? (
@@ -605,8 +605,8 @@ function StepTwo({ step, icon: Icon }) {
                             viewport={{ once: true }}
                             transition={{ delay: 0.6 + i * 0.15, duration: 0.8, ease: "easeOut" }}
                             className={`h-full rounded-full ${module.status === "completed"
-                                ? "bg-gradient-to-r from-emerald-500 to-green-500"
-                                : "bg-gradient-to-r from-violet-500 to-purple-500"
+                              ? "bg-gradient-to-r from-emerald-500 to-green-500"
+                              : "bg-gradient-to-r from-violet-500 to-purple-500"
                               }`}
                           />
                         </div>
@@ -817,15 +817,15 @@ function StepThree({ step, icon: Icon }) {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedAnswer(i)}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${option.correct
-                      ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 shadow-md shadow-emerald-500/20"
-                      : "border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 shadow-md shadow-emerald-500/20"
+                    : "border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                     }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${option.correct
-                          ? "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/40"
-                          : "bg-slate-100 dark:bg-slate-600 text-slate-500 dark:text-slate-400"
+                        ? "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/40"
+                        : "bg-slate-100 dark:bg-slate-600 text-slate-500 dark:text-slate-400"
                         }`}
                     >
                       {String.fromCharCode(65 + i)}
@@ -1119,7 +1119,7 @@ export default function HowItWorks() {
   const icons = [UserPlus, Compass, BookOpen, GraduationCap];
 
   return (
-    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden">
+    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-purple-50/50 via-purple-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
 
       {/* Animated Background */}
       <div className="absolute inset-0 -z-10">
