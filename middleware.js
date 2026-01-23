@@ -20,6 +20,7 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, request) => {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get("host") || "";
+  const localToken = request.cookies.get("token")?.value;
 
   // Check if accessing admin subdomain
   if (hostname.startsWith("admin.") || hostname === "admin.localhost:3000") {
@@ -27,25 +28,9 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.rewrite(url);
   }
 
-  // Check for custom auth token
-  const token = request.cookies.get("token")?.value;
-  const isPublic = isPublicRoute(request);
-
-  if (token) {
-    // If user has a token and is on a login/signup page, redirect to dashboard
-    if (url.pathname.startsWith("/auth/login") || url.pathname.startsWith("/auth/signup")) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    return NextResponse.next();
-  }
-
-  if (!isPublic) {
-    // If not public and no custom token, let Clerk handle it or redirect
-    try {
-      await auth.protect();
-    } catch (e) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
-    }
+  // If user has a local token, we consider them authenticated for the purpose of middleware routing
+  if (!isPublicRoute(request) && !localToken) {
+    await auth.protect();
   }
 
   return NextResponse.next();

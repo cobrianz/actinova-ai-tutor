@@ -1,83 +1,87 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Sparkles, CheckCircle2, ShieldCheck, Mail, Lock, Eye, EyeOff, Loader2, Github, User } from "lucide-react";
 import { useSignUp } from "@clerk/nextjs";
-import { toast } from "react-hot-toast";
+import { useAuth } from "@/components/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import Link from "next/link";
+import {
+  Sparkles,
+  CheckCircle2,
+  ShieldCheck,
+  Mail,
+  Lock,
+  Loader2,
+  Github,
+  User,
+  ArrowRight
+} from "lucide-react";
 
 export default function SignupPage() {
-  const { isLoaded, signUp, setActive } = useSignUp();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const router = useRouter();
+  const { signup } = useAuth();
+  const { signUp, isLoaded: clerkLoaded } = useSignUp();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    acceptTerms: false
+  });
 
-  const handleCustomSignup = async (e) => {
+  const handleChange = (e) => {
+    const { id, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  const handleEmailSignup = async (e) => {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
+
+    if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
-    if (!acceptTerms) {
-      toast.error("Please accept the terms and conditions");
+    if (!formData.acceptTerms) {
+      toast.error("You must accept the terms and conditions");
       return;
     }
 
-    setIsLoading(true);
-
+    setLoading(true);
     try {
-      const response = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          firstName, 
-          lastName, 
-          email, 
-          password, 
-          confirmPassword, 
-          acceptTerms 
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Account created successfully!");
-        if (data.requiresVerification) {
-          router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
-        } else {
-          router.push("/onboarding");
-        }
+      const result = await signup(formData);
+      if (result.success) {
+        toast.success("Account created! Please check your email for verification.");
+        // AuthProvider or API handles redirect to verify-email
       } else {
-        toast.error(data.error || "Signup failed");
+        toast.error(result.error || "Signup failed");
       }
-    } catch (error) {
-      toast.error("An error occurred during signup");
+    } catch (err) {
+      toast.error("An unexpected error occurred");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSocialSignup = async (strategy) => {
-    if (!isLoaded) return;
-
+    if (!clerkLoaded) return;
     try {
       await signUp.authenticateWithRedirect({
-        strategy: strategy,
-        redirectUrl: "/api/auth/callback",
+        strategy,
+        redirectUrl: "/auth/signup",
         redirectUrlComplete: "/onboarding",
       });
     } catch (err) {
-      toast.error("Social signup failed");
+      console.error("Social signup error:", err);
+      toast.error(`Failed to sign up with ${strategy.replace("oauth_", "")}`);
     }
   };
 
@@ -91,10 +95,10 @@ export default function SignupPage() {
           alt="Digital learning"
           className="absolute inset-0 object-cover w-full h-full opacity-40 scale-105"
         />
-        
+
         <div className="relative z-20 flex flex-col justify-between p-12 w-full">
           <Link href="/" className="inline-flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transition-all group-hover:scale-110">
+            <div className="w-12 h-12 bg-white border border-purple-100 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm">
               <Sparkles className="w-7 h-7 text-purple-600" />
             </div>
             <span className="text-3xl font-bold text-gray-900 tracking-tight font-bricolage">
@@ -109,7 +113,7 @@ export default function SignupPage() {
                 personalized education.
               </span>
             </h1>
-            
+
             <div className="space-y-4">
               {[
                 "AI-driven curriculum design",
@@ -137,160 +141,176 @@ export default function SignupPage() {
       </div>
 
       {/* Right Section: Custom Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 overflow-y-auto bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-20 overflow-y-auto bg-white">
         <div className="max-w-md w-full flex flex-col">
-          <div className="mb-8 text-center lg:text-left">
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <span className="font-bricolage">Actinova AI</span>
+            </div>
+          </div>
+
+          <div className="text-left mb-6">
             <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">Create Account</h2>
-            <p className="text-gray-500 font-medium">Join our community of lifelong learners</p>
+            <p className="text-gray-500 font-medium">Join us and start your learning journey</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <button
-              onClick={() => handleSocialSignup("oauth_google")}
-              className="flex items-center justify-center space-x-3 py-3 px-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors font-semibold"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 6.16l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-              <span>Google</span>
-            </button>
-            <button
-              onClick={() => handleSocialSignup("oauth_github")}
-              className="flex items-center justify-center space-x-3 py-3 px-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors font-semibold"
-            >
-              <Github className="w-5 h-5" />
-              <span>GitHub</span>
-            </button>
-          </div>
-
-          <div className="relative mb-6 text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-100"></div>
-            </div>
-            <span className="relative px-4 bg-white text-xs font-bold text-gray-400 uppercase tracking-widest">Or register with email</span>
-          </div>
-
-          <form onSubmit={handleCustomSignup} className="space-y-4">
+          <form onSubmit={handleEmailSignup} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">First Name</label>
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">First Name</Label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="firstName"
                     placeholder="John"
-                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none text-sm"
+                    className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    value={formData.firstName}
+                    onChange={handleChange}
                     required
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Last Name</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
-                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none text-sm"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none text-sm"
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  className="h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  value={formData.lastName}
+                  onChange={handleChange}
                   required
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-10 pr-10 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none text-sm"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Confirm</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none text-sm"
-                    required
-                  />
-                </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 py-2">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={acceptTerms}
-                onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="w-4 h-4 text-purple-600 border-gray-200 rounded focus:ring-purple-500"
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="At least 8 characters"
+                  className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Repeat your password"
+                  className={`pl-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
+                      ? "border-red-300 bg-red-50/30"
+                      : "border-gray-100"
+                    }`}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <p className="text-[11px] font-bold text-red-500 mt-1 ml-1">Passwords do not match</p>
+              )}
+            </div>
+
+            <div className="flex items-start space-x-2 pt-1">
+              <Checkbox
+                id="acceptTerms"
+                checked={formData.acceptTerms}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, acceptTerms: checked }))}
+                className="mt-1 border-gray-200 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
               />
-              <label htmlFor="terms" className="text-xs text-gray-500 font-medium leading-none cursor-pointer">
+              <label
+                htmlFor="acceptTerms"
+                className="text-xs font-medium text-gray-500 leading-normal cursor-pointer"
+              >
                 I agree to the{" "}
-                <Link href="/terms" className="text-purple-600 hover:underline">Terms</Link>
+                <Link href="/terms" className="text-purple-600 hover:underline">Terms of Service</Link>
                 {" "}and{" "}
                 <Link href="/privacy" className="text-purple-600 hover:underline">Privacy Policy</Link>
               </label>
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl shadow-none transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center space-x-2"
+              className="w-full h-11 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] group"
+              disabled={loading}
             >
-              {isLoading ? (
+              {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <span>Create Account</span>
+                <>
+                  Create Account
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
-            </button>
+            </Button>
           </form>
 
-          <p className="mt-8 text-center text-gray-500 font-medium text-sm">
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-100" />
+            </div>
+            <span className="relative z-10 bg-white px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Or sign up with
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              variant="outline"
+              className="h-11 border-gray-100 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-gray-700"
+              onClick={() => handleSocialSignup("oauth_google")}
+              disabled={loading || !clerkLoaded}
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-3" />
+              Google
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11 border-gray-100 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-gray-700"
+              onClick={() => handleSocialSignup("oauth_github")}
+              disabled={loading || !clerkLoaded}
+            >
+              <Github className="w-5 h-5 mr-3" />
+              GitHub
+            </Button>
+          </div>
+
+          <p className="mt-8 text-center text-sm font-medium text-gray-500">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-purple-600 hover:text-purple-500 font-bold underline decoration-2 underline-offset-4">
-              Sign in
+            <Link
+              href="/auth/login"
+              className="text-purple-600 font-bold hover:text-purple-700 underline decoration-2 underline-offset-4"
+            >
+              Sign In
             </Link>
           </p>
         </div>

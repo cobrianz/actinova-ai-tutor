@@ -280,17 +280,17 @@ export default function ProfileContent() {
   const ModalOverlay = ({ isOpen, onClose, children, title }) => {
     if (!isOpen) return null;
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 ">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div
-          className={`${theme === 'dark' ? "bg-slate-500 border-slate-800" : "bg-white border-slate-200"} border rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto`}
+          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         >
           <div
-            className={`sticky top-0 flex items-center justify-between p-6 border-b ${theme === 'dark' ? "border-slate-800" : "border-slate-200"} ${theme === 'dark' ? "bg-slate-900" : "bg-white"}`}
+            className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
           >
-            <h2 className="text-xl font-bold">{title}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
             <button
               onClick={onClose}
-              className={`p-1 rounded-lg transition-colors ${theme === 'dark' ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+              className="p-1 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
             >
               <X size={20} />
             </button>
@@ -304,15 +304,15 @@ export default function ProfileContent() {
   return (
     <>
       <div
-        className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? "dark text-white" : "bg-slate-50 text-slate-900"}`}
+        className="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
       >
         <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-7xl mx-auto">
             {/* Professional Profile Header */}
-            <div className={`mb-8 p-6 rounded-2xl ${theme === 'dark' ? "bg-slate-800 text-white" : "bg-white text-slate-900 shadow-sm border border-slate-200"}`}>
+            <div className="mb-8 p-6 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Avatar */}
-                <div className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0 ${theme === 'dark' ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"}`}>
+                <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                   {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
                 </div>
 
@@ -321,21 +321,21 @@ export default function ProfileContent() {
                   <h1 className="text-3xl font-bold mb-1">
                     {profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "User")}
                   </h1>
-                  <p className={`text-sm mb-4 ${theme === 'dark' ? "text-slate-400" : "text-slate-500"}`}>
+                  <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
                     {profileData?.user?.email || user?.email}
                   </p>
 
                   <div className="flex flex-wrap justify-center md:justify-start gap-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${profileData?.usage?.isPremium
                       ? "bg-gradient-to-r from-amber-200 to-yellow-400 text-yellow-900"
-                      : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                       }`}>
                       {profileData?.usage?.isPremium ? <Crown size={12} /> : <Star size={12} />}
                       {profileData?.user?.subscription?.plan === 'enterprise'
                         ? "Enterprise Member"
                         : profileData?.usage?.isPremium ? "Pro Member" : "Free Plan"}
                     </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${theme === 'dark' ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"}`}>
+                    <span className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                       <Calendar size={12} />
                       Member since {new Date(user?.createdAt || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                     </span>
@@ -343,15 +343,15 @@ export default function ProfileContent() {
                 </div>
 
                 {/* Quick Stats */}
-                <div className={`flex gap-6 px-6 py-4 rounded-xl ${theme === 'dark' ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                <div className="flex gap-6 px-6 py-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{profileData?.usage?.used || 0}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">Generations</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Generations</div>
                   </div>
-                  <div className="w-px bg-slate-200 dark:bg-slate-600"></div>
+                  <div className="w-px bg-gray-200 dark:bg-gray-700"></div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">{profileData?.usage?.details?.courses?.used || 0}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">Courses</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Courses</div>
                   </div>
                 </div>
               </div>
@@ -368,9 +368,7 @@ export default function ProfileContent() {
                     onClick={() => setActiveTab(item.id)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${isActive
                       ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                      : theme === 'dark'
-                        ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
-                        : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-sm border border-gray-200 dark:border-gray-700"
                       }`}
                   >
                     <Icon size={16} />
@@ -381,7 +379,7 @@ export default function ProfileContent() {
             </div>
 
             {/* Tab Content */}
-            <div className={`p-6 rounded-2xl ${theme === 'dark' ? "bg-slate-800 text-white" : "bg-white text-slate-900 shadow-sm border border-slate-200"}`}>
+            <div className="p-6 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm border border-gray-200 dark:border-gray-700">
               {activeTab === "my-profile" && (
                 <div className="space-y-10">
                   {loading ? (
@@ -398,26 +396,26 @@ export default function ProfileContent() {
                   ) : (
                     <>
                       <div>
-                        <h2 className="text-xl font-bold mb-2">Personal Info</h2>
-                        <p className={`text-sm mb-6 ${theme === 'dark' ? "text-slate-400" : "text-slate-600"}`}>
+                        <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Personal Info</h2>
+                        <p className="text-sm mb-6 text-gray-500 dark:text-gray-400">
                           Your account details and interests
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">First Name</label>
-                            <div className={`px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">First Name</label>
+                            <div className="px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
                               {profileData?.user?.firstName || user?.firstName || "N/A"}
                             </div>
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Last Name</label>
-                            <div className={`px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Last Name</label>
+                            <div className="px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
                               {profileData?.user?.lastName || user?.lastName || "N/A"}
                             </div>
                           </div>
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Email Address</label>
-                            <div className={`px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Email Address</label>
+                            <div className="px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
                               {profileData?.user?.email || user?.email || "N/A"}
                             </div>
                           </div>
@@ -494,8 +492,8 @@ export default function ProfileContent() {
               {activeTab === "password" && (
                 <div className="space-y-8">
                   <div>
-                    <h2 className="text-xl font-bold mb-2">Security Settings</h2>
-                    <p className={`text-sm mb-6 ${theme === 'dark' ? "text-slate-400" : "text-slate-600"}`}>
+                    <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Security Settings</h2>
+                    <p className="text-sm mb-6 text-gray-500 dark:text-gray-400">
                       Maintain your account security by updating your password
                     </p>
                   </div>
@@ -506,7 +504,7 @@ export default function ProfileContent() {
                         type="password"
                         value={passwordData.current}
                         onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-                        className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`}
+                        className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="••••••••"
                       />
                     </div>
@@ -516,7 +514,7 @@ export default function ProfileContent() {
                         type="password"
                         value={passwordData.new}
                         onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                        className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`}
+                        className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="••••••••"
                       />
                     </div>
@@ -526,7 +524,7 @@ export default function ProfileContent() {
                         type="password"
                         value={passwordData.confirm}
                         onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                        className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-300"}`}
+                        className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                         placeholder="••••••••"
                       />
                     </div>
@@ -545,8 +543,8 @@ export default function ProfileContent() {
               {activeTab === "settings" && (
                 <div className="space-y-8">
                   <div>
-                    <h2 className="text-xl font-bold mb-2">App Preferences</h2>
-                    <p className={`text-sm mb-6 ${theme === 'dark' ? "text-slate-400" : "text-slate-600"}`}>
+                    <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">App Preferences</h2>
+                    <p className="text-sm mb-6 text-gray-500 dark:text-gray-400">
                       Personalize your experience with Actinova
                     </p>
                   </div>
@@ -560,7 +558,7 @@ export default function ProfileContent() {
                         <select
                           value={settings.difficulty}
                           onChange={(e) => setSettings({ ...settings, difficulty: e.target.value })}
-                          className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark' ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-200"}`}
+                          className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                         >
                           <option value="beginner">Beginner</option>
                           <option value="intermediate">Intermediate</option>
@@ -632,14 +630,14 @@ export default function ProfileContent() {
 
                   {/* Billing History Section */}
                   <div className="space-y-6">
-                    <h3 className="font-bold flex items-center gap-2 text-lg">
+                    <h3 className="font-bold flex items-center gap-2 text-lg text-gray-900 dark:text-gray-100">
                       <Receipt size={20} /> Billing History
                     </h3>
 
-                    <div className={`overflow-hidden rounded-xl border ${theme === 'dark' ? "border-slate-700" : "border-slate-200"}`}>
+                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                       {profileData?.user?.billingHistory?.length > 0 ? (
                         <table className="w-full text-sm text-left">
-                          <thead className={`text-xs uppercase bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b ${theme === 'dark' ? "border-slate-700" : "border-slate-200"}`}>
+                          <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                             <tr>
                               <th className="px-6 py-4">Date</th>
                               <th className="px-6 py-4">Amount</th>
@@ -727,11 +725,11 @@ export default function ProfileContent() {
                     </div>
                   </div>
 
-                  <div className={`p-6 rounded-2xl border ${theme === 'dark' ? "border-slate-700 bg-slate-900/50" : "border-slate-100 bg-slate-50"}`}>
-                    <h3 className="font-bold flex items-center gap-2 mb-4">
+                  <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <h3 className="font-bold flex items-center gap-2 mb-4 text-gray-900 dark:text-gray-100">
                       <Zap size={18} /> Pro Benefits
                     </h3>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-400">
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> 1000+ words lesson detail</li>
                       <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Branded PDF Exports</li>
                       <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Advanced Quiz Generation</li>

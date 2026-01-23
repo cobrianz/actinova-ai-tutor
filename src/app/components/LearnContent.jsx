@@ -1284,6 +1284,10 @@ export default function LearnContent() {
             setShowLimitModal(true);
             setIsLoading(false);
             fetchInProgressRef.current = false;
+            // Notify global listeners that loading is officially "done" (even if it's a limit error)
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("actinova:loading-done"));
+            }
             return;
           }
           const errorData = await response.json();
@@ -1485,8 +1489,8 @@ export default function LearnContent() {
 
   // No knowledge-check parsing: nothing to do when content changes
 
-  // Show loading state only if no course data yet
-  if (isLoading && !courseData) {
+  // Show loading state only if no course data yet and no limit modal
+  if (isLoading && !courseData && !showLimitModal) {
     return (
       <ActinovaLoader
         text={
@@ -1537,8 +1541,8 @@ export default function LearnContent() {
     );
   }
 
-  // Ensure courseData exists
-  if (!courseData) {
+  // Ensure courseData exists or we're showing a limit modal
+  if (!courseData && !showLimitModal) {
     return (
       <div className="h-[calc(100vh-6rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
         <div className="flex-1 flex items-center justify-center">

@@ -9,10 +9,14 @@ import { ObjectId } from "mongodb";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const LIMITS = {
-  free: { cards: 8, monthlyGenerations: 2 },
-  premium: { cards: 40, monthlyGenerations: 20 },
-};
+// Limits are now unified in planLimits.js
+// const LIMITS = {
+//   free: { cards: 8, monthlyGenerations: 2 },
+//   premium: { cards: 40, monthlyGenerations: 20 },
+// };
+
+import { getUserPlanLimits } from "@/lib/planLimits";
+import { checkAPILimit, trackAPIUsage } from "@/lib/planMiddleware";
 
 export async function POST(request) {
   let userId = null;
@@ -54,32 +58,38 @@ export async function POST(request) {
     const { db } = await connectToDatabase();
 
     // ─── USER & MONTHLY LIMITS (planMiddleware) ───
+    let usageStatus = { used: 0, limit: 5, resetsOn: new Date().toLocaleDateString() };
     if (userId) {
-      const { checkAPILimit, trackAPIUsage } = await import("@/lib/planMiddleware");
-      
       const limitCheck = await checkAPILimit(userId, "generate-flashcards");
-      
-      if (!limitCheck.withinLimit) {
+      usageStatus = {
+        used: limitCheck.currentUsage,
+        limit: limitCheck.limit,
+        resetsOn: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
+      };
+
+      if (!limitCheck.withinLimit && limitCheck.limit !== -1) {
         return NextResponse.json(
           {
             error: "API rate limit exceeded",
             message: `You have reached your monthly limit of ${limitCheck.limit} flashcard generations`,
             remaining: 0,
-            resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+            resetDate: usageStatus.resetsOn,
           },
           { status: 429 }
         );
       }
     }
 
-    // Determine premium status for generation logic
+    let currentLimits;
     if (userId) {
       const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
       isPremium = user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
+      currentLimits = getUserPlanLimits(user);
+    } else {
+      currentLimits = getUserPlanLimits(null);
     }
 
-    const cardCount =
-      additionalCards || (isPremium ? LIMITS.premium.cards : LIMITS.free.cards);
+    const cardCount = additionalCards || currentLimits.flashcards;
 
     // ─── GENERATE FLASHCARDS ───
     const completion = await openai.chat.completions.create({
@@ -229,12 +239,11 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
           difficulty,
           isPremium,
           canExportToAnki: true,
+          canExportToAnki: true,
           monthly: {
-            used: monthlyUsage, // Do not increment usage for existing
-            limit: isPremium
-              ? LIMITS.premium.monthlyGenerations
-              : LIMITS.free.monthlyGenerations,
-            resetsOn: usageResetDate.toLocaleDateString(),
+            used: usageStatus.used,
+            limit: usageStatus.limit,
+            resetsOn: usageStatus.resetsOn,
           },
           features: [
             "Spaced Repetition (SM-2)",
@@ -283,6 +292,12 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
       await db.collection("cardSets").insertOne(cardSet);
       console.log(`Card set saved: ${cardSetId}`);
 
+      // Increment usage after successful AI generation
+      if (userId) {
+        await trackAPIUsage(userId, "generate-flashcards");
+        usageStatus.used += 1;
+      }
+
       // Enforce per-user card set limits (free: 1, premium: 20) in background or check before?
       // Check before is better, but here we check after insert (if it's just check).
       // The logic seemed to prevent returning success if limit reached, but we just inserted it.
@@ -319,11 +334,9 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
       canExportToAnki: true,
       cards: existingCardSetId ? newCards : undefined, // Return new cards when adding to existing set
       monthly: {
-        used: monthlyUsage + 1,
-        limit: isPremium
-          ? LIMITS.premium.monthlyGenerations
-          : LIMITS.free.monthlyGenerations,
-        resetsOn: usageResetDate.toLocaleDateString(),
+        used: usageStatus.used,
+        limit: usageStatus.limit,
+        resetsOn: usageStatus.resetsOn,
       },
       features: [
         "Spaced Repetition (SM-2)",

@@ -143,9 +143,14 @@ export default function Generate({ setActiveContent }) {
       } catch (error) {
         console.error("Flashcard generation failed:", error);
         toast.error(error.message || "Failed to generate flashcards");
-      } finally {
         setShowLoader(false);
         setIsSubmitting(false);
+      } finally {
+        // Double check for cleanup
+        setTimeout(() => {
+          setShowLoader(false);
+          setIsSubmitting(false);
+        }, 500);
       }
       return;
     }
@@ -211,9 +216,16 @@ export default function Generate({ setActiveContent }) {
 
     // Navigate to learn page where generation will happen
     // Loader will stay visible during navigation and be cleared by LearnContent
+    setShowLoader(true);
     router.push(
       `/learn/${encodeURIComponent(subject)}?format=${format}&difficulty=${difficulty}`
     );
+
+    // Safety fallback to clear loader after 5 seconds if navigation fails or hangs
+    setTimeout(() => {
+      setShowLoader(false);
+      setIsSubmitting(false);
+    }, 5000);
   };
 
   // Keep hook order stable: always call effect, conditionally act inside it

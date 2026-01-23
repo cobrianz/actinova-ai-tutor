@@ -6,7 +6,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getUserPlanLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
-import { withAPIRateLimit } from "@/lib/planMiddleware";
+import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -71,7 +71,27 @@ async function handlePost(request) {
             {
               role: "system",
               content: `Generate a complete course outline in JSON format for "${topic}" at ${difficulty} level.
-              ... (rest of the prompt remains the same) ...`,
+        
+        The JSON must strictly follow this structure:
+        {
+          "title": "Comprehensive Course Title",
+          "totalModules": ${modules},
+          "totalLessons": ${totalLessons},
+          "modules": [
+            {
+              "title": "Module Title",
+              "lessons": [
+                { "title": "Detailed Lesson Title" }
+              ]
+            }
+          ]
+        }
+        
+        Requirements:
+        1. Be academically rigorous and logically structured.
+        2. Ensure lesson titles are specific and descriptive.
+        3. Do not include lesson content; focus only on titles and structure.
+        4. Return ONLY the JSON object.`,
             },
             {
               role: "user",
@@ -89,13 +109,13 @@ async function handlePost(request) {
 
         const updatedCourseDoc = {
           title: course.title,
-          totalModules: course.totalModules,
-          totalLessons: course.totalLessons,
-          modules: course.modules.map((m, i) => ({
+          totalModules: course.totalModules || modules,
+          totalLessons: course.totalLessons || totalLessons,
+          modules: (course.modules || []).map((m, i) => ({
             ...m,
             id: i + 1,
-            lessons: m.lessons.map((l, j) => ({
-              ...l,
+            lessons: (m.lessons || []).map((l, j) => ({
+              title: typeof l === "string" ? l : l.title || `Lesson ${j + 1}`,
               id: `${i + 1}-${j + 1}`,
               content: "",
               completed: false,
@@ -114,6 +134,9 @@ async function handlePost(request) {
         await db
           .collection("library")
           .updateOne({ _id: existingCourse._id }, { $set: updatedCourseDoc });
+
+        // Increment usage after successful upgrade
+        await trackAPIUsage(userId, "generate-course");
 
         return NextResponse.json({
           success: true,
@@ -158,7 +181,27 @@ async function handlePost(request) {
         {
           role: "system",
           content: `Generate a complete course outline in JSON format for "${topic}" at ${difficulty} level.
-          ... (rest of prompt) ...`,
+        
+        The JSON must strictly follow this structure:
+        {
+          "title": "Comprehensive Course Title",
+          "totalModules": ${modules},
+          "totalLessons": ${totalLessons},
+          "modules": [
+            {
+              "title": "Module Title",
+              "lessons": [
+                { "title": "Detailed Lesson Title" }
+              ]
+            }
+          ]
+        }
+        
+        Requirements:
+        1. Be academically rigorous and logically structured.
+        2. Ensure lesson titles are specific and descriptive.
+        3. Do not include lesson content; focus only on titles and structure.
+        4. Return ONLY the JSON object.`,
         },
         {
           role: "user",
@@ -184,13 +227,13 @@ async function handlePost(request) {
       difficulty,
       format: "course",
       level: difficulty,
-      totalModules: course.totalModules,
-      totalLessons: course.totalLessons,
-      modules: course.modules.map((m, i) => ({
+      totalModules: course.totalModules || modules,
+      totalLessons: course.totalLessons || totalLessons,
+      modules: (course.modules || []).map((m, i) => ({
         ...m,
         id: i + 1,
-        lessons: m.lessons.map((l, j) => ({
-          ...l,
+        lessons: (m.lessons || []).map((l, j) => ({
+          title: typeof l === "string" ? l : l.title || `Lesson ${j + 1}`,
           id: `${i + 1}-${j + 1}`,
           content: "",
           completed: false,
@@ -211,6 +254,9 @@ async function handlePost(request) {
     };
 
     await db.collection("library").insertOne(courseDoc);
+
+    // Increment usage after successful generation
+    await trackAPIUsage(userId, "generate-course");
 
     return NextResponse.json({
       success: true,
@@ -250,6 +296,8 @@ export const POST = withErrorHandling(
 
 async function generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits) {
   const questionsCount = questions || 10;
+  const apiName = "quiz"; // Match planLimits feature name
+
   try {
     // If db wasn't passed, connect now (fallback)
     if (!db) {
@@ -344,33 +392,9 @@ Return ONLY valid JSON with this exact structure:
       );
     }
 
-    // Check user limits for quiz generation (Total Cap)
-    let quizCount = 0;
-    if (userId) {
-      const user = await db
-        .collection("users")
-        .findOne({ _id: new ObjectId(userId) });
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      // Count existing tests for this user created this month
-      quizCount = await db.collection("tests").countDocuments({
-        createdBy: new ObjectId(userId),
-        createdAt: { $gte: startOfMonth }
-      });
+    // Limit check is handled by withAPIRateLimit middleware for the parent route
+    // but we can add a double-check here if needed using the same unified logic
 
-      const limit = planLimits.quizzes;
-      if (limit !== -1 && quizCount >= limit) {
-        return NextResponse.json(
-          {
-            error: `Monthly test limit reached (${limit}). ${!isPremium ? "Upgrade to premium for up to 20 tests/mo." : ""}`,
-            limit,
-            current: quizCount,
-            isPremium: isPremium,
-          },
-          { status: 429 }
-        );
-      }
-    }
 
     const testDoc = {
       ...quiz,
@@ -382,18 +406,9 @@ Return ONLY valid JSON with this exact structure:
 
     const result = await db.collection("tests").insertOne(testDoc);
 
-    // Increment API Usage for User
+    // Increment API Usage for User using unified system
     if (userId) {
-      try {
-        await db
-          .collection("users")
-          .updateOne(
-            { _id: new ObjectId(userId) },
-            { $inc: { monthlyUsage: 1 } }
-          );
-      } catch (e) {
-        console.error("Failed to increment monthly usage for quiz", e);
-      }
+      await trackAPIUsage(userId, apiName);
     }
 
     return NextResponse.json({

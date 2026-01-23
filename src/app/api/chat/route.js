@@ -15,10 +15,10 @@ async function requirePremium(userId) {
   const user = await User.findById(userId).lean();
   if (!user) throw new Error("User not found");
 
-    const isPremium =
-      user.isPremium ||
-      ((user.subscription?.plan === "premium" || user.subscription?.plan === "enterprise") &&
-        user.subscription?.status === "active");
+  const isPremium =
+    user.isPremium ||
+    ((user.subscription?.plan === "premium" || user.subscription?.plan === "enterprise") &&
+      user.subscription?.status === "active");
 
 
   if (!isPremium) {
@@ -66,8 +66,8 @@ async function handlePost(request) {
       return NextResponse.json(
         {
           error: "API rate limit exceeded",
-          message: limitCheck.limit === 0 
-            ? "Premium subscription required for AI Tutor" 
+          message: limitCheck.limit === 0
+            ? "Premium subscription required for AI Tutor"
             : `You have reached your monthly limit of ${limitCheck.limit} AI Tutor messages`,
           remaining: 0,
           resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
@@ -128,6 +128,10 @@ You are teaching: **${topic}** — stay strictly on topic.`;
         ? words.slice(0, 195).join(" ") +
         "...\n\nWhat would you like to explore next?"
         : aiResponse;
+
+    // Increment API usage after successful response
+    const { trackAPIUsage } = await import("@/lib/planMiddleware");
+    await trackAPIUsage(user._id, "ai-tutor-chat");
 
     return NextResponse.json({
       success: true,
