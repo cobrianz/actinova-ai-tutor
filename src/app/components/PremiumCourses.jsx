@@ -944,34 +944,6 @@ export default function PremiumCourses() {
           )}
         </>
       )}
-
-      {/* Footer / CTA Enhancement */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="mt-24 p-12 rounded-[3rem] bg-gradient-to-br from-primary/10 via-background to-accent/5 border border-primary/20 text-center relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-32 translate-x-32"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 rounded-full blur-[80px] translate-y-32 -translate-x-32"></div>
-
-        <div className="relative z-10 max-w-2xl mx-auto">
-          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Sparkles className="text-primary w-8 h-8" />
-          </div>
-          <h2 className="text-3xl font-black mb-4 text-foreground">Want to see your topic featured here?</h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Our AI continuously analyzes trending global topics. If you have a specific domain you'd like us to prioritize, let us know!
-          </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-foreground text-background font-bold rounded-2xl hover:scale-105 transition-all shadow-xl"
-          >
-            <span>Suggest a Topic</span>
-            <ChevronRight size={20} />
-          </Link>
-        </div>
-      </motion.div>
     </div>
   );
 }

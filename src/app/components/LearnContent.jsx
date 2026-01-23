@@ -57,6 +57,7 @@ export default function LearnContent() {
     lessonIndex: 0,
   });
   const [notes, setNotes] = useState("");
+  const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [chatMessages, setChatMessages] = useState([
@@ -1949,8 +1950,8 @@ export default function LearnContent() {
                     }}
                     disabled={!notes.trim() || !isPro}
                     className={`w-full flex items-center justify-center space-x-2 py-3 px-4 text-sm rounded-xl font-bold transition-all ${isPro
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02]"
-                        : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02]"
+                      : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
                       }`}
                   >
                     <Download className="w-4 h-4" />
