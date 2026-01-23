@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSignUp } from "@clerk/nextjs";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +22,6 @@ import {
 
 export default function SignupPage() {
   const { signup } = useAuth();
-  const { signUp, isLoaded: clerkLoaded } = useSignUp();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -71,19 +69,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleSocialSignup = async (strategy) => {
-    if (!clerkLoaded) return;
-    try {
-      await signUp.authenticateWithRedirect({
-        strategy,
-        redirectUrl: "/auth/signup",
-        redirectUrlComplete: "/onboarding",
-      });
-    } catch (err) {
-      console.error("Social signup error:", err);
-      toast.error(`Failed to sign up with ${strategy.replace("oauth_", "")}`);
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-white flex overflow-hidden font-sans">
@@ -227,8 +213,8 @@ export default function SignupPage() {
                   type="password"
                   placeholder="Repeat your password"
                   className={`pl-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
-                      ? "border-red-300 bg-red-50/30"
-                      : "border-gray-100"
+                    ? "border-red-300 bg-red-50/30"
+                    : "border-gray-100"
                     }`}
                   value={formData.confirmPassword}
                   onChange={handleChange}
@@ -275,33 +261,7 @@ export default function SignupPage() {
           </form>
 
           <div className="relative my-6 text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-100" />
-            </div>
-            <span className="relative z-10 bg-white px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Or sign up with
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant="outline"
-              className="h-11 border-gray-100 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-gray-700"
-              onClick={() => handleSocialSignup("oauth_google")}
-              disabled={loading || !clerkLoaded}
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-3" />
-              Google
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 border-gray-100 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-gray-700"
-              onClick={() => handleSocialSignup("oauth_github")}
-              disabled={loading || !clerkLoaded}
-            >
-              <Github className="w-5 h-5 mr-3" />
-              GitHub
-            </Button>
+            {/* Social signup removed */}
           </div>
 
           <p className="mt-8 text-center text-sm font-medium text-gray-500">

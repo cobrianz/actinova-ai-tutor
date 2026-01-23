@@ -10,9 +10,25 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "./ThemeProvider";
 import { useRouter, usePathname } from "next/navigation";
-import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { useAuth } from "@/components/AuthProvider";
+import {
+  User,
+  LogOut,
+  Settings,
+  CreditCard
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Navbar({ toggleSidebar }) {
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -89,33 +105,67 @@ export default function Navbar({ toggleSidebar }) {
             </button>
 
             {/* Auth Buttons */}
-            <SignedOut>
+            {/* Auth Buttons */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="relative h-8 w-8 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40">
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={user.profile?.avatar} alt={user.firstName} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {user.firstName?.[0]}{user.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.firstName} {user.lastName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/profile")}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  {user.subscription?.status === "active" && (
+                    <DropdownMenuItem onClick={() => router.push("/billing")}>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      <span>Billing</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    onClick={() => logout()}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
               <div className="flex items-center space-x-2">
-                <Link 
+                <Link
                   href="/auth/login"
                   className="text-sm font-bold text-foreground hover:text-primary transition-colors px-3 py-2"
                 >
                   Log in
                 </Link>
-                <Link 
+                <Link
                   href="/auth/signup"
                   className="text-sm font-bold bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-all shadow-sm"
                 >
                   Sign up
                 </Link>
               </div>
-            </SignedOut>
-
-            <SignedIn>
-              <UserButton 
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: "w-8 h-8 sm:w-9 sm:h-9 border-2 border-primary/20",
-                  }
-                }}
-                afterSignOutUrl="/"
-              />
-            </SignedIn>
+            )}
           </div>
         </div>
       </header>
