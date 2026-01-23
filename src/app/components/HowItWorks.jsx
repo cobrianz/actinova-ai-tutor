@@ -96,39 +96,14 @@ export default function HowItWorks() {
   const icons = [UserPlus, Compass, BookOpen, GraduationCap];
 
   return (
-    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* Animated Background */}
+    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden">
+      {/* Dynamic Background - Match Hero Section */}
       <div className="absolute inset-0 -z-10">
-        {/* Gradient Orbs */}
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.15, 0.25, 0.15],
-            x: [0, 50, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-40 right-1/4 w-[900px] h-[900px] bg-gradient-to-br from-blue-400/30 via-cyan-300/20 to-transparent rounded-full blur-[150px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.1, 0.2, 0.1],
-            x: [0, -30, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 left-1/4 w-[700px] h-[700px] bg-gradient-to-tr from-violet-400/25 via-purple-300/20 to-transparent rounded-full blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.15, 1],
-            opacity: [0.1, 0.18, 0.1],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-indigo-300/20 to-blue-300/15 rounded-full blur-[100px]"
-        />
-        {/* Subtle Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(99,102,241,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.04)_1px,transparent_1px)] bg-[size:80px_80px]" />
-        <FloatingParticles />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+
+        {/* Subtle Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -145,25 +120,17 @@ export default function HowItWorks() {
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-100 to-violet-100 dark:from-blue-500/15 dark:to-violet-500/15 border border-blue-200/50 dark:border-blue-500/20 text-sm font-medium mb-8 shadow-lg shadow-blue-500/10"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6"
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            >
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}>
+              <Sparkles className="w-4 h-4" />
             </motion.div>
-            <span className="bg-gradient-to-r from-blue-700 to-violet-700 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent font-semibold">
-              Simple & Powerful
-            </span>
+            <span className="font-semibold">Simple & Powerful</span>
           </motion.div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight text-balance text-slate-900 dark:text-white">
-            How it{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent bg-[size:200%] animate-gradient">
-              Works
-            </span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+            How it <span className="text-primary">Works</span>
           </h2>
-          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed text-pretty">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Transform your learning journey in four simple steps. Our AI-powered
             platform makes mastering any skill effortless.
           </p>
