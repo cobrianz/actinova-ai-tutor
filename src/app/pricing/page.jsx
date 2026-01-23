@@ -389,7 +389,7 @@ export default function PricingPage() {
             className="inline-flex items-center space-x-2 bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all"
           >
             <Sparkles className="w-5 h-5" />
-            <span>Start Free Trial</span>
+            <span>Start Learning</span>
           </Link>
         </div>
       </div>

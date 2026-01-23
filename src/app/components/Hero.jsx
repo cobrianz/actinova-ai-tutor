@@ -90,7 +90,24 @@ export default function Hero({ handleGetStarted }) {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <button className="px-8 py-4 bg-secondary hover:bg-secondary/80 text-foreground rounded-2xl font-semibold text-lg border border-border transition-all flex items-center gap-2">
+            <button
+              onClick={() => {
+                const element = document.getElementById('how-it-works');
+                if (element) {
+                  const offset = 100;
+                  const bodyRect = document.body.getBoundingClientRect().top;
+                  const elementRect = element.getBoundingClientRect().top;
+                  const elementPosition = elementRect - bodyRect;
+                  const offsetPosition = elementPosition - offset;
+
+                  window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                  });
+                }
+              }}
+              className="px-8 py-4 bg-secondary hover:bg-secondary/80 text-foreground rounded-2xl font-semibold text-lg border border-border transition-all flex items-center gap-2"
+            >
               <Play className="w-5 h-5 fill-current" />
               See How It Works
             </button>
