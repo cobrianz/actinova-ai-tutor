@@ -107,49 +107,28 @@ export default function Navbar({ toggleSidebar }) {
             {/* Auth Buttons */}
             {/* Auth Buttons */}
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="relative h-8 w-8 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40">
-                    <Avatar className="h-full w-full">
-                      <AvatarImage src={user.profile?.avatar} alt={user.firstName} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                        {user.firstName?.[0]}{user.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.firstName} {user.lastName}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/profile")}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/settings")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  {user.subscription?.status === "active" && (
-                    <DropdownMenuItem onClick={() => router.push("/billing")}>
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      <span>Billing</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                    onClick={() => logout()}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setActiveContent && setActiveContent("profile")}
+                  className="relative h-10 w-10 rounded-2xl overflow-hidden border-2 border-primary/20 hover:border-primary hover:scale-105 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-primary/40 group overflow-hidden"
+                  aria-label="View profile"
+                >
+                  <Avatar className="h-full w-full">
+                    <AvatarImage src={user.profile?.avatar} alt={user.firstName} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors" />
+                </button>
+                <button
+                  onClick={() => logout()}
+                  className="p-2 text-muted-foreground hover:text-destructive rounded-xl hover:bg-destructive/10 transition-all"
+                  aria-label="Log out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <Link

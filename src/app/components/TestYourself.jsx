@@ -154,86 +154,86 @@ const TestYourself = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+    <div className="p-4 sm:p-8 bg-background text-foreground min-h-full">
       <header className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight flex items-center">
           <BrainCircuit className="w-8 h-8 mr-3 text-blue-500" />
           Test Your Knowledge
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+        <p className="text-lg text-muted-foreground mt-2">
           Challenge yourself with quizzes on various topics.
         </p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card
-          className={`bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-blue-600 dark:text-gray-400">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Tests
             </CardTitle>
-            <HelpCircle className="w-6 h-6 text-blue-500 dark:text-gray-500" />
+            <HelpCircle className="w-6 h-6 text-primary/60" />
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-foreground">
               {loading ? "..." : quizzes.length}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Assignments & Quizzes
             </p>
           </CardContent>
         </Card>
         <Card
-          className={`bg-yellow-50 dark:bg-gray-800 border border-yellow-200 dark:border-gray-700 shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-yellow-600 dark:text-gray-400">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Pending
             </CardTitle>
-            <Clock className="w-6 h-6 text-yellow-500 dark:text-gray-500" />
+            <Clock className="w-6 h-6 text-amber-500/60" />
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-foreground">
               {loading ? "..." : quizzes.length}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Need completion
             </p>
           </CardContent>
         </Card>
         <Card
-          className={`bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700 shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-green-600 dark:text-gray-400">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Completed Tests
             </CardTitle>
-            <CheckCircle className="w-6 h-6 text-green-500 dark:text-gray-500" />
+            <CheckCircle className="w-6 h-6 text-green-500/60" />
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-foreground">
               {loading ? "..." : performanceStats?.completedTests || 0}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Out of {performanceStats?.totalTests || 0} tests
             </p>
           </CardContent>
         </Card>
         <Card
-          className={`bg-purple-50 dark:bg-gray-800 border border-purple-200 dark:border-gray-700 shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-purple-600 dark:text-gray-400">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Score
             </CardTitle>
-            <Award className="w-6 h-6 text-purple-500 dark:text-gray-500" />
+            <Award className="w-6 h-6 text-purple-500/60" />
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-foreground">
               {loading ? "..." : `${performanceStats?.averageScore || 0}%`}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Across all completed tests
             </p>
           </CardContent>
@@ -241,14 +241,14 @@ const TestYourself = () => {
       </div>
 
       <div
-        className={`bg-indigo-50 dark:bg-gray-800 p-6 rounded-lg border border-indigo-200 dark:border-gray-700 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`bg-card p-6 rounded-3xl border border-border transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <h2 className="text-2xl font-bold">Available Quizzes</h2>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="mt-2 sm:mt-0"
+            className="mt-2 sm:mt-0 rounded-xl"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filters
@@ -256,16 +256,16 @@ const TestYourself = () => {
         </div>
 
         {showFilters && (
-          <div className="mb-6 p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div className="mb-6 p-4 bg-muted/30 rounded-2xl border border-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Difficulty
                 </label>
                 <select
                   value={filterDifficulty}
                   onChange={(e) => setFilterDifficulty(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
                   <option value="all">All Difficulties</option>
                   <option value="beginner">Beginner</option>
@@ -274,13 +274,13 @@ const TestYourself = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Status
                 </label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
                   <option value="all">All Tests</option>
                   <option value="pending">Pending</option>
@@ -291,12 +291,13 @@ const TestYourself = () => {
             {(filterDifficulty !== "all" || filterStatus !== "all") && (
               <div className="mt-4 flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => {
                     setFilterDifficulty("all");
                     setFilterStatus("all");
                   }}
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   Clear Filters
                 </Button>
@@ -305,17 +306,21 @@ const TestYourself = () => {
           </div>
         )}
         {loading ? (
-          <div className="text-center text-gray-500 dark:text-gray-400">
+          <div className="text-center text-muted-foreground py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary/30 border-t-primary mx-auto mb-4"></div>
             Loading quizzes...
           </div>
         ) : quizzes.length === 0 ? (
-          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+          <div className="text-center text-muted-foreground py-12">
+            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 opacity-20" />
+            </div>
             <p className="mb-2">No quizzes available yet.</p>
             <p>
               Go to the{" "}
               <Link
                 href="/dashboard?tab=generate"
-                className="text-blue-500 hover:underline"
+                className="text-primary hover:underline font-medium"
               >
                 Generate
               </Link>{" "}
@@ -338,53 +343,42 @@ const TestYourself = () => {
               return (
                 <>
                   {currentQuizzes.map((quiz) => {
-                    const difficultyColors = {
-                      easy: "bg-blue-50 dark:bg-gray-800 border-blue-200 dark:border-gray-700",
-                      medium:
-                        "bg-orange-50 dark:bg-gray-800 border-orange-200 dark:border-gray-700",
-                      hard: "bg-purple-50 dark:bg-gray-800 border-purple-200 dark:border-gray-700",
-                    };
-                    const colorClass =
-                      difficultyColors[quiz.difficulty] ||
-                      "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
                     return (
                       <div
                         key={quiz._id}
-                        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors ${colorClass}`}
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-2xl border border-border bg-card/50 hover:bg-muted/30 transition-all group"
                       >
                         <div className="mb-4 sm:mb-0">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                             {quiz.title}
                           </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             {quiz.course}
                           </p>
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            <span className="flex items-center">
-                              <FileText className="w-3 h-3 mr-1" />
+                          <div className="flex items-center space-x-6 mt-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-blue-500" />
                               {quiz.questions.length} questions
                             </span>
                             {quiz.createdAt && (
-                              <span className="flex items-center">
-                                <Clock className="w-3 h-3 mr-1" />
+                              <span className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-orange-500" />
                                 {new Date(quiz.createdAt).toLocaleDateString()}
                               </span>
                             )}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${quiz.difficulty === 'easy' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
+                                quiz.difficulty === 'medium' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                  'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                              }`}>
+                              {quiz.difficulty}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <Button
                             variant="default"
                             onClick={() => setSelectedQuiz(quiz)}
-                            className={`${quiz.difficulty === "easy"
-                              ? "bg-blue-500 hover:bg-blue-600 text-white"
-                              : quiz.difficulty === "medium"
-                                ? "bg-orange-500 hover:bg-orange-600 text-white"
-                                : quiz.difficulty === "hard"
-                                  ? "bg-purple-500 hover:bg-purple-600 text-white"
-                                  : "bg-gray-500 hover:bg-gray-600 text-white"
-                              }`}
+                            className="w-full sm:w-auto rounded-xl px-8 py-2 font-bold shadow-lg shadow-primary/20"
                           >
                             {(() => {
                               const completedKey = `quiz_completed_${quiz._id}`;
@@ -399,30 +393,34 @@ const TestYourself = () => {
                     );
                   })}
                   {totalPages > 1 && (
-                    <div className="flex justify-center mt-6 space-x-2">
+                    <div className="flex justify-center mt-10 gap-2">
                       <button
                         onClick={() =>
                           setCurrentPage((prev) => Math.max(prev - 1, 1))
                         }
                         disabled={currentPage === 1}
-                        className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600"
+                        className="p-2 rounded-xl border border-border bg-card hover:bg-muted disabled:opacity-30 transition-all text-muted-foreground"
                       >
-                        Previous
+                        <ChevronLeft size={20} />
                       </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                        (page) => (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-3 py-1 text-sm rounded ${currentPage === page
-                              ? "bg-indigo-500 text-white"
-                              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                              }`}
-                          >
-                            {page}
-                          </button>
-                        )
-                      )}
+
+                      <div className="flex gap-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                          (page) => (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === page
+                                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                                  : "bg-card border border-border text-muted-foreground hover:bg-muted"
+                                }`}
+                            >
+                              {page}
+                            </button>
+                          )
+                        )}
+                      </div>
+
                       <button
                         onClick={() =>
                           setCurrentPage((prev) =>
@@ -430,9 +428,9 @@ const TestYourself = () => {
                           )
                         }
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600"
+                        className="p-2 rounded-xl border border-border bg-card hover:bg-muted disabled:opacity-30 transition-all text-muted-foreground"
                       >
-                        Next
+                        <ChevronRight size={20} />
                       </button>
                     </div>
                   )}

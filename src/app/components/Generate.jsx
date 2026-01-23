@@ -336,7 +336,7 @@ export default function Generate({ setActiveContent }) {
                   : "border-border hover:border-foreground/30"
                   }`}
               >
-                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
                 <span className="font-medium text-xs sm:text-sm">Course</span>
               </button>
               <button
@@ -346,7 +346,7 @@ export default function Generate({ setActiveContent }) {
                   : "border-border hover:border-foreground/30"
                   }`}
               >
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-gray-700 dark:text-gray-300" />
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
                 <span className="font-medium text-xs sm:text-sm">
                   Flashcards
                 </span>
@@ -522,7 +522,7 @@ function PopularTopics({ setTopic, setLocalTopic }) {
             key={i}
             className="p-3 sm:p-4 bg-muted border border-border rounded-lg animate-pulse"
           >
-            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+            <div className="h-4 bg-muted-foreground/20 rounded w-3/4"></div>
           </div>
         ))}
       </div>

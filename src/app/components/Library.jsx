@@ -319,7 +319,7 @@ export default function Library({ setActiveContent }) {
         </p>
         <Link
           href="/auth/login"
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           Log In
         </Link>
@@ -443,7 +443,7 @@ export default function Library({ setActiveContent }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search your library..."
-            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background"
+            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background text-foreground"
           />
         </div>
 
@@ -484,11 +484,11 @@ export default function Library({ setActiveContent }) {
               key={i}
               className="bg-card border border-border rounded-lg p-6 animate-pulse"
             >
-              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
-              <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mb-6"></div>
+              <div className="h-4 bg-muted-foreground/20 rounded mb-4 w-3/4"></div>
+              <div className="h-3 bg-muted-foreground/20 rounded mb-6"></div>
               <div className="flex gap-3">
-                <div className="h-8 w-20 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
-                <div className="h-8 w-24 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+                <div className="h-8 w-20 bg-muted-foreground/20 rounded-full"></div>
+                <div className="h-8 w-24 bg-muted-foreground/20 rounded-full"></div>
               </div>
             </div>
           ))}
@@ -541,9 +541,9 @@ export default function Library({ setActiveContent }) {
                 whileHover={{ y: -4 }}
                 className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300"
               >
-                <div className="h-2 bg-gray-200 dark:bg-gray-700">
+                <div className="h-2 bg-secondary">
                   <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000"
+                    className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-1000"
                     style={{ width: `${course.progress}%` }}
                   />
                 </div>
@@ -575,7 +575,7 @@ export default function Library({ setActiveContent }) {
                         title={course.isPinned ? "Unpin" : "Pin (max 3)"}
                       >
                         <Pin
-                          className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-gray-400"}`}
+                          className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`}
                         />
                       </button>
                       <button
@@ -607,7 +607,7 @@ export default function Library({ setActiveContent }) {
                         <span>Progress</span>
                         <span>{course.progress}%</span>
                       </div>
-                      <div className="w-full sm:w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary rounded-full transition-all duration-1000"
                           style={{ width: `${course.progress}%` }}
@@ -628,7 +628,7 @@ export default function Library({ setActiveContent }) {
                     </Link>
                   </div>
 
-                  <p className="text-xs text-gray-500 mt-3">
+                  <p className="text-xs text-muted-foreground mt-3">
                     Last accessed:{" "}
                     {new Date(course.lastAccessed).toLocaleDateString()}
                   </p>
@@ -653,7 +653,7 @@ export default function Library({ setActiveContent }) {
             <button
               key={i + 1}
               onClick={() => handlePageChange(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-blue-600 text-white" : "border"}`}
+              className={`px-3 py-1 rounded border transition-colors ${currentPage === i + 1 ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground hover:bg-secondary border-border"}`}
             >
               {i + 1}
             </button>

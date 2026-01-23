@@ -80,7 +80,7 @@ export default function AboutPage() {
       <HeroNavbar />
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-background -z-10" />
         <div className="max-w-7xl mx-auto text-center">
           <motion.div

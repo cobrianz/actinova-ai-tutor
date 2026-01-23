@@ -282,15 +282,15 @@ export default function ProfileContent() {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          className="bg-card border border-border rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         >
           <div
-            className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+            className="sticky top-0 flex items-center justify-between p-6 border-b border-border bg-card"
           >
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+            <h2 className="text-xl font-bold text-foreground">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+              className="p-1 rounded-lg transition-colors hover:bg-secondary text-muted-foreground"
             >
               <X size={20} />
             </button>
@@ -304,15 +304,15 @@ export default function ProfileContent() {
   return (
     <>
       <div
-        className="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+        className="min-h-full transition-colors duration-300 bg-background text-foreground"
       >
         <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-7xl mx-auto">
             {/* Professional Profile Header */}
-            <div className="mb-8 p-6 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="mb-8 p-6 rounded-2xl bg-card text-foreground shadow-sm border border-border">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Avatar */}
-                <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0 bg-primary/10 text-primary">
                   {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
                 </div>
 
@@ -321,21 +321,21 @@ export default function ProfileContent() {
                   <h1 className="text-3xl font-bold mb-1">
                     {profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "User")}
                   </h1>
-                  <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
+                  <p className="text-sm mb-4 text-muted-foreground">
                     {profileData?.user?.email || user?.email}
                   </p>
 
                   <div className="flex flex-wrap justify-center md:justify-start gap-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${profileData?.usage?.isPremium
                       ? "bg-gradient-to-r from-amber-200 to-yellow-400 text-yellow-900"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                      : "bg-secondary text-muted-foreground"
                       }`}>
                       {profileData?.usage?.isPremium ? <Crown size={12} /> : <Star size={12} />}
                       {profileData?.user?.subscription?.plan === 'enterprise'
                         ? "Enterprise Member"
                         : profileData?.usage?.isPremium ? "Pro Member" : "Free Plan"}
                     </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 bg-secondary text-muted-foreground">
                       <Calendar size={12} />
                       Member since {new Date(user?.createdAt || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                     </span>
@@ -343,15 +343,15 @@ export default function ProfileContent() {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="flex gap-6 px-6 py-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                <div className="flex gap-6 px-6 py-4 rounded-xl bg-muted/50">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{profileData?.usage?.used || 0}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Generations</div>
+                    <div className="text-xs text-muted-foreground">Generations</div>
                   </div>
-                  <div className="w-px bg-gray-200 dark:bg-gray-700"></div>
+                  <div className="w-px bg-border"></div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">{profileData?.usage?.details?.courses?.used || 0}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Courses</div>
+                    <div className="text-xs text-muted-foreground">Courses</div>
                   </div>
                 </div>
               </div>
@@ -367,8 +367,8 @@ export default function ProfileContent() {
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${isActive
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-sm border border-gray-200 dark:border-gray-700"
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground shadow-sm border border-border"
                       }`}
                   >
                     <Icon size={16} />
@@ -379,67 +379,67 @@ export default function ProfileContent() {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6 rounded-2xl bg-card text-foreground shadow-sm border border-border">
               {activeTab === "my-profile" && (
                 <div className="space-y-10">
                   {loading ? (
                     <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
                       <span className="ml-2">Loading profile...</span>
                     </div>
                   ) : error ? (
                     <div className="flex items-center justify-center py-12">
-                      <AlertCircle className="w-8 h-8 text-red-500 mr-2" />
-                      <span className="text-red-500">{error}</span>
-                      <button onClick={fetchProfileData} className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
+                      <AlertCircle className="w-8 h-8 text-destructive mr-2" />
+                      <span className="text-destructive">{error}</span>
+                      <button onClick={fetchProfileData} className="ml-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Retry</button>
                     </div>
                   ) : (
                     <>
                       <div>
-                        <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Personal Info</h2>
-                        <p className="text-sm mb-6 text-gray-500 dark:text-gray-400">
+                        <h2 className="text-xl font-bold mb-2 text-foreground">Personal Info</h2>
+                        <p className="text-sm mb-6 text-muted-foreground">
                           Your account details and interests
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">First Name</label>
-                            <div className="px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">First Name</label>
+                            <div className="px-4 py-2 rounded-lg border bg-muted/50 border-border text-foreground">
                               {profileData?.user?.firstName || user?.firstName || "N/A"}
                             </div>
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Last Name</label>
-                            <div className="px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Last Name</label>
+                            <div className="px-4 py-2 rounded-lg border bg-muted/50 border-border text-foreground">
                               {profileData?.user?.lastName || user?.lastName || "N/A"}
                             </div>
                           </div>
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Email Address</label>
-                            <div className="px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Email Address</label>
+                            <div className="px-4 py-2 rounded-lg border bg-muted/50 border-border text-foreground">
                               {profileData?.user?.email || user?.email || "N/A"}
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
+                      <div className="pt-6 border-t border-border">
                         <h2 className="text-xl font-bold mb-6">Usage Statistics</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           {/* Course Generation Usage */}
                           <div className="space-y-3">
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Course Generations</span>
-                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                              <span className="text-xs font-bold text-primary">
                                 {profileData?.usage?.details?.courses?.used || 0} / {profileData?.usage?.details?.courses?.limit === null ? "∞" : profileData?.usage?.details?.courses?.limit}
                               </span>
                             </div>
-                            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-blue-600 transition-all duration-700 ease-out"
+                                className="h-full bg-primary transition-all duration-700 ease-out"
                                 style={{ width: `${profileData?.usage?.details?.courses?.limit === null ? 100 : profileData?.usage?.details?.courses?.percent || 0}%` }}
                               />
                             </div>
-                            <p className="text-[10px] text-slate-500">Monthly course creation limit</p>
+                            <p className="text-[10px] text-muted-foreground">Monthly course creation limit</p>
                           </div>
 
                           {/* Flashcard Generation Usage */}
@@ -450,13 +450,13 @@ export default function ProfileContent() {
                                 {profileData?.usage?.details?.flashcards?.used || 0} / {profileData?.usage?.details?.flashcards?.limit === null ? "∞" : profileData?.usage?.details?.flashcards?.limit}
                               </span>
                             </div>
-                            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-purple-600 transition-all duration-700 ease-out"
                                 style={{ width: `${profileData?.usage?.details?.flashcards?.limit === null ? 100 : profileData?.usage?.details?.flashcards?.percent || 0}%` }}
                               />
                             </div>
-                            <p className="text-[10px] text-slate-500">Monthly flashcard set limit</p>
+                            <p className="text-[10px] text-muted-foreground">Monthly flashcard set limit</p>
                           </div>
 
                           {/* Quiz Generation Usage */}
@@ -467,18 +467,18 @@ export default function ProfileContent() {
                                 {profileData?.usage?.details?.quizzes?.used || 0} / {profileData?.usage?.details?.quizzes?.limit === null ? "∞" : profileData?.usage?.details?.quizzes?.limit}
                               </span>
                             </div>
-                            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-emerald-600 transition-all duration-700 ease-out"
                                 style={{ width: `${profileData?.usage?.details?.quizzes?.limit === null ? 100 : profileData?.usage?.details?.quizzes?.percent || 0}%` }}
                               />
                             </div>
-                            <p className="text-[10px] text-slate-500">Monthly assessment paper limit</p>
+                            <p className="text-[10px] text-muted-foreground">Monthly assessment paper limit</p>
                           </div>
                         </div>
-                        <div className="mt-8 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 flex items-center gap-4">
-                          <AlertCircle className="text-blue-600 dark:text-blue-400 shrink-0" size={20} />
-                          <p className="text-xs text-blue-800 dark:text-blue-300">
+                        <div className="mt-8 p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-4">
+                          <AlertCircle className="text-primary shrink-0" size={20} />
+                          <p className="text-xs text-foreground/80">
                             Your usage resets on the <span className="font-bold">{profileData?.usage?.resetDate || "1st"}</span> of every month.
                             {!profileData?.usage?.isPremium && " Upgrade to Pro for 10x higher limits and unlimited access."}
                           </p>
@@ -492,8 +492,8 @@ export default function ProfileContent() {
               {activeTab === "password" && (
                 <div className="space-y-8">
                   <div>
-                    <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Security Settings</h2>
-                    <p className="text-sm mb-6 text-gray-500 dark:text-gray-400">
+                    <h2 className="text-xl font-bold mb-2 text-foreground">Security Settings</h2>
+                    <p className="text-sm mb-6 text-muted-foreground">
                       Maintain your account security by updating your password
                     </p>
                   </div>
@@ -504,7 +504,7 @@ export default function ProfileContent() {
                         type="password"
                         value={passwordData.current}
                         onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
                         placeholder="••••••••"
                       />
                     </div>
@@ -514,7 +514,7 @@ export default function ProfileContent() {
                         type="password"
                         value={passwordData.new}
                         onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
                         placeholder="••••••••"
                       />
                     </div>
@@ -524,14 +524,14 @@ export default function ProfileContent() {
                         type="password"
                         value={passwordData.confirm}
                         onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
                         placeholder="••••••••"
                       />
                     </div>
                     <button
                       onClick={handlePasswordChange}
                       disabled={updating}
-                      className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30 flex items-center gap-2"
+                      className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/30 flex items-center gap-2"
                     >
                       {updating && <Loader2 size={16} className="animate-spin" />}
                       Update Password
@@ -543,8 +543,8 @@ export default function ProfileContent() {
               {activeTab === "settings" && (
                 <div className="space-y-8">
                   <div>
-                    <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">App Preferences</h2>
-                    <p className="text-sm mb-6 text-gray-500 dark:text-gray-400">
+                    <h2 className="text-xl font-bold mb-2 text-foreground">App Preferences</h2>
+                    <p className="text-sm mb-6 text-muted-foreground">
                       Personalize your experience with Actinova
                     </p>
                   </div>
@@ -558,7 +558,7 @@ export default function ProfileContent() {
                         <select
                           value={settings.difficulty}
                           onChange={(e) => setSettings({ ...settings, difficulty: e.target.value })}
-                          className="w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
                         >
                           <option value="beginner">Beginner</option>
                           <option value="intermediate">Intermediate</option>
@@ -570,22 +570,22 @@ export default function ProfileContent() {
                       <h3 className="font-semibold text-lg flex items-center gap-2">
                         <Bell size={18} /> Notifications
                       </h3>
-                      <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                         <span className="text-sm">Email Reminders</span>
                         <input
                           type="checkbox"
                           checked={settings.emailNotifications}
                           onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-                          className="w-5 h-5 accent-blue-600"
+                          className="w-5 h-5 accent-primary"
                         />
                       </div>
                     </div>
                   </div>
-                  <div className="pt-6 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+                  <div className="pt-6 border-t border-border flex justify-end">
                     <button
                       onClick={handleSaveSettings}
                       disabled={updating}
-                      className="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-indigo-500/30 transition-all"
+                      className="px-8 py-2.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl font-semibold shadow-lg hover:shadow-primary/30 transition-all"
                     >
                       {updating ? "Saving..." : "Save Preferences"}
                     </button>
@@ -595,21 +595,21 @@ export default function ProfileContent() {
 
               {activeTab === "billing" && (
                 <div className="space-y-8">
-                  <div className={`p-8 rounded-3xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-indigo-600 to-blue-700 text-white" : "bg-slate-50 dark:bg-slate-900 border dark:border-slate-700"}`}>
+                  <div className={`p-8 rounded-3xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-primary to-primary-foreground/20 text-white" : "bg-muted border border-border"}`}>
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-8">
                         <div>
-                          <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${profileData?.usage?.isPremium ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"}`}>Current Plan</span>
+                          <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${profileData?.usage?.isPremium ? "bg-white/20 text-white" : "bg-primary/20 text-primary"}`}>Current Plan</span>
                           <h2 className="text-4xl font-black mt-8">
                             {profileData?.user?.subscription?.plan === 'enterprise'
                               ? "ENTERPRISE PLAN"
                               : profileData?.usage?.isPremium ? "PRO PLAN" : "FREE PLAN"}
                           </h2>
                         </div>
-                        {profileData?.usage?.isPremium ? <Crown className="text-amber-300" size={48} /> : <Star className="text-blue-500" size={48} />}
+                        {profileData?.usage?.isPremium ? <Crown className="text-amber-300" size={48} /> : <Star className="text-primary" size={48} />}
                       </div>
 
-                      <p className={`max-w-md text-sm mb-2 ${profileData?.usage?.isPremium ? "text-indigo-100" : "text-slate-500"}`}>
+                      <p className={`max-w-md text-sm mb-2 ${profileData?.usage?.isPremium ? "text-white/80" : "text-muted-foreground"}`}>
                         {profileData?.usage?.isPremium
                           ? "You have full access to all premium features, high-resolution PDF exports, and priority AI generation."
                           : "You are currently on the free plan with limited generations. Upgrade to unlock the full potential of AI-powered learning."}
@@ -619,7 +619,7 @@ export default function ProfileContent() {
                         {!profileData?.usage?.isPremium && (
                           <button
                             onClick={() => router.push("/dashboard?tab=upgrade")}
-                            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700"
+                            className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-xl shadow-primary/20 hover:bg-primary/90"
                           >
                             Upgrade to Pro
                           </button>
@@ -630,14 +630,14 @@ export default function ProfileContent() {
 
                   {/* Billing History Section */}
                   <div className="space-y-6">
-                    <h3 className="font-bold flex items-center gap-2 text-lg text-gray-900 dark:text-gray-100">
+                    <h3 className="font-bold flex items-center gap-2 text-lg text-foreground">
                       <Receipt size={20} /> Billing History
                     </h3>
 
-                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="overflow-hidden rounded-xl border border-border shadow-sm">
                       {profileData?.user?.billingHistory?.length > 0 ? (
                         <table className="w-full text-sm text-left">
-                          <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                          <thead className="text-xs uppercase bg-muted text-muted-foreground border-b border-border">
                             <tr>
                               <th className="px-6 py-4">Date</th>
                               <th className="px-6 py-4">Amount</th>
@@ -645,9 +645,9 @@ export default function ProfileContent() {
                               <th className="px-6 py-4 text-right">Receipt</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                          <tbody className="divide-y divide-border">
                             {profileData.user.billingHistory.map((tx, i) => (
-                              <tr key={i} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors`}>
+                              <tr key={i} className={`hover:bg-muted/50 transition-colors`}>
                                 <td className="px-6 py-4 font-medium">
                                   {new Date(tx.date || tx.paidAt).toLocaleDateString()}
                                 </td>
@@ -655,9 +655,9 @@ export default function ProfileContent() {
                                   {tx.currency} {(tx.amount).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tx.status === 'success' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                                    tx.status === 'failed' ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-                                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tx.status === 'success' ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
+                                    tx.status === 'failed' ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
+                                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300"
                                     }`}>
                                     {tx.status}
                                   </span>
@@ -706,7 +706,7 @@ export default function ProfileContent() {
                                           console.error(e);
                                         }
                                       }}
-                                      className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-semibold text-xs"
+                                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 hover:underline font-semibold text-xs"
                                     >
                                       <Download size={14} />
                                     </button>
@@ -717,7 +717,7 @@ export default function ProfileContent() {
                           </tbody>
                         </table>
                       ) : (
-                        <div className="text-center py-12 text-slate-500">
+                        <div className="text-center py-12 text-muted-foreground">
                           <Receipt size={48} className="mx-auto mb-4 opacity-20" />
                           <p>No billing history available yet.</p>
                         </div>
@@ -725,11 +725,11 @@ export default function ProfileContent() {
                     </div>
                   </div>
 
-                  <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <h3 className="font-bold flex items-center gap-2 mb-4 text-gray-900 dark:text-gray-100">
+                  <div className="p-6 rounded-2xl border border-border bg-muted/50">
+                    <h3 className="font-bold flex items-center gap-2 mb-4 text-foreground">
                       <Zap size={18} /> Pro Benefits
                     </h3>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
                       <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> 1000+ words lesson detail</li>
                       <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Branded PDF Exports</li>
                       <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Advanced Quiz Generation</li>

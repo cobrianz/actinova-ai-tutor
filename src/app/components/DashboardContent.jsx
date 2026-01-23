@@ -59,7 +59,7 @@ export default function DashboardContent() {
     library: Library,
     flashcards: FlashcardsLibrary,
     quizzes: TestYourself,
-    "staff-picks": PremiumCourses,
+    "premium-courses": PremiumCourses,
     upgrade: Upgrade,
     chat: Chat,
     profile: ProfileContent,
@@ -70,7 +70,7 @@ export default function DashboardContent() {
   const ComponentWrapper = isChat ? "div" : "div"; // Keep div for now
 
   return (
-    <div className={`relative bg-background ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
+    <div className={`relative min-h-full bg-background ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
       <div
         className={
           isChat

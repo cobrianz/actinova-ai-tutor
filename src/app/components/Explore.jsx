@@ -1456,7 +1456,7 @@ export default function Explore() {
       {/* Categories */}
       <div className="mb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="text-2xl font-bold text-foreground">
             Browse by Category
           </h2>
           <button
@@ -1497,7 +1497,7 @@ export default function Explore() {
             ) : filteredCategories.length === 0 && searchQuery ? (
               <div className="text-center py-12">
                 <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No categories found
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -1625,7 +1625,7 @@ export default function Explore() {
               {[...Array(6)].map((_, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 animate-pulse"
+                  className="bg-card border border-border rounded-lg p-6 animate-pulse"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded flex-1 mr-4"></div>
@@ -1666,7 +1666,7 @@ export default function Explore() {
                 <h2 className="text-2xl font-bold text-foreground">
                   {generatedSet.category} Courses
                 </h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
                   {generatedSet.cached ? "From Cache" : "Generated"}{" "}
                   {new Date(generatedSet.generatedAt).toLocaleDateString()}
                 </span>
@@ -1695,7 +1695,7 @@ export default function Explore() {
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow relative group"
+                    className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow relative group"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-lg font-semibold text-foreground flex-1">
@@ -1775,7 +1775,7 @@ export default function Explore() {
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={!pagination.hasPrev}
-            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="p-2 rounded-lg border border-border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -1789,8 +1789,8 @@ export default function Explore() {
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium ${currentPage === page
-                    ? "bg-blue-600 text-white"
-                    : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border hover:bg-secondary text-foreground"
                     }`}
                 >
                   {page}
@@ -1816,13 +1816,13 @@ export default function Explore() {
       {/* Premium Upgrade Modal */}
       {showPremiumModal && selectedCategoryForModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+          <div className="bg-card rounded-xl max-w-md w-full p-6 shadow-2xl border border-border">
             <div className="text-center">
               <div className="mb-4">
                 <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">⭐</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-xl font-bold text-foreground mb-2">
                   {selectedCategoryForModal.name} Courses
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -1838,7 +1838,7 @@ export default function Explore() {
                     setShowPremiumModal(false);
                     setSelectedCategoryForModal(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex-1 px-4 py-2 border border-border rounded-lg text-foreground hover:bg-secondary"
                 >
                   Maybe Later
                 </button>
@@ -1861,13 +1861,13 @@ export default function Explore() {
       {/* Monthly Limit Reached Modal */}
       {showLimitModal && limitModalData && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg max-w-md w-full p-6 shadow-2xl border border-white/20">
+          <div className="bg-card backdrop-blur-md rounded-lg max-w-md w-full p-6 shadow-2xl border border-border">
             <div className="text-center">
               <div className="mb-4">
                 <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">⏰</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-xl font-bold text-foreground mb-2">
                   Monthly Limit Reached
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">

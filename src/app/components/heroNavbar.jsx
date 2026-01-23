@@ -75,8 +75,8 @@ export default function HeroNavbar({ handleGetStarted }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className={cn(
           "relative flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-500",
-          scrolled 
-            ? "glass shadow-lg border-white/20 dark:border-white/10" 
+          scrolled
+            ? "glass shadow-xl border-white/20 dark:border-white/10"
             : "bg-transparent border-transparent"
         )}>
           {/* Logo */}

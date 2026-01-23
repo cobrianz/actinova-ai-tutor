@@ -4,6 +4,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { Search, Book, MessageCircle, Mail, Phone, HelpCircle, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
+import HeroNavbar from "../components/heroNavbar"
 
 export default function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -86,27 +87,9 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Book className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground">Actinova AI Tutor</span>
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <HeroNavbar />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
         {/* Header */}
         <motion.div
           className="text-center mb-12"

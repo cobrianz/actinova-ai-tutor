@@ -409,7 +409,7 @@ export default function Chat({ topic: propTopic }) {
                 <span className="truncate flex-1">{chat.topic}</span>
                 <button
                   onClick={(e) => handleDeleteTopic(chat.topic, e)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 rounded"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive rounded"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -478,8 +478,8 @@ export default function Chat({ topic: propTopic }) {
                   {/* Avatar */}
                   <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-sm mt-1">
                     {isUser ? (
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-sm flex items-center justify-center">
-                        <User className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+                      <div className="w-8 h-8 bg-secondary rounded-sm flex items-center justify-center">
+                        <User className="w-5 h-5 text-muted-foreground" />
                       </div>
                     ) : (
                       <div className="w-8 h-8 bg-black dark:bg-white rounded-sm flex items-center justify-center">
@@ -490,12 +490,12 @@ export default function Chat({ topic: propTopic }) {
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                    <div className="font-semibold text-sm text-foreground mb-1">
                       {isUser ? "You" : "Actinova AI"}
-                      <span className="text-xs font-normal text-gray-400 ml-2">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-xs font-normal text-muted-foreground ml-2">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div
-                      className="prose prose-base dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-7"
+                      className="prose prose-base dark:prose-invert max-w-none text-foreground/90 leading-7"
                       dangerouslySetInnerHTML={{ __html: renderFormattedContent(message.content) }}
                     />
                   </div>
@@ -508,9 +508,9 @@ export default function Chat({ topic: propTopic }) {
                   <Bot className="w-5 h-5 text-white dark:text-black" />
                 </div>
                 <div className="flex items-center">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce mr-1"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce mr-1 delay-75"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce mr-1"></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce mr-1 delay-75"></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-150"></div>
                 </div>
               </div>
             )}
@@ -521,8 +521,8 @@ export default function Chat({ topic: propTopic }) {
         {/* Floating Input Area */}
         <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-background via-background to-transparent pt-10">
           <div className="max-w-3xl mx-auto relative">
-            <div className="relative flex items-end gap-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-lg ring-1 ring-black/5 dark:ring-white/5">
-              <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Attach (Demo)">
+            <div className="relative flex items-end gap-2 bg-card border border-border rounded-xl p-3 shadow-lg ring-1 ring-black/5 dark:ring-white/5">
+              <button className="p-2 text-muted-foreground hover:text-foreground" title="Attach (Demo)">
                 <Plus className="w-5 h-5" />
               </button>
               <textarea
@@ -535,7 +535,7 @@ export default function Chat({ topic: propTopic }) {
                   }
                 }}
                 placeholder={isPro ? "Send a message..." : "Upgrade to Pro to chat"}
-                className="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[24px] py-2 text-gray-900 dark:text-white placeholder-gray-500"
+                className="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[24px] py-2 text-foreground placeholder-muted-foreground"
                 rows={1}
                 disabled={!topic || !isPro || isSending}
                 style={{ height: 'auto' }}
@@ -548,15 +548,15 @@ export default function Chat({ topic: propTopic }) {
                 onClick={handleSend}
                 disabled={authLoading || !input.trim()}
                 className={`p-1.5 rounded-lg transition-all ${input.trim()
-                  ? "bg-black dark:bg-white text-white dark:text-black"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground"
                   }`}
               >
                 <Send className="w-4 h-4" />
               </button>
             </div>
             <div className="text-center mt-2">
-              <p className="text-xs text-gray-400">Actinova can make mistakes. Verify important info.</p>
+              <p className="text-xs text-muted-foreground">Actinova can make mistakes. Verify important info.</p>
             </div>
           </div>
         </div>

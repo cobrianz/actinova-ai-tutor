@@ -46,7 +46,7 @@ export default function Sidebar({
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
     { name: "AI Chat", id: "chat", icon: MessageCircle },
-    { name: "Premium", id: "staff-picks", icon: Star },
+    { name: "Premium", id: "premium-courses", icon: Star },
     // Only show upgrade when auth has finished loading and user is not pro
     !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },
   ].filter(Boolean);

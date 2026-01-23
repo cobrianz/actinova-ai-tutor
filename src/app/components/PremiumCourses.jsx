@@ -157,9 +157,9 @@ export default function PremiumCourses() {
           new Date() - new Date(parsed.generatedAt) < 24 * 60 * 60 * 1000
         ) {
           // 24 hours
-            setPersonalizedCourses(parsed.courses);
-            setIsDataLoading(false);
-            setGeneratingPersonalized(false);
+          setPersonalizedCourses(parsed.courses);
+          setIsDataLoading(false);
+          setGeneratingPersonalized(false);
           return;
         }
       }
@@ -787,140 +787,120 @@ export default function PremiumCourses() {
                 key={course.id || index}
                 variants={itemVariants}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className="group relative bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-sm border border-gray-200 dark:border-slate-700/50 rounded-2xl overflow-hidden hover:border-gray-300 dark:hover:border-slate-600/70 transition-all duration-300"
+                className="group relative bg-card/60 backdrop-blur-xl border border-border rounded-[2rem] overflow-hidden hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 flex flex-col h-full"
               >
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-3 dark:opacity-10">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-purple-600/20 dark:from-blue-500/40 dark:to-purple-600/40 rounded-full -translate-y-16 translate-x-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-600/20 dark:from-purple-500/40 dark:to-pink-600/40 rounded-full translate-y-12 -translate-x-12"></div>
+                {/* Visual Header */}
+                <div className="relative h-48 overflow-hidden">
+                  <div className={`absolute inset-0 bg-gradient-to-br transition-transform duration-700 group-hover:scale-110 ${index % 3 === 0 ? "from-blue-600 to-indigo-700" :
+                    index % 3 === 1 ? "from-purple-600 to-pink-700" :
+                      "from-orange-500 to-red-600"
+                    }`}>
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+                  </div>
+
+                  {/* Floating Icons for context */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 transition-opacity">
+                    <BookOpen size={64} className="text-white transform -rotate-12" />
+                  </div>
+
+                  {/* Badges */}
+                  <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg backdrop-blur-md ${getBadgeColor(course.badge)}`}>
+                      {getBadgeIcon(course.badge)}
+                      {course.badge}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="relative p-6">
-                  {/* Header with badges */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl">
-                        <Crown className="w-4 h-4 text-blue-500" />
-                      </div>
-                      <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent text-xs font-bold uppercase tracking-wider">
-                        Premium
-                      </span>
-                    </div>
-                    {course.badge && (
-                      <div
-                        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getBadgeColor(course.badge)}`}
-                      >
-                        {getBadgeIcon(course.badge)}
-                        <span>{course.badge}</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Title and Description */}
+                {/* Content */}
+                <div className="p-6 flex flex-col flex-1">
                   <div className="mb-4">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
+                    <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-1">
                       {course.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-slate-200 text-sm leading-relaxed mb-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                       {course.description}
-                    </p>
-                    <p className="text-gray-500 dark:text-slate-300 text-xs">
-                      by {course.instructor}
                     </p>
                   </div>
 
                   {/* Stats */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="flex items-center space-x-1 text-gray-500 dark:text-slate-400">
-                        <Users className="w-4 h-4" />
-                        <span>
-                          {
-                            [
-                              "5k",
-                              "10k",
-                              "15k",
-                              "20k",
-                              "25k",
-                              "30k",
-                              "35k",
-                              "40k",
-                            ][Math.floor(Math.random() * 8)]
-                          }
-                        </span>
+                  <div className="grid grid-cols-3 gap-2 mb-6 border-y border-border py-4">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                        <Users size={14} className="text-blue-500" />
+                        <span className="text-[10px] font-medium">Students</span>
                       </div>
-                      <div className="flex items-center space-x-1 text-gray-500 dark:text-slate-400">
-                        <Clock className="w-4 h-4" />
-                        <span>{course.duration}</span>
-                      </div>
+                      <span className="text-sm font-bold">{course.students?.toLocaleString() || "1.2k"}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-blue-400 fill-blue-400" />
-                      <span className="text-gray-700 dark:text-slate-100 font-medium text-sm">
-                        {course.rating}
-                      </span>
+                    <div className="text-center border-x border-border">
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                        <Clock size={14} className="text-orange-500" />
+                        <span className="text-[10px] font-medium">Duration</span>
+                      </div>
+                      <span className="text-sm font-bold">{course.duration || "6w"}</span>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                        <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                        <span className="text-[10px] font-medium">Rating</span>
+                      </div>
+                      <span className="text-sm font-bold">{course.rating || "4.8"}</span>
                     </div>
                   </div>
 
-                  {/* Premium Note */}
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
-                    {/* Progress Bar */}
-                    {(() => {
-                      const { daysLeft, progress } = getCourseExpiryInfo(
-                        course.createdAt
-                      );
-                      return (
-                        <div className="w-full">
-                          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <span>Course Access</span>
-                            <span>Expires in {daysLeft} days</span>
+                  {/* Pricing/Access */}
+                  {isPro && (
+                    <div className="mb-6">
+                      {(() => {
+                        const { daysLeft, progress } = getCourseExpiryInfo(course.createdAt);
+                        return (
+                          <div className="w-full">
+                            <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">
+                              <span>Course Access</span>
+                              <span className="text-primary">{daysLeft} days left</span>
+                            </div>
+                            <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-primary h-1.5 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                                style={{ width: `${progress}%` }}
+                              ></div>
+                            </div>
                           </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Pricing and CTA */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {course.price}
-                      </span>
-                      {course.originalPrice && (
-                        <span className="text-lg text-gray-400 dark:text-slate-400 line-through">
-                          {course.originalPrice}
-                        </span>
-                      )}
+                        );
+                      })()}
                     </div>
+                  )}
 
+                  {/* Actions */}
+                  <div className="mt-auto space-y-3">
                     {isPro ? (
                       <button
                         onClick={() => handleStartLearning(course)}
                         disabled={preparingCourse === course.id}
-                        className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-normal rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center space-x-2 text-xs"
+                        className="w-full py-3.5 px-6 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
                       >
                         {preparingCourse === course.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Preparing your course...</span>
-                          </>
+                          <><div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div> Preparing...</>
                         ) : (
-                          <span>Start Learning</span>
+                          <>
+                            <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
+                            <span>Start Learning Now</span>
+                          </>
                         )}
                       </button>
                     ) : (
                       <button
                         onClick={() => handleUpgradePlan("premium-course")}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer"
+                        className="w-full py-3.5 px-6 rounded-2xl bg-foreground text-background font-bold shadow-lg hover:shadow-foreground/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2"
                       >
-                        Get Premium
+                        <Crown className="w-5 h-5" />
+                        <span>Get Premium Access</span>
                       </button>
                     )}
+
+                    <p className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-[0.1em]">
+                      AI-Powered Learning Experience
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -929,69 +909,68 @@ export default function PremiumCourses() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <motion.div
-              className="flex items-center justify-center space-x-2 mt-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
+            <div className="flex justify-center items-center gap-4 mt-16">
               <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                className="p-3 rounded-2xl bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-all cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft size={24} />
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
+              <div className="flex gap-2">
+                {[...Array(totalPages)].map((_, i) => (
                   <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer ${currentPage === page
-                      ? "bg-blue-600 text-white"
-                      : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-12 h-12 rounded-2xl font-bold transition-all cursor-pointer ${currentPage === i + 1
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                        : "bg-card border border-border text-muted-foreground hover:bg-secondary"
                       }`}
                   >
-                    {page}
+                    {i + 1}
                   </button>
-                )
-              )}
+                ))}
+              </div>
 
               <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                className="p-3 rounded-2xl bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30 transition-all cursor-pointer"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight size={24} />
               </button>
-            </motion.div>
+            </div>
           )}
         </>
       )}
 
-      {/* CTA Section */}
+      {/* Footer / CTA Enhancement */}
       <motion.div
-        className="text-center mt-16 bg-gray-50 dark:bg-gray-800 rounded-2xl p-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mt-24 p-12 rounded-[3rem] bg-gradient-to-br from-primary/10 via-background to-accent/5 border border-primary/20 text-center relative overflow-hidden"
       >
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-          Want to see your course featured?
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Create exceptional learning experiences and get noticed by our
-          education team.
-        </p>
-        <Link
-          href="/contact"
-          className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
-        >
-          <span>Contact Our Team</span>
-        </Link>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 rounded-full blur-[80px] translate-y-32 -translate-x-32"></div>
+
+        <div className="relative z-10 max-w-2xl mx-auto">
+          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="text-primary w-8 h-8" />
+          </div>
+          <h2 className="text-3xl font-black mb-4 text-foreground">Want to see your topic featured here?</h2>
+          <p className="text-lg text-muted-foreground mb-8">
+            Our AI continuously analyzes trending global topics. If you have a specific domain you'd like us to prioritize, let us know!
+          </p>
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-foreground text-background font-bold rounded-2xl hover:scale-105 transition-all shadow-xl"
+          >
+            <span>Suggest a Topic</span>
+            <ChevronRight size={20} />
+          </Link>
+        </div>
       </motion.div>
     </div>
   );

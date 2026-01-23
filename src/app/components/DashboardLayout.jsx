@@ -21,8 +21,8 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <ThemeProvider>
-        <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-          <Navbar toggleSidebar={toggleSidebar} />
+        <div className="h-screen bg-background flex flex-col">
+          <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
           <div className="flex flex-1 overflow-hidden">
             <div className="relative h-full z-50">
               <Sidebar
