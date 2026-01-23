@@ -180,7 +180,7 @@ export default function BlogPage() {
                                             whileHover={{ scale: 1.05 }}
                                         >
                                             <TrendingUp className="w-4 h-4" />
-                                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">Featured Article</span>
+                                            <span className="text-[10px] sm:text-xs font-black  tracking-[0.2em]">Featured Article</span>
                                         </motion.div>
 
                                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-foreground mb-6 leading-[1.1] tracking-tight">
@@ -203,7 +203,7 @@ export default function BlogPage() {
                                                     </div>
                                                 </div>
                                                 <div className="text-sm">
-                                                    <p className="text-muted-foreground font-bold uppercase tracking-wider text-[10px]">Author</p>
+                                                    <p className="text-muted-foreground font-bold  tracking-wider text-[10px]">Author</p>
                                                     <p className="font-black text-foreground text-base">{featuredPost.author?.name || "Admin"}</p>
                                                 </div>
                                             </div>
