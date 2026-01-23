@@ -20,10 +20,16 @@ function VerifyEmailContent() {
   const { fetchUser } = useAuth();
 
   useEffect(() => {
-    // Get email from localStorage
-    const email = localStorage.getItem("pendingVerificationEmail");
-    if (email) {
-      setUserEmail(email);
+    // Check for email in URL first
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setUserEmail(emailParam);
+    } else {
+      // Fallback to localStorage
+      const email = localStorage.getItem("pendingVerificationEmail");
+      if (email) {
+        setUserEmail(email);
+      }
     }
 
     // Check for token in URL

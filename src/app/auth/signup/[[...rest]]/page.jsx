@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   CheckCircle2,
@@ -22,6 +23,7 @@ import {
 
 export default function SignupPage() {
   const { signup } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -58,7 +60,13 @@ export default function SignupPage() {
       const result = await signup(formData);
       if (result.success) {
         toast.success("Account created! Please check your email for verification.");
-        // AuthProvider or API handles redirect to verify-email
+
+        // Redirect to verify-email page with email as query param
+        if (result.requiresVerification) {
+          router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         toast.error(result.error || "Signup failed");
       }

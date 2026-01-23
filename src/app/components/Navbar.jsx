@@ -28,6 +28,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Navbar({ toggleSidebar }) {
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();

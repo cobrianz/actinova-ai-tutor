@@ -520,40 +520,6 @@ const onboardingSteps = [
     ],
   },
   {
-    id: "learning-style",
-    title: "What's your preferred learning style?",
-    description:
-      "Different people learn best in different ways. Tell us how you prefer to learn.",
-    icon: Lightbulb,
-    fields: [
-      {
-        id: "visual",
-        label: "Visual",
-        description: "Diagrams, videos, images",
-      },
-      {
-        id: "auditory",
-        label: "Auditory",
-        description: "Lectures, discussions, podcasts",
-      },
-      {
-        id: "reading",
-        label: "Reading/Writing",
-        description: "Books, articles, notes",
-      },
-      {
-        id: "kinesthetic",
-        label: "Hands-on",
-        description: "Practice, projects, experiments",
-      },
-      {
-        id: "mixed",
-        label: "Mixed",
-        description: "Combination of different styles",
-      },
-    ],
-  },
-  {
     id: "time-commitment",
     title: "How much time can you commit?",
     description: "This helps us suggest courses that fit your schedule.",
@@ -584,7 +550,6 @@ export default function Onboarding({ onComplete }) {
   const [selectedEducationLevel, setSelectedEducationLevel] = useState("");
   const [selectedSkillLevel, setSelectedSkillLevel] = useState("");
   const [selectedGoals, setSelectedGoals] = useState([]);
-  const [selectedLearningStyle, setSelectedLearningStyle] = useState("");
   const [selectedTimeCommitment, setSelectedTimeCommitment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -602,8 +567,6 @@ export default function Onboarding({ onComplete }) {
         return selectedSkillLevel !== "";
       case "goals":
         return selectedGoals.length > 0;
-      case "learning-style":
-        return selectedLearningStyle !== "";
       case "time-commitment":
         return selectedTimeCommitment !== "";
       default:
@@ -642,9 +605,6 @@ export default function Onboarding({ onComplete }) {
         break;
       case "skill-level":
         setSelectedSkillLevel(fieldId);
-        break;
-      case "learning-style":
-        setSelectedLearningStyle(fieldId);
         break;
       case "time-commitment":
         setSelectedTimeCommitment(fieldId);
@@ -710,7 +670,6 @@ export default function Onboarding({ onComplete }) {
         educationLevel: selectedEducationLevel,
         skillLevel: selectedSkillLevel,
         goals: selectedGoals,
-        learningStyle: selectedLearningStyle,
         timeCommitment: selectedTimeCommitment,
         onboardingCompleted: true,
       };
@@ -755,64 +714,52 @@ export default function Onboarding({ onComplete }) {
   const IconComponent = currentStepData.icon;
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen p-4 overflow-hidden">
-      {/* Decorative dots - Big */}
-      <div className="absolute top-10 left-10 w-16 h-16 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-xl"></div>
-      <div className="absolute top-32 right-20 w-20 h-20 bg-purple-500/10 dark:bg-purple-400/10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-20 left-32 w-24 h-24 bg-pink-500/10 dark:bg-pink-400/10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-32 right-16 w-16 h-16 bg-indigo-500/10 dark:bg-indigo-400/10 rounded-full blur-xl"></div>
-
-      {/* Decorative dots - Medium */}
-      <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-blue-400/20 dark:bg-blue-300/20 rounded-full blur-md"></div>
-      <div className="absolute top-1/3 right-1/3 w-10 h-10 bg-purple-400/20 dark:bg-purple-300/20 rounded-full blur-md"></div>
-      <div className="absolute bottom-1/4 left-1/3 w-14 h-14 bg-pink-400/20 dark:bg-pink-300/20 rounded-full blur-md"></div>
-
-      {/* Decorative dots - Small */}
-      <div className="absolute top-20 right-1/4 w-6 h-6 bg-blue-300/30 dark:bg-blue-200/30 rounded-full blur-sm"></div>
-      <div className="absolute top-1/2 left-20 w-8 h-8 bg-purple-300/30 dark:bg-purple-200/30 rounded-full blur-sm"></div>
-      <div className="absolute bottom-1/3 right-1/4 w-5 h-5 bg-indigo-300/30 dark:bg-indigo-200/30 rounded-full blur-sm"></div>
-      <div className="absolute top-40 left-1/2 w-7 h-7 bg-pink-300/30 dark:bg-pink-200/30 rounded-full blur-sm"></div>
-      <div className="absolute bottom-40 right-1/3 w-6 h-6 bg-purple-300/30 dark:bg-purple-200/30 rounded-full blur-sm"></div>
+    <div className="relative flex flex-col min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Decorative dots - Subtle background elements */}
+      <div className="absolute top-10 left-10 w-16 h-16 bg-primary/5 rounded-full blur-xl"></div>
+      <div className="absolute top-32 right-20 w-20 h-20 bg-primary/5 rounded-full blur-xl"></div>
+      <div className="absolute bottom-20 left-32 w-24 h-24 bg-primary/5 rounded-full blur-xl"></div>
+      <div className="absolute bottom-32 right-16 w-16 h-16 bg-primary/5 rounded-full blur-xl"></div>
 
       {/* Main content */}
       <motion.div
-        className="bg-transparent dark:bg-gray-800 rounded-2xl max-w-5xl w-full max-h-[90vh] relative z-10 flex flex-col overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 flex flex-col flex-1 w-full max-w-6xl mx-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {/* Header */}
-        <div className="bg-transparent dark:bg-gray-800 p-6 rounded-t-2xl flex-shrink-0">
-          <div className="flex flex-col items-center justify-center mb-4 text-center">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-3">
-              <IconComponent className="w-6 h-6 text-white" />
+        <div className="p-8 pb-4 text-center">
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4 transition-transform hover:scale-110 shadow-sm border border-primary/20">
+              <IconComponent className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl font-heading mb-2">
                 {currentStepData.title}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-base font-medium text-muted-foreground">
                 Step {currentStep + 1} of {onboardingSteps.length}
               </p>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-secondary rounded-full h-1.5 max-w-xs mx-auto overflow-hidden">
             <motion.div
-              className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full"
+              className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]"
               initial={{ width: 0 }}
               animate={{
                 width: `${((currentStep + 1) / onboardingSteps.length) * 100}%`,
               }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1 hide-scrollbar">
-          <p className="text-gray-600 dark:text-gray-400 mb-6 text-center">
+        <div className="flex-1 p-8 pt-2 overflow-y-auto hide-scrollbar">
+          <p className="max-w-3xl mx-auto mb-10 text-lg leading-relaxed text-center text-muted-foreground">
             {currentStepData.description}
           </p>
 
@@ -829,9 +776,7 @@ export default function Onboarding({ onComplete }) {
                         ? selectedEducationLevel === field.id
                         : currentStepData.id === "skill-level"
                           ? selectedSkillLevel === field.id
-                          : currentStepData.id === "learning-style"
-                            ? selectedLearningStyle === field.id
-                            : selectedTimeCommitment === field.id;
+                          : selectedTimeCommitment === field.id;
 
               const FieldIcon = field.icon;
 
@@ -851,16 +796,16 @@ export default function Onboarding({ onComplete }) {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`p-4 rounded-full border-2 transition-all text-center ${isSelected
-                    ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:border-primary/50"
                     }`}
                 >
                   <div className="flex items-center justify-center space-x-3">
                     {FieldIcon && (
                       <div
                         className={`p-2 rounded-full ${isSelected
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-muted-foreground"
                           }`}
                       >
                         <FieldIcon className="w-5 h-5" />
@@ -870,18 +815,18 @@ export default function Onboarding({ onComplete }) {
                       <div className="flex items-center justify-center gap-2">
                         <h3
                           className={`font-semibold ${isSelected
-                            ? "text-blue-900 dark:text-blue-100"
-                            : "text-gray-900 dark:text-gray-100"
+                            ? "text-primary"
+                            : "text-foreground"
                             }`}
                         >
                           {field.label}
                         </h3>
                         {isSelected && (
-                          <Check className="w-5 h-5 text-blue-600" />
+                          <Check className="w-5 h-5 text-primary" />
                         )}
                       </div>
                       {field.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 text-center">
+                        <p className="text-xs text-muted-foreground mt-1 text-center">
                           {field.description}
                         </p>
                       )}
@@ -894,23 +839,23 @@ export default function Onboarding({ onComplete }) {
         </div>
 
         {/* Footer */}
-        <div className="bg-transparent dark:bg-gray-800 p-6 flex items-center justify-between rounded-b-2xl flex-shrink-0">
+        <div className="flex items-center justify-between p-8 border-t border-border/50">
           <button
             onClick={handleBack}
             disabled={currentStep === 0}
-            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             Back
           </button>
           <button
             onClick={handleNext}
             disabled={!canProceed() || isSaving}
-            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-all active:scale-95 shadow-lg shadow-primary/20"
           >
-            <span>
-              {isLastStep ? (isSaving ? "Saving..." : "Complete") : "Next"}
+            <span className="text-sm tracking-wide uppercase">
+              {isLastStep ? (isSaving ? "Saving..." : "Finish Profile") : "Continue"}
             </span>
-            {!isLastStep && <ChevronRight className="w-4 h-4" />}
+            {!isLastStep && <ChevronRight className="w-5 h-5" />}
           </button>
         </div>
       </motion.div>

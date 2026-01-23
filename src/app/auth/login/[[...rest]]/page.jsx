@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   CheckCircle2,
@@ -21,6 +22,7 @@ import {
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +42,13 @@ export default function LoginPage() {
         toast.success("Welcome back!");
         // Redirect is handled by AuthProvider's effect
       } else {
-        toast.error(result.error || "Login failed");
+        // If account requires verification, redirect to verify-email
+        if (result.requiresVerification) {
+          toast.error(result.error || "Please verify your email first");
+          router.push(`/auth/verify-email?email=${encodeURIComponent(result.email || email)}`);
+        } else {
+          toast.error(result.error || "Login failed");
+        }
       }
     } catch (err) {
       toast.error("An unexpected error occurred");

@@ -8,8 +8,12 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "30d";
 
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
+// Helper to ensure JWT_SECRET is present when needed
+function ensureSecret() {
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
+  return JWT_SECRET;
 }
 
 // Password hashing with salt rounds
@@ -44,7 +48,7 @@ export function signAccessToken(user, options = {}) {
     payload.jti = user.jti;
   }
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, ensureSecret(), {
     expiresIn: options.expiresIn || JWT_EXPIRES_IN,
     issuer: "actinova-ai-tutor",
     audience: "actinova-ai-tutor-users",
@@ -64,7 +68,7 @@ export function signRefreshToken(user) {
     payload.jti = user.jti;
   }
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, ensureSecret(), {
     expiresIn: JWT_REFRESH_EXPIRES_IN,
     issuer: "actinova-ai-tutor",
     audience: "actinova-ai-tutor-users",
@@ -88,7 +92,7 @@ export function generateTokenPair(user, options = {}) {
 // Verify token with proper error handling
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET, {
+    return jwt.verify(token, ensureSecret(), {
       issuer: "actinova-ai-tutor",
       audience: "actinova-ai-tutor-users",
     });
@@ -106,7 +110,7 @@ export function verifyToken(token) {
 // Verify refresh token specifically
 export function verifyRefreshToken(token) {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, ensureSecret(), {
       issuer: "actinova-ai-tutor",
       audience: "actinova-ai-tutor-users",
     });
