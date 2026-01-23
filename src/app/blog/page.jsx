@@ -145,8 +145,8 @@ export default function BlogPage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category.value
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                                     }`}
                             >
                                 {category.name} ({category.count})
@@ -167,11 +167,11 @@ export default function BlogPage() {
                             <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                                 {/* Decorative background */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900" />
-                                
+
                                 {/* Content */}
                                 <div className="relative p-8 lg:p-12">
                                     {/* Featured badge */}
-                                    <motion.div 
+                                    <motion.div
                                         className="inline-flex items-center space-x-2 mb-6 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full"
                                         whileHover={{ scale: 1.05 }}
                                     >
@@ -239,7 +239,7 @@ export default function BlogPage() {
                                     </div>
 
                                     {/* CTA Button */}
-                                    <motion.div 
+                                    <motion.div
                                         className="mt-8"
                                         whileHover={{ scale: 1.02 }}
                                     >
@@ -272,7 +272,7 @@ export default function BlogPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                                    className="bg-card border border-border rounded-lg overflow-hidden skeleton-block"
                                 >
                                     {/* Image skeleton */}
                                     <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 animate-pulse" />
@@ -326,11 +326,11 @@ export default function BlogPage() {
                                         key={post.slug || post._id}
                                         variants={itemVariants}
                                         whileHover={{ y: -5 }}
-                                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                                        className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
                                     >
                                         <div className="p-6">
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs font-medium">
+                                                <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium">
                                                     {post.category}
                                                 </span>
                                                 {post.trending && (
@@ -341,11 +341,11 @@ export default function BlogPage() {
                                                 )}
                                             </div>
 
-                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2">
+                                            <h3 className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
                                                 {post.title}
                                             </h3>
 
-                                            <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                                            <p className="text-muted-foreground mb-4 line-clamp-3">
                                                 {post.excerpt}
                                             </p>
 
@@ -353,7 +353,7 @@ export default function BlogPage() {
                                                 {(post.tags || []).slice(0, 3).map((tag) => (
                                                     <span
                                                         key={tag}
-                                                        className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs flex items-center space-x-1"
+                                                        className="bg-secondary text-muted-foreground px-2 py-1 rounded text-xs flex items-center space-x-1"
                                                     >
                                                         <Tag className="w-3 h-3" />
                                                         <span>{tag}</span>
@@ -363,14 +363,14 @@ export default function BlogPage() {
 
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
-                                                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                                                        <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                                                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                                                        <User className="w-4 h-4 text-muted-foreground" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                        <p className="text-sm font-medium text-foreground">
                                                             {post.author?.name || "Admin"}
                                                         </p>
-                                                        <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                                             <span>{post.date}</span>
                                                             <span>•</span>
                                                             <span>{post.readTime}</span>
@@ -387,13 +387,13 @@ export default function BlogPage() {
                                                                     title: post.title,
                                                                     text: post.excerpt,
                                                                     url: `${window.location.origin}/blog/${post.slug}`,
-                                                                }).catch(() => {});
+                                                                }).catch(() => { });
                                                             } else {
                                                                 navigator.clipboard.writeText(`${window.location.origin}/blog/${post.slug}`);
                                                                 toast.success("Link copied!");
                                                             }
                                                         }}
-                                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                                        className="p-2 hover:bg-secondary rounded transition-colors text-muted-foreground hover:text-primary"
                                                         title="Share article"
                                                         whileHover={{ scale: 1.1 }}
                                                         whileTap={{ scale: 0.95 }}
@@ -403,7 +403,7 @@ export default function BlogPage() {
 
                                                     <Link
                                                         href={`/blog/${post.slug || post._id}`}
-                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm flex items-center space-x-1"
+                                                        className="text-primary hover:text-primary/80 font-medium text-sm flex items-center space-x-1"
                                                     >
                                                         <span>Read</span>
                                                         <ArrowRight className="w-4 h-4" />
@@ -425,11 +425,11 @@ export default function BlogPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-foreground mb-2">
                             No articles found
                         </h3>
-                        <p className="text-gray-600 dark:text-gray-400 mb-6">
+                        <p className="text-muted-foreground mb-6">
                             {searchQuery
                                 ? `No articles match "${searchQuery}" in the selected category.`
                                 : "No articles found in the selected category."}
@@ -448,15 +448,15 @@ export default function BlogPage() {
 
                 {/* Newsletter Signup */}
                 <motion.div
-                    className="mt-20 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 text-center"
+                    className="mt-20 bg-secondary rounded-2xl p-8 text-center"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                 >
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                    <h2 className="text-2xl font-bold text-foreground mb-4">
                         Stay Updated with Learning Insights
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
+                    <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
                         Get the latest articles, learning tips, and educational insights
                         delivered to your inbox weekly.
                     </p>

@@ -198,16 +198,16 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <HeroNavbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Choose Your Learning Plan
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             {isPro ? (
               <>
                 Welcome back, <strong>{user?.name || 'Member'}! </strong>
@@ -226,7 +226,7 @@ export default function PricingPage() {
           )}
 
           <div className="mb-8">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-muted-foreground">
               Simple, transparent monthly pricing. Cancel anytime.
             </span>
           </div>
@@ -242,11 +242,11 @@ export default function PricingPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 ${isPopular
-                  ? "border-blue-500 scale-105 ring-2 ring-blue-500/20 z-10"
+                className={`relative bg-card dark:bg-secondary/20 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 ${isPopular
+                  ? "border-primary scale-105 ring-2 ring-primary/20 z-10"
                   : isCurrentPlan
                     ? "border-green-500 ring-2 ring-green-500/20"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    : "border-border hover:border-primary/50"
                   }`}
               >
                 {isCurrentPlan && (
@@ -269,19 +269,19 @@ export default function PricingPage() {
                   <div className="flex items-center space-x-3 mb-4">
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center ${isPopular
-                        ? "bg-gradient-to-r from-green-500 to-blue-600"
-                        : "bg-gray-100 dark:bg-gray-700"
+                        ? "bg-primary"
+                        : "bg-secondary"
                         }`}
                     >
                       <Icon
                         className={`w-5 h-5 ${isPopular
-                          ? "text-white"
-                          : "text-gray-600 dark:text-gray-400"
+                          ? "text-primary-foreground"
+                          : "text-muted-foreground"
                           }`}
                       />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      <h3 className="text-xl font-bold text-foreground">
                         {plan.name}
                       </h3>
                     </div>
@@ -289,10 +289,10 @@ export default function PricingPage() {
 
                   <div className="mb-6">
                     <div className="flex items-baseline">
-                      <span className="text-4xl font-bold text-gray-900 dark:text-white">
+                      <span className="text-4xl font-bold text-foreground">
                         ${plan.price}
                       </span>
-                      <span className="text-gray-600 dark:text-gray-400 ml-1">
+                      <span className="text-muted-foreground ml-1">
                         /month
                       </span>
                     </div>
@@ -305,7 +305,7 @@ export default function PricingPage() {
                         className="flex items-start space-x-3"
                       >
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-600 dark:text-gray-300 text-sm">
+                        <span className="text-muted-foreground text-sm">
                           {feature}
                         </span>
                       </li>
@@ -339,19 +339,19 @@ export default function PricingPage() {
 
         {/* FAQ */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-8">
+          <h2 className="text-3xl font-bold text-foreground text-center mb-8">
             Frequently Asked Questions
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6"
+                className="bg-secondary rounded-lg p-6 border border-border"
               >
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="font-semibold text-foreground mb-2">
                   {faq.question}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
+                <p className="text-muted-foreground">{faq.answer}</p>
               </div>
             ))}
           </div>

@@ -85,20 +85,20 @@ export default function HelpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
+      <nav className="border-b border-border bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/dashboard" className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Book className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">Actinova AI Tutor</span>
+              <span className="text-xl font-bold text-foreground">Actinova AI Tutor</span>
             </Link>
             <Link
               href="/dashboard"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Back to Dashboard
             </Link>
@@ -114,8 +114,8 @@ export default function HelpPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">How can we help you?</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-4">How can we help you?</h1>
+          <p className="text-xl text-muted-foreground mb-8">
             Find answers to common questions or get in touch with our support team
           </p>
 
@@ -127,7 +127,7 @@ export default function HelpPage() {
               placeholder="Search for help articles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-12 pr-4 py-4 border border-border rounded-xl bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
         </motion.div>
@@ -142,19 +142,19 @@ export default function HelpPage() {
           {helpCategories.map((category, index) => {
             const Icon = category.icon
             return (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+              <div key={index} className="bg-card rounded-2xl shadow-lg p-6 border border-border">
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Icon className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{category.title}</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{category.title}</h3>
                 </div>
                 <ul className="space-y-2">
                   {category.articles.map((article, articleIndex) => (
                     <li key={articleIndex}>
                       <a
                         href="#"
-                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="text-muted-foreground hover:text-primary transition-colors"
                       >
                         {article}
                       </a>
@@ -168,22 +168,22 @@ export default function HelpPage() {
 
         {/* FAQ Section */}
         <motion.div
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-16"
+          className="bg-card rounded-2xl shadow-lg p-8 mb-16 border border-border"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">
             Frequently Asked Questions
           </h2>
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div key={index} className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-secondary/50 transition-colors"
                 >
-                  <span className="font-medium text-gray-900 dark:text-white">{faq.question}</span>
+                  <span className="font-medium text-foreground">{faq.question}</span>
                   {expandedFaq === index ? (
                     <ChevronUp className="w-5 h-5 text-gray-500" />
                   ) : (
@@ -192,7 +192,7 @@ export default function HelpPage() {
                 </button>
                 {expandedFaq === index && (
                   <div className="px-6 pb-4">
-                    <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
+                    <p className="text-muted-foreground">{faq.answer}</p>
                   </div>
                 )}
               </div>
@@ -202,23 +202,23 @@ export default function HelpPage() {
 
         {/* Contact Support */}
         <motion.div
-          className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-8 text-white text-center"
+          className="bg-primary rounded-2xl shadow-lg p-8 text-primary-foreground text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <h2 className="text-2xl font-bold mb-4">Still need help?</h2>
-          <p className="text-blue-100 mb-8">
+          <p className="opacity-90 mb-8">
             Our support team is here to help you succeed. Get in touch and we'll respond as soon as possible.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white/10 rounded-lg p-6">
               <Mail className="w-8 h-8 mx-auto mb-3" />
               <h3 className="font-semibold mb-2">Email Support</h3>
-              <p className="text-sm text-blue-100 mb-3">Get help via email</p>
+              <p className="text-sm opacity-80 mb-3">Get help via email</p>
               <a
                 href="mailto:support@actinova.com"
-                className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                className="bg-white text-primary px-4 py-2 rounded-lg hover:bg-white/90 transition-colors"
               >
                 Send Email
               </a>
@@ -226,18 +226,18 @@ export default function HelpPage() {
             <div className="bg-white/10 rounded-lg p-6">
               <MessageCircle className="w-8 h-8 mx-auto mb-3" />
               <h3 className="font-semibold mb-2">Live Chat</h3>
-              <p className="text-sm text-blue-100 mb-3">Chat with our team</p>
-              <button className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+              <p className="text-sm opacity-80 mb-3">Chat with our team</p>
+              <button className="bg-white text-primary px-4 py-2 rounded-lg hover:bg-white/90 transition-colors">
                 Start Chat
               </button>
             </div>
             <div className="bg-white/10 rounded-lg p-6">
               <Phone className="w-8 h-8 mx-auto mb-3" />
               <h3 className="font-semibold mb-2">Phone Support</h3>
-              <p className="text-sm text-blue-100 mb-3">Enterprise customers</p>
+              <p className="text-sm opacity-80 mb-3">Enterprise customers</p>
               <a
                 href="tel:+1-555-0123"
-                className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                className="bg-white text-primary px-4 py-2 rounded-lg hover:bg-white/90 transition-colors"
               >
                 Call Now
               </a>

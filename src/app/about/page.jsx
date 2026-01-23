@@ -76,9 +76,9 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <HeroNavbar />
-      
+
       {/* Hero Section */}
       <section className="relative pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-white dark:from-blue-900/10 dark:to-gray-900 -z-10" />
@@ -91,10 +91,10 @@ export default function AboutPage() {
             <span className="inline-block px-4 py-1.5 mb-6 text-sm font-semibold tracking-wide text-blue-600 uppercase bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
               Transforming Education
             </span>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white mb-8 tracking-tight">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-foreground mb-8 tracking-tight">
               Democratizing <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Education</span> Through AI
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Actinova AI Tutor is building the future of learning. We combine cutting-edge artificial intelligence with proven pedagogical methods to unlock human potential everywhere.
             </p>
           </motion.div>
@@ -111,12 +111,12 @@ export default function AboutPage() {
             className="relative"
           >
             <div className="absolute -top-4 -left-4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
-            <img 
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop" 
-              alt="Students learning" 
+            <img
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop"
+              alt="Students learning"
               className="rounded-3xl shadow-2xl relative z-10 w-full object-cover aspect-[4/3]"
             />
-            <div className="absolute -bottom-6 -right-6 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl z-20 border border-gray-100 dark:border-gray-700 hidden sm:block">
+            <div className="absolute -bottom-6 -right-6 bg-card p-6 rounded-2xl shadow-xl z-20 border border-border hidden sm:block">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
                   <Zap className="text-green-600 w-6 h-6" />
@@ -134,10 +134,10 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="space-y-6"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
               Our Story: Born from a Need for <span className="text-blue-600">Personalization</span>
             </h2>
-            <div className="space-y-4 text-lg text-gray-600 dark:text-gray-300">
+            <div className="space-y-4 text-lg text-muted-foreground">
               <p>
                 Founded in 2022 by a team of educators and engineers, Actinova AI Tutor was born from a simple observation: traditional one-size-fits-all education doesn't work for everyone.
               </p>
@@ -153,11 +153,11 @@ export default function AboutPage() {
       </section>
 
       {/* Technology Section */}
-      <section className="py-24 bg-gray-50 dark:bg-gray-800/50 px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-secondary/50 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Powered by Advanced AI</h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Powered by Advanced AI</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Our proprietary technology combines large language models with educational psychology.
             </p>
           </div>
@@ -167,16 +167,16 @@ export default function AboutPage() {
               { title: "Instant Feedback", desc: "Get detailed explanations and corrections within seconds.", icon: Zap, color: "purple" },
               { title: "Secure Learning", desc: "Your data is protected with enterprise-grade security.", icon: Shield, color: "green" }
             ].map((tech, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 whileHover={{ y: -10 }}
-                className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700"
+                className="bg-card p-8 rounded-2xl shadow-sm border border-border"
               >
-                <div className={`w-14 h-14 bg-${tech.color}-100 dark:bg-${tech.color}-900/30 rounded-xl flex items-center justify-center mb-6`}>
-                  <tech.icon className={`w-8 h-8 text-${tech.color}-600 dark:text-${tech.color}-400`} />
+                <div className={`w-14 h-14 bg-secondary rounded-xl flex items-center justify-center mb-6`}>
+                  <tech.icon className={`w-8 h-8 text-primary`} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{tech.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400">{tech.desc}</p>
+                <h3 className="text-xl font-bold text-foreground mb-4">{tech.title}</h3>
+                <p className="text-muted-foreground">{tech.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -211,26 +211,26 @@ export default function AboutPage() {
           </div>
           <div className="order-1 lg:order-2 grid grid-cols-2 gap-4">
             <div className="space-y-4 pt-12">
-              <img 
-                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop" 
-                alt="Learning 1" 
+              <img
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop"
+                alt="Learning 1"
                 className="rounded-2xl shadow-lg aspect-[3/4] object-cover"
               />
-              <img 
-                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=600&auto=format&fit=crop" 
-                alt="Learning 2" 
+              <img
+                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=600&auto=format&fit=crop"
+                alt="Learning 2"
                 className="rounded-2xl shadow-lg aspect-square object-cover"
               />
             </div>
             <div className="space-y-4">
-              <img 
-                src="https://images.unsplash.com/photo-1523240715639-9a67a0e71d8b?q=80&w=600&auto=format&fit=crop" 
-                alt="Learning 3" 
+              <img
+                src="https://images.unsplash.com/photo-1523240715639-9a67a0e71d8b?q=80&w=600&auto=format&fit=crop"
+                alt="Learning 3"
                 className="rounded-2xl shadow-lg aspect-square object-cover"
               />
-              <img 
-                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop" 
-                alt="Learning 4" 
+              <img
+                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop"
+                alt="Learning 4"
                 className="rounded-2xl shadow-lg aspect-[3/4] object-cover"
               />
             </div>
@@ -241,9 +241,9 @@ export default function AboutPage() {
       {/* NEW: Global Reach Section */}
       <section className="py-24 bg-blue-900 text-white overflow-hidden relative">
         <div className="absolute inset-0 opacity-10">
-          <img 
-            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop" 
-            alt="World Map" 
+          <img
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop"
+            alt="World Map"
             className="w-full h-full object-cover"
           />
         </div>
@@ -256,7 +256,7 @@ export default function AboutPage() {
               { label: "Lessons Delivered", value: "1.2M+" },
               { label: "Teacher Hours Saved", value: "500K+" }
             ].map((stat, i) => (
-              <motion.div 
+              <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -283,7 +283,7 @@ export default function AboutPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {values.map((value, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -307,7 +307,7 @@ export default function AboutPage() {
       {/* Mission & Vision Section (Refined) */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <motion.div 
+          <motion.div
             className="p-10 rounded-[3rem] bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-2xl relative overflow-hidden"
             whileHover={{ scale: 1.02 }}
           >
@@ -321,7 +321,7 @@ export default function AboutPage() {
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="p-10 rounded-[3rem] bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl relative overflow-hidden"
             whileHover={{ scale: 1.02 }}
           >
