@@ -562,9 +562,15 @@ export default function Library({ setActiveContent }) {
                     <div className="flex gap-1 sm:ml-4">
                       {course.format !== "questions" && course.format !== "flashcards" && (
                         <button
-                          onClick={() => handleDownload(course)}
-                          className={`p-2 rounded-lg transition-colors ${isPremium ? "hover:bg-secondary" : "opacity-50 cursor-not-allowed"}`}
-                          title={isPremium ? "Download PDF" : "Pro Feature: Download PDF"}
+                          onClick={() => {
+                            if (course.progress < 100) {
+                              toast.info("Please complete the course or wait for all lessons to generate before downloading.");
+                              return;
+                            }
+                            handleDownload(course);
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${isPremium ? (course.progress === 100 ? "hover:bg-secondary" : "opacity-60 cursor-not-allowed") : "opacity-50 cursor-not-allowed"}`}
+                          title={!isPremium ? "Pro Feature: Download PDF" : (course.progress === 100 ? "Download PDF" : "Complete course to download")}
                         >
                           <Download className="w-4 h-4" />
                         </button>

@@ -220,8 +220,6 @@ export default function BlogPage() {
                                                     <span className="text-muted-foreground">{featuredPost.readTime}</span>
                                                 </div>
                                             </div>
-                                        </div>
-
                                         <div className="flex flex-wrap items-center gap-4">
                                             <Link
                                                 href={`/blog/${featuredPost.slug || featuredPost._id}`}
@@ -244,23 +242,15 @@ export default function BlogPage() {
                                                         toast.success("Link copied to clipboard!");
                                                     }
                                                 }}
-                                                className="p-5 bg-card border border-border hover:bg-secondary text-foreground rounded-[1.5rem] transition-all"
+                                                className="p-5 bg-card  hover:bg-secondary text-foreground rounded-[1.5rem] transition-all"
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
                                             >
                                                 <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
                                             </motion.button>
                                         </div>
-                                    </div>
-
-                                    {/* Visual Representation (Placeholder for future thumbnail) */}
-                                    <div className="hidden lg:block w-1/3 order-1 lg:order-2">
-                                        <div className="relative aspect-square">
-                                            <div className="absolute inset-0 bg-blue-600/20 rounded-[3rem] rotate-6 scale-95 blur-2xl animate-pulse" />
-                                            <div className="relative h-full w-full bg-gradient-to-br from-blue-600 to-purple-600 rounded-[3rem] flex items-center justify-center p-12 overflow-hidden shadow-inner">
-                                                <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")` }} />
-                                            </div>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>

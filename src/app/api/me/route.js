@@ -38,18 +38,13 @@ export async function GET(request) {
       return NextResponse.json({ user: null });
     }
 
-    const user = await usersCol.findOne(
-      query,
-      {
-        projection: {
-          password: 0,
-          refreshTokens: 0,
-          "profile.bio": 0,
-          courses: 0,
-          timeCommitment: 0,
-        },
-      }
-    );
+    // Use validateSubscriptionStatus to ensure auto-downgrade logic runs
+    const { validateSubscriptionStatus } = await import("@/lib/planMiddleware");
+    const userId = query._id.toString();
+    const user = await validateSubscriptionStatus(userId);
+
+    // If validatedUser confirms user exists, we proceed. 
+    // Note: The previous projection is replaced by selecting fields for 'safeUser' later.
 
     if (!user || user.status !== "active") {
       return NextResponse.json({ user: null });

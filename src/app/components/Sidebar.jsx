@@ -105,7 +105,11 @@ export default function Sidebar({
       return;
     }
     setActiveItem(id);
-    setActiveContent(id);
+    if (setActiveContent) {
+      setActiveContent(id);
+    } else {
+      router.push(`/dashboard?tab=${id}`);
+    }
 
     // Close on small and medium screens
     if (screenSize === "small" || screenSize === "medium") {

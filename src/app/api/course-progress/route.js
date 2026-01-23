@@ -91,9 +91,10 @@ async function handlePost(request) {
         const isLessonDone =
           typeof body.isLessonCompleted === "boolean"
             ? body.isLessonCompleted
-            : completed;
+            : true;
 
         if (!Number.isNaN(moduleId)) {
+          // 1. Update the lesson in library
           await db.collection("library").updateOne(
             { _id: courseObjId, userId: user._id },
             {
@@ -106,6 +107,52 @@ async function handlePost(request) {
               arrayFilters: [{ "m.id": moduleId }, { "l.id": lessonId }],
             }
           );
+
+          // 2. Fetch the updated course to calculate real progress
+          const updatedCourse = await db.collection("library").findOne({ _id: courseObjId, userId: user._id });
+
+          if (updatedCourse) {
+            const totalLessons = updatedCourse.totalLessons || 0;
+            let completedCount = 0;
+
+            updatedCourse.modules.forEach(m => {
+              m.lessons.forEach(l => {
+                if (l.completed) completedCount++;
+              });
+            });
+
+            const newProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+            const isFinished = newProgress >= 100 && completedCount >= totalLessons;
+
+            // 3. Update course-level completion in library
+            await db.collection("library").updateOne(
+              { _id: courseObjId },
+              { $set: { progress: newProgress, completed: isFinished } }
+            );
+
+            // 4. Update user's course list
+            await db.collection("users").updateOne(
+              { _id: user._id, "courses.courseId": courseId },
+              {
+                $set: {
+                  "courses.$.progress": newProgress,
+                  "courses.$.completed": isFinished,
+                  "courses.$.lastUpdated": new Date(),
+                },
+              }
+            );
+
+            return NextResponse.json({
+              success: true,
+              message: "Progress updated",
+              data: {
+                courseId,
+                progress: newProgress,
+                completed: isFinished,
+                updatedAt: new Date().toISOString(),
+              },
+            });
+          }
         }
       } catch (e) {
         console.error("Lesson progress update error:", e);

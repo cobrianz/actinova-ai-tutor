@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmModal from "./ConfirmModal";
+import { useAuth } from "./AuthProvider";
 import ActinovaLoader from "./ActinovaLoader";
 
 // Function to render markdown/rich text formatting

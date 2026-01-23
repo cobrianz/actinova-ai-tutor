@@ -1885,6 +1885,37 @@ export default function LearnContent() {
                 </div>
               )}
             </div>
+            {/* Mobile Mark Complete Button */}
+            <div className="p-4 pb-20 lg:pb-8 flex justify-center lg:hidden">
+              <button
+                onClick={async () => {
+                  if (!activeLesson || lessonContentLoading) return;
+                  const lessonId = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+                  const isCurrentlyCompleted = completedLessons.has(lessonId);
+                  const action = isCurrentlyCompleted ? "incomplete" : "complete";
+                  toast.loading(`Marking lesson as ${action}...`, { id: "mark-complete-mobile" });
+
+                  try {
+                    await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
+                    toast.success(`Lesson marked as ${action}!`, { id: "mark-complete-mobile" });
+                  } catch (error) {
+                    toast.error(`Error: ${error.message}`, { id: "mark-complete-mobile" });
+                  }
+                }}
+                disabled={!currentLesson?.content || lessonContentLoading}
+                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all w-full justify-center ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+                    ? "bg-secondary text-foreground border border-border"
+                    : "bg-primary text-primary-foreground"
+                  }`}
+              >
+                <CheckCircle className="w-5 h-5" />
+                <span>
+                  {completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+                    ? "Mark Incomplete"
+                    : "Mark Completed"}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 

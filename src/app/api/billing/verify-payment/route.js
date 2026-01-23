@@ -132,10 +132,8 @@ export async function GET(request) {
 
     if (alreadyProcessed) {
       console.log("Transaction already processed (idempotent)", data.reference);
-      return redirectTo(
-        request,
-        `/dashboard?payment=success&plan=${plan}&ref=${data.reference}`
-      );
+      const successUrl = `/checkout/success?plan=${plan}&cycle=${billingCycle}&ref=${data.reference}&amount=${data.amount / 100}`;
+      return redirectTo(request, successUrl);
     }
 
     // === 5. Calculate subscription period ===

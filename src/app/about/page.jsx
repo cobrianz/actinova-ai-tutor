@@ -224,7 +224,7 @@ export default function AboutPage() {
             </div>
             <div className="space-y-4">
               <img
-                src="https://images.unsplash.com/photo-1523240715639-9a67a0e71d8b?q=80&w=600&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop"
                 alt="Learning 3"
                 className="rounded-2xl shadow-lg aspect-square object-cover"
               />

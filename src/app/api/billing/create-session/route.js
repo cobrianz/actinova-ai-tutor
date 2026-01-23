@@ -137,15 +137,17 @@ async function createCheckoutSessionHandler(request) {
     const cycle = billingCycle.toLowerCase() === "yearly" ? "yearly" : "monthly";
     const isYearly = cycle === "yearly";
 
-    // Base USD Price
-    const monthlyUsd = selectedPlan.price || 0;
+    // Base Price from DB
+    const basePrice = selectedPlan.price || 0;
+    const originalPrice = selectedPlan.originalPrice || basePrice;
+    const discountText = selectedPlan.discountDescription || "";
 
-    let finalUsd = monthlyUsd;
-    let planNameDisplay = `${selectedPlan.name} - Monthly`;
+    let finalUsd = basePrice;
+    let planNameDisplay = `${selectedPlan.name} ${discountText ? `(${discountText})` : ""}`;
 
     if (isYearly) {
       // If DB has a specific yearly price, use it; otherwise apply 7% discount
-      const yearlyUsd = selectedPlan.yearlyPrice || (monthlyUsd * 12 * 0.93);
+      const yearlyUsd = selectedPlan.yearlyPrice || (basePrice * 12 * 0.93);
       finalUsd = yearlyUsd;
       planNameDisplay = `${selectedPlan.name} - Yearly (Save 7%)`;
     }

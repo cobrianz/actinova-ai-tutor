@@ -170,6 +170,24 @@ async function handlePost(request, { params }) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
+    // Check if course is complete or fully generated
+    const totalLessonsCount = course.totalLessons || 0;
+    const lessonsWithContent = course.modules.reduce((acc, mod) => {
+      return acc + (mod.lessons?.filter(l => l.content && l.content.length > 50).length || 0);
+    }, 0);
+
+    const isReadyForDownload = course.completed || (lessonsWithContent >= totalLessonsCount && totalLessonsCount > 0);
+
+    if (!isReadyForDownload) {
+      return NextResponse.json(
+        {
+          error: "Course in progress",
+          message: "You can only download a course once all lessons have been generated or after you've marked it as complete."
+        },
+        { status: 400 }
+      );
+    }
+
     // Size limit check to prevent abuse
     const totalLessons = course.modules.reduce(
       (sum, m) => sum + (m.lessons?.length || 0),

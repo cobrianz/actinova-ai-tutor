@@ -19,7 +19,7 @@ import confetti from "canvas-confetti";
 function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+  const sessionId = searchParams.get("ref") || searchParams.get("reference") || searchParams.get("session_id");
   const [isVerifying, setIsVerifying] = useState(true);
   const [verified, setVerified] = useState(false);
 
@@ -58,21 +58,21 @@ function SuccessContent() {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-slate-400">Verifying your payment...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground font-medium">Verifying your payment...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50 dark:opacity-100">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-pink-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-violet-600/5 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
@@ -98,13 +98,13 @@ function SuccessContent() {
           </div>
 
           <h1
-            className="text-4xl md:text-5xl font-bold text-white mb-4"
+            className="text-4xl md:text-5xl font-bold text-foreground mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Payment Successful!
           </h1>
 
-          <p className="text-slate-400 text-lg max-w-md mx-auto">
+          <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Your subscription is now active. You have full access to all premium
             features.
           </p>
@@ -114,10 +114,10 @@ function SuccessContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 p-8 max-w-lg w-full mb-8"
+          className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-8 max-w-lg w-full mb-8"
         >
-          <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+          <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
             What's Unlocked for You
           </h2>
 
@@ -165,8 +165,8 @@ function SuccessContent() {
                   <feature.icon className={`w-5 h-5 ${feature.color}`} />
                 </div>
                 <div>
-                  <h3 className="font-medium text-white">{feature.title}</h3>
-                  <p className="text-sm text-slate-400">{feature.description}</p>
+                  <h3 className="font-medium text-foreground">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -180,7 +180,7 @@ function SuccessContent() {
           className="flex flex-col sm:flex-row gap-4"
         >
           <Link
-            href="/dashboard"
+            href="/dashboard?celebrate=true"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 transition-all group"
           >
             Go to Dashboard
@@ -189,7 +189,7 @@ function SuccessContent() {
 
           <Link
             href="/explore"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-muted-foreground bg-secondary hover:bg-secondary/80 transition-all border border-border"
           >
             <Sparkles className="w-4 h-4" />
             Explore Courses
@@ -200,7 +200,7 @@ function SuccessContent() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="mt-8 text-sm text-slate-500"
+          className="mt-8 text-sm text-muted-foreground"
         >
           A confirmation email has been sent to your inbox.
         </motion.p>

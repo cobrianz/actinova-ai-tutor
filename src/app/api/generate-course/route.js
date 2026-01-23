@@ -47,9 +47,46 @@ async function handlePost(request) {
       return generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits);
     }
 
-    const normalizedTopic = topic.trim().toLowerCase();
+    // ─── STEP 1: CANONICALIZE TOPIC & CHECK FOR EXISTING (SMART) ───
+    // Get list of existing course topics for this user to help AI detect duplicates
+    const userCourses = await db.collection("library")
+      .find({ userId: new ObjectId(userId), format: "course", difficulty })
+      .project({ topic: 1, title: 1 })
+      .limit(50)
+      .toArray();
 
-    // Check for existing course
+    const topicList = userCourses.length > 0
+      ? userCourses.map(c => `"${c.topic}" (Title: ${c.title})`).join(", ")
+      : "None";
+
+    const canonicalization = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: `You are an academic course classifier. 
+          Given a user's requested topic and a list of their existing courses, determine:
+          1. A professional, standardized "standardTitle".
+          2. A "searchableTopic" (short, lowercase, e.g. "javascript").
+          3. If this request is semantically the same as an existing course in: [${topicList}].
+          
+          Guidelines:
+          - "Web Dev" and "Fullstack Web Development" are SAME.
+          - "JS basics" and "Javascript Zero to Hero" are SAME.
+          - If SAME, set "isDuplicate": true and "matchedTopic": "the_existing_topic_string".
+          
+          Return JSON: { "standardTitle": "...", "searchableTopic": "...", "isDuplicate": boolean, "matchedTopic": string|null }`
+        },
+        { role: "user", content: `User Topic: "${topic}"` }
+      ]
+    });
+
+    const canon = JSON.parse(canonicalization.choices[0].message.content);
+    const normalizedTopic = canon.isDuplicate ? canon.matchedTopic : canon.searchableTopic.trim().toLowerCase();
+
+    // Check for existing course (exact match on normalized/matched topic)
     const existingCourse = await db.collection("library").findOne({
       userId: new ObjectId(userId),
       topic: normalizedTopic,
@@ -172,6 +209,8 @@ async function handlePost(request) {
 
     // ─── GENERATE NEW COURSE ───
     const { modules, lessonsPerModule, totalLessons } = planLimits;
+    const finalTitle = canon.standardTitle;
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.7,
@@ -180,11 +219,11 @@ async function handlePost(request) {
       messages: [
         {
           role: "system",
-          content: `Generate a complete course outline in JSON format for "${topic}" at ${difficulty} level.
+          content: `Generate a complete course outline in JSON format for "${finalTitle}" at ${difficulty} level.
         
         The JSON must strictly follow this structure:
         {
-          "title": "Comprehensive Course Title",
+          "title": "${finalTitle}",
           "totalModules": ${modules},
           "totalLessons": ${totalLessons},
           "modules": [
@@ -221,7 +260,7 @@ async function handlePost(request) {
     const courseDoc = {
       _id: courseId,
       userId: new ObjectId(userId),
-      title: course.title,
+      title: course.title || canon.standardTitle,
       topic: normalizedTopic,
       originalTopic: topic,
       difficulty,

@@ -22,6 +22,11 @@ export default function PricingPage() {
   const [plans, setPlans] = useState([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [selectedPlanForModal, setSelectedPlanForModal] = useState(null);
+  const nextBillDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -77,19 +82,34 @@ export default function PricingPage() {
   const currentPlanId = getUserPlanId();
   const isPro = currentPlanId === 'premium' || currentPlanId === 'enterprise';
 
+  const userPlanId = user?.subscription?.status === 'active'
+    ? (user?.subscription?.plan === 'pro' ? 'premium' : user?.subscription?.plan)
+    : (user?.isPremium ? 'premium' : 'basic');
+
+  const PLAN_LEVELS = {
+    'basic': 0,
+    'premium': 1,
+    'pro': 1,
+    'enterprise': 2
+  };
+
   const initiatePaymentSelection = (plan) => {
     if (!plan.id) {
       console.error("Plan ID missing");
       return;
     }
 
-    if (currentPlanId === 'enterprise') {
-      toast.success("You are already on the Enterprise plan!");
+    const targetPlanId = plan.id;
+    const targetLevel = PLAN_LEVELS[targetPlanId] || 0;
+    const currentLevel = PLAN_LEVELS[userPlanId] || 0;
+
+    if (targetLevel === currentLevel && userPlanId !== 'basic') {
+      toast.info(`You are already on the ${plan.name} plan!`);
       return;
     }
 
-    if (currentPlanId === 'premium' && (plan.id === 'premium' || plan.name.toLowerCase().includes('pro'))) {
-      toast.success("You are already on the Premium plan!");
+    if (targetLevel < currentLevel) {
+      toast.warning("You already have a higher-tier subscription active.");
       return;
     }
 
@@ -388,7 +408,7 @@ export default function PricingPage() {
                     {selectedPlanForModal?.name}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Billed Monthly
+                    Next bill: {nextBillDate}
                   </p>
                 </div>
 
@@ -399,32 +419,34 @@ export default function PricingPage() {
                     </span>
                     <span className="text-muted-foreground ml-1">/mo</span>
                   </div>
-                  {/* Currency conversion hint */}
-                  <div className="text-xs text-muted-foreground p-2 bg-card rounded border border-dashed border-border">
-                    You will be charged the equivalent amount for non-USD payment methods.
+                  <div className="space-y-2 mb-6 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="text-foreground">${selectedPlanForModal?.originalPrice || selectedPlanForModal?.price}</span>
+                    </div>
+                    {selectedPlanForModal?.originalPrice > selectedPlanForModal?.price && (
+                      <div className="flex items-center justify-between text-sm text-green-600 font-medium">
+                        <span>Discount</span>
+                        <span>-${(selectedPlanForModal.originalPrice - selectedPlanForModal.price).toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <ul className="space-y-3 mb-6">
-                  {selectedPlanForModal?.features?.slice(0, 3).map((f, i) => (
-                    <li key={i} className="flex items-start text-xs text-muted-foreground">
-                      <Check className="w-3 h-3 text-green-500 mr-2 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <div className="flex items-center justify-between text-sm font-medium">
-                  <span className="text-foreground">Total due today</span>
-                  <span className="text-foreground">${selectedPlanForModal?.price?.toFixed(2)}</span>
+                <div className="pt-6 border-t border-border mt-auto">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-base font-semibold text-foreground">Total due today</span>
+                    <span className="text-2xl font-bold text-foreground">${selectedPlanForModal?.price?.toFixed(2)}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-right italic">
+                    Includes all taxes and fees
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Right: Payment Selection */}
-            <div className="md:col-span-3 p-6 bg-card">
+            <div className="md:col-span-3 p-6 bg-card flex flex-col">
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <DialogTitle className="text-xl font-bold text-foreground">Check out</DialogTitle>

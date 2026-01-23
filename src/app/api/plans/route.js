@@ -22,8 +22,7 @@ export async function GET() {
 
         const formattedPlans = plans.map(plan => ({
             ...plan,
-            id: plan.id || plan.name.toLowerCase().split(' ')[0], // efficient fallback
-            popular: plan.id === 'premium' || plan.name.toLowerCase().includes('pro'),
+            id: plan.id || plan._id.toString(),
         }));
 
         return NextResponse.json({ plans: formattedPlans });
