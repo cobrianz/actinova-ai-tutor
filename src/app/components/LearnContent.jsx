@@ -1575,23 +1575,22 @@ export default function LearnContent() {
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Permanent Navbar Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 z-50 shadow-sm relative">
+      <div className="bg-card backdrop-blur-md border-b border-border p-3 sm:p-4 z-50 shadow-sm relative">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
           {/* Left Group - Navigation */}
           <div className="flex items-center space-x-2 sm:space-x-4">
-
             <Link
               href="/dashboard"
-              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 transition-all font-bold shadow-sm"
+              className="flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl bg-foreground text-background hover:opacity-90 transition-all font-bold shadow-lg"
             >
               <Home className="w-4 h-4" />
               <span className="hidden md:inline">Dashboard</span>
             </Link>
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-medium ${isSidebarOpen
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50"
-                : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+              className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl border transition-all font-bold ${isSidebarOpen
+                ? "bg-primary/10 text-primary border-primary/20"
+                : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
                 }`}
             >
               <Menu className="w-4 h-4" />
@@ -1599,8 +1598,15 @@ export default function LearnContent() {
             </button>
           </div>
 
-          {/* Right Group - Controls */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Center Title (Desktop only or scaled) */}
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2">
+            <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em] line-clamp-1 max-w-[300px]">
+              {courseData?.title}
+            </h2>
+          </div>
+
+          {/* Right Group - Controls (HIDDEN ON MOBILE, moved to bottom) */}
+          <div className="hidden lg:flex items-center space-x-3">
             <button
               onClick={async () => {
                 if (!activeLesson || lessonContentLoading) return;
@@ -1616,55 +1622,39 @@ export default function LearnContent() {
                   toast.error(`Error: ${error.message}`, { id: "mark-complete" });
                 }
               }}
-              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-medium border ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-900/50"
-                : "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/50"
+              className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl transition-all font-bold border ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+                ? "bg-orange-500/10 text-orange-500 border-orange-500/20"
+                : "bg-green-500/10 text-green-500 border-green-500/20"
                 }`}
               disabled={!currentLesson?.content || lessonContentLoading}
             >
               <CheckCircle className="w-4 h-4" />
-              <span className="hidden md:inline">
+              <span>
                 {completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                  ? "Mark Incomplete"
-                  : "Mark Complete"}
+                  ? "Incomplete"
+                  : "Complete"}
               </span>
             </button>
 
             <button
-              onClick={() => {
-                const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
-                if (!isPro) {
-                  toast.error("Lesson PDF export is a Pro feature. Please upgrade.");
-                  router.push("/dashboard?tab=upgrade");
-                  return;
-                }
-                if (!currentLesson?.content) {
-                  toast.error("No lesson content to download.");
-                  return;
-                }
-                downloadCourseAsPDF({
-                  title: currentLesson.title,
-                  content: currentLesson.content
-                }, "notes");
-                toast.success("Download started!");
-              }}
-              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all font-medium"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden md:inline">Download Lesson</span>
-            </button>
-
-            <button
               onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-medium ${isRightPanelOpen
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50"
-                : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+              className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl border transition-all font-bold ${isRightPanelOpen
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-secondary/50 text-muted-foreground border-border"
                 }`}
             >
               <MessageCircle className="w-4 h-4" />
-              <span className="hidden md:inline">{isRightPanelOpen ? "Hide Tools" : "Show Tools"}</span>
+              <span>{isRightPanelOpen ? "Hide Tools" : "Show Tools"}</span>
             </button>
           </div>
+
+          {/* Mobile Right Tools Toggle */}
+          <button
+            onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+            className="lg:hidden p-2 text-muted-foreground hover:bg-secondary rounded-xl transition-colors"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
         </div>
       </div>
 
@@ -1936,143 +1926,77 @@ export default function LearnContent() {
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Write your notes here... remember to download them before leaving this page!!"
-                    className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                    placeholder="Write your notes here..."
+                    className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-foreground placeholder-muted-foreground focus:outline-none"
                     dir="ltr"
-                    style={{ direction: "ltr", unicodeBidi: "plaintext" }}
                   />
                   {isSavingNotes && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <div className="text-xs text-muted-foreground mt-2 animate-pulse">
                       Saving...
                     </div>
                   )}
                 </div>
-                <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="p-4 border-t border-border">
                   <button
                     onClick={() => {
-                      const isPro =
-                        user &&
-                        ((user.subscription &&
-                          user.subscription.plan === "pro" &&
-                          user.subscription.status === "active") ||
-                          user.isPremium);
+                      const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
                       if (!isPro) {
-                        toast.error(
-                          "Notes PDF export is a Pro feature. Please upgrade."
-                        );
+                        toast.error("Notes PDF export is a Pro feature. Please upgrade.");
                         router.push("/dashboard?tab=upgrade");
                         return;
                       }
                       handleDownloadNotes();
                     }}
-                    disabled={
-                      !notes.trim() ||
-                      !(
-                        user &&
-                        ((user.subscription &&
-                          user.subscription.plan === "pro" &&
-                          user.subscription.status === "active") ||
-                          user.isPremium)
-                      )
-                    }
-                    className={
-                      user &&
-                        ((user.subscription &&
-                          user.subscription.plan === "pro" &&
-                          user.subscription.status === "active") ||
-                          user.isPremium)
-                        ? "w-full flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-4 px-3 sm:px-4 text-sm rounded-lg transition-colors sm:p-x3 bg-blue-600 text-white hover:bg-blue-700"
-                        : "w-full flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-4 px-3 sm:px-4 text-sm rounded-lg disabled:opacity-50 transition-colors sm:p-x3 bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                    }
+                    disabled={!notes.trim() || !isPro}
+                    className={`w-full flex items-center justify-center space-x-2 py-3 px-4 text-sm rounded-xl font-bold transition-all ${isPro
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02]"
+                        : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+                      }`}
                   >
-                    <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>
-                      {user &&
-                        ((user.subscription &&
-                          user.subscription.plan === "pro" &&
-                          user.subscription.status === "active") ||
-                          user.isPremium)
-                        ? "Download Notes"
-                        : "Pro: Notes PDF"}
-                    </span>
+                    <Download className="w-4 h-4" />
+                    <span>{isPro ? "Download Notes" : "Pro: PDF Export"}</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col bg-[#e5ddd5] dark:bg-[#0b141a] relative overflow-hidden">
-                {/* Chat Background Pattern - Subtle Overlay */}
-                <div
-                  className="absolute inset-0 opacity-[0.05] dark:opacity-[0.03] pointer-events-none"
-                  style={{
-                    backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")`,
-                    backgroundRepeat: 'repeat'
-                  }}
-                />
+              <div className="h-full flex flex-col bg-muted/30 dark:bg-background relative overflow-hidden">
+                {/* Chat Background Pattern */}
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")` }} />
 
-                <div className="p-3 sm:p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md z-10 flex items-center justify-between">
+                <div className="p-4 border-b border-border bg-card/80 backdrop-blur-md z-10 flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+                    <h3 className="font-bold text-sm text-foreground flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
                       AI Tutor
                     </h3>
-                    <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
-                      Online & ready to help
-                    </p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Online Help</p>
                   </div>
                 </div>
 
                 <div
                   ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto scrollbar-hide p-3 sm:p-4 space-y-3 z-10"
+                  className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 z-10 bg-[radial-gradient(circle_at_top_right,_var(--primary),transparent)] opacity-5"
                 >
-                  <style jsx>{`
-                    .scrollbar-hide::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}</style>
                   {chatMessages.map((message, index) => {
                     const isUser = message.type === "user";
                     const time = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
 
                     return (
-                      <div
-                        key={index}
-                        className={`flex ${isUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
-                      >
-                        <div
-                          className={`max-w-[85%] px-3 py-2 rounded-xl text-sm relative shadow-sm ${isUser
-                            ? "bg-[#dcf8c6] dark:bg-[#005c4b] text-gray-800 dark:text-gray-100 rounded-tr-none"
-                            : "bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-tl-none"
-                            }`}
-                        >
+                      <div key={index} className={`flex ${isUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2`}>
+                        <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm border ${isUser
+                          ? "bg-primary text-primary-foreground border-primary shadow-primary/20 rounded-tr-none"
+                          : "bg-card text-foreground border-border rounded-tl-none"
+                          }`}>
                           {!isUser && (
-                            <div className="flex items-center space-x-2 mb-1 opacity-70">
-                              <Bot className="w-3 h-3 text-blue-500" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider">
-                                AI Tutor
-                              </span>
+                            <div className="flex items-center space-x-2 mb-1.5 opacity-70">
+                              <Bot className="w-4 h-4 text-primary" />
+                              <span className="text-[10px] font-black uppercase tracking-wider">AI Assistant</span>
                             </div>
                           )}
-
-                          {message.html ? (
-                            <div
-                              className="prose prose-sm dark:prose-invert max-w-none break-words"
-                              dangerouslySetInnerHTML={{
-                                __html: message.message,
-                              }}
-                            />
-                          ) : (
-                            <p className="whitespace-pre-wrap break-words">{message.message}</p>
-                          )}
-
-                          <div className={`text-[10px] mt-1 flex justify-end items-center space-x-1 opacity-50 ${isUser ? "text-gray-700 dark:text-gray-300" : "text-gray-500 dark:text-gray-400"}`}>
+                          <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: message.html ? message.message : message.message }} />
+                          <div className="text-[10px] mt-2 flex justify-end items-center space-x-1 opacity-50">
                             <span>{time}</span>
-                            {isUser && (
-                              <svg className="w-3 h-3 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M20 6L9 17l-5-5" />
-                                <path d="M20 10l-11 11-5-5" className="translate-x-1" />
-                              </svg>
-                            )}
+                            {isUser && <CheckCircle size={10} className="text-primary-foreground" />}
                           </div>
                         </div>
                       </div>
@@ -2080,45 +2004,27 @@ export default function LearnContent() {
                   })}
                 </div>
 
-                <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-700/50 z-10 transition-all">
-                  <div className="flex items-end space-x-2 max-w-full">
-                    <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-2xl shadow-sm border border-gray-200 dark:border-transparent focus-within:border-blue-500 transition-all flex items-end p-1">
+                <div className="p-4 bg-card/80 backdrop-blur-md border-t border-border z-10">
+                  <div className="flex items-end space-x-2">
+                    <div className="flex-1 bg-secondary/50 rounded-2xl border border-border focus-within:border-primary transition-all p-1">
                       <textarea
                         value={aiQuestion}
                         onChange={(e) => {
                           setAiQuestion(e.target.value);
-                          // Auto expand height
                           e.target.style.height = 'auto';
                           e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                         }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            if (aiQuestion.trim()) {
-                              sendAiQuestion();
-                              e.target.style.height = 'auto';
-                            }
-                          }
-                        }}
-                        placeholder="Type a message"
-                        className="flex-1 px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none resize-none max-h-[120px]"
+                        placeholder="Ask anything..."
+                        className="w-full px-3 py-2 bg-transparent text-sm text-foreground placeholder-muted-foreground focus:outline-none resize-none max-h-[120px]"
                         rows={1}
                       />
                     </div>
                     <button
-                      onClick={() => {
-                        sendAiQuestion();
-                        // Reset textarea height after click
-                        const textarea = document.querySelector('textarea[placeholder="Type a message"]');
-                        if (textarea) textarea.style.height = 'auto';
-                      }}
+                      onClick={sendAiQuestion}
                       disabled={!aiQuestion.trim()}
-                      className={`p-3 rounded-full flex items-center justify-center transition-all ${aiQuestion.trim()
-                        ? "bg-[#00a884] shadow-lg scale-100 hover:bg-[#008f72] active:scale-95"
-                        : "bg-gray-300 dark:bg-gray-700 opacity-50 cursor-not-allowed scale-90"
-                        }`}
+                      className={`p-4 rounded-full transition-all ${aiQuestion.trim() ? "bg-primary text-primary-foreground shadow-lg hover:rotate-12" : "bg-muted text-muted-foreground opacity-50"}`}
                     >
-                      <Send className={`w-5 h-5 text-white ${aiQuestion.trim() ? "translate-x-0.5 -translate-y-0.5" : ""}`} />
+                      <Send size={18} />
                     </button>
                   </div>
                 </div>
@@ -2126,6 +2032,48 @@ export default function LearnContent() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Mobile Sticky Footer Controls */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-card/80 backdrop-blur-xl border-t border-border z-50 flex items-center justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.1)]">
+        <button
+          onClick={async () => {
+            if (!activeLesson || lessonContentLoading) return;
+            await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
+          }}
+          className={`flex-1 mx-2 p-3 rounded-xl font-bold flex flex-col items-center gap-1 transition-all ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+            ? "text-orange-500"
+            : "text-green-500"
+            }`}
+        >
+          <CheckCircle size={20} />
+          <span className="text-[10px] uppercase tracking-widest">{completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? "Undo" : "Done"}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (!isPro) {
+              toast.error("Pro feature");
+              return;
+            }
+            downloadCourseAsPDF({
+              title: currentLesson.title,
+              content: currentLesson.content
+            }, "notes");
+          }}
+          className="flex-1 mx-2 p-3 rounded-xl font-bold text-foreground flex flex-col items-center gap-1"
+        >
+          <Download size={20} />
+          <span className="text-[10px] uppercase tracking-widest">PDF</span>
+        </button>
+
+        <button
+          onClick={() => setIsRightPanelOpen(true)}
+          className="flex-1 mx-2 p-3 rounded-xl font-bold text-primary flex flex-col items-center gap-1"
+        >
+          <MessageCircle size={20} />
+          <span className="text-[10px] uppercase tracking-widest">AI Tutor</span>
+        </button>
       </div>
 
       {/* Notes Download Modal removed for instant download */}

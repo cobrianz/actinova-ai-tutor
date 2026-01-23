@@ -439,46 +439,46 @@ export default function PremiumCourses() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
       {/* Header */}
       <motion.div
-        className="text-center mb-12"
+        className="text-center mb-16 lg:mb-24"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.8 }}
       >
-        <div className="flex items-center justify-center space-x-2 mb-4">
-          <Star className="w-8 h-8 text-blue-500" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Premium Courses
-          </h1>
+        <div className="inline-flex items-center justify-center space-x-3 mb-6 px-4 py-2 bg-primary/5 rounded-2xl border border-primary/10">
+          <Sparkles className="w-6 h-6 text-primary animate-pulse" />
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Curated Excellence</span>
         </div>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          High-quality courses with advanced features, expert instruction, and
-          comprehensive learning materials.
+        <h1 className="text-4xl md:text-6xl font-black text-foreground mb-8 tracking-tight">
+          <span className="bg-gradient-to-r from-primary via-blue-600 to-accent bg-clip-text text-transparent">Premium Courses</span>
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
+          Professional-grade curricula designed for deep mastery. Experience advanced AI tutoring, expert instruction, and comprehensive materials tailored to your learning goals.
         </p>
       </motion.div>
 
       {/* Search and Filter */}
       <motion.div
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="relative flex-1 max-w-xl">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search premium courses..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search curricula, topics, or skills..."
+            className="w-full pl-12 pr-4 py-4 border border-border rounded-2xl bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium"
           />
         </div>
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-            <Crown className="w-5 h-5 text-white" />
+          <div className="p-3 bg-foreground text-background rounded-2xl shadow-xl">
+            <Crown className="w-6 h-6" />
           </div>
         </div>
       </motion.div>
@@ -924,8 +924,8 @@ export default function PremiumCourses() {
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
                     className={`w-12 h-12 rounded-2xl font-bold transition-all cursor-pointer ${currentPage === i + 1
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                        : "bg-card border border-border text-muted-foreground hover:bg-secondary"
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : "bg-card border border-border text-muted-foreground hover:bg-secondary"
                       }`}
                   >
                     {i + 1}
