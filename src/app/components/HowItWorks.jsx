@@ -554,10 +554,10 @@ function StepTwo({
                   whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.5, type: "spring" }}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 dark:bg-violet-500/20 border border-violet-200 dark:border-violet-500/30"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20"
                 >
                   <span className="text-xs text-muted-foreground">Progress:</span>
-                  <span className="font-bold text-primary dark:text-violet-400">42%</span>
+                  <span className="font-bold text-primary">42%</span>
                 </motion.div>
               </div>
 
@@ -594,7 +594,7 @@ function StepTwo({
                     <motion.div
                       whileHover={{ scale: 1.02, x: 6 }}
                       className={`flex items-start gap-4 p-4 rounded-xl transition-all cursor-pointer ${module.status === "in-progress"
-                        ? "bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-500/15 dark:to-purple-500/15 border border-violet-200 dark:border-violet-500/30 shadow-md shadow-violet-500/10"
+                        ? "bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-500/15 dark:to-purple-500/15 border border-primary/20 shadow-md shadow-violet-500/10"
                         : module.status === "completed"
                           ? "bg-muted"
                           : "bg-muted/50 opacity-60"
@@ -672,9 +672,9 @@ function StepTwo({
         <div className="flex items-center gap-4">
           <motion.div
             whileHover={{ scale: 1.1, rotate: -5 }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/20 dark:to-purple-500/20 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center shadow-lg shadow-violet-500/20"
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/20 dark:to-purple-500/20 border border-primary/20 flex items-center justify-center shadow-lg shadow-violet-500/20"
           >
-            <Icon className="w-8 h-8 text-primary dark:text-violet-400" />
+            <Icon className="w-8 h-8 text-primary" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
@@ -967,7 +967,7 @@ function StepFour({
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
-              className="relative p-8 rounded-2xl bg-gradient-to-br from-purple-50 via-violet-50/50 to-white dark:from-purple-500/15 dark:via-violet-500/10 dark:to-transparent border border-purple-200 dark:border-purple-500/20 mb-6 overflow-hidden"
+              className="relative p-8 rounded-2xl bg-gradient-to-br from-purple-50 via-violet-50/50 to-white dark:from-purple-500/15 dark:via-violet-500/10 dark:to-transparent border border-primary/20 dark:border-purple-500/20 mb-6 overflow-hidden"
             >
               {/* Decorative Pattern */}
               <div className="absolute inset-0 opacity-20 dark:opacity-10">
@@ -1077,7 +1077,7 @@ function StepFour({
                     viewport={{ once: true }}
                     transition={{ delay: 1.1 + i * 0.08, type: "spring" }}
                     whileHover={{ scale: 1.1, y: -2 }}
-                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 text-purple-700 dark:text-purple-400 text-xs font-medium border border-purple-200 dark:border-purple-500/20 cursor-pointer shadow-sm"
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 text-purple-700 dark:text-purple-400 text-xs font-medium border border-primary/20 dark:border-purple-500/20 cursor-pointer shadow-sm"
                   >
                     {skill}
                   </motion.span>
@@ -1115,7 +1115,7 @@ function StepFour({
         <div className="flex items-center gap-4">
           <motion.div
             whileHover={{ scale: 1.1, rotate: -5 }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-500/20"
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 border border-primary/20 dark:border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-500/20"
           >
             <Icon className="w-8 h-8 text-primary dark:text-purple-400" />
           </motion.div>
