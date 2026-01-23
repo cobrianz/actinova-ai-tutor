@@ -186,11 +186,6 @@ function BrowserWindow({
   url = "actirova.com",
   className = "",
   tiltDirection = "left",
-}: {
-  children: any;
-  url?  ;
-  className?  ;
-  tiltDirection? "left" | "right";
 }) {
   const tilt = tiltDirection === "left" ? "rotate-[-2deg]" : "rotate-[2deg]";
   
@@ -246,11 +241,6 @@ function AppWindow({
   title = "Actirova",
   className = "",
   tiltDirection = "left",
-}: {
-  children: any;
-  title?  ;
-  className?  ;
-  tiltDirection? "left" | "right";
 }) {
   const tilt = tiltDirection === "left" ? "rotate-[-2deg]" : "rotate-[2deg]";
   
@@ -1219,3 +1209,4 @@ function StepFour({
     </motion.div>
   );
 }
+
