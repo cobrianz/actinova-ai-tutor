@@ -194,14 +194,7 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-<<<<<<< HEAD
-=======
 
-          <div className="relative my-8 text-center">
-            {/* Social login removed */}
-          </div>
-
->>>>>>> 2f202fa8196eb810ce990dae4cbca6aa2238c826
           <p className="mt-10 text-center text-sm font-medium text-gray-500">
             Don't have an account?{" "}
             <Link
