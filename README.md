@@ -106,7 +106,7 @@ SMTP_USER=your-smtp-username
 SMTP_PASS=your-smtp-password
 
 # Payment Processing
-PAYSTACK_SECRET_KEY=sk_test_your-paystack-secret-key
+PAYSTACK_SECRET_KEY=your-paystack-secret-key
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 # CORS
@@ -325,7 +325,7 @@ NODE_ENV=production
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/actinova-prod
 JWT_SECRET=your-production-jwt-secret
 OPENAI_API_KEY=sk-production-key
-PAYSTACK_SECRET_KEY=sk_live_production-key
+PAYSTACK_SECRET_KEY=your-production-key
 NEXTAUTH_URL=https://yourdomain.com
 ```
 

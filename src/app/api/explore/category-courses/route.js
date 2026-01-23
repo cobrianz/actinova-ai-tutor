@@ -159,7 +159,7 @@ Return ONLY a clean JSON array. No markdown. No explanations. Make them feel rea
         Programming: [
           "Next.js 15 – The Complete Guide",
           "TypeScript Mastery 2025",
-          "Build SaaS with AI & Stripe",
+          "Build SaaS with AI",
           "React Native Mobile Apps",
           "Rust for WebAssembly",
         ],
