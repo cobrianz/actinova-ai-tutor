@@ -27,8 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function Navbar({ toggleSidebar, setActiveContent }) {
-  const { user, logout } = useAuth();
+export default function Navbar({ toggleSidebar }) {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -105,30 +104,7 @@ export default function Navbar({ toggleSidebar, setActiveContent }) {
             </button>
 
             {/* Auth Buttons */}
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setActiveContent && setActiveContent("profile")}
-                  className="relative group flex items-center space-x-2 sm:space-x-3 p-1 rounded-2xl sm:p-1.5 sm:pr-4 hover:bg-secondary/80 transition-all active:scale-95"
-                >
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden border-2 border-primary/50 group-hover:border-primary transition-all shadow-sm">
-                    <Avatar className="h-full w-full">
-                      <AvatarImage src={user.profile?.avatar} alt={user.firstName} />
-                      <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
-                        {user.firstName?.[0]}{user.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="text-left hidden sm:block">
-                    <p className="text-[11px] font-black text-foreground uppercase tracking-wider leading-none mb-1">{user.firstName}</p>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                      <p className="text-[9px] text-muted-foreground font-bold uppercase">{user.subscription?.plan === 'pro' ? 'PRO PLAN' : 'FREE'}</p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            ) : (
+            <SignedOut>
               <div className="flex items-center space-x-2">
                 <Link
                   href="/auth/login"

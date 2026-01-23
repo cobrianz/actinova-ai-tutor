@@ -259,6 +259,14 @@ export default function SignupPage() {
               )}
             </Button>
           </form>
+<<<<<<< HEAD
+=======
+
+          <div className="relative my-6 text-center">
+            {/* Social signup removed */}
+          </div>
+
+>>>>>>> 2f202fa8196eb810ce990dae4cbca6aa2238c826
           <p className="mt-8 text-center text-sm font-medium text-gray-500">
             Already have an account?{" "}
             <Link
