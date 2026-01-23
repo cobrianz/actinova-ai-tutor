@@ -37,10 +37,10 @@ export default function HeroNavbar({ handleGetStarted }) {
   };
 
   const navLinks = [
-    { href: "#features", label: "Features", isAnchor: true },
-    { href: "/pricing", label: "Pricing", isAnchor: false },
     { href: "/about", label: "About", isAnchor: false },
+    { href: "/pricing", label: "Pricing", isAnchor: false },
     { href: "/blog", label: "Blog", isAnchor: false },
+    { href: "/contact", label: "Contact", isAnchor: false },
   ];
 
   const handleNavClick = (e, href, isAnchor) => {
