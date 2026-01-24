@@ -164,7 +164,7 @@ export default function SignupPage() {
                   <Input
                     id="firstName"
                     placeholder="John"
-                    className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     value={formData.firstName}
                     onChange={handleChange}
                     required
@@ -176,7 +176,7 @@ export default function SignupPage() {
                 <Input
                   id="lastName"
                   placeholder="Doe"
-                  className="h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -192,7 +192,7 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -208,7 +208,7 @@ export default function SignupPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="At least 8 characters"
-                  className="pl-10 pr-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 pr-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -237,7 +237,7 @@ export default function SignupPage() {
                   placeholder="Repeat your password"
                   className={`pl-10 pr-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
                     ? "border-red-300 bg-red-50/30"
-                    : "border-gray-100"
+                    : "border-slate-200 dark:border-slate-800"
                     }`}
                   value={formData.confirmPassword}
                   onChange={handleChange}

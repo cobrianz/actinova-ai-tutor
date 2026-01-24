@@ -9,21 +9,14 @@ export function ThemeProvider({ children, initialTheme }) {
 
   useEffect(() => {
     const getSystemTheme = () => {
-      if (typeof window !== "undefined") {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
+      // Ignore system preference for now to ensure light mode by default
       return "light";
     };
 
     const getInitialTheme = () => {
-      if (initialTheme === "system") {
-        return getSystemTheme();
-      }
       const saved = localStorage.getItem("theme");
       if (saved) return saved;
-      return initialTheme || "light";
+      return "light";
     };
 
     const savedTheme = getInitialTheme();

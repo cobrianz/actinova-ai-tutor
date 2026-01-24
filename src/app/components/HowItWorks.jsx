@@ -100,33 +100,33 @@ function BrowserWindow({ children, url, tiltDirection = "left", delay = 0 }) {
       whileHover={{ scale: 1.02, rotate: 0 }}
       className={`perspective-1000 ${tiltClass} transition-transform duration-500`}
     >
-      <div className="glass rounded-2xl overflow-hidden shadow-2xl shadow-primary/10">
+      <div className="glass rounded-2xl overflow-hidden shadow-2xl shadow-primary/20 border border-primary/5">
         {/* Browser Chrome */}
         <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 px-4 py-3 flex items-center gap-3 border-b border-slate-200/50 dark:border-slate-700/50">
           <div className="flex gap-2">
             <motion.div
               whileHover={{ scale: 1.2 }}
-              className="w-3 h-3 rounded-full bg-red-400 shadow-sm shadow-red-400/50"
+              className="w-3 h-3 rounded-full bg-[#FF5F56] shadow-sm shadow-[#FF5F56]/30"
             />
             <motion.div
               whileHover={{ scale: 1.2 }}
-              className="w-3 h-3 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50"
+              className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-sm shadow-[#FFBD2E]/30"
             />
             <motion.div
               whileHover={{ scale: 1.2 }}
-              className="w-3 h-3 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50"
+              className="w-3 h-3 rounded-full bg-[#27C93F] shadow-sm shadow-[#27C93F]/30"
             />
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <div className="bg-white dark:bg-slate-700 rounded-lg px-4 py-1.5 flex items-center gap-2 text-sm text-muted-foreground w-full max-w-md shadow-inner">
-              <Shield className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="truncate">{url}</span>
+            <div className="bg-white dark:bg-slate-700 rounded-lg px-4 py-1.5 flex items-center gap-2 text-sm text-muted-foreground w-full max-w-md shadow-sm border border-slate-200/50 dark:border-slate-600/50">
+              <Shield className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500/20" />
+              <span className="truncate text-xs font-medium">{url}</span>
             </div>
           </div>
           <div className="w-16" />
         </div>
         {/* Content */}
-        <div className="bg-gradient-to-br from-white via-slate-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">
+        <div className="bg-white dark:bg-slate-900 p-6">
           {children}
         </div>
       </div>
@@ -189,11 +189,10 @@ function ProfileMockup() {
                         : [...prev, skill]
                     )
                   }
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                    isSelected
-                      ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/30"
-                      : "bg-secondary text-secondary-foreground hover:bg-accent"
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border-2 ${isSelected
+                    ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white border-transparent shadow-md shadow-violet-500/30"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-800"
+                    }`}
                 >
                   {isSelected && <Check className="w-3.5 h-3.5 inline mr-1" />}
                   {skill}
@@ -216,11 +215,10 @@ function ProfileMockup() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
                 whileHover={{ y: -2 }}
-                className={`p-3 rounded-xl text-center cursor-pointer transition-all duration-300 ${
-                  i === 1
-                    ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30"
-                    : "bg-secondary hover:bg-accent text-secondary-foreground"
-                }`}
+                className={`p-3 rounded-xl text-center cursor-pointer transition-all duration-300 border-2 ${i === 1
+                  ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white border-transparent shadow-lg shadow-violet-500/30"
+                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-800 text-slate-600 dark:text-slate-400"
+                  }`}
               >
                 <span className="text-sm font-medium">{level}</span>
               </motion.div>
@@ -272,9 +270,9 @@ function LearningPathMockup() {
         </div>
 
         {/* Progress Overview */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border border-blue-200/50 dark:border-blue-800/50">
+        <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Overall Progress
             </span>
             <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
@@ -302,22 +300,20 @@ function LearningPathMockup() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + i * 0.1 }}
               whileHover={{ x: 4 }}
-              className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${
-                module.status === "current"
-                  ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/30"
-                  : module.status === "locked"
-                    ? "bg-muted/50 opacity-60"
-                    : "bg-secondary"
-              }`}
+              className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${module.status === "current"
+                ? "bg-blue-500/10 dark:bg-blue-500/20 border-2 border-blue-500/30"
+                : module.status === "locked"
+                  ? "bg-slate-50 dark:bg-slate-800/50 opacity-60"
+                  : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm"
+                }`}
             >
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  module.status === "complete"
-                    ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/30"
-                    : module.status === "current"
-                      ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/30"
-                      : "bg-muted text-muted-foreground"
-                }`}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center ${module.status === "complete"
+                  ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/30"
+                  : module.status === "current"
+                    ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/30"
+                    : "bg-muted text-muted-foreground"
+                  }`}
               >
                 {module.status === "complete" ? (
                   <Check className="w-5 h-5" />
@@ -338,11 +334,10 @@ function LearningPathMockup() {
                         initial={{ width: 0 }}
                         whileInView={{ width: `${module.progress}%` }}
                         transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
-                        className={`h-full rounded-full ${
-                          module.status === "complete"
-                            ? "bg-emerald-500"
-                            : "bg-gradient-to-r from-blue-500 to-cyan-500"
-                        }`}
+                        className={`h-full rounded-full ${module.status === "complete"
+                          ? "bg-emerald-500"
+                          : "bg-gradient-to-r from-blue-500 to-cyan-500"
+                          }`}
                       />
                     </div>
                     <span className="text-xs text-muted-foreground">
@@ -372,8 +367,10 @@ function LessonMockup() {
         {/* Video Player */}
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="relative aspect-video rounded-xl bg-gradient-to-br from-indigo-900 to-violet-900 overflow-hidden shadow-lg"
+          className="relative aspect-video rounded-xl bg-slate-100 dark:bg-indigo-950 overflow-hidden shadow-lg border border-slate-200 dark:border-indigo-900"
         >
+          {/* Mock visual for video */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-900/50 dark:to-purple-900/50" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -426,15 +423,15 @@ function LessonMockup() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-xl font-medium shadow-lg shadow-indigo-500/30"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20"
           >
             <BookOpen className="w-4 h-4" />
             Take Notes
           </motion.button>
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, border: '1px solid currentColor' }}
             whileTap={{ scale: 0.98 }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-accent text-secondary-foreground rounded-xl font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 rounded-xl font-bold transition-all shadow-sm"
           >
             <Brain className="w-4 h-4" />
             Ask AI
@@ -469,8 +466,8 @@ function PracticeMockup() {
         </div>
 
         {/* Question */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200/50 dark:border-purple-800/50">
-          <p className="text-sm text-foreground leading-relaxed">
+        <div className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-800/40">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
             What is the correct way to update state based on the previous state
             in React?
           </p>
@@ -489,18 +486,16 @@ function PracticeMockup() {
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedAnswer(i)}
-              className={`w-full p-4 rounded-xl text-left flex items-center gap-3 transition-all duration-300 ${
-                selectedAnswer === i
-                  ? "bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-purple-500/50"
-                  : "bg-secondary hover:bg-accent border-2 border-transparent"
-              }`}
+              className={`w-full p-4 rounded-xl text-left flex items-center gap-3 transition-all duration-300 ${selectedAnswer === i
+                ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-purple-500/50"
+                : "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-2 border-slate-100 dark:border-slate-700 shadow-sm"
+                }`}
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                  selectedAnswer === i
-                    ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${selectedAnswer === i
+                  ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
+                  : "bg-muted text-muted-foreground"
+                  }`}
               >
                 {String.fromCharCode(65 + i)}
               </div>
@@ -573,12 +568,12 @@ function ProgressMockup() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + i * 0.1 }}
-              whileHover={{ y: -2 }}
-              className="p-4 rounded-xl bg-secondary"
+              whileHover={{ y: -2, border: '1px solid #e2e8f0' }}
+              className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm"
             >
               <stat.icon className={`w-5 h-5 ${stat.color} mb-2`} />
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-2xl font-bold text-slate-800 dark:text-white">{stat.value}</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">{stat.label}</p>
             </motion.div>
           ))}
         </div>
@@ -595,11 +590,10 @@ function ProgressMockup() {
                     initial={{ height: 0 }}
                     whileInView={{ height: `${heights[i]}%` }}
                     transition={{ delay: 0.5 + i * 0.05, duration: 0.5 }}
-                    className={`w-full rounded-t-md ${
-                      i === 6
-                        ? "bg-slate-200 dark:bg-slate-700"
-                        : "bg-gradient-to-t from-cyan-500 to-blue-500"
-                    }`}
+                    className={`w-full rounded-t-md ${i === 6
+                      ? "bg-slate-200 dark:bg-slate-700"
+                      : "bg-gradient-to-t from-cyan-500 to-blue-500"
+                      }`}
                   />
                   <span className="text-[10px] text-muted-foreground">{day}</span>
                 </div>
@@ -623,7 +617,7 @@ function CertificateMockup() {
         {/* Certificate Card */}
         <motion.div
           whileHover={{ scale: 1.02, rotateY: 5 }}
-          className="relative p-6 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/50 dark:via-orange-950/50 dark:to-yellow-950/50 border-2 border-amber-200 dark:border-amber-800 overflow-hidden"
+          className="relative p-6 rounded-2xl bg-gradient-to-br from-amber-50/50 via-white to-orange-50/50 dark:from-amber-950/20 dark:via-slate-900 dark:to-orange-950/20 border-2 border-amber-200/50 dark:border-amber-800/40 overflow-hidden shadow-lg shadow-amber-500/5"
         >
           {/* Decorative Pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -632,7 +626,7 @@ function CertificateMockup() {
               backgroundSize: '10px 10px'
             }} />
           </div>
-          
+
           <div className="relative text-center space-y-4">
             <motion.div
               animate={{ rotate: [0, 5, -5, 0] }}
@@ -687,7 +681,7 @@ function CertificateMockup() {
         </div>
 
         {/* Share Button */}
-        <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/30">
+        <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg shadow-amber-500/30">
           <Rocket className="w-4 h-4 mr-2" />
           Share Achievement
         </Button>
@@ -712,7 +706,7 @@ export default function HowItWorks() {
   return (
     <section
       ref={containerRef}
-      className="relative py-24 md:py-32 overflow-hidden"
+      className="relative py-24 md:py-32 overflow-hidden bg-white dark:bg-transparent"
     >
       {/* Background Elements */}
       <div className="absolute inset-0 -z-10">
