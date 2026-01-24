@@ -119,7 +119,7 @@ export async function POST(request) {
       : "clear and detailed with practical examples";
 
     // === Generate Prompt ===
-    const prompt = `Write a complete, high-quality educational lesson in Markdown format.
+    const prompt = `Write a complete, high-quality educational lesson in Markdown format no tables just use paragraphs or list for comparisons.
 
 **Course Topic**: ${courseTopic}
 **Module**: ${moduleTitle}
