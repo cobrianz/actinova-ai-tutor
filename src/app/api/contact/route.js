@@ -41,20 +41,6 @@ export async function POST(req) {
       status: "new",
     }).save();
 
-    // Send email notification
-    try {
-      const { sendContactMessageEmail } = await import("@/lib/email");
-      await sendContactMessageEmail({
-        fromEmail: email,
-        name,
-        subject,
-        message,
-        category,
-      });
-    } catch (emailError) {
-      console.error("[POST /api/contact] Failed to send email:", emailError);
-      // We don't fail the request if email fails, but we log it.
-    }
     return NextResponse.json({
       success: true,
       contactId: contact._id,

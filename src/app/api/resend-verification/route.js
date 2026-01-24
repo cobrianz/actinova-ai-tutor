@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import crypto from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 
 const RATE_LIMIT = { max: 3, windowMs: 15 * 60 * 1000 };
