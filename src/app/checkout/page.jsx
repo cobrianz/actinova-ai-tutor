@@ -200,22 +200,22 @@ function CheckoutContent() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-600/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-10">
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8 group"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Back to Pricing</span>
+          <span className="text-xs sm:text-sm font-medium">Back to Pricing</span>
         </Link>
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-semibold mb-4 sm:mb-6"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-3 h-3" />
             <span>{currentPlan?.discountDescription || "Special Launch Offer"}</span>
           </motion.div>
 
@@ -223,7 +223,7 @@ function CheckoutContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-bold text-foreground mb-4"
+            className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-3 sm:mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Upgrade Your Learning
@@ -233,22 +233,22 @@ function CheckoutContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-muted-foreground text-lg max-w-2xl mx-auto"
+            className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto"
           >
-            Unlock unlimited AI-powered courses, advanced analytics, and premium features
+            Unlock unlimited AI-powered courses and premium features
           </motion.p>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 space-y-6">
+        <div className="grid lg:grid-cols-5 gap-4 md:gap-8">
+          <div className="lg:col-span-3 space-y-4 md:space-y-6">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-6"
+              className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-4 sm:p-6"
             >
-              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-400" />
+              <h2 className="text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-400" />
                 Select Your Plan
               </h2>
 
@@ -264,7 +264,7 @@ function CheckoutContent() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 + index * 0.1 }}
                       onClick={() => setSelectedPlan(plan.id)}
-                      className={`w-full relative p-5 rounded-xl border-2 transition-all duration-300 text-left group ${isSelected
+                      className={`w-full relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-300 text-left group ${isSelected
                         ? `bg-gradient-to-r ${plan.gradient} border-transparent ${plan.shadowColor} shadow-lg`
                         : "bg-secondary/50 border-border hover:border-border/80"
                         }`}
@@ -278,26 +278,26 @@ function CheckoutContent() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div
-                            className={`w-12 h-12 rounded-xl flex items-center justify-center ${isSelected
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${isSelected
                               ? "bg-white/20"
                               : `bg-gradient-to-br ${plan.gradient}`
                               }`}
                           >
                             <Icon
-                              className={`w-6 h-6 ${isSelected ? "text-white" : "text-white"
+                              className={`w-5 h-5 ${isSelected ? "text-white" : "text-white"
                                 }`}
                             />
                           </div>
 
                           <div>
                             <h3
-                              className={`text-lg font-bold ${isSelected ? "text-white" : "text-foreground"
+                              className={`text-base sm:text-lg font-bold ${isSelected ? "text-white" : "text-foreground"
                                 }`}
                             >
                               {plan.name}
                             </h3>
                             <p
-                              className={`text-sm ${isSelected ? "text-white/70" : "text-muted-foreground"
+                              className={`text-[10px] sm:text-xs ${isSelected ? "text-white/70" : "text-muted-foreground"
                                 }`}
                             >
                               Next bill: {nextBillDate}
@@ -306,22 +306,22 @@ function CheckoutContent() {
                         </div>
 
                         <div className="text-right">
-                          <div className="flex items-baseline gap-2">
+                          <div className="flex items-baseline gap-1.5">
                             <span
-                              className={`text-sm line-through ${isSelected ? "text-white/50" : "text-muted-foreground/50"
+                              className={`text-[10px] sm:text-xs line-through ${isSelected ? "text-white/50" : "text-muted-foreground/50"
                                 }`}
                             >
                               ${plan.originalPrice}
                             </span>
                             <span
-                              className={`text-2xl font-bold ${isSelected ? "text-white" : "text-foreground"
+                              className={`text-xl sm:text-2xl font-bold ${isSelected ? "text-white" : "text-foreground"
                                 }`}
                             >
                               ${plan.price}
                             </span>
                           </div>
                           <span
-                            className={`text-xs ${isSelected ? "text-white/60" : "text-muted-foreground"
+                            className={`text-[10px] sm:text-xs ${isSelected ? "text-white/60" : "text-muted-foreground"
                               }`}
                           >
                             per month
@@ -329,16 +329,6 @@ function CheckoutContent() {
                         </div>
                       </div>
 
-                      <div
-                        className={`absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                          ? "bg-white border-white"
-                          : "border-slate-600 group-hover:border-slate-500"
-                          }`}
-                      >
-                        {isSelected && (
-                          <Check className="w-3 h-3 text-purple-600" />
-                        )}
-                      </div>
                     </motion.button>
                   );
                 })}
@@ -349,10 +339,10 @@ function CheckoutContent() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-6"
+              className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-4 sm:p-6"
             >
-              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
-                <Check className="w-5 h-5 text-emerald-400" />
+              <h2 className="text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
                 What's Included
               </h2>
 
@@ -372,10 +362,10 @@ function CheckoutContent() {
                       transition={{ delay: index * 0.05 }}
                       className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30"
                     >
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 text-emerald-400" />
                       </div>
-                      <span className="text-muted-foreground text-sm">{feature}</span>
+                      <span className="text-muted-foreground text-[13px]">{feature}</span>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -390,16 +380,16 @@ function CheckoutContent() {
               transition={{ delay: 0.4 }}
               className="sticky top-8 bg-card/50 backdrop-blur-xl rounded-2xl border border-border overflow-hidden"
             >
-              <div className="p-6 border-b border-border">
-                <h2 className="text-xl font-semibold text-foreground mb-1">
+              <div className="p-4 sm:p-6 border-b border-border">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">
                   Order Summary
                 </h2>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-[10px] sm:text-xs">
                   Secure checkout powered by Paystack
                 </p>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {currentPlan && (
@@ -452,7 +442,7 @@ function CheckoutContent() {
                   <span className="text-lg font-semibold text-foreground">
                     Total Due Today
                   </span>
-                  <span className="text-2xl font-bold text-foreground">
+                  <span className="text-xl sm:text-2xl font-bold text-foreground">
                     ${currentPlan?.price}
                   </span>
                 </div>
@@ -482,28 +472,30 @@ function CheckoutContent() {
                 <button
                   onClick={handleCheckout}
                   disabled={isLoading || !canCheckout}
-                  className={`w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r ${currentPlan?.gradient} hover:opacity-90 transition-all flex items-center justify-center gap-2 group ${(isLoading || !canCheckout) ? "opacity-70 cursor-not-allowed" : ""
+                  className={`w-full py-3.5 sm:py-4 rounded-xl font-semibold text-white bg-gradient-to-r ${currentPlan?.gradient} hover:opacity-90 transition-all flex items-center justify-center gap-2 group ${(isLoading || !canCheckout) ? "opacity-70 cursor-not-allowed" : ""
                     }`}
                 >
                   {isLoading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      Processing...
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span className="text-sm sm:text-base">Processing...</span>
                     </>
                   ) : isCurrentPlan ? (
                     <>
-                      <Sparkles className="w-5 h-5" />
-                      Current Plan
+                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="text-sm sm:text-base">Current Plan</span>
                     </>
                   ) : isLowerPlan ? (
                     <>
-                      <Lock className="w-5 h-5" />
-                      Plan Locked
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="text-sm sm:text-base">Plan Locked</span>
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-5 h-5" />
-                      {paymentMethod === "mobile_money" ? "Pay with M-Pesa" : (isHigherPlan && userPlanId !== 'basic' ? "Upgrade Now" : "Continue to Payment")}
+                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="text-sm sm:text-base">
+                        {paymentMethod === "mobile_money" ? "Pay with M-Pesa" : (isHigherPlan && userPlanId !== 'basic' ? "Upgrade Now" : "Continue to Payment")}
+                      </span>
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
@@ -579,17 +571,17 @@ function CheckoutContent() {
           transition={{ delay: 0.6 }}
           className="mt-12 text-center"
         >
-          <div className="inline-flex items-center gap-6 p-4 rounded-xl bg-card/50 border border-border">
+          <div className="inline-flex flex-wrap items-center justify-center gap-4 sm:gap-6 p-4 rounded-xl bg-card/50 border border-border">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Lock className="w-4 h-4" />
               <span>256-bit SSL</span>
             </div>
-            <div className="h-4 w-px bg-border"></div>
+            <div className="hidden sm:block h-4 w-px bg-border"></div>
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Shield className="w-4 h-4" />
               <span>PCI Compliant</span>
             </div>
-            <div className="h-4 w-px bg-border"></div>
+            <div className="hidden sm:block h-4 w-px bg-border"></div>
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <CreditCard className="w-4 h-4" />
               <span>Powered by Paystack</span>

@@ -98,7 +98,7 @@ function SuccessContent() {
           </div>
 
           <h1
-            className="text-4xl md:text-5xl font-bold text-foreground mb-4"
+            className="text-3xl md:text-5xl font-bold text-foreground mb-4"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Payment Successful!

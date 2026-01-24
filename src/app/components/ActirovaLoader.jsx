@@ -14,7 +14,7 @@ export default function ActirovaLoader({ text = "course" }) {
 
   return (
     <div
-      data-Actirova-loader="true"
+      data-actirova-loader="true"
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-background"
     >
       {/* Dynamic Background Gradients */}
