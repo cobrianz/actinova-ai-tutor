@@ -315,14 +315,14 @@ function StepOne({ step, icon: Icon }) {
                     ],
                   }}
                   transition={{ duration: 2.5, repeat: Infinity }}
-                  className="w-20 h-20 rounded-2xl bg-gradient-to-br bg-primary flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-primary/40"
+                  className="w-20 h-20 rounded-2xl bg-gradient-to-br bg-gradient-to-br from-primary via-primary to-primary/90 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-primary/40"
                 >
                   JD
                 </motion.div>
                 <div className="space-y-1">
                   <div className="text-sm font-semibold text-slate-800 dark:text-white">John Doe</div>
-                  <div className="text-xs text-slate-400">john@example.com</div>
-                  <button className="text-xs text-primary font-medium hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                  <div className="text-xs text-slate-400 dark:text-slate-500">john@example.com</div>
+                  <button className="text-xs text-primary font-medium hover:text-primary/80 transition-colors">
                     Change photo
                   </button>
                 </div>
@@ -596,7 +596,7 @@ function StepTwo({ step, icon: Icon }) {
                           >
                             {module.title}
                           </span>
-                          <span className="text-xs text-slate-400">{module.modules} lessons</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">{module.modules} lessons</span>
                         </div>
                         <div className="h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                           <motion.div
