@@ -6,23 +6,11 @@ import { hashPassword } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 import crypto from 'crypto';
 
-const RATE_LIMIT = { max: 5, windowMs: 15 * 60 * 1000 };
-const attempts = new Map(); // In-memory (use Redis in prod)
-
 export async function POST(request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const now = Date.now();
-
-  // Rate limiting removed per user request
-
-
   let body;
   try {
     body = await request.json();
   } catch {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
@@ -38,30 +26,22 @@ export async function POST(request) {
 
   // Basic validation
   if (!firstName || firstName.length < 2 || firstName.length > 50) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json(
       { error: "First name must be 2–50 characters" },
       { status: 400 }
     );
   }
   if (!lastName || lastName.length < 2 || lastName.length > 50) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json(
       { error: "Last name must be 2–50 characters" },
       { status: 400 }
     );
   }
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
   // Strong password validation
   if (!password || password.length < 8) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json(
       { error: "Password must be at least 8 characters" },
       { status: 400 }
@@ -76,8 +56,6 @@ export async function POST(request) {
   if (!/[@$!%*?&]/.test(password)) passwordErrors.push("special character (@$!%*?&)");
 
   if (passwordErrors.length > 0) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json(
       {
         error: "Password too weak",
@@ -87,16 +65,12 @@ export async function POST(request) {
     );
   }
   if (password !== confirmPassword) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json(
       { error: "Passwords don't match" },
       { status: 400 }
     );
   }
   if (acceptTerms !== true) {
-    record.count++;
-    attempts.set(ip, record);
     return NextResponse.json(
       { error: "You must accept the terms" },
       { status: 400 }
@@ -110,8 +84,6 @@ export async function POST(request) {
     // Check existing user
     const existing = await usersCol.findOne({ email });
     if (existing) {
-      record.count++;
-      attempts.set(ip, record);
       return NextResponse.json(
         { error: "An account with this email already exists" },
         { status: 409 }
@@ -162,10 +134,6 @@ export async function POST(request) {
       });
     } catch (emailError) {
       console.error("[Signup] Failed to send verification email:", emailError);
-      // Don't fail signup if email fails - log error in production
-      if (process.env.NODE_ENV === "production") {
-        // Verification email failed
-      }
     }
 
     // Success response
@@ -190,6 +158,7 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("Signup error:", error);
     return NextResponse.json(
       { error: "Registration failed. Please try again later." },
       { status: 500 }
