@@ -13,18 +13,8 @@ export async function POST(request) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   const now = Date.now();
 
-  // Rate limiting per IP
-  const attempts = loginAttempts.get(ip) || { count: 0, resetAt: now };
-  if (now - attempts.resetAt > RATE_LIMIT.windowMs) {
-    attempts.count = 0;
-    attempts.resetAt = now;
-  }
-  if (attempts.count >= RATE_LIMIT.max) {
-    return NextResponse.json(
-      { error: "Too many login attempts. Try again later." },
-      { status: 429 }
-    );
-  }
+  // Rate limiting removed per user request
+
 
   try {
     const body = await request.json();

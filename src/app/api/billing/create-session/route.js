@@ -155,12 +155,12 @@ async function createCheckoutSessionHandler(request) {
     let currency = "USD";
     let amountToSend = Math.round(finalUsd * 100); // Default USD cents
     let finalKesAmount = 0;
-    let channels = ["card"];
+    let channels = ["card", "mobile_money"];
 
     // handle payment method specific logic
     if (paymentMethod === "mobile_money") {
       currency = "KES";
-      channels = ["mobile_money"];
+      channels = ["card", "mobile_money"]; // Allow both, but prioritize MM context
 
       // Dynamic exchange rate fetch
       let exchangeRate = 129; // Fallback

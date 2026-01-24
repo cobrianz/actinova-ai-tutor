@@ -14,18 +14,8 @@ export async function POST(request) {
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const now = Date.now();
 
-  // Rate limiting
-  const record = attempts.get(ip) || { count: 0, resetAt: now };
-  if (now - record.resetAt > RATE_LIMIT.windowMs) {
-    record.count = 1;
-    record.resetAt = now;
-  } else if (record.count >= RATE_LIMIT.max) {
-    return NextResponse.json(
-      { error: "Too many signup attempts. Try again later." },
-      { status: 429 }
-    );
-  }
-  attempts.set(ip, record);
+  // Rate limiting removed per user request
+
 
   let body;
   try {
