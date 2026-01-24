@@ -161,8 +161,8 @@ function BrowserWindow({
         </div>
         {/* Right Icons */}
         <div className="flex items-center gap-3 text-slate-400">
-          <Share2 className="w-4 h-4 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer" />
-          <Download className="w-4 h-4 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer" />
+          <Share2 className="w-4 h-4 hover:text-primary transition-colors cursor-pointer" />
+          <Download className="w-4 h-4 hover:text-primary transition-colors cursor-pointer" />
         </div>
       </div>
       {/* Content */}
@@ -237,14 +237,14 @@ function StepOne({ step, icon: Icon }) {
             whileHover={{ scale: 1.1, rotate: 5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-500/20 dark:to-cyan-500/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center shadow-lg shadow-blue-500/20"
           >
-            <Icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <Icon className="w-8 h-8 text-primary" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
             transition={{ type: "spring", delay: 0.2 }}
-            className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold shadow-lg shadow-blue-500/30"
+            className="px-5 py-2 rounded-full bg-gradient-to-r from-primary to-primary text-white text-sm font-bold shadow-lg shadow-primary/30"
           >
             Step 1
           </motion.div>
@@ -263,7 +263,7 @@ function StepOne({ step, icon: Icon }) {
             >
               <motion.div
                 whileHover={{ scale: 1.2 }}
-                className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/30"
+                className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-md shadow-primary/30"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
@@ -315,14 +315,14 @@ function StepOne({ step, icon: Icon }) {
                     ],
                   }}
                   transition={{ duration: 2.5, repeat: Infinity }}
-                  className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-blue-500/40"
+                  className="w-20 h-20 rounded-2xl bg-gradient-to-br bg-primary flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-primary/40"
                 >
                   JD
                 </motion.div>
                 <div className="space-y-1">
                   <div className="text-sm font-semibold text-slate-800 dark:text-white">John Doe</div>
                   <div className="text-xs text-slate-400">john@example.com</div>
-                  <button className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                  <button className="text-xs text-primary font-medium hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                     Change photo
                   </button>
                 </div>
@@ -352,7 +352,7 @@ function StepOne({ step, icon: Icon }) {
                       transition={{ delay: 0.6 + i * 0.05, type: "spring" }}
                       whileHover={{ scale: 1.08, y: -2 }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all ${skill.selected
-                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
+                        ? "bg-gradient-to-r from-primary to-primary text-white shadow-lg shadow-primary/30"
                         : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
                         }`}
                     >
@@ -397,7 +397,7 @@ function StepOne({ step, icon: Icon }) {
               >
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Weekly learning goal</label>
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">10 hrs/week</span>
+                  <span className="text-sm font-bold text-primary">10 hrs/week</span>
                 </div>
                 <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <motion.div
@@ -424,7 +424,7 @@ function StepOne({ step, icon: Icon }) {
                 transition={{ delay: 0.8 }}
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white font-semibold flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-shadow"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white font-semibold flex items-center justify-center gap-2 shadow-xl shadow-primary/30 hover:shadow-blue-500/50 transition-shadow"
               >
                 Continue
                 <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
@@ -480,7 +480,7 @@ function StepTwo({ step, icon: Icon }) {
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.1 }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/40 cursor-pointer"
+                className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-lg shadow-violet-500/40 cursor-pointer"
               >
                 <Compass className="w-5 h-5 text-white" />
               </motion.div>
@@ -499,7 +499,7 @@ function StepTwo({ step, icon: Icon }) {
               <div className="mt-auto">
                 <motion.div
                   whileHover={{ scale: 1.1 }}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center cursor-pointer shadow-md"
+                  className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary flex items-center justify-center cursor-pointer shadow-md"
                 >
                   <User className="w-5 h-5 text-white" />
                 </motion.div>
@@ -521,7 +521,7 @@ function StepTwo({ step, icon: Icon }) {
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 dark:bg-violet-500/20 border border-violet-200 dark:border-violet-500/30"
                 >
                   <span className="text-xs text-slate-500 dark:text-slate-400">Progress:</span>
-                  <span className="font-bold text-violet-600 dark:text-violet-400">42%</span>
+                  <span className="font-bold text-primary">42%</span>
                 </motion.div>
               </div>
 
@@ -570,7 +570,7 @@ function StepTwo({ step, icon: Icon }) {
                         className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${module.status === "completed"
                           ? "bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/40"
                           : module.status === "in-progress"
-                            ? "bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/40"
+                            ? "bg-gradient-to-r from-primary to-primary shadow-lg shadow-violet-500/40"
                             : "bg-slate-200 dark:bg-slate-600"
                           }`}
                       >
@@ -606,7 +606,7 @@ function StepTwo({ step, icon: Icon }) {
                             transition={{ delay: 0.6 + i * 0.15, duration: 0.8, ease: "easeOut" }}
                             className={`h-full rounded-full ${module.status === "completed"
                               ? "bg-gradient-to-r from-emerald-500 to-green-500"
-                              : "bg-gradient-to-r from-violet-500 to-purple-500"
+                              : "bg-gradient-to-r from-primary to-primary"
                               }`}
                           />
                         </div>
@@ -638,14 +638,14 @@ function StepTwo({ step, icon: Icon }) {
             whileHover={{ scale: 1.1, rotate: -5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/20 dark:to-purple-500/20 border border-violet-200 dark:border-violet-500/30 flex items-center justify-center shadow-lg shadow-violet-500/20"
           >
-            <Icon className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+            <Icon className="w-8 h-8 text-primary" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
             transition={{ type: "spring", delay: 0.2 }}
-            className="px-5 py-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 text-white text-sm font-bold shadow-lg shadow-violet-500/30"
+            className="px-5 py-2 rounded-full bg-gradient-to-r from-primary to-primary text-white text-sm font-bold shadow-lg shadow-primary/30"
           >
             Step 2
           </motion.div>
@@ -664,7 +664,7 @@ function StepTwo({ step, icon: Icon }) {
             >
               <motion.div
                 whileHover={{ scale: 1.2 }}
-                className="w-6 h-6 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center shadow-md shadow-violet-500/30"
+                className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-md shadow-primary/30"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
@@ -988,7 +988,7 @@ function StepFour({ step, icon: Icon }) {
                     whileHover={{ rotate: 10 }}
                     className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 mx-auto mb-2 flex items-center justify-center"
                   >
-                    <stat.icon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <stat.icon className="w-4 h-4 text-primary" />
                   </motion.div>
                   <div className="text-lg font-bold text-slate-800 dark:text-white">
                     {typeof stat.value === "number" ? (
@@ -1020,7 +1020,7 @@ function StepFour({ step, icon: Icon }) {
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
                   </motion.div>
                   <span className="text-sm font-semibold text-slate-800 dark:text-white">Skills Mastered</span>
                 </div>
@@ -1075,14 +1075,14 @@ function StepFour({ step, icon: Icon }) {
             whileHover={{ scale: 1.1, rotate: -5 }}
             className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-500/20 dark:to-violet-500/20 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-500/20"
           >
-            <Icon className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+            <Icon className="w-8 h-8 text-primary" />
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
             transition={{ type: "spring", delay: 0.2 }}
-            className="px-5 py-2 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-purple-500/30"
+            className="px-5 py-2 rounded-full bg-gradient-to-r from-primary to-primary text-white text-sm font-bold shadow-lg shadow-primary/30"
           >
             Step 4
           </motion.div>
@@ -1101,7 +1101,7 @@ function StepFour({ step, icon: Icon }) {
             >
               <motion.div
                 whileHover={{ scale: 1.2 }}
-                className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center shadow-md shadow-purple-500/30"
+                className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-primary flex items-center justify-center shadow-md shadow-primary/30"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
@@ -1175,7 +1175,7 @@ export default function HowItWorks() {
               animate={{ rotate: 360 }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Sparkles className="w-4 h-4 text-primary" />
             </motion.div>
             <span className="bg-gradient-to-r from-blue-700 to-violet-700 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent font-semibold">
               Simple & Powerful
