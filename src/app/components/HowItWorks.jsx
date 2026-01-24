@@ -1119,7 +1119,8 @@ export default function HowItWorks() {
   const icons = [UserPlus, Compass, BookOpen, GraduationCap];
 
   return (
-    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-purple-50/50 via-purple-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-purple-50/50 via-purple-50/30 to-white dark:bg-transparent">
+
 
       {/* Animated Background */}
       <div className="absolute inset-0 -z-10">
