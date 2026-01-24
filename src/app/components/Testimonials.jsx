@@ -8,7 +8,7 @@ export default function Testimonials() {
   const { testimonials } = data;
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section id="testimonials" className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
           <motion.h2

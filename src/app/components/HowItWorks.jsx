@@ -704,6 +704,7 @@ export default function HowItWorks() {
 
   return (
     <section
+      id="how-it-works"
       ref={containerRef}
       className="relative py-24 md:py-32 overflow-hidden bg-white dark:bg-transparent"
     >

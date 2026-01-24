@@ -509,3 +509,196 @@ export const downloadQuizAsPDF = async (data) => {
     const fileName = `assessment_${data.title?.replace(/\s+/g, "_").toLowerCase() || "exam"}.pdf`;
     pdf.save(fileName);
 };
+
+/**
+ * Generates an enterprise-grade payment receipt PDF.
+ * Designed for auditability, print clarity, and corporate standards.
+ */
+export const downloadReceiptAsPDF = async (data) => {
+    if (!data) throw new Error("Receipt data is required.");
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    /* ------------------------------------------------------------------
+       LAYOUT CONSTANTS
+    ------------------------------------------------------------------ */
+    const PAGE_WIDTH = 210;
+    const MARGIN = 25;
+    const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+    let y = 20;
+
+    /* ------------------------------------------------------------------
+       CORPORATE THEME
+    ------------------------------------------------------------------ */
+    const COLORS = {
+        text: [0, 0, 0],
+        muted: [90, 90, 90],
+        border: [200, 200, 200],
+        accent: [0, 70, 140], // conservative enterprise blue
+        success: [0, 120, 60]
+    };
+
+    const BRAND = {
+        name: "Actirova AI Tutor Ltd.",
+        website: "www.actirova.com",
+        support: "support@actirova.com"
+    };
+
+    /* ------------------------------------------------------------------
+       HEADER (LOGO + COMPANY INFO)
+    ------------------------------------------------------------------ */
+    try {
+        pdf.addImage("/logo.png", "PNG", MARGIN, y, 22, 22);
+    } catch { }
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.setTextColor(...COLORS.text);
+    pdf.text(BRAND.name, MARGIN + 30, y + 8);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(...COLORS.muted);
+    pdf.text(BRAND.website, MARGIN + 30, y + 14);
+    pdf.text(`Support: ${BRAND.support}`, MARGIN + 30, y + 19);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.text("RECEIPT", PAGE_WIDTH - MARGIN, y + 10, { align: "right" });
+
+    y += 30;
+
+    /* ------------------------------------------------------------------
+       DIVIDER
+    ------------------------------------------------------------------ */
+    pdf.setDrawColor(...COLORS.border);
+    pdf.setLineWidth(0.5);
+    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 12;
+
+    /* ------------------------------------------------------------------
+       RECEIPT META (LEFT / RIGHT BLOCK)
+    ------------------------------------------------------------------ */
+    const drawMetaRow = (label, value, x, yPos) => {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(9);
+        pdf.setTextColor(...COLORS.muted);
+        pdf.text(label, x, yPos);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(...COLORS.text);
+        pdf.text(String(value || "N/A"), x + 40, yPos);
+    };
+
+    const LEFT_X = MARGIN;
+    const RIGHT_X = PAGE_WIDTH / 2 + 5;
+
+    let metaY = y;
+    drawMetaRow("Receipt No.", data.receiptNumber, LEFT_X, metaY);
+    metaY += 6;
+    drawMetaRow("Transaction Date", data.transactionDate, LEFT_X, metaY);
+    metaY += 6;
+    drawMetaRow("Reference", data.reference, LEFT_X, metaY);
+
+    let metaYR = y;
+    drawMetaRow("Payment Method", data.method || "Card", RIGHT_X, metaYR);
+    metaYR += 6;
+    drawMetaRow("Account Status", data.accountStatus || "Active", RIGHT_X, metaYR);
+    metaYR += 6;
+    drawMetaRow("Auto-Renewal", data.autoRenew || "Enabled", RIGHT_X, metaYR);
+
+    y = Math.max(metaY, metaYR) + 14;
+
+    /* ------------------------------------------------------------------
+       LINE ITEM TABLE
+    ------------------------------------------------------------------ */
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.setTextColor(...COLORS.text);
+
+    pdf.text("Description", MARGIN, y);
+    pdf.text("Period", PAGE_WIDTH - MARGIN - 60, y);
+    pdf.text("Amount", PAGE_WIDTH - MARGIN, y, { align: "right" });
+
+    y += 4;
+    pdf.setDrawColor(...COLORS.border);
+    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 8;
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+
+    pdf.text(data.plan || "Pro Subscription", MARGIN, y);
+    pdf.text(
+        data.validFrom || data.transactionDate || "—",
+        PAGE_WIDTH - MARGIN - 60,
+        y
+    );
+
+    pdf.text(
+        `$ ${data.amount || "0.00"}`,
+        PAGE_WIDTH - MARGIN,
+        y,
+        { align: "right" }
+    );
+
+    y += 12;
+
+    /* ------------------------------------------------------------------
+       TOTAL
+    ------------------------------------------------------------------ */
+    pdf.setDrawColor(...COLORS.border);
+    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 10;
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(12);
+    pdf.text("Total Paid", PAGE_WIDTH - MARGIN - 60, y);
+    pdf.text(
+        `$ ${data.amount || "0.00"}`,
+        PAGE_WIDTH - MARGIN,
+        y,
+        { align: "right" }
+    );
+
+    y += 16;
+
+    /* ------------------------------------------------------------------
+       PAYMENT STATUS
+    ------------------------------------------------------------------ */
+    pdf.setFontSize(10);
+    pdf.setTextColor(...COLORS.success);
+    pdf.text(
+        `Payment Status: ${data.status || "SUCCESS"}`,
+        MARGIN,
+        y
+    );
+
+    y += 10;
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(...COLORS.muted);
+    pdf.text(
+        `Processed on ${data.timestamp || "N/A"}`,
+        MARGIN,
+        y
+    );
+
+    /* ------------------------------------------------------------------
+       FOOTER (LEGAL / NOTICE)
+    ------------------------------------------------------------------ */
+    y = 270;
+    pdf.setDrawColor(...COLORS.border);
+    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+    y += 8;
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(...COLORS.muted);
+    pdf.text(
+        "This document is electronically generated and is valid without a signature.",
+        PAGE_WIDTH / 2,
+        y,
+        { align: "center" }
+    );
+
+    pdf.save(`Actirova_Receipt_${data.receiptNumber || Date.now()}.pdf`);
+};

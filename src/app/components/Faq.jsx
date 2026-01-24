@@ -11,7 +11,7 @@ export default function Faq() {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <section className="py-24 bg-secondary/30 relative overflow-hidden">
+    <section id="faq" className="py-24 bg-secondary/30 relative overflow-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <motion.div

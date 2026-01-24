@@ -37,6 +37,7 @@ import {
 import { useAuth } from "./AuthProvider";
 import { useTheme } from "./ThemeProvider";
 import { toast } from "sonner";
+import { downloadReceiptAsPDF } from "../lib/pdfUtils";
 
 const defaultSettings = {
   difficulty: "adaptive",
@@ -595,21 +596,21 @@ export default function ProfileContent() {
 
               {activeTab === "billing" && (
                 <div className="space-y-8">
-                  <div className={`p-8 rounded-3xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-primary to-primary-foreground/20 text-white" : "bg-muted border border-border"}`}>
+                  <div className={`p-6 rounded-2xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/20" : "bg-muted border border-border"}`}>
                     <div className="relative z-10">
-                      <div className="flex justify-between items-start mb-8">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${profileData?.usage?.isPremium ? "bg-white/20 text-white" : "bg-primary/20 text-primary"}`}>Current Plan</span>
-                          <h2 className="text-4xl font-black mt-8">
+                          <span className={`px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${profileData?.usage?.isPremium ? "bg-white/20 text-white" : "bg-primary/20 text-primary"}`}>Current Plan</span>
+                          <h2 className="text-2xl font-black mt-4">
                             {profileData?.user?.subscription?.plan === 'enterprise'
                               ? "ENTERPRISE PLAN"
                               : profileData?.usage?.isPremium ? "PRO PLAN" : "FREE PLAN"}
                           </h2>
                         </div>
-                        {profileData?.usage?.isPremium ? <Crown className="text-amber-300" size={48} /> : <Star className="text-primary" size={48} />}
+                        {profileData?.usage?.isPremium ? <Crown className="text-amber-300" size={32} /> : <Star className="text-primary" size={32} />}
                       </div>
 
-                      <p className={`max-w-md text-sm mb-2 ${profileData?.usage?.isPremium ? "text-white/80" : "text-muted-foreground"}`}>
+                      <p className={`max-w-md text-xs mb-4 ${profileData?.usage?.isPremium ? "text-white/90" : "text-muted-foreground"}`}>
                         {profileData?.usage?.isPremium
                           ? "You have full access to all premium features, high-resolution PDF exports, and priority AI generation."
                           : "You are currently on the free plan with limited generations. Upgrade to unlock the full potential of AI-powered learning."}
@@ -651,8 +652,10 @@ export default function ProfileContent() {
                                 <td className="px-6 py-4 font-medium">
                                   {new Date(tx.date || tx.paidAt).toLocaleDateString()}
                                 </td>
-                                <td className="px-6 py-4">
-                                  {tx.currency} {(tx.amount).toLocaleString()}
+                                <td className="px-6 py-4 font-medium">
+                                  $ {tx.metadata?.usdAmount
+                                    ? Math.round(tx.metadata.usdAmount)
+                                    : (tx.currency === 'KES' ? Math.round(tx.amount / 129) : Math.round(tx.amount))}
                                 </td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tx.status === 'success' ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
@@ -675,29 +678,44 @@ export default function ProfileContent() {
                                         try {
                                           const toastId = toast.loading("Generating receipt...");
 
-                                          // Dynamically import react-pdf to avoid build-time issues
-                                          const { pdf } = await import("@react-pdf/renderer");
-                                          const { default: ReceiptDocument } = await import("./ReceiptDocument");
+                                          const paidDate = new Date(tx.date || tx.paidAt);
+                                          const dateStr = paidDate.toLocaleDateString('en-GB', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                          });
+                                          const timeStr = paidDate.toLocaleTimeString('en-GB', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          });
 
-                                          // Generate PDF blob client-side
-                                          const blob = await pdf(
-                                            <ReceiptDocument
-                                              transaction={tx}
-                                              user={{
-                                                name: profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "Valued Customer"),
-                                                email: profileData?.user?.email || user?.email
-                                              }}
-                                            />
-                                          ).toBlob();
+                                          const displayAmount = tx.metadata?.usdAmount
+                                            ? Math.round(tx.metadata.usdAmount)
+                                            : (tx.currency === 'KES' ? Math.round(tx.amount / 129) : Math.round(tx.amount));
 
-                                          const url = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
-                                          a.href = url;
-                                          a.download = `receipt-${id}.pdf`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          window.URL.revokeObjectURL(url);
+                                          const currency = 'USD';
+
+                                          const planName = tx.plan
+                                            ? tx.plan.charAt(0).toUpperCase() + tx.plan.slice(1)
+                                            : 'Pro';
+
+                                          const isMobileMoney = tx.metadata?.paymentMethod === 'mobile_money' || tx.currency === 'KES';
+                                          const paymentMethodDisplay = isMobileMoney ? 'Mobile Money (M-Pesa)' : 'Credit/Debit Card';
+
+                                          await downloadReceiptAsPDF({
+                                            transactionDate: dateStr,
+                                            receiptNumber: tx.transactionId || tx.reference || 'N/A',
+                                            reference: tx.reference || 'N/A',
+                                            status: tx.status || 'SUCCESS',
+                                            method: paymentMethodDisplay,
+                                            plan: `${planName} Subscription`,
+                                            accountStatus: 'Active',
+                                            autoRenew: tx.subscription?.autoRenew ? 'Enabled' : 'Disabled',
+                                            validFrom: dateStr,
+                                            amount: displayAmount,
+                                            currency: currency,
+                                            timestamp: `${dateStr} at ${timeStr} EAT`
+                                          });
 
                                           toast.dismiss(toastId);
                                           toast.success("Receipt downloaded");
