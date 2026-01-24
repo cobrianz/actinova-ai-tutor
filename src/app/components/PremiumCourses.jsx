@@ -803,7 +803,7 @@ export default function PremiumCourses() {
                   {/* Content */}
                   <div className="p-6 flex flex-col flex-1">
                     <div className="mb-4">
-                      <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-1">
+                      <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
                         {course.title}
                       </h3>
                       <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">

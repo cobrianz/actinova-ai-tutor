@@ -551,7 +551,7 @@ export default function Library({ setActiveContent }) {
                 <div className="p-6">
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-foreground truncate">
+                      <h3 className="text-lg font-semibold text-foreground line-clamp-2">
                         {course.title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
