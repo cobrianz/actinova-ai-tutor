@@ -21,6 +21,7 @@ import {
   X,
   CheckCircle,
   Home,
+  Pin,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -424,6 +425,26 @@ export default function LearnContent() {
     } catch (err) {
       console.error("Progress save error:", err);
       toast.error("Failed to save progress to the cloud.");
+    }
+  };
+
+  const handleDownloadLesson = async () => {
+    if (!currentLesson?.content || lessonContentLoading) return;
+
+    const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
+    if (!isPro) {
+      toast.error("Lesson PDF downloads are a Pro feature. Please upgrade.");
+      router.push("/pricing");
+      return;
+    }
+
+    const toastId = toast.loading("Preparing lesson PDF...");
+    try {
+      await downloadCourseAsPDF(currentLesson, "notes");
+      toast.success("Download started!", { id: toastId });
+    } catch (error) {
+      console.error("Lesson download error:", error);
+      toast.error("Failed to download lesson PDF", { id: toastId });
     }
   };
 
@@ -1612,8 +1633,17 @@ export default function LearnContent() {
             </h2>
           </div>
 
-          {/* Right Group - Controls (HIDDEN ON MOBILE, moved to bottom) */}
-          <div className="hidden lg:flex items-center space-x-3">
+          {/* Right Group - Controls (Always visible for easy access) */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <button
+              onClick={handleDownloadLesson}
+              className="p-2 sm:p-2.5 rounded-xl border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
+              title="Download Lesson PDF"
+              disabled={!currentLesson?.content || lessonContentLoading}
+            >
+              <Download className="w-4 h-4" />
+            </button>
+
             <button
               onClick={async () => {
                 if (!activeLesson || lessonContentLoading) return;
@@ -1629,39 +1659,31 @@ export default function LearnContent() {
                   toast.error(`Error: ${error.message}`, { id: "mark-complete" });
                 }
               }}
-              className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl transition-all font-bold border ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                ? "bg-orange-500/10 text-orange-500 border-orange-500/20"
-                : "bg-green-500/10 text-green-500 border-green-500/20"
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-xl transition-all font-bold border ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+                ? "bg-green-500/10 text-green-500 border-green-500/20"
+                : "bg-primary/10 text-primary border-primary/20"
                 }`}
               disabled={!currentLesson?.content || lessonContentLoading}
             >
               <CheckCircle className="w-4 h-4" />
-              <span>
+              <span className="hidden sm:inline">
                 {completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                  ? "Incomplete"
+                  ? "Done"
                   : "Complete"}
               </span>
             </button>
 
             <button
               onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-              className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl border transition-all font-bold ${isRightPanelOpen
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-xl border transition-all font-bold ${isRightPanelOpen
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-secondary/50 text-muted-foreground border-border"
                 }`}
             >
               <MessageCircle className="w-4 h-4" />
-              <span>{isRightPanelOpen ? "Hide Tools" : "Show Tools"}</span>
+              <span className="hidden sm:inline">AI Tutor</span>
             </button>
           </div>
-
-          {/* Mobile Right Tools Toggle */}
-          <button
-            onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-            className="lg:hidden p-2 text-muted-foreground hover:bg-secondary rounded-xl transition-colors"
-          >
-            <MessageCircle className="w-6 h-6" />
-          </button>
         </div>
       </div>
 
@@ -1885,37 +1907,7 @@ export default function LearnContent() {
                 </div>
               )}
             </div>
-            {/* Mobile Mark Complete Button */}
-            <div className="p-4 pb-20 lg:pb-8 flex justify-center lg:hidden">
-              <button
-                onClick={async () => {
-                  if (!activeLesson || lessonContentLoading) return;
-                  const lessonId = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
-                  const isCurrentlyCompleted = completedLessons.has(lessonId);
-                  const action = isCurrentlyCompleted ? "incomplete" : "complete";
-                  toast.loading(`Marking lesson as ${action}...`, { id: "mark-complete-mobile" });
-
-                  try {
-                    await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
-                    toast.success(`Lesson marked as ${action}!`, { id: "mark-complete-mobile" });
-                  } catch (error) {
-                    toast.error(`Error: ${error.message}`, { id: "mark-complete-mobile" });
-                  }
-                }}
-                disabled={!currentLesson?.content || lessonContentLoading}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all w-full justify-center ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                  ? "bg-secondary text-foreground border border-border"
-                  : "bg-primary text-primary-foreground"
-                  }`}
-              >
-                <CheckCircle className="w-5 h-5" />
-                <span>
-                  {completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                    ? "Mark Incomplete"
-                    : "Mark Completed"}
-                </span>
-              </button>
-            </div>
+            {/* Mobile controls removed as requested */}
           </div>
         </div>
 
@@ -1924,7 +1916,6 @@ export default function LearnContent() {
           className={`${isRightPanelOpen ? "translate-x-0" : "translate-x-full"
             } w-full lg:w-80 xl:w-96 bg-card border-l border-border flex flex-col absolute z-40 transition-transform duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-full shadow-xl`}
         >
-
           <div className="border-b border-border relative">
             <div className="flex">
               <button
@@ -2077,50 +2068,6 @@ export default function LearnContent() {
           </div>
         </div>
       </div>
-
-      {/* Mobile Sticky Footer Controls */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-card/80 backdrop-blur-xl border-t border-border z-50 flex items-center justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.1)]">
-        <button
-          onClick={async () => {
-            if (!activeLesson || lessonContentLoading) return;
-            await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
-          }}
-          className={`flex-1 mx-2 p-3 rounded-xl font-bold flex flex-col items-center gap-1 transition-all ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-            ? "text-orange-500"
-            : "text-green-500"
-            }`}
-        >
-          <CheckCircle size={20} />
-          <span className="text-[10px] uppercase tracking-widest">{completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? "Undo" : "Done"}</span>
-        </button>
-
-        <button
-          onClick={() => {
-            if (!isPro) {
-              toast.error("Pro feature");
-              return;
-            }
-            downloadCourseAsPDF({
-              title: currentLesson.title,
-              content: currentLesson.content
-            }, "notes");
-          }}
-          className="flex-1 mx-2 p-3 rounded-xl font-bold text-foreground flex flex-col items-center gap-1"
-        >
-          <Download size={20} />
-          <span className="text-[10px] uppercase tracking-widest">PDF</span>
-        </button>
-
-        <button
-          onClick={() => setIsRightPanelOpen(true)}
-          className="flex-1 mx-2 p-3 rounded-xl font-bold text-primary flex flex-col items-center gap-1"
-        >
-          <MessageCircle size={20} />
-          <span className="text-[10px] uppercase tracking-widest">AI Tutor</span>
-        </button>
-      </div>
-
-      {/* Notes Download Modal removed for instant download */}
 
       {/* Limit Reached Modal */}
       {showLimitModal && limitModalData && (

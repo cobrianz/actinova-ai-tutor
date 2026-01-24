@@ -173,10 +173,16 @@ export default function Library({ setActiveContent }) {
           : c
       )
     );
-    setStats((prev) => ({
-      ...prev,
-      pinned: willBePinned ? currentPinnedCount + 1 : currentPinnedCount - 1,
-    }));
+    setStats((prev) => {
+      const isCourse = course.type === "course" || (course.id && course.id.startsWith("course_"));
+      return {
+        ...prev,
+        pinned: willBePinned ? (prev.pinned || 0) + 1 : Math.max(0, (prev.pinned || 0) - 1),
+        pinnedCourses: isCourse
+          ? (willBePinned ? (prev.pinnedCourses || 0) + 1 : Math.max(0, (prev.pinnedCourses || 0) - 1))
+          : (prev.pinnedCourses || 0)
+      };
+    });
 
     try {
       const res = await fetch("/api/library", {
@@ -531,116 +537,123 @@ export default function Library({ setActiveContent }) {
                 : "space-y-4"
             }
           >
-            {courses.map((course) => (
-              <motion.div
-                key={course.id}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                whileHover={{ y: -4 }}
-                className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300"
-              >
-                <div className="h-2 bg-secondary">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-1000"
-                    style={{ width: `${course.progress}%` }}
-                  />
-                </div>
+            {courses
+              .filter(course => {
+                if (filterBy === "pinned") return course.isPinned;
+                if (filterBy === "completed") return course.progress === 100;
+                if (filterBy === "in-progress") return course.progress > 0 && course.progress < 100;
+                return true;
+              })
+              .map((course) => (
+                <motion.div
+                  key={course.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  whileHover={{ y: -4 }}
+                  className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300"
+                >
+                  <div className="h-2 bg-secondary">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-1000"
+                      style={{ width: `${course.progress}%` }}
+                    />
+                  </div>
 
-                <div className="p-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-foreground line-clamp-2">
-                        {course.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {course.description}
-                      </p>
-                    </div>
+                  <div className="p-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-foreground line-clamp-2">
+                          {course.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {course.description}
+                        </p>
+                      </div>
 
-                    <div className="flex gap-1 sm:ml-4">
-                      {course.format !== "questions" && course.format !== "flashcards" && (
+                      <div className="flex gap-1 sm:ml-4">
+                        {course.format !== "questions" && course.format !== "flashcards" && (
+                          <button
+                            onClick={() => {
+                              if (course.progress < 100) {
+                                toast.info("Please complete the course or wait for all lessons to generate before downloading.");
+                                return;
+                              }
+                              handleDownload(course);
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${isPremium ? (course.progress === 100 ? "hover:bg-secondary" : "opacity-60 cursor-not-allowed") : "opacity-50 cursor-not-allowed"}`}
+                            title={!isPremium ? "Pro Feature: Download PDF" : (course.progress === 100 ? "Download PDF" : "Complete course to download")}
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
-                          onClick={() => {
-                            if (course.progress < 100) {
-                              toast.info("Please complete the course or wait for all lessons to generate before downloading.");
-                              return;
-                            }
-                            handleDownload(course);
-                          }}
-                          className={`p-2 rounded-lg transition-colors ${isPremium ? (course.progress === 100 ? "hover:bg-secondary" : "opacity-60 cursor-not-allowed") : "opacity-50 cursor-not-allowed"}`}
-                          title={!isPremium ? "Pro Feature: Download PDF" : (course.progress === 100 ? "Download PDF" : "Complete course to download")}
+                          onClick={() => handlePin(course.id)}
+                          className="p-2 hover:bg-secondary rounded"
+                          title={course.isPinned ? "Unpin" : "Pin (max 3)"}
                         >
-                          <Download className="w-4 h-4" />
+                          <Pin
+                            className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`}
+                          />
                         </button>
-                      )}
-                      <button
-                        onClick={() => handlePin(course.id)}
-                        className="p-2 hover:bg-secondary rounded"
-                        title={course.isPinned ? "Unpin" : "Pin (max 3)"}
-                      >
-                        <Pin
-                          className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`}
-                        />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(course.id)}
-                        className="p-2 hover:bg-secondary rounded text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 sm:gap-3 text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4" />
-                      {course.completedLessons}/{course.totalLessons}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {course.estimatedTime}
-                    </span>
-                    <span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-[10px] sm:text-xs">
-                      {course.difficulty || "Beginner"}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                    <div className="text-sm flex-1">
-                      <div className="flex justify-between mb-1">
-                        <span>Progress</span>
-                        <span>{course.progress}%</span>
-                      </div>
-                      <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full transition-all duration-1000"
-                          style={{ width: `${course.progress}%` }}
-                        />
+                        <button
+                          onClick={() => handleDelete(course.id)}
+                          className="p-2 hover:bg-secondary rounded text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
-                    <Link
-                      href={
-                        course.isGenerated
-                          ? `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`
-                          : `/learn/${course.id}`
-                      }
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium whitespace-nowrap shadow-md shadow-primary/10"
-                    >
-                      <Play className="w-4 h-4" />
-                      {course.progress === 100 ? "Review" : "Continue"}
-                    </Link>
-                  </div>
+                    <div className="flex flex-wrap gap-2 sm:gap-3 text-sm text-muted-foreground mb-4">
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="w-4 h-4" />
+                        {course.completedLessons}/{course.totalLessons}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {course.estimatedTime}
+                      </span>
+                      <span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-[10px] sm:text-xs">
+                        {course.difficulty || "Beginner"}
+                      </span>
+                    </div>
 
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Last accessed:{" "}
-                    {new Date(course.lastAccessed).toLocaleDateString()}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                      <div className="text-sm flex-1">
+                        <div className="flex justify-between mb-1">
+                          <span>Progress</span>
+                          <span>{course.progress}%</span>
+                        </div>
+                        <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all duration-1000"
+                            style={{ width: `${course.progress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <Link
+                        href={
+                          course.isGenerated
+                            ? `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`
+                            : `/learn/${course.id}`
+                        }
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium whitespace-nowrap shadow-md shadow-primary/10"
+                      >
+                        <Play className="w-4 h-4" />
+                        {course.progress === 100 ? "Review" : "Continue"}
+                      </Link>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Last accessed:{" "}
+                      {new Date(course.lastAccessed).toLocaleDateString()}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
           </motion.div>
         </AnimatePresence>
       )}

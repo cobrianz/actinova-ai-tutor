@@ -381,14 +381,21 @@ export default function Chat({ topic: propTopic }) {
 
       {/* Sidebar - Collapsible, Dark/Light */}
       <div
-        className={`${sidebarOpen ? "translate-x-0 w-[260px]" : "-translate-x-full w-0"} transition-all duration-300 border-r border-border bg-muted/30 flex flex-col absolute md:relative z-20 h-full`}
+        className={`${sidebarOpen ? "translate-x-0 w-[280px]" : "-translate-x-full w-0"} transition-all duration-300 border-r border-border bg-card flex flex-col absolute md:relative z-30 h-full shadow-xl md:shadow-none`}
       >
-        <div className="p-3 mb-2 flex items-center justify-between">
-          <button onClick={handleNewChat} className="flex-1 flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg hover:bg-secondary transition-colors shadow-sm">
-            <Plus className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">New chat</span>
-          </button>
-          <button onClick={() => setSidebarOpen(false)} className="ml-2 p-2 text-muted-foreground hover:text-foreground md:hidden">
+        {/* Overlay for mobile when sidebar is open */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1] md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <div className="p-4 mb-4 flex items-center justify-start border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <Bot className="w-5 h-5 text-primary" />
+            <span className="text-sm font-bold text-foreground">Chat History</span>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="ml-auto p-2 text-muted-foreground hover:text-foreground md:hidden rounded-lg hover:bg-secondary transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -424,16 +431,31 @@ export default function Chat({ topic: propTopic }) {
       {/* Main Chat Area - Minimalist Stream */}
       <div className="flex-1 flex flex-col relative w-full h-full bg-background">
 
-        {/* Header - Minimal */}
-        <div className="h-14 flex items-center justify-between px-4 fixed top-0 w-full md:relative bg-background/80 backdrop-blur z-10">
-          <div className="flex items-center">
-            {!sidebarOpen && (
-              <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg">
-                <ChevronLeft className="w-5 h-5 mx-auto md:hidden" />
-                <MessageSquare className="w-5 h-5 hidden md:block" />
-              </button>
-            )}
-            <span className="font-medium text-foreground ml-2">{topic || "New Chat"}</span>
+        {/* Header - Minimal and Responsive */}
+        <div className="h-14 flex items-center justify-between px-4 sticky top-0 w-full bg-background/90 backdrop-blur-md z-20 border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors bg-secondary/50"
+              aria-label="Toggle chat history"
+            >
+              <MessageSquare className={`w-5 h-5 ${sidebarOpen ? 'text-primary' : ''}`} />
+            </button>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-foreground truncate max-w-[150px] sm:max-w-md">
+                  {topic || "New Chat"}
+                </span>
+                <button
+                  onClick={handleNewChat}
+                  className="p-1 text-muted-foreground hover:text-primary transition-colors text-xs flex items-center gap-1 hover:bg-primary/10 rounded"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span className="hidden sm:inline">New</span>
+                </button>
+              </div>
+              {topic && <span className="text-[10px] text-muted-foreground hidden sm:block">AI Study Companion</span>}
+            </div>
           </div>
           <div className="flex items-center gap-1">
             {topic && (
@@ -476,9 +498,9 @@ export default function Chat({ topic: propTopic }) {
             {messages.map((message, index) => {
               const isUser = message.role === "user";
               return (
-                <div key={index} className="flex gap-4 md:gap-6 animate-in fade-in duration-300">
-                  {/* Avatar */}
-                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-sm mt-1">
+                <div key={index} className="flex gap-3 md:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {/* Avatar - Hidden on very small screens to save space if needed, but keeping for now */}
+                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg mt-1 bg-muted">
                     {isUser ? (
                       <div className="w-8 h-8 bg-secondary rounded-sm flex items-center justify-center">
                         <User className="w-5 h-5 text-muted-foreground" />
@@ -521,10 +543,10 @@ export default function Chat({ topic: propTopic }) {
         </div>
 
         {/* Floating Input Area */}
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-background via-background to-transparent pt-10">
-          <div className="max-w-3xl mx-auto relative">
-            <div className="relative flex items-end gap-2 bg-card border border-border rounded-xl p-3 shadow-lg ring-1 ring-black/5 dark:ring-white/5">
-              <button className="p-2 text-muted-foreground hover:text-foreground" title="Attach (Demo)">
+        <div className="sticky bottom-0 left-0 w-full p-3 md:p-6 bg-gradient-to-t from-background via-background/95 to-transparent">
+          <div className="max-w-3xl mx-auto relative group">
+            <div className="relative flex items-end gap-2 bg-card border border-border rounded-2xl p-2 md:p-3 shadow-2xl ring-1 ring-black/5 dark:ring-white/5 transition-all focus-within:ring-primary/20">
+              <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors shrink-0" title="Attach (Demo)">
                 <Plus className="w-5 h-5" />
               </button>
               <textarea
