@@ -370,7 +370,9 @@ export default function LearnContent() {
   };
 
   const toggleLessonCompletion = async (moduleId, lessonIndex) => {
-    const lessonId = `${moduleId}-${lessonIndex}`;
+    const mod = courseData?.modules?.find(m => m.id === moduleId);
+    const lesson = mod?.lessons?.[lessonIndex];
+    const lessonId = lesson?.id || `${moduleId}-${lessonIndex}`;
     const newCompleted = new Set(completedLessons);
 
     if (newCompleted.has(lessonId)) {
@@ -1647,7 +1649,7 @@ export default function LearnContent() {
             <button
               onClick={async () => {
                 if (!activeLesson || lessonContentLoading) return;
-                const lessonId = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+                const lessonId = currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
                 const isCurrentlyCompleted = completedLessons.has(lessonId);
                 const action = isCurrentlyCompleted ? "incomplete" : "complete";
                 toast.loading(`Marking lesson as ${action}...`, { id: "mark-complete" });
@@ -1659,7 +1661,7 @@ export default function LearnContent() {
                   toast.error(`Error: ${error.message}`, { id: "mark-complete" });
                 }
               }}
-              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-xl transition-all font-bold border ${completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-xl transition-all font-bold border ${completedLessons.has(currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
                 ? "bg-green-500/10 text-green-500 border-green-500/20"
                 : "bg-primary/10 text-primary border-primary/20"
                 }`}

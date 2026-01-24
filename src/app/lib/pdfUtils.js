@@ -18,6 +18,75 @@ const COLORS = {
     white: [255, 255, 255]
 };
 
+/**
+ * Shared utility to render text with markdown support
+ */
+const renderTextWithMarkdown = (pdf, text, xPos, y, contentWidth, margin, checkNewPage, size = 11) => {
+    pdf.setFontSize(size);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(...COLORS.text);
+
+    const lines = pdf.splitTextToSize(text, contentWidth - (xPos - margin));
+
+    lines.forEach((line) => {
+        if (typeof checkNewPage === 'function') checkNewPage(8);
+
+        let currentX = xPos;
+        // Robust splitting for bold-italic (***), bold (**), italic (* or _), code (`)
+        const segments = line.split(/(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|___.*?___|__.*?__|_.*?_|`[^`]+`)/g);
+
+        segments.forEach(segment => {
+            if (!segment) return;
+
+            let style = "normal";
+            let cleanText = segment;
+            let isCode = false;
+
+            if (segment.startsWith("***") && segment.endsWith("***")) {
+                style = "bolditalic";
+                cleanText = segment.substring(3, segment.length - 3);
+            } else if (segment.startsWith("**") && segment.endsWith("**")) {
+                style = "bold";
+                cleanText = segment.substring(2, segment.length - 2);
+            } else if ((segment.startsWith("*") && segment.endsWith("*")) ||
+                (segment.startsWith("_") && segment.endsWith("_"))) {
+                style = "italic";
+                cleanText = segment.substring(1, segment.length - 1);
+            } else if (segment.startsWith("`") && segment.endsWith("`")) {
+                style = "normal";
+                cleanText = segment.substring(1, segment.length - 1);
+                isCode = true;
+            }
+
+            if (isCode) {
+                pdf.setFont("courier", "normal");
+                pdf.setTextColor(50, 50, 50);
+            } else {
+                pdf.setFont("helvetica", style);
+                pdf.setTextColor(...COLORS.text);
+            }
+
+            pdf.text(cleanText, currentX, y);
+            const w = pdf.getTextWidth(cleanText);
+            currentX += w;
+
+            if (isCode) {
+                pdf.setFont("helvetica", "normal");
+                pdf.setTextColor(...COLORS.text);
+            }
+        });
+        y += 7;
+    });
+    return y;
+};
+
+/**
+ * Strips markdown formatting markers for bold/italic
+ */
+const stripMarkdown = (text) => {
+    return text.replace(/(\*\*\*|\*\*|\*|___|__|__|`)/g, "");
+};
+
 export const downloadCourseAsPDF = async (data, mode = "course") => {
     if (!data) throw new Error("No data provided");
 
@@ -117,47 +186,6 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     pdf.addPage();
     y = 30;
 
-    const renderMarkdownLine = (text, xPos, currentY, size = 11) => {
-        pdf.setFontSize(size);
-        pdf.setFont("helvetica", "normal");
-        pdf.setTextColor(...COLORS.text);
-
-        const lines = pdf.splitTextToSize(text, contentWidth - (xPos - margin));
-
-        lines.forEach((line) => {
-            checkNewPage(8);
-
-            let currentX = xPos;
-            // Robust splitting for bold-italic (***), bold (**), italic (* or _)
-            const segments = line.split(/(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|___.*?___|__.*?__|__.*?_|_.*?_)/g);
-
-            segments.forEach(segment => {
-                if (!segment) return;
-
-                let style = "normal";
-                let cleanText = segment;
-
-                if (segment.startsWith("***") && segment.endsWith("***")) {
-                    style = "bolditalic";
-                    cleanText = segment.substring(3, segment.length - 3);
-                } else if (segment.startsWith("**") && segment.endsWith("**")) {
-                    style = "bold";
-                    cleanText = segment.substring(2, segment.length - 2);
-                } else if ((segment.startsWith("*") && segment.endsWith("*")) ||
-                    (segment.startsWith("_") && segment.endsWith("_"))) {
-                    style = "italic";
-                    cleanText = segment.substring(1, segment.length - 1);
-                }
-
-                pdf.setFont("helvetica", style);
-                pdf.text(cleanText, currentX, y);
-
-                const w = pdf.getTextWidth(cleanText);
-                currentX += w;
-            });
-            y += 7;
-        });
-    };
 
     const renderCodeLine = (text, xPos) => {
         pdf.setFont("courier", "normal");
@@ -221,7 +249,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
             checkNewPage(12);
 
             if (trimmedLine.startsWith("# ")) {
-                const headerText = trimmedLine.substring(2).trim();
+                const headerText = stripMarkdown(trimmedLine.substring(2).trim());
                 // Skip if it matches the course title to avoid redundancy
                 if (headerText.toLowerCase() === data.title?.toLowerCase()) {
                     return;
@@ -237,7 +265,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 pdf.setFont("helvetica", "bold");
                 pdf.setFontSize(20);
                 pdf.setTextColor(...COLORS.primary);
-                const headerText = trimmedLine.substring(3).toUpperCase();
+                const headerText = stripMarkdown(trimmedLine.substring(3).toUpperCase());
                 const lines = pdf.splitTextToSize(headerText, contentWidth);
                 pdf.text(lines, margin, y);
 
@@ -252,7 +280,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 pdf.setFont("helvetica", "bold");
                 pdf.setFontSize(15);
                 pdf.setTextColor(...COLORS.text);
-                const headerText = trimmedLine.substring(4);
+                const headerText = stripMarkdown(trimmedLine.substring(4));
                 const lines = pdf.splitTextToSize(headerText, contentWidth);
                 pdf.text(lines, margin, y);
                 y += (lines.length * 7) + 2;
@@ -261,7 +289,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 pdf.setFont("helvetica", "bold");
                 pdf.setFontSize(13);
                 pdf.setTextColor(...COLORS.text);
-                const headerText = trimmedLine.substring(5);
+                const headerText = stripMarkdown(trimmedLine.substring(5));
                 const lines = pdf.splitTextToSize(headerText, contentWidth);
                 pdf.text(lines, margin, y);
                 y += (lines.length * 6) + 2;
@@ -286,17 +314,17 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 pdf.setTextColor(...COLORS.primary);
                 pdf.text("•", margin + 2, y);
                 const txt = trimmedLine.replace(/^[-*•]\s/, "");
-                renderMarkdownLine(txt, margin + 8, y);
+                y = renderTextWithMarkdown(pdf, txt, margin + 8, y, contentWidth, margin, checkNewPage, 11);
             } else if (trimmedLine.match(/^\d+\.\s/)) {
                 const n = trimmedLine.match(/^\d+\./)[0];
                 pdf.setFont("helvetica", "bold");
                 pdf.setTextColor(...COLORS.primary);
                 pdf.text(n, margin, y);
                 const txt = trimmedLine.replace(/^\d+\.\s/, "");
-                renderMarkdownLine(txt, margin + 10, y);
+                y = renderTextWithMarkdown(pdf, txt, margin + 10, y, contentWidth, margin, checkNewPage, 11);
             } else {
                 pdf.setTextColor(...COLORS.text);
-                renderMarkdownLine(trimmedLine, margin, y);
+                y = renderTextWithMarkdown(pdf, trimmedLine, margin, y, contentWidth, margin, checkNewPage, 11);
             }
         });
     };
@@ -413,33 +441,28 @@ export const downloadQuizAsPDF = async (data) => {
 
     // Questions
     data.questions.forEach((q, index) => {
-        const textLines = pdf.splitTextToSize(`${index + 1}. ${q.text}`, contentWidth - 10);
-        const optionsHeight = (q.options?.length || 0) * 8;
-        const neededSpace = (textLines.length * 6) + optionsHeight + 20;
-
-        if (y + neededSpace > pageHeight - 30) {
-            pdf.addPage();
-            addBranding();
-            y = 25;
-        }
+        checkNewPage(40);
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(12);
         pdf.setTextColor(...COLORS.text);
-        pdf.text(textLines, margin, y);
 
-        y += (textLines.length * 6) + 5;
+        // Render question number and text with potential markdown
+        const qNum = `${index + 1}. `;
+        pdf.text(qNum, margin, y);
+        y = renderTextWithMarkdown(pdf, q.text, margin + 8, y, contentWidth, margin, checkNewPage, 12);
+        y += 5;
 
         if (q.options) {
             pdf.setFont("helvetica", "normal");
             pdf.setFontSize(11);
             q.options.forEach((opt, optIdx) => {
+                checkNewPage(12);
                 const optPrefix = String.fromCharCode(65 + optIdx) + ")";
                 pdf.setTextColor(...COLORS.textLight);
                 pdf.text(optPrefix, margin + 5, y);
-                pdf.setTextColor(...COLORS.text);
-                pdf.text(pdf.splitTextToSize(opt, contentWidth - 20), margin + 15, y);
-                y += 8;
+                y = renderTextWithMarkdown(pdf, opt, margin + 15, y, contentWidth - 20, margin, checkNewPage, 11);
+                y += 1;
             });
         } else {
             // Space for written answer
@@ -448,7 +471,7 @@ export const downloadQuizAsPDF = async (data) => {
             y += 15;
         }
 
-        y += 10;
+        y += 5;
     });
 
     // Answer Key (on a new page)
