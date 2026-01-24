@@ -39,6 +39,8 @@ export default function RootLayout({ children }) {
                     document.documentElement.classList.add('dark');
                   } else {
                     document.documentElement.classList.remove('dark');
+                    // Force a consistent state if null
+                    if (!saved) localStorage.setItem('theme', 'light');
                   }
                 } catch (e) {}
               })();

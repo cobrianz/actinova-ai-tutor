@@ -16,7 +16,11 @@ export function ThemeProvider({ children, initialTheme }) {
     const getInitialTheme = () => {
       if (typeof window === "undefined") return "light";
       const saved = localStorage.getItem("theme");
-      return saved || "light";
+      if (!saved) {
+        localStorage.setItem("theme", "light");
+        return "light";
+      }
+      return saved;
     };
 
     const savedTheme = getInitialTheme();
