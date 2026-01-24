@@ -91,7 +91,24 @@ export async function POST(request) {
     }
 
     // Password check
-    const isValid = await verifyPassword(password, user.password);
+    if (!user.password) {
+      // User might have signed up via OAuth (Google) and has no password
+      attempts.count++;
+      loginAttempts.set(ip, attempts);
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    let isValid = false;
+    try {
+      isValid = await verifyPassword(password, user.password);
+    } catch (bcryptError) {
+      console.error("Bcrypt verify error:", bcryptError);
+      isValid = false;
+    }
+
     if (!isValid) {
       attempts.count++;
       loginAttempts.set(ip, attempts);
@@ -266,8 +283,9 @@ export async function POST(request) {
       },
     });
   } catch (error) {
+    console.error("Login API Error:", error);
     return NextResponse.json(
-      { error: "Authentication failed. Please try again later." },
+      { error: "Something went wrong. Please check your details and try again." },
       { status: 500 }
     );
   }

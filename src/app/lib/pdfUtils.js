@@ -128,21 +128,23 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
             checkNewPage(8);
 
             let currentX = xPos;
-            // Improved splitting for **bold**, *italic*, and _underline_
-            const segments = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g);
+            // Robust splitting for bold-italic (***), bold (**), italic (* or _)
+            const segments = line.split(/(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|___.*?___|__.*?__|__.*?_|_.*?_)/g);
 
             segments.forEach(segment => {
                 if (!segment) return;
 
                 let style = "normal";
-                let underline = false;
                 let cleanText = segment;
 
-                if (segment.startsWith("**") && segment.endsWith("**")) {
+                if (segment.startsWith("***") && segment.endsWith("***")) {
+                    style = "bolditalic";
+                    cleanText = segment.substring(3, segment.length - 3);
+                } else if (segment.startsWith("**") && segment.endsWith("**")) {
                     style = "bold";
                     cleanText = segment.substring(2, segment.length - 2);
-                } else if ((segment.startsWith("*") && segment.endsWith("*")) || (segment.startsWith("_") && segment.endsWith("_"))) {
-                    // Support both * and _ for italics
+                } else if ((segment.startsWith("*") && segment.endsWith("*")) ||
+                    (segment.startsWith("_") && segment.endsWith("_"))) {
                     style = "italic";
                     cleanText = segment.substring(1, segment.length - 1);
                 }
@@ -198,14 +200,17 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
             }
 
             // Handle horizontal rule
-            if (trimmedLine === "---" || trimmedLine === "***" || trimmedLine === "___") {
-                checkNewPage(10);
-                y += 5;
-                pdf.setDrawColor(...COLORS.divider);
-                pdf.setLineWidth(0.5);
-                pdf.line(margin, y, pageWidth - margin, y);
-                y += 8;
-                return;
+            if (trimmedLine === "---" || trimmedLine.startsWith("***") || trimmedLine === "___") {
+                // If it's just '***', treat as divider. If it has text around it, it's bold-italic (handled in renderMarkdownLine)
+                if (trimmedLine === "---" || trimmedLine === "***" || trimmedLine === "___") {
+                    checkNewPage(10);
+                    y += 5;
+                    pdf.setDrawColor(...COLORS.divider);
+                    pdf.setLineWidth(0.5);
+                    pdf.line(margin, y, pageWidth - margin, y);
+                    y += 8;
+                    return;
+                }
             }
 
             if (!trimmedLine) {

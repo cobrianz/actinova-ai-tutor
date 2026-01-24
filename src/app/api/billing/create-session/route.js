@@ -155,7 +155,7 @@ async function createCheckoutSessionHandler(request) {
     let currency = "USD";
     let amountToSend = Math.round(finalUsd * 100); // Default USD cents
     let finalKesAmount = 0;
-    let channels = ["card", "mobile_money"];
+    let channels = ["card"]; // USD supports card
 
     // handle payment method specific logic
     if (paymentMethod === "mobile_money") {
@@ -177,8 +177,9 @@ async function createCheckoutSessionHandler(request) {
       }
 
       const exactKes = finalUsd * exchangeRate;
-      amountToSend = Math.round(exactKes * 100); // KES cents
-      finalKesAmount = Math.ceil(exactKes);
+      // Round UP to nearest 10 (e.g. 5121 -> 5130, 5129 -> 5130)
+      finalKesAmount = Math.ceil(exactKes / 10) * 10;
+      amountToSend = finalKesAmount * 100; // KES cents
     }
 
     const planConfig = {

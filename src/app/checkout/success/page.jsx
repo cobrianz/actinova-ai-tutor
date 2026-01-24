@@ -157,7 +157,7 @@ function SuccessContent() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 + index * 0.1 }}
-                className="flex items-start gap-4 p-4 rounded-xl bg-slate-800/30"
+                className="flex items-start gap-4 p-4 rounded-xl bg-secondary/30"
               >
                 <div
                   className={`w-10 h-10 rounded-lg ${feature.bg} flex items-center justify-center flex-shrink-0`}
@@ -213,8 +213,8 @@ export default function CheckoutSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       }
     >
@@ -222,3 +222,4 @@ export default function CheckoutSuccessPage() {
     </Suspense>
   );
 }
+

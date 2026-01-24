@@ -54,6 +54,7 @@ function CheckoutContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState("card");
 
   const canceled = searchParams.get("canceled");
   const planFromQuery = searchParams.get("plan");
@@ -136,7 +137,7 @@ function CheckoutContent() {
         body: JSON.stringify({
           plan: selectedPlan,
           billingCycle: "monthly",
-          paymentMethod: "card"
+          paymentMethod: paymentMethod // Dynamic method
         }),
       });
 
@@ -174,18 +175,18 @@ function CheckoutContent() {
 
   if (isLoadingUser || isLoadingPlans) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (plans.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
         <div className="text-center">
-          <p className="text-xl mb-4">No plans available at the moment.</p>
-          <Link href="/pricing" className="text-purple-400 hover:underline">Return to Pricing</Link>
+          <p className="text-xl mb-4 text-muted-foreground">No plans available at the moment.</p>
+          <Link href="/pricing" className="text-primary hover:underline">Return to Pricing</Link>
         </div>
       </div>
     );
@@ -456,6 +457,28 @@ function CheckoutContent() {
                   </span>
                 </div>
 
+                {/* Payment Method Selector */}
+                <div className="grid grid-cols-2 gap-2 p-1 bg-secondary rounded-lg border border-border">
+                  <button
+                    onClick={() => setPaymentMethod("card")}
+                    className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${paymentMethod === "card"
+                      ? "bg-background shadow text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
+                  >
+                    Card / Bank
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod("mobile_money")}
+                    className={`py-2 px-4 rounded-md text-sm font-medium transition-all ${paymentMethod === "mobile_money"
+                      ? "bg-background shadow text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
+                  >
+                    M-Pesa / Mobile
+                  </button>
+                </div>
+
                 <button
                   onClick={handleCheckout}
                   disabled={isLoading || !canCheckout}
@@ -480,7 +503,7 @@ function CheckoutContent() {
                   ) : (
                     <>
                       <CreditCard className="w-5 h-5" />
-                      {isHigherPlan && userPlanId !== 'basic' ? "Upgrade Now" : "Continue to Payment"}
+                      {paymentMethod === "mobile_money" ? "Pay with M-Pesa" : (isHigherPlan && userPlanId !== 'basic' ? "Upgrade Now" : "Continue to Payment")}
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}

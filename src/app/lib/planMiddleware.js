@@ -113,7 +113,20 @@ export async function checkCourseAccess(userId, courseId) {
             .collection("courses")
             .findOne({ _id: new ObjectId(courseId) });
 
-        if (!course) return { hasAccess: false, reason: "Course not found" };
+        if (!course) {
+            // Check library for personalized courses
+            const libCourse = await db.collection("library").findOne({
+                _id: new ObjectId(courseId),
+                userId: new ObjectId(userId)
+            });
+
+            if (libCourse) {
+                // If it's in their library, they definitely have access (it was generated for them)
+                return { hasAccess: true };
+            }
+
+            return { hasAccess: false, reason: "Course not found" };
+        }
 
         // Free courses are accessible to everyone
         if (!course.isPremium) {
