@@ -171,6 +171,7 @@ export async function POST(request) {
         code: verificationCode,
       });
     } catch (emailError) {
+      console.error("[Signup] Failed to send verification email:", emailError);
       // Don't fail signup if email fails - log error in production
       if (process.env.NODE_ENV === "production") {
         // Verification email failed
