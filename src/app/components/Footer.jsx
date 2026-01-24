@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Facebook, Twitter, Instagram, Github, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
@@ -85,6 +86,7 @@ export default function Footer() {
             </div>
           ))}
 
+
           {/* Newsletter Column */}
           <div className="space-y-6">
             <h4 className="font-bold text-lg uppercase tracking-wider text-primary text-sm">
@@ -93,18 +95,7 @@ export default function Footer() {
             <p className="text-muted-foreground text-sm">
               Subscribe to get the latest updates and learning resources.
             </p>
-            <form className="space-y-3">
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border-accent focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
-                />
-              </div>
-              <button className="w-full px-4 py-3 bg-foreground text-background rounded-xl font-bold text-sm hover:bg-foreground/90 transition-all">
-                Subscribe
-              </button>
-            </form>
+            <NewsletterForm />
           </div>
         </div>
 
@@ -121,5 +112,67 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function NewsletterForm() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle, loading, success, error
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus("success");
+        setEmail("");
+        // Reset success message after 3 seconds
+        setTimeout(() => setStatus("idle"), 3000);
+      } else {
+        setStatus("error");
+      }
+    } catch (e) {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      {status === "success" ? (
+        <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-500 text-sm font-medium animate-in fade-in slide-in-from-bottom-2">
+          Subscribed successfully!
+        </div>
+      ) : (
+        <>
+          <div className="relative">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full px-4 py-3 rounded-xl bg-secondary border border-border-accent focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+              disabled={status === "loading"}
+            />
+          </div>
+          <button
+            disabled={status === "loading"}
+            className="w-full px-4 py-3 bg-foreground text-background rounded-xl font-bold text-sm hover:bg-foreground/90 transition-all disabled:opacity-50"
+          >
+            {status === "loading" ? "Subscribing..." : "Subscribe"}
+          </button>
+          {status === "error" && (
+            <p className="text-xs text-red-500">Failed to subscribe. Try again.</p>
+          )}
+        </>
+      )}
+    </form>
   );
 }
