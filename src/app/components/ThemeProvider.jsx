@@ -14,13 +14,15 @@ export function ThemeProvider({ children, initialTheme }) {
     };
 
     const getInitialTheme = () => {
+      if (typeof window === "undefined") return "light";
       const saved = localStorage.getItem("theme");
-      if (saved) return saved;
-      return "light";
+      return saved || "light";
     };
 
     const savedTheme = getInitialTheme();
     setTheme(savedTheme);
+    // document class is already handled by head script for initial load, 
+    // but we update it here for subsequent state changes or hydration cleanup.
     document.documentElement.classList.toggle("dark", savedTheme === "dark");
 
     // Listen for system theme changes if system theme is selected
