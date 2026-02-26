@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   TrendingUp,
+  Presentation,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -47,6 +48,7 @@ export default function Sidebar({
     { name: "Library", id: "library", icon: BookOpen },
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
+    { name: "Presentations", id: "presentations-library", icon: Presentation },
     { name: "AI Chat", id: "chat", icon: MessageCircle },
     { name: "Premium", id: "premium-courses", icon: Star },
     // Only show upgrade when auth has finished loading and user is not pro
