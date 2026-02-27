@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import ConfirmModal from "./ConfirmModal";
+import PresentationEditor from "./PresentationEditor";
 
 export default function PresentationsLibrary({ setActiveContent }) {
   const [presentations, setPresentations] = useState([]);
@@ -66,32 +67,20 @@ export default function PresentationsLibrary({ setActiveContent }) {
   const handleDownload = async (presentationId, title) => {
     try {
       setDownloadingId(presentationId);
-      const response = await fetch(
-        `/api/presentations/${presentationId}?download=true`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`/api/presentations/${presentationId}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch presentation details");
+      const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error("Failed to download presentation");
-      }
+      // Because we now use client-side html2canvas to save the beautiful slides,
+      // we must open the editor which contains the complex DOM logic to render it.
+      setSelectedPresentation(data.presentation);
+      toast.info("Opened editor for export. Please click 'Export PPTX' inside the editor.");
 
-      // Create blob from response
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `${title.replace(/\s+/g, "_")}_${new Date().getTime()}.pptx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-
-      toast.success("Presentation downloaded successfully!");
     } catch (error) {
-      console.error("Download failed:", error);
-      toast.error("Failed to download presentation");
+      console.error("Failed to prepare download:", error);
+      toast.error("Failed to fetch presentation for download");
     } finally {
       setDownloadingId(null);
     }
@@ -168,99 +157,12 @@ export default function PresentationsLibrary({ setActiveContent }) {
 
   if (selectedPresentation && !showConfirmDelete) {
     return (
-      <div className="space-y-6">
-        <button
-          onClick={() => setSelectedPresentation(null)}
-          className="text-primary hover:text-primary/80 font-medium flex items-center"
-        >
-          ← Back to Library
-        </button>
-
-        <div className="bg-card border border-border rounded-xl p-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            {selectedPresentation.title}
-          </h1>
-          <p className="text-muted-foreground mb-4">
-            {selectedPresentation.description}
-          </p>
-
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex items-center gap-2 text-sm">
-              <Layers className="w-4 h-4 text-primary" />
-              <span>{selectedPresentation.totalSlides} slides</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="capitalize px-2 py-1 bg-primary/10 text-primary rounded">
-                {selectedPresentation.difficulty}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              <span>{formatDate(selectedPresentation.createdAt)}</span>
-            </div>
-          </div>
-
-          <div className="flex gap-4 mb-8">
-            <button
-              onClick={() =>
-                handleDownload(selectedPresentation._id, selectedPresentation.title)
-              }
-              disabled={downloadingId === selectedPresentation._id}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
-            >
-              {downloadingId === selectedPresentation._id ? (
-                <Loader className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              Download as PPTX
-            </button>
-            <button
-              onClick={() => handleDeleteClick(selectedPresentation)}
-              className="flex items-center gap-2 bg-destructive/10 text-destructive px-6 py-2 rounded-lg hover:bg-destructive/20 font-medium"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-          </div>
-
-          {/* Slides Preview */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">
-              Slide Preview
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto">
-              {selectedPresentation.slides.map((slide, index) => (
-                <div
-                  key={index}
-                  className="bg-muted p-4 rounded-lg border border-border hover:shadow-md transition-shadow"
-                >
-                  <h3 className="font-semibold text-foreground mb-2">
-                    Slide {index + 1}: {slide.title}
-                  </h3>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    {Array.isArray(slide.content) ? (
-                      slide.content.slice(0, 3).map((point, idx) => (
-                        <p key={idx} className="line-clamp-1">
-                          • {point}
-                        </p>
-                      ))
-                    ) : (
-                      <p className="line-clamp-1">• {slide.content}</p>
-                    )}
-                    {Array.isArray(slide.content) &&
-                      slide.content.length > 3 && (
-                        <p className="text-xs">
-                          +{slide.content.length - 3} more points
-                        </p>
-                      )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PresentationEditor
+        presentation={selectedPresentation}
+        onBack={() => setSelectedPresentation(null)}
+        onDownload={handleDownload}
+        isDownloading={downloadingId !== null}
+      />
     );
   }
 

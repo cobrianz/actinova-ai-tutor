@@ -122,26 +122,28 @@ export default function Presentations({ setActiveContent }) {
         </div>
       )}
 
-      <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-3">
+      <div className="mb-12 relative text-center pt-8">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-32 bg-primary/20 blur-[100px] -z-10 rounded-full"></div>
+        <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600 dark:from-blue-400 dark:to-primary mb-4 tracking-tight">
           {friendlyName
             ? `Welcome back, ${friendlyName}`
-            : "Welcome to Actirova AI Tutor"}
+            : "Professional AI Presentations"}
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Create beautiful, professional presentations powered by AI. Perfect
-          for education, business, and storytelling.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Create beautiful, modern presentations powered by AI. Generate stunning slides with professional graphics, layouts, and colors in seconds.
         </p>
       </div>
 
-      <div className="bg-card p-8 mb-10 border border-border rounded-xl">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-2">
-            Generate Your Presentation
+      <div className="bg-card p-8 mb-10 border border-border/50 rounded-2xl shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -ml-20 -mb-20"></div>
+
+        <div className="text-center mb-10 relative z-10">
+          <h2 className="text-3xl font-bold text-foreground mb-3">
+            Design Your Next Masterpiece
           </h2>
-          <p className="text-muted-foreground">
-            Enter a topic and watch as AI creates a comprehensive, beautifully
-            formatted presentation
+          <p className="text-muted-foreground text-lg">
+            Enter a topic and let AI craft a comprehensive, stunning presentation
           </p>
           {!isPremium && atLimit && (
             <div className="mt-4 mx-auto max-w-md p-3 rounded-lg border border-destructive bg-destructive/10 text-destructive text-sm">
@@ -201,11 +203,10 @@ export default function Presentations({ setActiveContent }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <button
                 onClick={() => setStyle("professional")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors text-left ${
-                  style === "professional"
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors text-left ${style === "professional"
                     ? "border-primary bg-accent"
                     : "border-border hover:border-foreground/30"
-                }`}
+                  }`}
               >
                 <span className="font-medium text-sm text-foreground">
                   Professional
@@ -216,11 +217,10 @@ export default function Presentations({ setActiveContent }) {
               </button>
               <button
                 onClick={() => setStyle("creative")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors text-left ${
-                  style === "creative"
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors text-left ${style === "creative"
                     ? "border-primary bg-accent"
                     : "border-border hover:border-foreground/30"
-                }`}
+                  }`}
               >
                 <span className="font-medium text-sm text-foreground">
                   Creative
@@ -231,11 +231,10 @@ export default function Presentations({ setActiveContent }) {
               </button>
               <button
                 onClick={() => setStyle("minimal")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors text-left ${
-                  style === "minimal"
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors text-left ${style === "minimal"
                     ? "border-primary bg-accent"
                     : "border-border hover:border-foreground/30"
-                }`}
+                  }`}
               >
                 <span className="font-medium text-sm text-foreground">
                   Minimal

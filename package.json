@@ -54,7 +54,7 @@
     "dotenv": "^17.2.3",
     "downloadjs": "^1.4.7",
     "embla-carousel-react": "^8.6.0",
-    "framer-motion": "^12.18.1",
+    "framer-motion": "^12.34.3",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
