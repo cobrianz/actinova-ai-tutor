@@ -47,6 +47,7 @@ export default function Sidebar({
     { name: "Library", id: "library", icon: BookOpen },
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
+    { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
     { name: "AI Chat", id: "chat", icon: MessageCircle },
     { name: "Premium", id: "premium-courses", icon: Star },
     // Only show upgrade when auth has finished loading and user is not pro
@@ -150,7 +151,7 @@ export default function Sidebar({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
         />
       )}
 
@@ -161,7 +162,7 @@ export default function Sidebar({
             x: sidebarOpen ? 0 : -256,
           }}
           transition={{ duration: 0.3, type: "spring", damping: 25, stiffness: 200 }}
-          className={`absolute lg:static top-0 left-0 h-full bg-card border-r border-border overflow-hidden z-[60] lg:z-auto shadow-2xl lg:shadow-none`}
+          className={`fixed lg:static top-0 left-0 h-screen lg:h-full bg-card border-r border-border overflow-hidden z-[100] lg:z-auto shadow-2xl lg:shadow-none`}
         >
           {/* Main Sidebar Content Wrapper to maintain width while animating */}
           <div className="w-64 h-full flex flex-col">

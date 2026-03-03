@@ -10,6 +10,7 @@ import PremiumCourses from "./PremiumCourses";
 import Chat from "./Chat";
 import FlashcardsLibrary from "./FlashcardsLibrary";
 import TestYourself from "./TestYourself";
+import ReportsLibrary from "./ReportsLibrary";
 import ProfileContent from "./ProfileContent";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ export default function DashboardContent() {
     library: Library,
     flashcards: FlashcardsLibrary,
     quizzes: TestYourself,
+    "reports-library": ReportsLibrary,
     "premium-courses": PremiumCourses,
     chat: Chat,
     profile: ProfileContent,

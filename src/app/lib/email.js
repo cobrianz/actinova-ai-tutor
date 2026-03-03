@@ -71,7 +71,7 @@ const getBaseTemplate = ({ title, preheader, content }) => `
 
 export async function sendVerificationEmail({ to, name, token, code }) {
   const verificationLink = `${process.env.CORS_ORIGIN || process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/verify-email?token=${token}`;
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <${process.env.SMTP_USER}>`;
 
   const html = getBaseTemplate({
     title: "Verify Your Email",
@@ -109,7 +109,7 @@ export async function sendVerificationEmail({ to, name, token, code }) {
 }
 
 export async function sendWelcomeEmail({ to, name }) {
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <${process.env.SMTP_USER}>`;
 
   const html = getBaseTemplate({
     title: "Welcome to Actirova!",
@@ -140,7 +140,7 @@ export async function sendWelcomeEmail({ to, name }) {
 }
 
 export async function sendPasswordResetCodeEmail({ to, name, code }) {
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <${process.env.SMTP_USER}>`;
 
   const html = getBaseTemplate({
     title: "Reset Your Password",
@@ -168,7 +168,7 @@ export async function sendPasswordResetCodeEmail({ to, name, code }) {
 
 export async function sendPasswordResetEmail({ to, name, token }) {
   const resetLink = `${process.env.CORS_ORIGIN || process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password?token=${token}`;
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <${process.env.SMTP_USER}>`;
 
   const html = getBaseTemplate({
     title: "Reset Your Password",
@@ -195,7 +195,7 @@ export async function sendPasswordResetEmail({ to, name, token }) {
 }
 
 export async function sendPasswordChangeNotificationEmail({ to, name }) {
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <${process.env.SMTP_USER}>`;
 
   const html = getBaseTemplate({
     title: "Password Changed",
@@ -222,7 +222,7 @@ export async function sendPasswordChangeNotificationEmail({ to, name }) {
 
 export async function sendContactMessageEmail({ fromEmail, name, subject, message, category = "general" }) {
   const toAddress = "briankipkemoi808@gmail.com";
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME} Support" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME} Support" <${process.env.SMTP_USER}>`;
 
   const html = getBaseTemplate({
     title: "New Contact Message",
@@ -250,7 +250,7 @@ export async function sendContactMessageEmail({ fromEmail, name, subject, messag
 }
 
 export async function sendUpgradeEmail({ to, name, plan, billingCycle, amount, currency, expiresAt, reference }) {
-  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <noreply@actirova.com>`;
+  const fromAddress = process.env.SMTP_FROM || `"${APP_NAME}" <${process.env.SMTP_USER}>`;
   const planDisplay = plan.charAt(0).toUpperCase() + plan.slice(1);
   const cycleDisplay = billingCycle === "yearly" ? "Annual" : "Monthly";
 

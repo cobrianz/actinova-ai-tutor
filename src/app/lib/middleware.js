@@ -41,8 +41,12 @@ export function withAuth(handler, options = {}) {
       }
 
       if (!token) {
-        token = req.headers?.get("authorization")?.replace("Bearer ", "") ||
-          nextHeaders()?.get("authorization")?.replace?.("Bearer ", "") || null;
+        try {
+          token = req.headers?.get("authorization")?.replace("Bearer ", "") || null;
+          if (!token) {
+            token = nextHeaders()?.get("authorization")?.replace?.("Bearer ", "") || null;
+          }
+        } catch (e) { }
       }
 
       let userId = null;
@@ -61,6 +65,9 @@ export function withAuth(handler, options = {}) {
       }
 
       if (!userId) {
+        if (options.optional) {
+          return handler(req, context);
+        }
         await safeAuthDebug(req, "no-user-id-found");
         return NextResponse.json({ error: "Authentication required", code: "AUTH_REQUIRED" }, { status: 401 });
       }
@@ -70,6 +77,9 @@ export function withAuth(handler, options = {}) {
       const user = await validateSubscriptionStatus(userId);
 
       if (!user) {
+        if (options.optional) {
+          return handler(req, context);
+        }
         await safeAuthDebug(req, "user-not-found");
         return NextResponse.json({ error: "User not found", code: "USER_NOT_FOUND" }, { status: 401 });
       }
@@ -94,6 +104,42 @@ export function withAuth(handler, options = {}) {
     } catch (error) {
       console.error("Auth middleware error:", error);
       return NextResponse.json({ error: "Authentication error", code: "AUTH_ERROR" }, { status: 401 });
+    }
+  };
+}
+
+/**
+ * CSRF protection middleware
+ */
+import { validateCsrfToken, CSRF_HEADER_NAME, CSRF_COOKIE_NAME } from "./csrf";
+
+export function withCsrf(handler) {
+  return async (req, context) => {
+    const method = req.method.toUpperCase();
+    const safeMethods = ["GET", "HEAD", "OPTIONS"];
+
+    if (safeMethods.includes(method)) {
+      return handler(req, context);
+    }
+
+    try {
+      const csrfHeader = req.headers.get(CSRF_HEADER_NAME);
+      let csrfCookie = req.cookies.get(CSRF_COOKIE_NAME)?.value;
+      if (!csrfCookie) {
+        try { csrfCookie = nextCookies().get(CSRF_COOKIE_NAME)?.value; } catch (e) { }
+      }
+
+      if (!validateCsrfToken(csrfHeader, csrfCookie)) {
+        return NextResponse.json(
+          { error: "Invalid or missing CSRF token", code: "CSRF_VALIDATION_FAILED" },
+          { status: 403 }
+        );
+      }
+
+      return handler(req, context);
+    } catch (error) {
+      console.error("CSRF middleware error:", error);
+      return NextResponse.json({ error: "CSRF validation error", code: "CSRF_ERROR" }, { status: 500 });
     }
   };
 }
@@ -252,7 +298,9 @@ export function withErrorHandling(handler) {
 
 // Combine multiple middleware
 export function combineMiddleware(...middlewares) {
-  return middlewares.reduceRight((acc, middleware) => {
-    return middleware(acc);
-  });
+  return (handler) => {
+    return middlewares.reduceRight((acc, middleware) => {
+      return middleware(acc);
+    }, handler);
+  };
 }

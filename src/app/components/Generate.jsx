@@ -23,6 +23,9 @@ export default function Generate({ setActiveContent }) {
   const [format, setFormat] = useState("course");
   const [difficulty, setDifficulty] = useState("beginner");
   const [questionsCount, setQuestionsCount] = useState(10);
+  const [reportType, setReportType] = useState("report");
+  const [reportLength, setReportLength] = useState("medium");
+  const [citationStyle, setCitationStyle] = useState("APA");
   const [showLoader, setShowLoader] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -214,6 +217,58 @@ export default function Generate({ setActiveContent }) {
       return;
     }
 
+    // Handle report generation directly
+    if (format === "report") {
+      setShowLoader(true);
+      setIsSubmitting(true);
+
+      try {
+        const response = await fetch("/api/generate-report-outline", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            topic: subject,
+            type: reportType,
+            length: reportLength,
+            difficulty: difficulty,
+            citationStyle: citationStyle
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate report outline");
+        }
+
+        const data = await response.json();
+
+        // Notify usage update
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("usageUpdated"));
+        }
+
+        toast.success("Report outline generated!");
+
+        // Redirect to report editor with the new report ID
+        if (data.reportId) {
+          router.push(`/reports/${data.reportId}`);
+        }
+
+      } catch (error) {
+        console.error("Report generation failed:", error);
+        toast.error(error.message || "Failed to generate report");
+        setShowLoader(false);
+        setIsSubmitting(false);
+      } finally {
+        setTimeout(() => {
+          setShowLoader(false);
+          setIsSubmitting(false);
+        }, 500);
+      }
+      return;
+    }
+
     // Navigate to learn page where generation will happen
     // Loader will stay visible during navigation and be cleared by LearnContent
     setShowLoader(true);
@@ -295,10 +350,10 @@ export default function Generate({ setActiveContent }) {
                 // Auto-resize textarea
                 e.target.style.height = "auto";
                 e.target.style.height =
-                  Math.min(e.target.scrollHeight, 200) + "px";
+                  Math.min(e.target.scrollHeight, format === "report" ? 500 : 200) + "px";
               }}
-              placeholder="Describe what you want to learn in detail... (e.g., I want to learn Python programming from scratch, including data structures, web development with Django, and machine learning basics)"
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 text-base sm:text-lg border border-input rounded-lg sm:rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none min-h-[100px] sm:min-h-[120px] max-h-[200px] shadow-sm hover:shadow-md"
+              placeholder={format === "report" ? "Paste your assignment prompt, specific exam questions, or research topic here..." : "Describe what you want to learn in detail... (e.g., I want to learn Python programming from scratch)"}
+              className={`w-full px-3 sm:px-4 py-3 sm:py-4 text-base sm:text-lg border border-input rounded-lg sm:rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none min-h-[100px] sm:min-h-[120px] shadow-sm hover:shadow-md ${format === "report" ? "max-h-[500px]" : "max-h-[200px]"}`}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.ctrlKey) {
                   e.preventDefault();
@@ -306,20 +361,20 @@ export default function Generate({ setActiveContent }) {
                 }
               }}
               autoFocus
-              rows={4}
-              maxLength={500}
+              rows={format === "report" ? 8 : 4}
+              maxLength={format === "report" ? 5000 : 500}
               dir="ltr"
               style={{ direction: "ltr", unicodeBidi: "plaintext" }}
             />
             <div className="mt-2 flex justify-between items-center text-xs text-muted-foreground px-1">
               <span className="flex items-center">
                 <Lightbulb className="w-4 h-4 mr-1" />
-                Tip: Press Ctrl + Enter to generate your course
+                Tip: Press Ctrl + Enter to generate your {format === "report" ? "report" : "course"}
               </span>
               <span
-                className={localTopic.length > 450 ? "text-orange-500" : ""}
+                className={localTopic.length > (format === "report" ? 4800 : 450) ? "text-orange-500" : ""}
               >
-                {localTopic.length}/500
+                {localTopic.length}/{format === "report" ? 5000 : 500}
               </span>
             </div>
           </div>
@@ -328,7 +383,7 @@ export default function Generate({ setActiveContent }) {
             <label className="block text-sm font-medium text-foreground mb-2 sm:mb-3 text-left px-1">
               Choose the format
             </label>
-            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <button
                 onClick={() => setFormat("course")}
                 className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "course"
@@ -363,6 +418,18 @@ export default function Generate({ setActiveContent }) {
                   Test Yourself
                 </span>
               </button>
+              <button
+                onClick={() => setFormat("report")}
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "report"
+                  ? "border-primary bg-accent"
+                  : "border-border hover:border-foreground/30"
+                  }`}
+              >
+                <ScrollText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
+                <span className="font-medium text-xs sm:text-sm">
+                  Report & Essay
+                </span>
+              </button>
             </div>
           </div>
 
@@ -379,83 +446,159 @@ export default function Generate({ setActiveContent }) {
                     Math.min(50, parseInt(e.target.value, 10) || 10)
                   )
                 }
-                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary h-12"
                 max="50"
               />
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-              Choose difficulty level
-              {!isPremium && (
-                <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
-                  (Free users: Beginner only)
-                </span>
-              )}
-            </label>
-            <div className="relative">
-              <select
-                value={difficulty}
-                onChange={(e) => {
-                  const selectedDifficulty = e.target.value;
-
-                  if (!isPremium && selectedDifficulty !== "beginner") {
-                    toast.error(
-                      "Intermediate and Advanced levels require Pro subscription. Please upgrade to continue."
-                    );
-                    router.push("/pricing");
-                    return;
-                  }
-
-                  setDifficulty(selectedDifficulty);
-                }}
-                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
-                disabled={!isPremium && atLimit} // Optionally block interaction if at limit, but better to allow selecting beginner if it's the only option. 
-              >
-                <option value="beginner">
-                  Beginner{" "}
-                  {!isPremium
-                    ? "(Free)"
-                    : ""}
-                </option>
-                <option
-                  value="intermediate"
-                  disabled={!isPremium}
-                >
-                  Intermediate{" "}
-                  {isPremium
-                    ? "(Pro)"
-                    : "(Pro Only)"}
-                </option>
-                <option
-                  value="advanced"
-                  disabled={!isPremium}
-                >
-                  Advanced{" "}
-                  {isPremium
-                    ? "(Pro)"
-                    : "(Pro Only)"}
-                </option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            </div>
-            {!isPremium &&
-              difficulty !== "beginner" && (
-                <div className="mt-2 p-3 bg-accent/30 border border-accent rounded-lg">
-                  <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start">
-                    <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                    Intermediate and Advanced levels require a Pro subscription.
-                    <button
-                      onClick={() => router.push("/pricing")}
-                      className="ml-1 font-semibold underline hover:text-orange-900 dark:hover:text-orange-100"
-                    >
-                      Upgrade to Pro
-                    </button>
-                  </p>
+          {format === "report" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
+                  Content Type
+                </label>
+                <div className="relative">
+                  <select
+                    value={reportType}
+                    onChange={(e) => setReportType(e.target.value)}
+                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                  >
+                    <option value="report">Formal Report</option>
+                    <option value="essay">Academic Essay</option>
+                    <option value="article">Technical Article</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
-              )}
-          </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
+                  Target Length
+                </label>
+                <div className="relative">
+                  <select
+                    value={reportLength}
+                    onChange={(e) => setReportLength(e.target.value)}
+                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                  >
+                    <option value="short">Short (3-5 Sections)</option>
+                    <option value="medium">Medium (6-10 Sections)</option>
+                    <option value="long">Long (11-15 Sections)</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
+                  Citation Style
+                </label>
+                <div className="relative">
+                  <select
+                    value={citationStyle}
+                    onChange={(e) => setCitationStyle(e.target.value)}
+                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                  >
+                    <option value="APA">APA Style</option>
+                    <option value="MLA">MLA Style</option>
+                    <option value="Chicago">Chicago Style</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
+                  Academic Level
+                </label>
+                <div className="relative">
+                  <select
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value)}
+                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                  >
+                    <option value="beginner">University Undergraduate</option>
+                    <option value="intermediate">Post-Graduate / Masters</option>
+                    <option value="advanced">PhD / Academic Professional</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {format !== "report" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
+                Choose difficulty level
+                {!isPremium && (
+                  <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                    (Free users: Beginner only)
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <select
+                  value={difficulty}
+                  onChange={(e) => {
+                    const selectedDifficulty = e.target.value;
+
+                    if (!isPremium && selectedDifficulty !== "beginner") {
+                      toast.error(
+                        "Intermediate and Advanced levels require Pro subscription. Please upgrade to continue."
+                      );
+                      router.push("/pricing");
+                      return;
+                    }
+
+                    setDifficulty(selectedDifficulty);
+                  }}
+                  className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                  disabled={!isPremium && atLimit} // Optionally block interaction if at limit, but better to allow selecting beginner if it's the only option. 
+                >
+                  <option value="beginner">
+                    Beginner{" "}
+                    {!isPremium
+                      ? "(Free)"
+                      : ""}
+                  </option>
+                  <option
+                    value="intermediate"
+                    disabled={!isPremium}
+                  >
+                    Intermediate{" "}
+                    {isPremium
+                      ? "(Pro)"
+                      : "(Pro Only)"}
+                  </option>
+                  <option
+                    value="advanced"
+                    disabled={!isPremium}
+                  >
+                    Advanced{" "}
+                    {isPremium
+                      ? "(Pro)"
+                      : "(Pro Only)"}
+                  </option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              </div>
+              {!isPremium &&
+                difficulty !== "beginner" && (
+                  <div className="mt-2 p-3 bg-accent/30 border border-accent rounded-lg">
+                    <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start">
+                      <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                      Intermediate and Advanced levels require a Pro subscription.
+                      <button
+                        onClick={() => router.push("/pricing")}
+                        className="ml-1 font-semibold underline hover:text-orange-900 dark:hover:text-orange-100"
+                      >
+                        Upgrade to Pro
+                      </button>
+                    </p>
+                  </div>
+                )}
+            </div>
+          )}
 
           <button
             onClick={handleGenerate}

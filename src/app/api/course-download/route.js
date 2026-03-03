@@ -104,8 +104,8 @@ function parseInlineFormatting(text) {
   const segments = [];
   let lastIndex = 0;
 
-  // Combined regex for **bold**, *italic*, `code`
-  const regex = /\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`/g;
+  // Combined regex for ***bold-italic***, **bold**, *italic*, _italic_, `code`
+  const regex = /(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|_.*?_|`[^`]+`)/g;
   let match;
 
   while ((match = regex.exec(text))) {
@@ -114,15 +114,15 @@ function parseInlineFormatting(text) {
       segments.push({ text: text.slice(lastIndex, match.index) });
     }
 
-    if (match[1] !== undefined) {
-      // Bold: **text**
-      segments.push({ text: match[1], bold: true });
-    } else if (match[2] !== undefined) {
-      // Italic: *text*
-      segments.push({ text: match[2], italic: true });
-    } else if (match[3] !== undefined) {
-      // Inline code: `code`
-      segments.push({ text: match[3], code: true });
+    const segment = match[0];
+    if (segment.startsWith("***") && segment.endsWith("***")) {
+      segments.push({ text: segment.substring(3, segment.length - 3), bold: true, italic: true });
+    } else if (segment.startsWith("**") && segment.endsWith("**")) {
+      segments.push({ text: segment.substring(2, segment.length - 2), bold: true });
+    } else if ((segment.startsWith("*") && segment.endsWith("*")) || (segment.startsWith("_") && segment.endsWith("_"))) {
+      segments.push({ text: segment.substring(1, segment.length - 1), italic: true });
+    } else if (segment.startsWith("`") && segment.endsWith("`")) {
+      segments.push({ text: segment.substring(1, segment.length - 1), code: true });
     }
 
     lastIndex = regex.lastIndex;
@@ -134,6 +134,11 @@ function parseInlineFormatting(text) {
   }
 
   return segments;
+}
+
+function stripMarkdown(text) {
+  if (!text) return "";
+  return text.replace(/(\*\*\*|\*\*|\*|___|__|__|`)/g, "");
 }
 
 async function handlePost(request, { params }) {
@@ -353,19 +358,19 @@ async function handlePost(request, { params }) {
         for (const block of parsedContent) {
           if (block.type === "h1") {
             y -= 5;
-            addLine(block.text, 20, bold, rgb(0.1, 0.2, 0.4));
+            addLine(stripMarkdown(block.text), 20, bold, rgb(0.1, 0.2, 0.4));
             y -= 5;
           } else if (block.type === "h2") {
             y -= 3;
-            addLine(block.text, 16, bold, rgb(0.15, 0.25, 0.45));
+            addLine(stripMarkdown(block.text), 16, bold, rgb(0.15, 0.25, 0.45));
             y -= 3;
           } else if (block.type === "h3") {
             y -= 3;
-            addLine(block.text, 14, bold, rgb(0.2, 0.3, 0.5));
+            addLine(stripMarkdown(block.text), 14, bold, rgb(0.2, 0.3, 0.5));
             y -= 3;
           } else if (block.type === "h4") {
             y -= 2;
-            addLine(block.text, 13, bold, rgb(0.25, 0.35, 0.55));
+            addLine(stripMarkdown(block.text), 13, bold, rgb(0.25, 0.35, 0.55));
             y -= 2;
           } else if (block.type === "ul" || block.type === "ol") {
             let counter = 1;

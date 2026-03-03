@@ -54,3 +54,21 @@ export async function csrfFetch(url, options = {}) {
         headers,
     });
 }
+/**
+ * Standardized API client for the application
+ * Automatically handles CSRF and credentials
+ */
+export const apiClient = {
+    get: (url, options) => csrfFetch(url, { ...options, method: "GET" }),
+    post: (url, body, options) => csrfFetch(url, {
+        ...options,
+        method: "POST",
+        body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+    put: (url, body, options) => csrfFetch(url, {
+        ...options,
+        method: "PUT",
+        body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+    delete: (url, options) => csrfFetch(url, { ...options, method: "DELETE" }),
+};

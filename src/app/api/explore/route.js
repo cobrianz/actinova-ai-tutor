@@ -1,141 +1,90 @@
-// src/app/api/explore/route.js
 
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import { verifyToken } from "@/lib/auth";
+import User from "@/models/User";
+import { ObjectId } from "mongodb";
 
-// === Seed Trending Topics (Only if collection is empty or older than 1 week) ===
-async function seedTrendingIfEmpty(db) {
-  const trendingCol = db.collection("explore_trending");
-  const count = await trendingCol.countDocuments();
 
-  let shouldReseed = count === 0;
 
-  if (count > 0) {
-    const latest = await trendingCol.findOne({}, { sort: { createdAt: -1 } });
-    if (latest && latest.createdAt) {
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      if (new Date(latest.createdAt) < oneWeekAgo) {
-        shouldReseed = true;
-        await trendingCol.deleteMany({}); // Delete old courses
-      }
-    }
-  }
-
-  if (shouldReseed) {
-    await trendingCol.insertMany([
-      {
-        title: "Artificial Intelligence Fundamentals",
-        students: 2340,
-        rating: 4.8,
-        duration: "6 weeks",
-        level: "Beginner",
-        category: "AI/ML",
-        instructor: "Dr. Sarah Johnson",
-        thumbnail: "/placeholder.svg?height=200&width=300",
-        description:
-          "Learn the basics of AI and machine learning with hands-on projects",
-        tags: ["Python", "TensorFlow", "Neural Networks", "Data Science"],
-        price: 99,
-        isPremium: false,
-        createdAt: new Date(),
-      },
-      {
-        title: "Full Stack Web Development",
-        students: 1890,
-        rating: 4.9,
-        duration: "12 weeks",
-        level: "Intermediate",
-        category: "Programming",
-        instructor: "Mike Chen",
-        thumbnail: "/placeholder.svg?height=200&width=300",
-        description:
-          "Master both frontend and backend with modern technologies",
-        tags: ["React", "Node.js", "MongoDB", "Express"],
-        price: 149,
-        isPremium: true,
-        createdAt: new Date(),
-      },
-      {
-        title: "Data Analysis with Python",
-        students: 1560,
-        rating: 4.7,
-        duration: "8 weeks",
-        level: "Beginner",
-        category: "Data Science",
-        instructor: "Emily Rodriguez",
-        thumbnail: "/placeholder.svg?height=200&width=300",
-        description: "Analyze data and create visualizations using Python",
-        tags: ["Python", "Pandas", "Matplotlib", "Seaborn"],
-        price: 79,
-        isPremium: false,
-        createdAt: new Date(),
-      },
-      {
-        title: "Mobile App Development with React Native",
-        students: 1230,
-        rating: 4.6,
-        duration: "10 weeks",
-        level: "Intermediate",
-        category: "Mobile Development",
-        instructor: "Alex Kim",
-        thumbnail: "/placeholder.svg?height=200&width=300",
-        description: "Build cross-platform mobile apps using React Native",
-        tags: ["React Native", "JavaScript", "iOS", "Android"],
-        price: 129,
-        isPremium: true,
-        createdAt: new Date(),
-      },
-      {
-        title: "Cloud Architecture with AWS",
-        students: 980,
-        rating: 4.8,
-        duration: "9 weeks",
-        level: "Intermediate",
-        category: "Cloud & DevOps",
-        instructor: "David Wilson",
-        thumbnail: "/placeholder.svg?height=200&width=300",
-        description: "Design scalable applications on AWS",
-        tags: ["AWS", "EC2", "S3", "Lambda", "Docker"],
-        price: 179,
-        isPremium: true,
-        createdAt: new Date(),
-      },
-      {
-        title: "UI/UX Design Masterclass",
-        students: 1450,
-        rating: 4.9,
-        duration: "7 weeks",
-        level: "Beginner",
-        category: "Design",
-        instructor: "Lisa Park",
-        thumbnail: "/placeholder.svg?height=200&width=300",
-        description: "Create beautiful and user-friendly interfaces",
-        tags: ["Figma", "User Research", "Prototyping", "Design Systems"],
-        price: 119,
-        isPremium: true,
-        createdAt: new Date(),
-      },
-    ]);
-
-    console.log("Seeded explore_trending with 6 courses");
-  }
-}
-
-// === GET /api/explore → Returns only trending topics ===
-export async function GET() {
+// === GET /api/explore ===
+// Returns personalized trending topics if user is logged in
+export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
-    await seedTrendingIfEmpty(db);
 
-    const trendingTopics = await db
-      .collection("explore_trending")
-      .find({})
-      .sort({ students: -1 })
-      .limit(6)
-      .toArray();
+    const trendingCol = db.collection("explore_trending");
 
-    // Clean output — no MongoDB internals
-    const cleanTopics = trendingTopics.map((t) => ({
+    // 1. Check for Authentication
+    let userInterests = [];
+    const authHeader = request.headers.get("authorization");
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = verifyToken(token);
+
+        if (decoded?.id) {
+          // Fetch user details
+          // Note: We need to use findOne on the collection directly or use the model
+          // Using direct collection for speed and to avoid model initialization race conditions if any
+          const user = await db.collection("users").findOne(
+            { _id: new ObjectId(decoded.id) },
+            { projection: { interests: 1, interestCategories: 1 } }
+          );
+
+          if (user) {
+            const cats = user.interestCategories || [];
+            const ints = user.interests || [];
+            userInterests = [...new Set([...cats, ...ints])].map(i => i.toLowerCase());
+          }
+        }
+      } catch (e) {
+        // Invalid token - treat as guest
+        console.warn("Explore personalisation: Invalid token", e.message);
+      }
+    }
+
+    let results = [];
+
+    // 2. Personalization Query
+    if (userInterests.length > 0) {
+      // Create a regex array for flexible matching
+      const regexConditions = userInterests.map(interest => ({
+        $or: [
+          { category: { $regex: interest, $options: "i" } },
+          { tags: { $in: [new RegExp(interest, "i")] } },
+          { title: { $regex: interest, $options: "i" } }
+        ]
+      }));
+
+      // Find courses matching ANY interest
+      const personalizedCourses = await trendingCol.find({
+        $or: regexConditions
+      })
+        .sort({ students: -1, rating: -1 })
+        .limit(6)
+        .toArray();
+
+      results = personalizedCourses;
+    }
+
+    // 3. Fallback / Fill up to 6 items
+    if (results.length < 6) {
+      const existingIds = results.map(r => r._id);
+
+      const genericTrending = await trendingCol.find({
+        _id: { $nin: existingIds }
+      })
+        .sort({ students: -1 })
+        .limit(6 - results.length)
+        .toArray();
+
+      results = [...results, ...genericTrending];
+    }
+
+    // 4. Clean output
+    const cleanTopics = results.map((t) => ({
       title: t.title,
       students: t.students,
       rating: t.rating,
@@ -152,6 +101,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
+      personalized: userInterests.length > 0,
       trendingTopics: cleanTopics,
     });
   } catch (error) {

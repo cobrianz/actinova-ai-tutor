@@ -13,18 +13,8 @@ export async function POST(request) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   const now = Date.now();
 
-  // Rate limiting per IP
-  const attempts = loginAttempts.get(ip) || { count: 0, resetAt: now };
-  if (now - attempts.resetAt > RATE_LIMIT.windowMs) {
-    attempts.count = 0;
-    attempts.resetAt = now;
-  }
-  if (attempts.count >= RATE_LIMIT.max) {
-    return NextResponse.json(
-      { error: "Too many login attempts. Try again later." },
-      { status: 429 }
-    );
-  }
+  // Rate limiting removed per user request
+
 
   try {
     const body = await request.json();
@@ -101,7 +91,24 @@ export async function POST(request) {
     }
 
     // Password check
-    const isValid = await verifyPassword(password, user.password);
+    if (!user.password) {
+      // User might have signed up via OAuth (Google) and has no password
+      attempts.count++;
+      loginAttempts.set(ip, attempts);
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    let isValid = false;
+    try {
+      isValid = await verifyPassword(password, user.password);
+    } catch (bcryptError) {
+      console.error("Bcrypt verify error:", bcryptError);
+      isValid = false;
+    }
+
     if (!isValid) {
       attempts.count++;
       loginAttempts.set(ip, attempts);
@@ -276,8 +283,9 @@ export async function POST(request) {
       },
     });
   } catch (error) {
+    console.error("Login API Error:", error);
     return NextResponse.json(
-      { error: "Authentication failed. Please try again later." },
+      { error: "Something went wrong. Please check your details and try again." },
       { status: 500 }
     );
   }

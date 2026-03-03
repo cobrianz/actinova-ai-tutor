@@ -164,7 +164,7 @@ export default function SignupPage() {
                   <Input
                     id="firstName"
                     placeholder="John"
-                    className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     value={formData.firstName}
                     onChange={handleChange}
                     required
@@ -176,7 +176,7 @@ export default function SignupPage() {
                 <Input
                   id="lastName"
                   placeholder="Doe"
-                  className="h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -192,13 +192,14 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  className="pl-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.email}
                   onChange={handleChange}
                   required
                 />
               </div>
             </div>
+
 
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
@@ -208,7 +209,7 @@ export default function SignupPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="At least 8 characters"
-                  className="pl-10 pr-10 h-11 bg-gray-50/50 border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 pr-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -225,7 +226,38 @@ export default function SignupPage() {
                   )}
                 </button>
               </div>
+
+              {/* Password Strength Indicator */}
+              {formData.password && (
+                <div className="flex gap-1 mt-2">
+                  {[1, 2, 3, 4].map((level) => {
+                    const strength = (() => {
+                      let s = 0;
+                      if (formData.password.length >= 8) s++;
+                      if (/[A-Z]/.test(formData.password)) s++;
+                      if (/[0-9]/.test(formData.password)) s++;
+                      if (/[^A-Za-z0-9]/.test(formData.password)) s++;
+                      return s;
+                    })();
+
+                    let color = "bg-gray-200";
+                    if (strength >= level) {
+                      if (strength <= 2) color = "bg-red-500";
+                      else if (strength === 3) color = "bg-yellow-500";
+                      else color = "bg-green-500";
+                    }
+
+                    return (
+                      <div
+                        key={level}
+                        className={`h-1 flex-1 rounded-full transition-all duration-300 ${color}`}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
 
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -237,7 +269,7 @@ export default function SignupPage() {
                   placeholder="Repeat your password"
                   className={`pl-10 pr-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
                     ? "border-red-300 bg-red-50/30"
-                    : "border-gray-100"
+                    : "border-slate-200 dark:border-slate-800"
                     }`}
                   value={formData.confirmPassword}
                   onChange={handleChange}

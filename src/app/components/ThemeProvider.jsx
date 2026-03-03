@@ -9,25 +9,24 @@ export function ThemeProvider({ children, initialTheme }) {
 
   useEffect(() => {
     const getSystemTheme = () => {
-      if (typeof window !== "undefined") {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
+      // Ignore system preference for now to ensure light mode by default
       return "light";
     };
 
     const getInitialTheme = () => {
-      if (initialTheme === "system") {
-        return getSystemTheme();
-      }
+      if (typeof window === "undefined") return "light";
       const saved = localStorage.getItem("theme");
-      if (saved) return saved;
-      return initialTheme || "light";
+      if (!saved) {
+        localStorage.setItem("theme", "light");
+        return "light";
+      }
+      return saved;
     };
 
     const savedTheme = getInitialTheme();
     setTheme(savedTheme);
+    // document class is already handled by head script for initial load, 
+    // but we update it here for subsequent state changes or hydration cleanup.
     document.documentElement.classList.toggle("dark", savedTheme === "dark");
 
     // Listen for system theme changes if system theme is selected

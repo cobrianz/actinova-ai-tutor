@@ -241,10 +241,18 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(userData),
       });
 
-      const data = await res.json();
+      // Handle non-JSON or error responses gracefully
+      let data;
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch (err) {
+        console.error("JSON parse error:", err);
+        data = { error: "An unexpected server error occurred." };
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Signup failed");
+        throw new Error(data.error || data.details || "Signup failed");
       }
 
       return {

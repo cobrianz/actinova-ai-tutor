@@ -1,4 +1,4 @@
-// src/app/api/generate-course/route.js
+export const dynamic = "force-dynamic";
 
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
@@ -6,6 +6,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getUserPlanLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
+import { withCsrf } from "@/lib/withCsrf";
 import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
 
 const openai = new OpenAI({
@@ -324,13 +325,12 @@ async function handlePost(request) {
 }
 
 // Wrap with middleware
-export const POST = withErrorHandling(
-  combineMiddleware(
-    withAuth,
-    (handler) => withAPIRateLimit(handler, "generate-course"),
-    handlePost
-  )
-);
+export const POST = combineMiddleware(
+  withErrorHandling,
+  withCsrf,
+  withAuth,
+  (handler) => withAPIRateLimit(handler, "generate-course")
+)(handlePost);
 
 
 async function generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits) {

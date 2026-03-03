@@ -84,6 +84,7 @@ function getFreeLimits() {
         aiResponses: 3, // per day (ai-tutor-chat)
         generateCourseLimit: 5, // per month
         quizGenerations: 2, // per month
+        reportGenerations: 1, // per month
     };
 }
 
@@ -99,6 +100,7 @@ function getProLimits() {
         aiResponses: -1, // unlimited
         generateCourseLimit: 50, // per month
         quizGenerations: 20, // per month
+        reportGenerations: 20, // per month
     };
 }
 
@@ -113,6 +115,7 @@ function getEnterpriseLimits() {
         difficulties: ['beginner', 'intermediate', 'advanced'],
         aiResponses: -1, // unlimited
         generateCourseLimit: -1, // unlimited
+        reportGenerations: -1, // unlimited
     };
 }
 

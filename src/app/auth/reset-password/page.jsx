@@ -308,7 +308,7 @@ function ResetPasswordForm() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     placeholder="••••••••"
                   />
                   <button
@@ -341,7 +341,7 @@ function ResetPasswordForm() {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     placeholder="••••••••"
                   />
                   <button

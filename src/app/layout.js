@@ -27,6 +27,27 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning className={`${jost.variable} ${bricolage.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('theme');
+                  var theme = saved || 'light';
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    // Force a consistent state if null
+                    if (!saved) localStorage.setItem('theme', 'light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className="font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground"
         suppressHydrationWarning={true}

@@ -1,16 +1,15 @@
 // src/app/lib/withCsrf.js
 
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
 import { validateCsrfToken, CSRF_HEADER_NAME, CSRF_COOKIE_NAME } from "./csrf";
 
 /**
- * Higher-order function that wraps API route handlers with CSRF protection
- * Only validates CSRF tokens for state-changing methods (POST, PUT, DELETE, PATCH)
- * GET, HEAD, and OPTIONS requests bypass CSRF validation
+ * Higher-order function that wraps API route handlers with CSRF protection.
+ * Only validates CSRF tokens for state-changing methods (POST, PUT, DELETE, PATCH).
+ * GET, HEAD, and OPTIONS requests bypass CSRF validation.
  *
- * @param {Function} handler - The API route handler function
- * @returns {Function} Wrapped handler with CSRF protection
+ * Uses dynamic import for next/headers to avoid module-level evaluation
+ * during Next.js static build analysis.
  */
 export function withCsrf(handler) {
     return async function csrfProtectedHandler(request, context) {
@@ -24,6 +23,8 @@ export function withCsrf(handler) {
 
         // For state-changing methods, validate CSRF token
         try {
+            // Dynamic import to avoid module-level evaluation during Next.js build
+            const { cookies, headers } = await import("next/headers");
             const headersList = await headers();
             const cookieStore = await cookies();
 

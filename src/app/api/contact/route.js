@@ -30,6 +30,7 @@ export async function POST(req) {
       );
     }
 
+
     // Save to database for admin
     const contact = await new Contact({
       name,
@@ -39,8 +40,6 @@ export async function POST(req) {
       category,
       status: "new",
     }).save();
-
-
 
     return NextResponse.json({
       success: true,

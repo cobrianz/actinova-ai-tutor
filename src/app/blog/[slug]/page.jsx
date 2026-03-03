@@ -91,7 +91,7 @@ export default function BlogPost() {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <HeroNavbar />
 
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-32">
         <motion.header
           className="mb-8"
           initial={{ opacity: 0, y: 20 }}

@@ -220,35 +220,35 @@ export default function BlogPage() {
                                                     <span className="text-muted-foreground">{featuredPost.readTime}</span>
                                                 </div>
                                             </div>
-                                        <div className="flex flex-wrap items-center gap-4">
-                                            <Link
-                                                href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                                className="group/btn inline-flex items-center space-x-3 bg-foreground text-background px-10 py-5 rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-foreground/10 dark:shadow-none"
-                                            >
-                                                <span>Start Reading</span>
-                                                <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
-                                            </Link>
+                                            <div className="flex flex-wrap items-center gap-4 mt-auto lg:ml-auto justify-end w-full">
+                                                <Link
+                                                    href={`/blog/${featuredPost.slug || featuredPost._id}`}
+                                                    className="group/btn inline-flex items-center space-x-3 bg-foreground text-background px-10 py-5 rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-foreground/10 dark:shadow-none"
+                                                >
+                                                    <span>Start Reading</span>
+                                                    <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
+                                                </Link>
 
-                                            <motion.button
-                                                onClick={() => {
-                                                    if (navigator.share) {
-                                                        navigator.share({
-                                                            title: featuredPost.title,
-                                                            text: featuredPost.excerpt,
-                                                            url: `${window.location.origin}/blog/${featuredPost.slug}`,
-                                                        });
-                                                    } else {
-                                                        navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
-                                                        toast.success("Link copied to clipboard!");
-                                                    }
-                                                }}
-                                                className="p-5 bg-card  hover:bg-secondary text-foreground rounded-[1.5rem] transition-all"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
-                                            </motion.button>
-                                        </div>
+                                                <motion.button
+                                                    onClick={() => {
+                                                        if (navigator.share) {
+                                                            navigator.share({
+                                                                title: featuredPost.title,
+                                                                text: featuredPost.excerpt,
+                                                                url: `${window.location.origin}/blog/${featuredPost.slug}`,
+                                                            });
+                                                        } else {
+                                                            navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
+                                                            toast.success("Link copied to clipboard!");
+                                                        }
+                                                    }}
+                                                    className="p-5 bg-card  hover:bg-secondary text-foreground rounded-[1.5rem] transition-all"
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
+                                                </motion.button>
+                                            </div>
                                         </div>
 
                                     </div>
@@ -447,6 +447,7 @@ export default function BlogPage() {
                     </motion.div>
                 )}
 
+
                 {/* Newsletter Signup */}
                 <motion.div
                     className="mt-20 bg-secondary rounded-2xl p-8 text-center"
@@ -461,18 +462,63 @@ export default function BlogPage() {
                         Get the latest articles, learning tips, and educational insights
                         delivered to your inbox weekly.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="flex-1 px-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <button className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                            Subscribe
-                        </button>
-                    </div>
+                    <NewsletterForm />
                 </motion.div>
             </div>
         </div>
+    );
+}
+
+function NewsletterForm() {
+    const [email, setEmail] = useState("");
+    const [status, setStatus] = useState("idle");
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!email) return;
+        setStatus("loading");
+        try {
+            const res = await fetch("/api/newsletter", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            if (res.ok) {
+                setStatus("success");
+                setEmail("");
+                setTimeout(() => setStatus("idle"), 3000);
+            } else {
+                setStatus("error");
+            }
+        } catch {
+            setStatus("error");
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            {status === "success" ? (
+                <div className="w-full p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 font-medium">
+                    Subscribed successfully!
+                </div>
+            ) : (
+                <>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="flex-1 px-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        disabled={status === "loading"}
+                    />
+                    <button
+                        disabled={status === "loading"}
+                        className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
+                    >
+                        {status === "loading" ? "..." : "Subscribe"}
+                    </button>
+                </>
+            )}
+        </form>
     );
 }

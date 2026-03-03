@@ -261,7 +261,7 @@ function VerifyEmailContent() {
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="block w-full text-center text-3xl font-mono tracking-[0.5em] pl-10 h-14 bg-gray-50/50 border border-gray-100 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="block w-full text-center text-3xl font-mono tracking-[0.5em] pl-10 h-14 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                     placeholder="000000"
                   />
                 </div>
