@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function PremiumCourses() {
   const router = useRouter();
@@ -165,11 +166,7 @@ export default function PremiumCourses() {
       }
 
       // Fetch from API (auth via HttpOnly cookie)
-      const response = await fetch("/api/premium-courses/personalized", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiClient.post("/api/premium-courses/personalized");
 
       if (response.ok) {
         const data = await response.json();
@@ -237,15 +234,10 @@ export default function PremiumCourses() {
 
     try {
       // Generate the course (auth via HttpOnly cookie)
-      const response = await fetch("/api/generate-course", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: course.title,
-          format: "course",
-          difficulty: course.difficulty || "beginner",
-        }),
+      const response = await apiClient.post("/api/generate-course", {
+        topic: course.title,
+        format: "course",
+        difficulty: course.difficulty || "beginner",
       });
 
       if (!response.ok) {
@@ -269,17 +261,12 @@ export default function PremiumCourses() {
 
       // Track that user generated this premium course (so it won't be deleted)
       try {
-        await fetch("/api/profile/update", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            generatedPremiumCourse: {
-              courseId: course.id,
-              courseTitle: course.title,
-              generatedAt: new Date().toISOString(),
-            },
-          }),
+        await apiClient.post("/api/profile/update", {
+          generatedPremiumCourse: {
+            courseId: course.id,
+            courseTitle: course.title,
+            generatedAt: new Date().toISOString(),
+          },
         });
       } catch (trackError) {
         console.error("Error tracking generated course:", trackError);
@@ -314,12 +301,7 @@ export default function PremiumCourses() {
 
   const handleUpgradePlan = async (plan) => {
     try {
-      const response = await fetch("/api/billing/create-session", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
+      const response = await apiClient.post("/api/billing/create-session", { plan });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

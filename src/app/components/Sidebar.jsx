@@ -120,11 +120,9 @@ export default function Sidebar({
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/logout", { method: "POST" });
-      logout();
+      await logout();
     } catch (error) {
       console.error("Logout error:", error);
-      logout(); // Fallback
     }
   };
 

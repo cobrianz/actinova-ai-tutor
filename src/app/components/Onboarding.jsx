@@ -30,6 +30,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
+import { apiClient } from "@/lib/csrfClient";
 
 const onboardingSteps = [
   {
@@ -632,25 +633,9 @@ export default function Onboarding({ onComplete }) {
     }
   };
 
-  // Helper to get cookie value
-  const getCookie = (name) => {
-    if (typeof document === "undefined") return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
-    return null;
-  };
-
   const handleComplete = async () => {
     setIsSaving(true);
     try {
-      // Get CSRF token from cookie
-      const csrfToken = getCookie("csrfToken");
-
-      const headers = {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken || "",
-      };
 
       // Get interest categories from the interests step
       const interestsStep = onboardingSteps.find(
@@ -676,12 +661,7 @@ export default function Onboarding({ onComplete }) {
 
 
 
-      const response = await fetch("/api/profile/update", {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify(profileData),
-      });
+      const response = await apiClient.post("/api/profile/update", profileData);
 
 
 
