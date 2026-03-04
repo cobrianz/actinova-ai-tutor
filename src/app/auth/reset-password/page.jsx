@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 function ResetPasswordForm() {
   const [formData, setFormData] = useState({
@@ -29,11 +30,7 @@ function ResetPasswordForm() {
     if (!formData.email || !formData.code) return;
 
     try {
-      const res = await fetch("/api/verify-reset-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, code: formData.code }),
-      });
+      const res = await apiClient.post("/api/verify-reset-code", { email: formData.email, code: formData.code });
 
       const data = await res.json();
 
@@ -74,7 +71,7 @@ function ResetPasswordForm() {
 
   const validateToken = async () => {
     try {
-      const res = await fetch(`/api/validate-reset-token?token=${token}`);
+      const res = await apiClient.get(`/api/validate-reset-token?token=${token}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -140,11 +137,7 @@ function ResetPasswordForm() {
         ? { token, password: formData.password }
         : { email: formData.email, code: formData.code, password: formData.password };
 
-      const res = await fetch("/api/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await apiClient.post("/api/reset-password", body);
 
       const data = await res.json();
 

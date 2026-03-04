@@ -28,6 +28,7 @@ import ConfirmModal from "./ConfirmModal";
 import { toast } from "sonner";
 import { downloadCourseAsPDF } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Library({ setActiveContent }) {
   const [viewMode, setViewMode] = useState("grid");
@@ -62,12 +63,7 @@ export default function Library({ setActiveContent }) {
         search: searchQuery,
       });
 
-      const res = await fetch(`/api/library?${params}`, {
-        credentials: "include", // This sends httpOnly cookies automatically
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await apiClient.get(`/api/library?${params}`);
 
       if (!res.ok) {
         if (res.status === 401 && retryAfterRefresh) {
@@ -185,14 +181,10 @@ export default function Library({ setActiveContent }) {
     });
 
     try {
-      const res = await fetch("/api/library", {
-        method: "POST",
-        credentials: "include",
+      const res = await apiClient.post("/api/library", { action: "pin", itemId: courseId }, {
         headers: {
-          "Content-Type": "application/json",
           "x-user-id": user?._id || user?.id || "",
-        },
-        body: JSON.stringify({ action: "pin", itemId: courseId }),
+        }
       });
 
       if (res.status === 401 && retryAfterRefresh) {
@@ -240,14 +232,10 @@ export default function Library({ setActiveContent }) {
     setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
 
     try {
-      const res = await fetch("/api/library", {
-        method: "POST",
-        credentials: "include",
+      const res = await apiClient.post("/api/library", { action: "delete", itemId: courseToDelete.id }, {
         headers: {
-          "Content-Type": "application/json",
           "x-user-id": user?._id || user?.id || "",
-        },
-        body: JSON.stringify({ action: "delete", itemId: courseToDelete.id }),
+        }
       });
 
       if (res.status === 401 && retryAfterRefresh) {
@@ -287,9 +275,7 @@ export default function Library({ setActiveContent }) {
 
     const toastId = toast.loading(`Preparing PDF for ${course.title}...`);
     try {
-      const res = await fetch(`/api/library?id=${course.id}`, {
-        credentials: "include",
-      });
+      const res = await apiClient.get(`/api/library?id=${course.id}`);
 
       if (!res.ok) throw new Error("Failed to fetch full course data");
 

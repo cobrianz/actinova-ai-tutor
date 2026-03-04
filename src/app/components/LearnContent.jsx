@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function LearnContent() {
   const params = useParams();
@@ -110,21 +111,13 @@ export default function LearnContent() {
     }
     // Also persist to backend library for reloads
     try {
-      fetch("/api/library", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?._id || user?.id || user?.idString || "",
-        },
-        body: JSON.stringify({
-          action: "saveConversation",
-          courseId: courseData?._id || null,
-          topic: actualTopic,
-          difficulty,
-          format,
-          messages,
-        }),
+      apiClient.post("/api/library", {
+        action: "saveConversation",
+        courseId: courseData?._id || null,
+        topic: actualTopic,
+        difficulty,
+        format,
+        messages,
       }).catch(() => { });
     } catch (e) {
       // Silent fail for backend conversation persistence
@@ -141,20 +134,12 @@ export default function LearnContent() {
     } catch { }
     // Try backend
     try {
-      const res = await fetch("/api/library", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?._id || user?.id || user?.idString || "",
-        },
-        body: JSON.stringify({
-          action: "getConversation",
-          courseId: courseData?._id || null,
-          topic: actualTopic,
-          difficulty,
-          format,
-        }),
+      const res = await apiClient.post("/api/library", {
+        action: "getConversation",
+        courseId: courseData?._id || null,
+        topic: actualTopic,
+        difficulty,
+        format,
       });
       if (res.ok) {
         const data = await res.json();
@@ -296,22 +281,15 @@ export default function LearnContent() {
       setLessonContentLoading(true); // Still used for initial active lesson loading if desired, or we can use it more granularly
       setTypingContent("");
 
-      const response = await fetch("/api/course-agent", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "generateLesson",
-          courseId: courseData?._id || null,
-          moduleId,
-          lessonIndex,
-          lessonTitle,
-          moduleTitle,
-          courseTopic: topic,
-          difficulty,
-        }),
+      const response = await apiClient.post("/api/course-agent", {
+        action: "generateLesson",
+        courseId: courseData?._id || null,
+        moduleId,
+        lessonIndex,
+        lessonTitle,
+        moduleTitle,
+        courseTopic: topic,
+        difficulty,
       });
 
       if (!response.ok) {
@@ -399,21 +377,17 @@ export default function LearnContent() {
             ? Math.round((newCompleted.size / totalLessons) * 100)
             : 0;
 
-        const response = await fetch("/api/course-progress", {
-          method: "POST",
+        const response = await apiClient.post("/api/course-progress", {
+          courseId,
+          progress,
+          completed: progress === 100,
+          isLessonCompleted: newCompleted.has(lessonId),
+          userId: String(user?._id || user?.id || ""),
+          lessonId: lessonId,
+        }, {
           headers: {
-            "Content-Type": "application/json",
             "x-user-id": String(user?._id || user?.id || ""),
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            courseId,
-            progress,
-            completed: progress === 100,
-            isLessonCompleted: newCompleted.has(lessonId),
-            userId: String(user?._id || user?.id || ""),
-            lessonId: lessonId,
-          }),
+          }
         });
 
         if (!response.ok) {
@@ -442,7 +416,13 @@ export default function LearnContent() {
 
     const toastId = toast.loading("Preparing lesson PDF...");
     try {
-      await downloadCourseAsPDF(currentLesson, "notes");
+      const activeModule = courseData?.modules?.find(m => m.id === activeLesson.moduleId);
+      const lessonData = {
+        ...currentLesson,
+        course: courseData?.title,
+        module: activeModule?.title
+      };
+      await downloadCourseAsPDF(lessonData, "notes");
       toast.success("Download started!", { id: toastId });
     } catch (error) {
       console.error("Lesson download error:", error);
@@ -519,20 +499,15 @@ export default function LearnContent() {
           )
           .join("\n\n---\n\n") || "";
 
-      const relevanceCheck = await fetch("/api/course-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          action: "checkRelevance",
-          question: userMessage.message,
-          courseContent: allCourseContent,
-          lessonTitle: currentLesson?.title || "",
-          context: `Course: ${courseData?.title || ""
-            }, Level: ${courseData?.level || ""}, Topic: ${topic}. Module: ${courseData?.modules?.find((m) => m.id === activeLesson.moduleId)
-              ?.title || ""
-            }`,
-        }),
+      const relevanceCheck = await apiClient.post("/api/course-agent", {
+        action: "checkRelevance",
+        question: userMessage.message,
+        courseContent: allCourseContent,
+        lessonTitle: currentLesson?.title || "",
+        context: `Course: ${courseData?.title || ""
+          }, Level: ${courseData?.level || ""}, Topic: ${topic}. Module: ${courseData?.modules?.find((m) => m.id === activeLesson.moduleId)
+            ?.title || ""
+          }`,
       });
 
       if (!relevanceCheck.ok) {
@@ -561,20 +536,15 @@ export default function LearnContent() {
       }
 
       // Step 2: Question is relevant, get the answer
-      const response = await fetch("/api/course-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          action: "answer",
-          question: userMessage.message,
-          courseContent: allCourseContent,
-          lessonTitle: currentLesson?.title || "",
-          context: `Course: ${courseData?.title || ""
-            }, Level: ${courseData?.level || ""}, Topic: ${topic}. Module: ${courseData?.modules?.find((m) => m.id === activeLesson.moduleId)
-              ?.title || ""
-            }`,
-        }),
+      const response = await apiClient.post("/api/course-agent", {
+        action: "answer",
+        question: userMessage.message,
+        courseContent: allCourseContent,
+        lessonTitle: currentLesson?.title || "",
+        context: `Course: ${courseData?.title || ""
+          }, Level: ${courseData?.level || ""}, Topic: ${topic}. Module: ${courseData?.modules?.find((m) => m.id === activeLesson.moduleId)
+            ?.title || ""
+          }`,
       });
 
       if (!response.ok) {
@@ -848,10 +818,20 @@ export default function LearnContent() {
       })
       .join("\n");
 
-    // Handle horizontal rules
+    // Handle horizontal rules (removed as per user request)
     html = html.replace(
-      /^---+$/gm,
-      '<hr class="my-6 border-border" />'
+      /^\s*[-*_]{3,}\s*$/gm,
+      ''
+    );
+
+    // Underline Module and Lesson labels (as per user request)
+    html = html.replace(
+      /^(Module: .*)$/gm,
+      '<span class="underline decoration-primary/30 underline-offset-4">$1</span>'
+    );
+    html = html.replace(
+      /^(Lesson: .*)$/gm,
+      '<span class="underline decoration-primary/30 underline-offset-4">$1</span>'
     );
 
     // Restore code blocks
@@ -907,18 +887,11 @@ export default function LearnContent() {
     try {
       setIsSavingNotes(true);
 
-      const response = await fetch("/api/notes", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          itemId: `course_${courseData?._id}`,
-          lessonId: `${activeLesson.moduleId}-${activeLesson.lessonIndex}`,
-          content: notesContent,
-          title: currentLesson?.title || "Lesson Notes",
-        }),
+      const response = await apiClient.post("/api/notes", {
+        itemId: `course_${courseData?._id}`,
+        lessonId: `${activeLesson.moduleId}-${activeLesson.lessonIndex}`,
+        content: notesContent,
+        title: currentLesson?.title || "Lesson Notes",
       });
 
       if (!response.ok) {
@@ -1041,10 +1014,8 @@ export default function LearnContent() {
 
       // First, try to get from library (saves tokens!)
       try {
-        const libraryResponse = await fetch("/api/library", {
-          credentials: "include",
+        const libraryResponse = await apiClient.get("/api/library", {
           headers: {
-            "Content-Type": "application/json",
             "x-user-id": user?._id || user?.id || user?.idString || "",
           },
         });
@@ -1166,11 +1137,7 @@ export default function LearnContent() {
       // For flashcards, check the flashcards collection
       if (format === "flashcards") {
         try {
-          const cardsResponse = await fetch("/api/flashcards", {
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
+          const cardsResponse = await apiClient.get("/api/flashcards", {
             cache: "no-store",
           });
 
@@ -1226,7 +1193,7 @@ export default function LearnContent() {
       // Handle existing quiz loading
       if (format === "quiz" && existingQuizId) {
         try {
-          const quizResponse = await fetch(`/api/quizzes/${existingQuizId}`);
+          const quizResponse = await apiClient.get(`/api/quizzes/${existingQuizId}`);
           if (quizResponse.ok) {
             const quizData = await quizResponse.json();
             setCourseData(quizData);
@@ -1293,14 +1260,7 @@ export default function LearnContent() {
       }
 
       try {
-        const response = await fetch(apiEndpoint, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await apiClient.post(apiEndpoint, requestBody);
 
         if (!response.ok) {
           if (response.status === 429) {
@@ -1390,24 +1350,20 @@ export default function LearnContent() {
 
         // Persist generated course to library (no-op on server if already saved)
         try {
-          const libRes = await fetch("/api/library", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              "x-user-id": user?._id || user?.id || user?.idString || "",
+          const libRes = await apiClient.post("/api/library", {
+            action: "add",
+            course: {
+              isGenerated: true,
+              courseData: courseDataToSet,
+              title: courseDataToSet.title,
+              topic: courseDataToSet.topic || actualTopic,
+              level: courseDataToSet.level || difficulty,
+              format,
             },
-            body: JSON.stringify({
-              action: "add",
-              course: {
-                isGenerated: true,
-                courseData: courseDataToSet,
-                title: courseDataToSet.title,
-                topic: courseDataToSet.topic || actualTopic,
-                level: courseDataToSet.level || difficulty,
-                format,
-              },
-            }),
+          }, {
+            headers: {
+              "x-user-id": user?._id || user?.id || user?.idString || "",
+            }
           });
           if (!libRes.ok) {
             console.warn("Failed to store course in library");

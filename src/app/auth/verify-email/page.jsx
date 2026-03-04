@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CheckCircle, AlertCircle, Mail, ArrowLeft, Key, ShieldCheck, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../components/AuthProvider";
+import { apiClient } from "@/lib/csrfClient";
 
 function VerifyEmailContent() {
   const [code, setCode] = useState("");
@@ -43,11 +44,7 @@ function VerifyEmailContent() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+      const res = await apiClient.post("/api/verify-email", { token });
 
       const data = await res.json();
 
@@ -61,13 +58,9 @@ function VerifyEmailContent() {
 
         // Send welcome email
         try {
-          await fetch("/api/send-welcome-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: data.user.email,
-              firstName: data.user.name?.split(" ")[0] || "User",
-            }),
+          await apiClient.post("/api/send-welcome-email", {
+            email: data.user.email,
+            firstName: data.user.name?.split(" ")[0] || "User",
           });
         } catch (emailError) {
           console.error("Failed to send welcome email:", emailError);
@@ -95,11 +88,7 @@ function VerifyEmailContent() {
 
     setResendLoading(true);
     try {
-      const response = await fetch("/api/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
-      });
+      const response = await apiClient.post("/api/resend-verification", { email: userEmail });
 
       const data = await response.json();
 
@@ -136,11 +125,7 @@ function VerifyEmailContent() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
+      const res = await apiClient.post("/api/verify-email", { code });
 
       const data = await res.json();
 

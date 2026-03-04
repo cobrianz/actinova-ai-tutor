@@ -38,6 +38,7 @@ import { useAuth } from "./AuthProvider";
 import { useTheme } from "./ThemeProvider";
 import { toast } from "sonner";
 import { downloadReceiptAsPDF } from "../lib/pdfUtils";
+import { apiClient } from "@/lib/csrfClient";
 
 const defaultSettings = {
   difficulty: "adaptive",
@@ -100,9 +101,7 @@ export default function ProfileContent() {
   const fetchProfileData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/profile", {
-        credentials: "include",
-      });
+      const response = await apiClient.get("/api/profile");
 
       if (response.ok) {
         const data = await response.json();
@@ -127,11 +126,7 @@ export default function ProfileContent() {
       formData.append("lastName", editData.lastName);
       // bio and location removed from profile updates
 
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await apiClient.put("/api/profile", formData);
 
       if (response.ok) {
         const data = await response.json();
@@ -184,17 +179,10 @@ export default function ProfileContent() {
     try {
       setUpdating(true);
 
-      const response = await fetch("/api/change-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          currentPassword: passwordData.current,
-          newPassword: passwordData.new,
-          confirmPassword: passwordData.confirm,
-        }),
+      const response = await apiClient.post("/api/change-password", {
+        currentPassword: passwordData.current,
+        newPassword: passwordData.new,
+        confirmPassword: passwordData.confirm,
       });
 
       if (response.ok) {
@@ -256,12 +244,7 @@ export default function ProfileContent() {
         },
       };
 
-      const response = await fetch("/api/settings/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const response = await apiClient.post("/api/settings/update", payload);
 
       if (response.ok) {
         const data = await response.json();

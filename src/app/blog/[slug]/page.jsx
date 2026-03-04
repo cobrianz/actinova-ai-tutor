@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import HeroNavbar from "@/components/heroNavbar";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function BlogPost() {
   const params = useParams();
@@ -27,9 +28,7 @@ export default function BlogPost() {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/blog/${slug}`, {
-          credentials: "include",
-        });
+        const res = await apiClient.get(`/api/blog/${slug}`);
         if (!res.ok) throw new Error("Failed to load article");
         const data = await res.json();
         setPost(data.post);

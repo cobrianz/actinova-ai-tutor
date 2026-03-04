@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
 import QuizInterface from "./QuizInterface";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Generate({ setActiveContent }) {
   const [topic, setTopic] = useState("");
@@ -112,14 +113,9 @@ export default function Generate({ setActiveContent }) {
       setIsSubmitting(true);
 
       try {
-        const response = await fetch("/api/generate-flashcards", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            topic: subject,
-            difficulty,
-          }),
+        const response = await apiClient.post("/api/generate-flashcards", {
+          topic: subject,
+          difficulty,
         });
 
         if (!response.ok) {
@@ -166,18 +162,11 @@ export default function Generate({ setActiveContent }) {
 
       try {
         // Generate quiz directly via API
-        const response = await fetch("/api/generate-course", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            topic: subject,
-            difficulty,
-            format: "quiz",
-            questions: questionsCount,
-          }),
+        const response = await apiClient.post("/api/generate-course", {
+          topic: subject,
+          difficulty,
+          format: "quiz",
+          questions: questionsCount,
         });
 
         if (!response.ok) {
@@ -223,17 +212,12 @@ export default function Generate({ setActiveContent }) {
       setIsSubmitting(true);
 
       try {
-        const response = await fetch("/api/generate-report-outline", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            topic: subject,
-            type: reportType,
-            length: reportLength,
-            difficulty: difficulty,
-            citationStyle: citationStyle
-          }),
+        const response = await apiClient.post("/api/generate-report-outline", {
+          topic: subject,
+          type: reportType,
+          length: reportLength,
+          difficulty: difficulty,
+          citationStyle: citationStyle
         });
 
         if (!response.ok) {
@@ -633,9 +617,7 @@ function PopularTopics({ setTopic, setLocalTopic }) {
   React.useEffect(() => {
     async function fetchTopics() {
       try {
-        const res = await fetch("/api/popular-topics", {
-          credentials: "include",
-        });
+        const res = await apiClient.get("/api/popular-topics");
         const data = await res.json();
         setTopics(data.topics || []);
       } catch (error) {

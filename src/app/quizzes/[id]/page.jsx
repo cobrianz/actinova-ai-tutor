@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { apiClient } from "@/lib/csrfClient";
 
 const TakeQuizPage = ({ params }) => {
   const [quiz, setQuiz] = useState(null);
@@ -19,7 +20,7 @@ const TakeQuizPage = ({ params }) => {
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const response = await fetch(`/api/quizzes/${params.id}`);
+        const response = await apiClient.get(`/api/quizzes/${params.id}`);
         if (response.ok) {
           const data = await response.json();
           setQuiz(data);
@@ -188,7 +189,7 @@ const TakeQuizPage = ({ params }) => {
                   {submitted && (
                     <div className="mt-4 p-3 rounded-lg text-sm">
                       {JSON.stringify(answers[q._id]) ===
-                      JSON.stringify(q.correctAnswer) ? (
+                        JSON.stringify(q.correctAnswer) ? (
                         <div className="flex items-center text-green-600 dark:text-green-400">
                           <CheckCircle className="w-5 h-5 mr-2" />
                           Correct!

@@ -178,6 +178,25 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     pdf.text(titleLines, pageWidth / 2, y, { align: "center" });
 
     y += (titleLines.length * 10) + 10;
+
+    // Add Module info if present (for lessons)
+    if (data.module) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(...COLORS.text);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(data.module, pageWidth / 2, y, { align: "center" });
+
+        y += 8;
+    }
+
+    if (data.course && data.course !== data.title) {
+        pdf.setFontSize(12);
+        pdf.setTextColor(...COLORS.textLight);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`Part of: ${data.course}`, pageWidth / 2, y, { align: "center" });
+        y += 8;
+    }
+
     pdf.setFontSize(12);
     pdf.setTextColor(...COLORS.textLight);
     pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: "center" });
@@ -227,22 +246,36 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 return;
             }
 
-            // Handle horizontal rule
-            if (trimmedLine === "---" || trimmedLine.startsWith("***") || trimmedLine === "___") {
-                // If it's just '***', treat as divider. If it has text around it, it's bold-italic (handled in renderMarkdownLine)
-                if (trimmedLine === "---" || trimmedLine === "***" || trimmedLine === "___") {
-                    checkNewPage(10);
-                    y += 5;
-                    pdf.setDrawColor(...COLORS.divider);
-                    pdf.setLineWidth(0.5);
-                    pdf.line(margin, y, pageWidth - margin, y);
-                    y += 8;
-                    return;
-                }
+            // Handle horizontal rule (bypass rendering but keep spacing if needed)
+            if (trimmedLine.match(/^\s*[-*_]{3,}\s*$/)) {
+                y += 5;
+                return;
             }
 
             if (!trimmedLine) {
-                y += 5;
+                y += 3;
+                return;
+            }
+
+            const cleanLine = stripMarkdown(trimmedLine).toLowerCase().replace(/^(course|module|lesson|topic):\s*/, "").trim();
+            const isRedundant =
+                cleanLine === data.title?.toLowerCase() ||
+                (data.course && cleanLine === data.course.toLowerCase()) ||
+                (data.module && cleanLine === data.module.toLowerCase()) ||
+                (data.course && cleanLine.includes(data.course.toLowerCase())) ||
+                (data.module && cleanLine.includes(data.module.toLowerCase())) ||
+                (data.title && (cleanLine.includes(data.title.toLowerCase()) || data.title.toLowerCase().includes(cleanLine))) ||
+                trimmedLine.toLowerCase().startsWith("module:") ||
+                trimmedLine.toLowerCase().startsWith("lesson:") ||
+                trimmedLine.toLowerCase().startsWith("course:") ||
+                trimmedLine.toLowerCase().startsWith("topic:");
+
+            // Skip redundant titles, and skip early dividers/empty lines that often follow them
+            if (isRedundant || (trimmedLine.match(/^[-*_]{3,}$/) && y < 65)) {
+                return;
+            }
+
+            if (!trimmedLine && y < 65) {
                 return;
             }
 
@@ -250,40 +283,32 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
             if (trimmedLine.startsWith("# ")) {
                 const headerText = stripMarkdown(trimmedLine.substring(2).trim());
-                // Skip if it matches the course title to avoid redundancy
-                if (headerText.toLowerCase() === data.title?.toLowerCase()) {
-                    return;
-                }
-                y += 5;
+                y += 2;
                 pdf.setFont("helvetica", "bold");
                 pdf.setFontSize(26);
-                pdf.setTextColor(...COLORS.primary);
+                pdf.setTextColor(...COLORS.text);
                 pdf.text(headerText, pageWidth / 2, y, { align: "center" });
-                y += 15;
+                y += 10;
             } else if (trimmedLine.startsWith("## ")) {
-                y += 5;
+                y += 2;
                 pdf.setFont("helvetica", "bold");
                 pdf.setFontSize(20);
-                pdf.setTextColor(...COLORS.primary);
-                const headerText = stripMarkdown(trimmedLine.substring(3).toUpperCase());
+                pdf.setTextColor(...COLORS.text);
+                const headerText = stripMarkdown(trimmedLine.substring(3).trim());
                 const lines = pdf.splitTextToSize(headerText, contentWidth);
                 pdf.text(lines, margin, y);
 
                 const lastLineW = pdf.getTextWidth(lines[lines.length - 1]);
-                pdf.setDrawColor(...COLORS.primary);
-                pdf.setLineWidth(0.8);
-                const lineY = y + (lines.length * 7) - 4;
-                pdf.line(margin, lineY, margin + lastLineW, lineY);
-                y += (lines.length * 7) + 5;
+                y += (lines.length * 7) + 3;
             } else if (trimmedLine.startsWith("### ")) {
-                y += 3;
+                y += 2;
                 pdf.setFont("helvetica", "bold");
                 pdf.setFontSize(15);
                 pdf.setTextColor(...COLORS.text);
                 const headerText = stripMarkdown(trimmedLine.substring(4));
                 const lines = pdf.splitTextToSize(headerText, contentWidth);
                 pdf.text(lines, margin, y);
-                y += (lines.length * 7) + 2;
+                y += (lines.length * 7) + 1;
             } else if (trimmedLine.startsWith("#### ")) {
                 y += 2;
                 pdf.setFont("helvetica", "bold");

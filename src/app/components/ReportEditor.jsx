@@ -10,6 +10,7 @@ import {
     ShieldCheck, AlertTriangle, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 import { useRouter } from "next/navigation";
 import { saveAs } from "file-saver";
 import { useTheme } from "./ThemeProvider";
@@ -67,7 +68,7 @@ export default function ReportEditor({ reportId }) {
 
     const fetchReport = async () => {
         try {
-            const res = await fetch(`/api/reports/${reportId}`, { credentials: "include" });
+            const res = await apiClient.get(`/api/reports/${reportId}`);
             if (res.ok) {
                 const data = await res.json();
                 const r = data.report;
@@ -170,16 +171,11 @@ export default function ReportEditor({ reportId }) {
         if (!toolbar.text || isRewriting) return;
         setIsRewriting(true);
         try {
-            const res = await fetch('/api/rewrite-content', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: toolbar.text,
-                    action,
-                    topic: report?.title,
-                    citationStyle: report?.citationStyle
-                }),
-                credentials: 'include'
+            const res = await apiClient.post('/api/rewrite-content', {
+                text: toolbar.text,
+                action,
+                topic: report?.title,
+                citationStyle: report?.citationStyle
             });
 
             if (res.ok) {
@@ -232,26 +228,21 @@ export default function ReportEditor({ reportId }) {
             const sections = sectionsOverride || report?.sections;
             const references = referencesOverride || (referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences);
 
-            const res = await fetch(`/api/reports/${reportId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    fullContent: content,
-                    titlePageContent,
-                    sections,
-                    references,
-                    abstract: report?.abstract,
-                    title: report?.title,
-                    outline: report?.outline,
-                    sectionLengths,
-                    // metadata
-                    authorName,
-                    institution,
-                    courseName,
-                    studentName,
-                    submissionDate,
-                }),
+            const res = await apiClient.patch(`/api/reports/${reportId}`, {
+                fullContent: content,
+                titlePageContent,
+                sections,
+                references,
+                abstract: report?.abstract,
+                title: report?.title,
+                outline: report?.outline,
+                sectionLengths,
+                // metadata
+                authorName,
+                institution,
+                courseName,
+                studentName,
+                submissionDate,
             });
 
             if (res.ok) {
@@ -488,24 +479,19 @@ export default function ReportEditor({ reportId }) {
         const toastId = toast.loading("Synthesizing abstract...");
 
         try {
-            const res = await fetch("/api/generate-report-section", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    reportId,
-                    sectionId: "abstract",
-                    sectionTitle: "Abstract",
-                    sectionDescription: `Generate a comprehensive abstract (150-250 words) summarizing the ${report.type} on "${report.topic}". Include key findings, methodology, and conclusions.`,
-                    topic: report.topic,
-                    type: report.type,
-                    difficulty: report.academicLevel || "Undergraduate",
-                    citationStyle: report.citationStyle || "APA 7",
-                    criticalDepth: report.criticalDepth || "Moderate",
-                    requestedPages: 1,
-                    existingContent: editorRef.current.innerHTML,
-                    existingReferences: allReferences
-                }),
+            const res = await apiClient.post("/api/generate-report-section", {
+                reportId,
+                sectionId: "abstract",
+                sectionTitle: "Abstract",
+                sectionDescription: `Generate a comprehensive abstract (150-250 words) summarizing the ${report.type} on "${report.topic}". Include key findings, methodology, and conclusions.`,
+                topic: report.topic,
+                type: report.type,
+                difficulty: report.academicLevel || "Undergraduate",
+                citationStyle: report.citationStyle || "APA 7",
+                criticalDepth: report.criticalDepth || "Moderate",
+                requestedPages: 1,
+                existingContent: editorRef.current.innerHTML,
+                existingReferences: allReferences
             });
 
             if (!res.ok) throw new Error("Abstract generation failed");
@@ -550,14 +536,9 @@ export default function ReportEditor({ reportId }) {
                 setReport(updatedReport);
 
                 // Save abstract to database
-                await fetch(`/api/reports/${reportId}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        abstract: abstractText,
-                        fullContent: editorRef.current.innerHTML
-                    }),
+                await apiClient.patch(`/api/reports/${reportId}`, {
+                    abstract: abstractText,
+                    fullContent: editorRef.current.innerHTML
                 });
 
                 await saveReport(editorRef.current.innerHTML, report.sections);
@@ -576,24 +557,19 @@ export default function ReportEditor({ reportId }) {
         const toastId = toast.loading(`Drafting "${section.title}"...`);
 
         try {
-            const res = await fetch("/api/generate-report-section", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    reportId,
-                    sectionId: section.id,
-                    sectionTitle: section.title,
-                    sectionDescription: section.description,
-                    topic: report.topic,
-                    type: report.type,
-                    difficulty: report.academicLevel || "Undergraduate",
-                    citationStyle: report.citationStyle || "APA 7",
-                    criticalDepth: report.criticalDepth || "Moderate",
-                    requestedPages: sectionLengths[section.id] || 1,
-                    existingContent: editorRef.current.innerHTML,
-                    existingReferences: allReferences
-                }),
+            const res = await apiClient.post("/api/generate-report-section", {
+                reportId,
+                sectionId: section.id,
+                sectionTitle: section.title,
+                sectionDescription: section.description,
+                topic: report.topic,
+                type: report.type,
+                difficulty: report.academicLevel || "Undergraduate",
+                citationStyle: report.citationStyle || "APA 7",
+                criticalDepth: report.criticalDepth || "Moderate",
+                requestedPages: sectionLengths[section.id] || 1,
+                existingContent: editorRef.current.innerHTML,
+                existingReferences: allReferences
             });
 
             if (!res.ok) throw new Error("Generation failed");
@@ -656,23 +632,19 @@ export default function ReportEditor({ reportId }) {
 
     const exportAsLaTeX = async () => {
         try {
-            const res = await fetch("/api/latex-converter", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    structuredContent: {
-                        title: report.title,
-                        author: authorName,
-                        institution: institution,
-                        course: courseName,
-                        name: studentName,
-                        date: submissionDate,
-                        abstract: report.abstract || "",
-                        titlePageContent: titlePageRef.current ? titlePageRef.current.innerText : "",
-                        sections: [{ title: "Content", content: editorRef.current.innerText }],
-                        references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
-                    }
-                })
+            const res = await apiClient.post("/api/latex-converter", {
+                structuredContent: {
+                    title: report.title,
+                    author: authorName,
+                    institution: institution,
+                    course: courseName,
+                    name: studentName,
+                    date: submissionDate,
+                    abstract: report.abstract || "",
+                    titlePageContent: titlePageRef.current ? titlePageRef.current.innerText : "",
+                    sections: [{ title: "Content", content: editorRef.current.innerText }],
+                    references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
+                }
             });
             const data = await res.json();
             if (data.success) {
@@ -690,36 +662,32 @@ export default function ReportEditor({ reportId }) {
 
         try {
             // Server-side docx generation using docxtemplater
-            const res = await fetch("/api/generate-doc", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: report.title,
-                    author: authorName,
-                    institution: institution,
-                    course: courseName,
-                    name: studentName,
-                    date: submissionDate,
-                    citationStyle: report.citationStyle,
-                    abstract: report.abstract || "",
-                    titlePageContent: titlePageRef.current ? titlePageRef.current.innerHTML : "",
-                    // Parse the current HTML into multiple sections and paragraphs for the template
-                    sections: Array.from(editorRef.current.querySelectorAll('h2')).map(h2 => {
-                        let paragraphs = [];
-                        let next = h2.nextElementSibling;
-                        while (next && next.tagName !== 'H2') {
-                            if (next.tagName === 'P') {
-                                paragraphs.push(next.innerText);
-                            }
-                            next = next.nextElementSibling;
+            const res = await apiClient.post("/api/generate-doc", {
+                title: report.title,
+                author: authorName,
+                institution: institution,
+                course: courseName,
+                name: studentName,
+                date: submissionDate,
+                citationStyle: report.citationStyle,
+                abstract: report.abstract || "",
+                titlePageContent: titlePageRef.current ? titlePageRef.current.innerHTML : "",
+                // Parse the current HTML into multiple sections and paragraphs for the template
+                sections: Array.from(editorRef.current.querySelectorAll('h2')).map(h2 => {
+                    let paragraphs = [];
+                    let next = h2.nextElementSibling;
+                    while (next && next.tagName !== 'H2') {
+                        if (next.tagName === 'P') {
+                            paragraphs.push(next.innerText);
                         }
-                        return {
-                            Heading: h2.innerText,
-                            paragraphs: paragraphs
-                        };
-                    }).filter(s => s.Heading),
-                    references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
-                })
+                        next = next.nextElementSibling;
+                    }
+                    return {
+                        Heading: h2.innerText,
+                        paragraphs: paragraphs
+                    };
+                }).filter(s => s.Heading),
+                references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
             });
 
             if (!res.ok) throw new Error("Failed to generate DOCX");
@@ -788,7 +756,7 @@ export default function ReportEditor({ reportId }) {
             // First save to ensure we validate latest content
             await saveReport();
 
-            const res = await fetch(`/api/reports/${reportId}/validate`, { credentials: "include" });
+            const res = await apiClient.get(`/api/reports/${reportId}/validate`);
             if (res.ok) {
                 const { results } = await res.json();
                 setValidationResults(results);

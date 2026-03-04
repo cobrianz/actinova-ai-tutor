@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import HeroNavbar from "../components/heroNavbar";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function BlogPage() {
     const [selectedCategory, setSelectedCategory] = useState("all");
@@ -30,7 +31,7 @@ export default function BlogPage() {
         const fetchPosts = async () => {
             try {
                 setLoading(true);
-                const res = await fetch("/api/blog", { credentials: "include" });
+                const res = await apiClient.get("/api/blog");
                 if (!res.ok) throw new Error("Failed to load blog posts");
                 const data = await res.json();
                 const posts = data.posts || [];
@@ -478,11 +479,7 @@ function NewsletterForm() {
         if (!email) return;
         setStatus("loading");
         try {
-            const res = await fetch("/api/newsletter", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
+            const res = await apiClient.post("/api/newsletter", { email });
             if (res.ok) {
                 setStatus("success");
                 setEmail("");

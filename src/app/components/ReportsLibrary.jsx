@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Plus, FileText, MoreVertical, Trash2, ExternalLink, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function ReportsLibrary({ setActiveContent }) {
     const [reports, setReports] = useState([]);
@@ -19,7 +20,7 @@ export default function ReportsLibrary({ setActiveContent }) {
 
     const fetchReports = async () => {
         try {
-            const res = await fetch("/api/reports", { credentials: "include" });
+            const res = await apiClient.get("/api/reports");
             if (res.ok) {
                 const data = await res.json();
                 setReports(data.reports || []);
@@ -34,10 +35,7 @@ export default function ReportsLibrary({ setActiveContent }) {
     const deleteReport = async (id) => {
         if (!confirm("Are you sure you want to delete this report?")) return;
         try {
-            const res = await fetch(`/api/reports/${id}`, {
-                method: "DELETE",
-                credentials: "include",
-            });
+            const res = await apiClient.delete(`/api/reports/${id}`);
             if (res.ok) {
                 setReports(reports.filter(r => r._id !== id));
                 toast.success("Report deleted");

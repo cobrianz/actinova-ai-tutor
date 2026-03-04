@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Facebook, Twitter, Instagram, Github, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Footer() {
   const footerLinks = {
@@ -125,11 +126,7 @@ function NewsletterForm() {
 
     setStatus("loading");
     try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const res = await apiClient.post("/api/newsletter", { email });
       const data = await res.json();
       if (res.ok) {
         setStatus("success");

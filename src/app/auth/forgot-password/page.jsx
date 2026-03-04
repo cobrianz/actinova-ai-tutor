@@ -14,6 +14,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -38,11 +39,7 @@ export default function ForgotPasswordPage() {
           return;
         }
 
-        const res = await fetch("/api/forgot-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+        const res = await apiClient.post("/api/forgot-password", { email });
 
         const data = await res.json();
 
@@ -67,11 +64,7 @@ export default function ForgotPasswordPage() {
           return;
         }
 
-        const res = await fetch("/api/verify-reset-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code }),
-        });
+        const res = await apiClient.post("/api/verify-reset-code", { email, code });
 
         const data = await res.json();
 
@@ -99,11 +92,7 @@ export default function ForgotPasswordPage() {
           return;
         }
 
-        const res = await fetch("/api/reset-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code, password }),
-        });
+        const res = await apiClient.post("/api/reset-password", { email, code, password });
 
         const data = await res.json();
 

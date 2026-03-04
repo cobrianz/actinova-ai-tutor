@@ -20,6 +20,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmModal from "./ConfirmModal";
 import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
+import { apiClient } from "@/lib/csrfClient";
 
 // Function to render markdown/rich text formatting
 const renderFormattedContent = (content) => {
@@ -88,10 +89,9 @@ export default function Chat({ topic: propTopic }) {
     if (!currentTopic || !user) return [];
 
     try {
-      const response = await fetch(
+      const response = await apiClient.get(
         `/api/chat/history?topic=${encodeURIComponent(currentTopic)}`,
         {
-          credentials: "include",
           headers: {
             "x-user-id": user?._id || user?.id || "",
           },
@@ -113,17 +113,13 @@ export default function Chat({ topic: propTopic }) {
     if (!currentTopic || !user || messagesToSave.length === 0) return;
 
     try {
-      await fetch("/api/chat/history", {
-        method: "POST",
+      await apiClient.post("/api/chat/history", {
+        topic: currentTopic,
+        messages: messagesToSave,
+      }, {
         headers: {
-          "Content-Type": "application/json",
           "x-user-id": user?._id || user?.id || "",
-        },
-        body: JSON.stringify({
-          topic: currentTopic,
-          messages: messagesToSave,
-        }),
-        credentials: "include",
+        }
       });
     } catch (error) {
       console.error("Error saving chat history:", error);
@@ -148,9 +144,7 @@ export default function Chat({ topic: propTopic }) {
 
     setLoadingTopics(true);
     try {
-      const response = await fetch("/api/chat/history?action=topics", {
-        credentials: "include",
-      });
+      const response = await apiClient.get("/api/chat/history?action=topics");
 
       if (response.ok) {
         const data = await response.json();
@@ -260,9 +254,8 @@ export default function Chat({ topic: propTopic }) {
   const confirmClearHistory = async () => {
     if (!topic) return;
     try {
-      const response = await fetch(
-        `/api/chat/history?topic=${encodeURIComponent(topic)}`,
-        { method: "DELETE", credentials: "include" }
+      const response = await apiClient.delete(
+        `/api/chat/history?topic=${encodeURIComponent(topic)}`
       );
       if (response.ok) {
         setMessages([]);
@@ -284,9 +277,8 @@ export default function Chat({ topic: propTopic }) {
   const confirmDeleteTopic = async () => {
     if (!topicToDelete) return;
     try {
-      const response = await fetch(
-        `/api/chat/history?topic=${encodeURIComponent(topicToDelete)}&action=delete`,
-        { method: "DELETE", credentials: "include" }
+      const response = await apiClient.delete(
+        `/api/chat/history?topic=${encodeURIComponent(topicToDelete)}&action=delete`
       );
       if (response.ok) {
         toast.success(`Chat "${topicToDelete}" deleted`);
@@ -341,15 +333,10 @@ export default function Chat({ topic: propTopic }) {
         content: msg.content,
       }));
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMessage.content,
-          conversationHistory,
-          topic: topic,
-        }),
-        credentials: "include",
+      const response = await apiClient.post("/api/chat", {
+        message: userMessage.content,
+        conversationHistory,
+        topic: topic,
       });
 
       const data = await response.json();

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 const PLAN_UI_METADATA = {
   premium: {
@@ -62,7 +63,7 @@ function CheckoutContent() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await fetch("/api/plans");
+        const res = await apiClient.get("/api/plans");
         if (res.ok) {
           const data = await res.json();
           const filteredPlans = (data.plans || []).filter(plan =>
@@ -106,7 +107,7 @@ function CheckoutContent() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/me", { credentials: "include" });
+        const res = await apiClient.get("/api/me");
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
@@ -130,15 +131,10 @@ function CheckoutContent() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/billing/create-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          plan: selectedPlan,
-          billingCycle: "monthly",
-          paymentMethod: paymentMethod // Dynamic method
-        }),
+      const res = await apiClient.post("/api/billing/create-session", {
+        plan: selectedPlan,
+        billingCycle: "monthly",
+        paymentMethod: paymentMethod // Dynamic method
       });
 
       const data = await res.json();

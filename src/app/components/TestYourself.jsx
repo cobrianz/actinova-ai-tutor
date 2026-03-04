@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import QuizInterface from "./QuizInterface";
+import { apiClient } from "@/lib/csrfClient";
 
 const TestYourself = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -31,9 +32,7 @@ const TestYourself = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const response = await fetch("/api/quizzes", {
-          credentials: "include",
-        });
+        const response = await apiClient.get("/api/quizzes");
         if (response.ok) {
           const data = await response.json();
           setQuizzes(data);
@@ -98,14 +97,12 @@ const TestYourself = () => {
     }
 
     try {
-      const response = await fetch(`/api/quizzes/${quizId}`, {
-        method: "DELETE",
-      });
+      const response = await apiClient.delete(`/api/quizzes/${quizId}`);
 
       if (response.ok) {
         toast.success("Quiz deleted successfully");
         // Refresh the quizzes list
-        const response = await fetch("/api/quizzes");
+        const response = await apiClient.get("/api/quizzes");
         if (response.ok) {
           const data = await response.json();
           setQuizzes(data);
@@ -367,8 +364,8 @@ const TestYourself = () => {
                               </span>
                             )}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${quiz.difficulty === 'easy' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
-                                quiz.difficulty === 'medium' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-                                  'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                              quiz.difficulty === 'medium' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                                'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
                               }`}>
                               {quiz.difficulty}
                             </span>
@@ -411,8 +408,8 @@ const TestYourself = () => {
                               key={page}
                               onClick={() => setCurrentPage(page)}
                               className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === page
-                                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                                  : "bg-card border border-border text-muted-foreground hover:bg-muted"
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                                : "bg-card border border-border text-muted-foreground hover:bg-muted"
                                 }`}
                             >
                               {page}

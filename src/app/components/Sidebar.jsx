@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Sidebar({
   setActiveContent,
@@ -128,9 +129,7 @@ export default function Sidebar({
 
   const fetchUsage = async () => {
     try {
-      const res = await fetch("/api/user/usage", {
-        credentials: "include",
-      });
+      const res = await apiClient.get("/api/user/usage");
       if (res.ok) {
         const data = await res.json();
         setUsage(data);

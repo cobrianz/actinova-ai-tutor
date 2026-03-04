@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Eye,
 } from "lucide-react";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function FlashcardsLibrary({ setActiveContent }) {
   const [flashcards, setFlashcards] = useState([]);
@@ -45,12 +46,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
 
   const fetchFlashcards = async (retryAfterRefresh = true) => {
     try {
-      const response = await fetch("/api/flashcards", {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await apiClient.get("/api/flashcards");
 
       if (response.status === 401 && retryAfterRefresh) {
         // Try to refresh token and retry
@@ -87,10 +83,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
     if (!flashcardToDelete) return;
 
     try {
-      const response = await fetch(`/api/flashcards/${flashcardToDelete._id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await apiClient.delete(`/api/flashcards/${flashcardToDelete._id}`);
 
       if (response.status === 401 && retryAfterRefresh) {
         // Try to refresh token and retry
@@ -138,17 +131,13 @@ export default function FlashcardsLibrary({ setActiveContent }) {
     } catch { }
 
     try {
-      const response = await fetch("/api/library", {
-        method: "POST",
-        credentials: "include",
+      const response = await apiClient.post("/api/library", {
+        action: "bookmark",
+        itemId: `cards_${flashcardId}`,
+      }, {
         headers: {
-          "Content-Type": "application/json",
           "x-user-id": user?._id || user?.id || "",
-        },
-        body: JSON.stringify({
-          action: "bookmark",
-          itemId: `cards_${flashcardId}`,
-        }),
+        }
       });
 
       if (response.status === 401 && retryAfterRefresh) {

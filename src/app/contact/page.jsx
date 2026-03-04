@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import HeroNavbar from "../components/heroNavbar";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -37,11 +38,7 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const res = await apiClient.post("/api/contact", formData);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to send message");
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import HeroNavbar from "../components/heroNavbar";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 import {
   Dialog,
@@ -32,9 +33,7 @@ export default function PricingPage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch("/api/me", {
-          credentials: "include",
-        });
+        const response = await apiClient.get("/api/me");
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
@@ -48,7 +47,7 @@ export default function PricingPage() {
 
     const fetchPlans = async () => {
       try {
-        const res = await fetch("/api/plans");
+        const res = await apiClient.get("/api/plans");
         if (res.ok) {
           const data = await res.json();
           // Ensure every plan has a unique ID
@@ -141,16 +140,9 @@ export default function PricingPage() {
     setProcessingPlanId(plan.id);
 
     try {
-      const response = await fetch("/api/billing/create-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          plan: plan.id === 'premium' ? 'pro' : plan.id,
-          paymentMethod: method, // 'card' or 'mobile_money'
-        }),
+      const response = await apiClient.post("/api/billing/create-session", {
+        plan: plan.id === 'premium' ? 'pro' : plan.id,
+        paymentMethod: method, // 'card' or 'mobile_money'
       });
 
       const data = await response.json();

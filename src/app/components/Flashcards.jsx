@@ -17,6 +17,7 @@ import {
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Flashcards({ cardData }) {
   const [flipped, setFlipped] = useState({});
@@ -32,7 +33,7 @@ export default function Flashcards({ cardData }) {
       setStudyCards(cardData.cards);
     } else if (cardData?._id) {
       // Fetch the cards if not provided
-      fetch(`/api/flashcards/${cardData._id}`)
+      apiClient.get(`/api/flashcards/${cardData._id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.cards) {
@@ -108,17 +109,12 @@ export default function Flashcards({ cardData }) {
       const increment = isPremium ? 15 : 8; // Pro: 15 more, Free: up to 8 total
       const additionalCards = Math.min(increment, maxCards - studyCards.length);
 
-      const genRes = await fetch("/api/generate-flashcards", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: cardData.topic || cardData.title,
-          difficulty: cardData.level || "beginner",
-          existingCardSetId: cardData._id,
-          additionalCards: additionalCards,
-          existingCardCount: studyCards.length,
-        }),
+      const genRes = await apiClient.post("/api/generate-flashcards", {
+        topic: cardData.topic || cardData.title,
+        difficulty: cardData.level || "beginner",
+        existingCardSetId: cardData._id,
+        additionalCards: additionalCards,
+        existingCardCount: studyCards.length,
       });
 
       if (!genRes.ok) {
@@ -144,7 +140,7 @@ export default function Flashcards({ cardData }) {
       } else if (generated.success) {
         // For existing set updates, refresh the cards from the API
         try {
-          const refreshRes = await fetch(`/api/flashcards/${cardData._id}`);
+          const refreshRes = await apiClient.get(`/api/flashcards/${cardData._id}`);
           if (refreshRes.ok) {
             const refreshData = await refreshRes.json();
             setStudyCards(refreshData.cards || []);

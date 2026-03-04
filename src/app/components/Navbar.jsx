@@ -17,15 +17,9 @@ import {
   Settings,
   CreditCard
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Navbar({ toggleSidebar }) {
   const { user, logout } = useAuth();
@@ -38,9 +32,7 @@ export default function Navbar({ toggleSidebar }) {
   useEffect(() => {
     const checkUsageStats = async () => {
       try {
-        const response = await fetch("/api/user/usage", {
-          credentials: "include",
-        });
+        const response = await apiClient.get("/api/user/usage");
 
         if (response.ok) {
           const data = await response.json();

@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
+import { apiClient } from "@/lib/csrfClient";
 
 const staticCategories = [
   {
@@ -910,9 +911,7 @@ export default function Explore() {
       // If no valid courses in localStorage, check database (server reads auth from HttpOnly cookie)
       if (courses.length === 0) {
         try {
-          const response = await fetch("/api/explore/persisted-courses", {
-            credentials: "include",
-          });
+          const response = await apiClient.get("/api/explore/persisted-courses");
 
           if (response.ok) {
             const dbData = await response.json();
@@ -955,14 +954,7 @@ export default function Explore() {
 
   const saveCoursesToDatabase = async (courses) => {
     try {
-      await fetch("/api/explore/persisted-courses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ courses }),
-      });
+      await apiClient.post("/api/explore/persisted-courses", { courses });
     } catch (error) {
       console.error("Error saving courses to database:", error);
     }
@@ -989,9 +981,7 @@ export default function Explore() {
     try {
       setLoading(true);
       // Fetch AI-generated trending topics (auth via HttpOnly cookie)
-      const trendingResponse = await fetch("/api/explore/trending-topics", {
-        credentials: "include",
-      });
+      const trendingResponse = await apiClient.get("/api/explore/trending-topics");
       if (trendingResponse.ok) {
         const trendingData = await trendingResponse.json();
         setTrendingTopics((trendingData.topics || []).slice(0, 9));
@@ -1014,9 +1004,7 @@ export default function Explore() {
         isPremium: isPremium,
       });
 
-      const response = await fetch(`/api/courses?${params}`, {
-        credentials: "include",
-      });
+      const response = await apiClient.get(`/api/courses?${params}`);
       if (response.ok) {
         const data = await response.json();
         setPagination(data.pagination || {});
@@ -1047,15 +1035,10 @@ export default function Explore() {
       }
 
       // Generate the course (server reads cookie for auth)
-      const response = await fetch("/api/generate-course", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: topic.title,
-          format: "course",
-          difficulty,
-        }),
+      const response = await apiClient.post("/api/generate-course", {
+        topic: topic.title,
+        format: "course",
+        difficulty,
       });
 
       if (!response.ok) {
@@ -1117,11 +1100,8 @@ export default function Explore() {
     setExploringCategory(category.name);
 
     try {
-      const response = await fetch(
-        `/api/explore/category-courses?category=${encodeURIComponent(category.name)}`,
-        {
-          credentials: "include",
-        }
+      const response = await apiClient.get(
+        `/api/explore/category-courses?category=${encodeURIComponent(category.name)}`
       );
 
       if (response.status === 401 && retryAfterRefresh) {
@@ -1191,16 +1171,12 @@ export default function Explore() {
 
   const handleBookmark = async (itemId, type, itemData) => {
     try {
-      const headers = { "Content-Type": "application/json" };
-      const response = await fetch("/api/library", {
-        method: "POST",
-        headers: { ...headers, "x-user-id": user?._id || user?.id || "" },
-        credentials: "include",
-        body: JSON.stringify({
-          action: "bookmark",
-          courseId: itemId,
-          courseData: itemData,
-        }),
+      const response = await apiClient.post("/api/library", {
+        action: "bookmark",
+        courseId: itemId,
+        courseData: itemData,
+      }, {
+        headers: { "x-user-id": user?._id || user?.id || "" }
       });
 
       if (response.ok) {

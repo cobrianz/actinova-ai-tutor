@@ -94,7 +94,7 @@ export default function PremiumCourses() {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch("/api/premium-courses");
+      const response = await apiClient.get("/api/premium-courses");
       if (response.ok) {
         const data = await response.json();
         setCourses(data.courses);
@@ -114,8 +114,7 @@ export default function PremiumCourses() {
 
   const fetchTrendingCourses = async () => {
     try {
-      const response = await fetch("/api/premium-courses/trending", {
-        credentials: "include",
+      const response = await apiClient.get("/api/premium-courses/trending", {
         headers: {
           "x-user-id": user?._id || user?.id || "",
         },

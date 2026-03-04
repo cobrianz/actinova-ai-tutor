@@ -10,6 +10,7 @@ import { CheckCircle, XCircle, ArrowLeft, Eye, Download } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import { downloadQuizAsPDF } from "@/lib/pdfUtils";
+import { apiClient } from "@/lib/csrfClient";
 
 const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
   const [answers, setAnswers] = useState({});
@@ -167,20 +168,13 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
     ) {
 
       // Don't await this - make it non-blocking so quiz completion isn't delayed
-      fetch(`/api/quizzes/${quizId}/performance`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          score: totalScore,
-          totalMarks: loadedQuestions.reduce(
-            (acc, card) => acc + card.points,
-            0
-          ),
-          answers,
-        }),
+      apiClient.post(`/api/quizzes/${quizId}/performance`, {
+        score: totalScore,
+        totalMarks: loadedQuestions.reduce(
+          (acc, card) => acc + card.points,
+          0
+        ),
+        answers,
       })
         .then(async (response) => {
           if (response.ok) {
