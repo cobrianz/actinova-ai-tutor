@@ -85,6 +85,7 @@ function getFreeLimits() {
         generateCourseLimit: 5, // per month
         quizGenerations: 2, // per month
         reportGenerations: 1, // per month
+        careerLimit: 2, // per month
     };
 }
 
@@ -101,6 +102,7 @@ function getProLimits() {
         generateCourseLimit: 50, // per month
         quizGenerations: 20, // per month
         reportGenerations: 20, // per month
+        careerLimit: 15, // per month
     };
 }
 
@@ -116,6 +118,7 @@ function getEnterpriseLimits() {
         aiResponses: -1, // unlimited
         generateCourseLimit: -1, // unlimited
         reportGenerations: -1, // unlimited
+        careerLimit: -1, // unlimited
     };
 }
 

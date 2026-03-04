@@ -14,6 +14,8 @@ import {
   User,
   LogOut,
   TrendingUp,
+  Briefcase,
+  Brain
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -50,6 +52,8 @@ export default function Sidebar({
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
     { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
     { name: "AI Chat", id: "chat", icon: MessageCircle },
+    { name: "Career Growth", id: "career", icon: Briefcase },
+    { name: "Review Center", id: "reviews", icon: Brain },
     { name: "Premium", id: "premium-courses", icon: Star },
     // Only show upgrade when auth has finished loading and user is not pro
     !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },

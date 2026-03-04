@@ -12,6 +12,8 @@ import FlashcardsLibrary from "./FlashcardsLibrary";
 import TestYourself from "./TestYourself";
 import ReportsLibrary from "./ReportsLibrary";
 import ProfileContent from "./ProfileContent";
+import CareerGrowth from "./CareerGrowth";
+import ReviewDashboard from "./ReviewDashboard";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 
@@ -63,6 +65,8 @@ export default function DashboardContent() {
     "premium-courses": PremiumCourses,
     chat: Chat,
     profile: ProfileContent,
+    career: CareerGrowth,
+    reviews: ReviewDashboard,
   };
   const ContentComponent =
     routeComponents[activeContent] || routeComponents.generate;
@@ -98,7 +102,7 @@ export default function DashboardContent() {
           <div className="w-full h-full">
             {ContentComponent ? (
               <ContentComponent
-                key={activeContent}
+                key={`${activeContent}-${searchParams.get("tool") || ""}`}
                 setActiveContent={setActiveContent}
               />
             ) : (

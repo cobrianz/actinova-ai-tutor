@@ -2,6 +2,7 @@
 
 import LandingPage from "./components/LandingPage";
 import { useEffect } from "react";
+import { apiClient } from "@/lib/csrfClient";
 
 export default function Home() {
   useEffect(() => {

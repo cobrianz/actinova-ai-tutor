@@ -223,6 +223,7 @@ export async function checkAPILimit(userId, apiName) {
         if (apiName === "quiz") featureName = "quizGenerations";
         if (apiName === "ai-tutor-chat") featureName = "aiResponses";
         if (apiName === "generate-report-outline" || apiName === "generate-report-section") featureName = "reportGenerations";
+        if (apiName === "career") featureName = "careerLimit";
 
         const tierLimit = planLimits[featureName] || planLimits[apiName] || 5;
 

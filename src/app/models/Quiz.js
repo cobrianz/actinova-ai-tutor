@@ -28,6 +28,12 @@ const QuizSchema = new mongoose.Schema(
     questions: [QuestionSchema],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     performances: [PerformanceSchema],
+    srs: {
+      interval: { type: Number, default: 0 },
+      repetitions: { type: Number, default: 0 },
+      ease: { type: Number, default: 2.5 },
+      dueDate: { type: Date, default: Date.now },
+    },
   },
   { timestamps: true }
 );
