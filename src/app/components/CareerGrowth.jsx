@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import ResumeBuilder from "./ResumeBuilder";
@@ -15,20 +15,38 @@ import {
     Users,
     Zap,
     ArrowRight,
+    Sparkles,
+    TrendingUp,
+    CheckCircle2,
+    Loader2,
+    Briefcase,
+    BookOpen,
+    DollarSign,
+    Building2,
+    AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiClient } from "@/lib/csrfClient";
+import { toast } from "sonner";
 
 const CareerGrowth = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const subTab = searchParams.get("tool") || "overview";
+    const [trendingData, setTrendingData] = useState(null);
+    const [loadingTrends, setLoadingTrends] = useState(false);
 
-    const setSubTab = (tool) => {
+    const setSubTab = (tool, extraParams = {}) => {
         const params = new URLSearchParams(searchParams);
         if (tool === "overview") {
             params.delete("tool");
+            // Clear extra params like role
+            params.delete("role");
         } else {
             params.set("tool", tool);
+            Object.entries(extraParams).forEach(([key, value]) => {
+                params.set(key, value);
+            });
         }
         router.push(`/dashboard?${params.toString()}`);
     };
@@ -67,9 +85,51 @@ const CareerGrowth = () => {
         visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
     };
 
+    useEffect(() => {
+        const fetchTrending = async () => {
+            setLoadingTrends(true);
+            console.log("[CareerGrowth] Fetching trending data...");
+            try {
+                const response = await apiClient.get("/api/career/trending");
+                console.log("[CareerGrowth] Response status:", response.status, response.ok);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("[CareerGrowth] Received data:", {
+                        hasCareers: !!data.trendingCareers?.length,
+                        hasSkills: !!data.trendingSkills?.length,
+                        hasInsights: !!data.marketInsights
+                    });
+
+                    // Validate data structure
+                    if (data && (data.trendingCareers || data.trendingSkills || data.marketInsights)) {
+                        setTrendingData(data);
+                        console.log("[CareerGrowth] Data set successfully");
+                    } else {
+                        console.error("[CareerGrowth] Invalid data structure:", data);
+                        setTrendingData(null);
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error("[CareerGrowth] Failed to fetch trending data:", response.status, errorData);
+                    setTrendingData(null);
+                }
+            } catch (error) {
+                console.error("[CareerGrowth] Error fetching trending data:", error);
+                setTrendingData(null);
+            } finally {
+                setLoadingTrends(false);
+            }
+        };
+
+        if (subTab === "overview") {
+            fetchTrending();
+        }
+    }, [subTab]);
+
     if (subTab !== "overview") {
         return (
-            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 min-h-[80vh]">
+            <div className="max-w-7xl mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8 min-h-[80vh]">
                 {renderHeader()}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.98 }}
@@ -86,23 +146,29 @@ const CareerGrowth = () => {
     }
 
     return (
-        <div className="relative min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-indigo-500/5 rounded-full blur-[100px] -z-10" />
+        <div className="relative min-h-screen bg-white dark:bg-slate-950">
 
-            <main className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+            <main className="max-w-7xl mx-auto py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 lg:px-8">
                 {/* Hero Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-20"
+                    className="text-center mb-12 sm:mb-16 md:mb-20"
                 >
-                    <h1 className="text-6xl md:text-7xl font-black tracking-tighter mb-6 bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent italic">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20 mb-4 sm:mb-6"
+                    >
+                        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary">AI-Powered Career Suite</span>
+                    </motion.div>
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-4 sm:mb-6 px-2 bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-tight">
                         Skyrocket Your Career
                     </h1>
-                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
-                        Four specialized AI agents working in harmony to optimize your professional presence and unlock your full potential.
+                    <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium px-4">
+                        Four specialized AI tools working in harmony to optimize your professional presence and unlock your full potential.
                     </p>
                 </motion.div>
 
@@ -111,38 +177,39 @@ const CareerGrowth = () => {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="grid grid-cols-1 md:grid-cols-12 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:gap-6"
                 >
                     {/* Primary Tool: Resume Optimizer */}
                     <motion.div
                         variants={itemVariants}
                         onClick={() => setSubTab("resume")}
-                        className="md:col-span-8 group relative cursor-pointer overflow-hidden rounded-[2.5rem] border border-slate-800 bg-slate-900 text-white p-10 transition-all hover:scale-[1.01] shadow-2xl"
+                        className="md:col-span-8 group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 md:p-10 transition-all hover:scale-[1.01] hover:shadow-2xl hover:shadow-blue-500/20 hover:border-blue-500/50 active:scale-[0.99]"
                     >
-                        <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-                        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/30 transition-colors" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-violet-500/10 opacity-50" />
+                        <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[length:20px_20px]" />
+                        <div className="absolute -bottom-12 -right-12 w-32 sm:w-48 h-32 sm:h-48 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/30 transition-colors" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between h-full gap-8">
-                            <div className="max-w-sm">
-                                <div className="mb-6 inline-flex p-4 rounded-2xl bg-white/10 text-white border border-white/20">
-                                    <FileText size={32} />
+                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between h-full gap-5 sm:gap-6 md:gap-8">
+                            <div className="flex-1 max-w-md w-full">
+                                <div className="mb-4 sm:mb-6 inline-flex p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-sm">
+                                    <FileText size={24} className="sm:w-7 sm:h-7" />
                                 </div>
-                                <h2 className="text-3xl font-black mb-4">Resume Optimizer</h2>
-                                <p className="text-slate-400 mb-8 font-medium leading-relaxed">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 sm:mb-3 leading-tight">Resume Optimizer</h2>
+                                <p className="text-slate-300 mb-4 sm:mb-6 font-medium leading-relaxed text-xs sm:text-sm md:text-base">
                                     AI-driven ATS optimization to ensure your resume reaches human eyes. Precise keyword matching and impact analysis.
                                 </p>
-                                <div className="flex items-center gap-4 text-white font-black group-hover:gap-6 transition-all text-lg">
+                                <div className="flex items-center gap-2 sm:gap-3 text-white font-bold group-hover:gap-3 sm:group-hover:gap-4 transition-all text-sm sm:text-base md:text-lg">
                                     Optimize Resume
-                                    <ArrowRight size={24} />
+                                    <ArrowRight size={18} className="sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                                 </div>
                             </div>
 
-                            <div className="shrink-0 bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10 hidden md:block w-64 shadow-2xl">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Zap className="text-amber-400 fill-amber-400" size={16} />
-                                    <span className="font-black uppercase tracking-[0.2em] text-[10px]">AI Powered</span>
+                            <div className="shrink-0 bg-white/5 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 hidden md:block w-48 lg:w-56 shadow-xl">
+                                <div className="flex items-center gap-2 sm:gap-2.5 mb-2 sm:mb-3">
+                                    <Zap className="text-amber-400 fill-amber-400 sm:w-3.5 sm:h-3.5" size={12} />
+                                    <span className="font-black uppercase tracking-[0.15em] text-[8px] sm:text-[9px] text-amber-400">AI Powered</span>
                                 </div>
-                                <p className="font-bold text-sm text-slate-100 italic leading-snug">
+                                <p className="font-semibold text-[10px] sm:text-xs text-slate-200 italic leading-relaxed">
                                     "Your resume is your first impression. Let AI guarantee it's a perfect one."
                                 </p>
                             </div>
@@ -153,18 +220,21 @@ const CareerGrowth = () => {
                     <motion.div
                         variants={itemVariants}
                         onClick={() => setSubTab("skillgap")}
-                        className="md:col-span-4 group relative cursor-pointer overflow-hidden rounded-[2.5rem] border border-border/50 bg-card/40 backdrop-blur-xl p-8 transition-all hover:border-indigo-500/50 hover:shadow-[0_0_80px_-20px_rgba(99,102,241,0.2)]"
+                        className="md:col-span-4 group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 dark:from-indigo-950/50 dark:via-blue-950/50 dark:to-cyan-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98]"
                     >
-                        <div className="mb-6 inline-flex p-4 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                            <Target size={32} />
-                        </div>
-                        <h2 className="text-2xl font-black mb-3">Skill Analysis</h2>
-                        <p className="text-muted-foreground mb-12 font-medium">
-                            Identify the exact skills missing between you and your dream role.
-                        </p>
-                        <div className="flex items-center gap-2 text-indigo-500 font-bold group-hover:gap-4 transition-all">
-                            Map Future
-                            <ArrowRight size={20} />
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 via-blue-400/5 to-cyan-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative z-10">
+                            <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                <Target size={24} className="sm:w-7 sm:h-7" />
+                            </div>
+                            <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Skill Gap Analysis</h2>
+                            <p className="text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 font-medium text-xs sm:text-sm leading-relaxed">
+                                Identify the exact skills missing between you and your dream role.
+                            </p>
+                            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold group-hover:gap-2.5 sm:group-hover:gap-3 transition-all text-sm sm:text-base">
+                                Analyze Skills
+                                <ArrowRight size={16} className="sm:w-[18px] sm:h-[18px] group-hover:translate-x-1 transition-transform" />
+                            </div>
                         </div>
                     </motion.div>
 
@@ -172,18 +242,21 @@ const CareerGrowth = () => {
                     <motion.div
                         variants={itemVariants}
                         onClick={() => setSubTab("interview")}
-                        className="md:col-span-4 group relative cursor-pointer overflow-hidden rounded-[2.5rem] border border-border/50 bg-card/40 backdrop-blur-xl p-8 transition-all hover:border-purple-500/50 hover:shadow-[0_0_80px_-20px_rgba(168,85,247,0.2)]"
+                        className="md:col-span-4 group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-950/50 dark:via-pink-950/50 dark:to-rose-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl hover:shadow-purple-500/20 hover:scale-[1.02] active:scale-[0.98]"
                     >
-                        <div className="mb-6 inline-flex p-4 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
-                            <MessageSquare size={32} />
-                        </div>
-                        <h2 className="text-2xl font-black mb-3">Mock Interview</h2>
-                        <p className="text-muted-foreground mb-12 font-medium">
-                            Pressure-test your knowledge with personalized AI interviewers.
-                        </p>
-                        <div className="flex items-center gap-2 text-purple-500 font-bold group-hover:gap-4 transition-all">
-                            Start Session
-                            <ArrowRight size={20} />
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 via-pink-400/5 to-rose-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative z-10">
+                            <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                <MessageSquare size={24} className="sm:w-7 sm:h-7" />
+                            </div>
+                            <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Mock Interview</h2>
+                            <p className="text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 font-medium text-xs sm:text-sm leading-relaxed">
+                                Pressure-test your knowledge with personalized AI interviewers.
+                            </p>
+                            <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold group-hover:gap-2.5 sm:group-hover:gap-3 transition-all text-sm sm:text-base">
+                                Start Session
+                                <ArrowRight size={16} className="sm:w-[18px] sm:h-[18px] group-hover:translate-x-1 transition-transform" />
+                            </div>
                         </div>
                     </motion.div>
 
@@ -191,32 +264,33 @@ const CareerGrowth = () => {
                     <motion.div
                         variants={itemVariants}
                         onClick={() => setSubTab("network")}
-                        className="md:col-span-8 group relative cursor-pointer overflow-hidden rounded-[2.5rem] border border-slate-800 bg-slate-900 text-white p-10 transition-all hover:scale-[1.01] shadow-2xl"
+                        className="md:col-span-8 group relative cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 md:p-10 transition-all hover:scale-[1.01] hover:shadow-2xl hover:shadow-violet-500/20 hover:border-violet-500/50 active:scale-[0.99]"
                     >
-                        <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-                        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-colors" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-primary/10 opacity-50" />
+                        <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[length:20px_20px]" />
+                        <div className="absolute -bottom-12 -right-12 w-32 sm:w-48 h-32 sm:h-48 bg-violet-500/20 rounded-full blur-3xl group-hover:bg-violet-500/30 transition-colors" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between h-full gap-8">
-                            <div className="max-w-sm">
-                                <div className="mb-6 inline-flex p-4 rounded-2xl bg-white/10 text-white border border-white/20">
-                                    <Users size={32} />
+                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between h-full gap-5 sm:gap-6 md:gap-8">
+                            <div className="flex-1 max-w-md w-full">
+                                <div className="mb-4 sm:mb-6 inline-flex p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-sm">
+                                    <Users size={24} className="sm:w-7 sm:h-7" />
                                 </div>
-                                <h2 className="text-3xl font-black mb-4">Network AI</h2>
-                                <p className="text-slate-400 mb-8 font-medium leading-relaxed">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 sm:mb-3 leading-tight">Network AI</h2>
+                                <p className="text-slate-300 mb-4 sm:mb-6 font-medium leading-relaxed text-xs sm:text-sm md:text-base">
                                     Unlock back-channel opportunities. Draft perfect outreach and find ideal mentors instantly.
                                 </p>
-                                <div className="flex items-center gap-4 text-white font-black group-hover:gap-6 transition-all text-lg">
+                                <div className="flex items-center gap-2 sm:gap-3 text-white font-bold group-hover:gap-3 sm:group-hover:gap-4 transition-all text-sm sm:text-base md:text-lg">
                                     Expand Reach
-                                    <ArrowRight size={24} />
+                                    <ArrowRight size={18} className="sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                                 </div>
                             </div>
 
-                            <div className="shrink-0 bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10 hidden md:block w-64 shadow-2xl">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Zap className="text-amber-400 fill-amber-400" size={16} />
-                                    <span className="font-black uppercase tracking-[0.2em] text-[10px]">Active Networking</span>
+                            <div className="shrink-0 bg-white/5 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 hidden md:block w-48 lg:w-56 shadow-xl">
+                                <div className="flex items-center gap-2 sm:gap-2.5 mb-2 sm:mb-3">
+                                    <Zap className="text-amber-400 fill-amber-400 sm:w-3.5 sm:h-3.5" size={12} />
+                                    <span className="font-black uppercase tracking-[0.15em] text-[8px] sm:text-[9px] text-amber-400">Active Networking</span>
                                 </div>
-                                <p className="font-bold text-sm text-slate-100 italic leading-snug">
+                                <p className="font-semibold text-[10px] sm:text-xs text-slate-200 italic leading-relaxed">
                                     "Your network is your net worth. Let AI craft the connections that matter."
                                 </p>
                             </div>
@@ -224,6 +298,208 @@ const CareerGrowth = () => {
                     </motion.div>
                 </motion.div>
 
+                {/* Trending Careers and Skills Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-12 sm:mt-16 md:mt-20"
+                >
+                    <div className="text-center mb-8 sm:mb-10">
+
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 sm:mb-4 text-slate-900 dark:text-white">
+                            Trending Careers & Skills {new Date().getFullYear()}
+                        </h2>
+                        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                            Discover the most in-demand careers and skills this year, powered by AI market analysis
+                        </p>
+                    </div>
+
+                    {loadingTrends ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <Loader2 className="w-8 h-8 animate-spin text-violet-600 mb-4" />
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Loading trending careers and skills...</p>
+                        </div>
+                    ) : trendingData ? (
+                        <div className="space-y-8 sm:space-y-10">
+                            {/* Trending Careers */}
+                            {trendingData.trendingCareers && trendingData.trendingCareers.length > 0 && (
+                                <div>
+                                    <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                        <Briefcase className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                        Trending Careers
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                        {trendingData.trendingCareers.slice(0, 6).map((career, idx) => (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.1 * idx }}
+                                                className="bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950/30 dark:via-indigo-950/30 dark:to-purple-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
+                                            >
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
+                                                        {career.title}
+                                                    </h4>
+                                                    <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black uppercase tracking-wider">
+                                                        {career.growth || "Growing"}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+                                                    {career.description}
+                                                </p>
+                                                <div className="space-y-3">
+                                                    {career.averageSalary && (
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                                            <span className="font-semibold text-slate-700 dark:text-slate-300">{career.averageSalary}</span>
+                                                        </div>
+                                                    )}
+                                                    {career.industry && (
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                            <span className="text-slate-600 dark:text-slate-400">{career.industry}</span>
+                                                        </div>
+                                                    )}
+                                                    {career.skills && career.skills.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 pt-2">
+                                                            {career.skills.slice(0, 3).map((skill, i) => (
+                                                                <span key={i} className="px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-bold">
+                                                                    {skill}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="mt-5 pt-5 border-t border-violet-100 dark:border-violet-800/50 flex gap-3">
+                                                    <Button
+                                                        variant="default"
+                                                        className="flex-1 bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
+                                                        onClick={() => router.push(`/dashboard?tab=generate&topic=${encodeURIComponent(career.title)}`)}
+                                                    >
+                                                        <BookOpen className="w-4 h-4 mr-2" />
+                                                        Course
+                                                    </Button>
+                                                    <Button
+                                                        variant="secondary"
+                                                        className="flex-1 bg-violet-100 hover:bg-violet-200 text-violet-700 dark:bg-violet-900/50 dark:hover:bg-violet-900 dark:text-violet-300 shadow-sm"
+                                                        onClick={() => setSubTab("resume", { role: career.title })}
+                                                    >
+                                                        <FileText className="w-4 h-4 mr-2" />
+                                                        Resume
+                                                    </Button>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Trending Skills */}
+                            {trendingData.trendingSkills && trendingData.trendingSkills.length > 0 && (
+                                <div>
+                                    <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                        <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                                        Trending Skills to Learn
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                        {trendingData.trendingSkills.slice(0, 6).map((skill, idx) => (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.1 * idx }}
+                                                className="bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 dark:from-indigo-950/30 dark:via-blue-950/30 dark:to-cyan-950/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
+                                            >
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
+                                                        {skill.skill}
+                                                    </h4>
+                                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${skill.demand === 'critical' ? 'bg-red-500 text-white' :
+                                                        skill.demand === 'high' ? 'bg-orange-500 text-white' :
+                                                            'bg-yellow-500 text-white'
+                                                        }`}>
+                                                        {skill.demand || 'Medium'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+                                                    {skill.description}
+                                                </p>
+                                                {skill.relatedCareers && skill.relatedCareers.length > 0 && (
+                                                    <div className="pt-3 border-t border-indigo-200 dark:border-indigo-800">
+                                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Related Careers</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {skill.relatedCareers.slice(0, 2).map((career, i) => (
+                                                                <span key={i} className="px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                                                                    {career}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Market Insights */}
+                            {trendingData.marketInsights && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl sm:rounded-2xl p-6 sm:p-8"
+                                >
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                        <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Market Insights</h3>
+                                    </div>
+                                    <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
+                                        {trendingData.marketInsights}
+                                    </p>
+                                </motion.div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <AlertCircle className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+                            <p className="text-slate-600 dark:text-slate-400 mb-4">Unable to load trending data.</p>
+                            <Button
+                                onClick={() => {
+                                    setLoadingTrends(true);
+                                    setTrendingData(null);
+                                    const fetchTrending = async () => {
+                                        try {
+                                            const response = await apiClient.get("/api/career/trending");
+                                            if (response.ok) {
+                                                const data = await response.json();
+                                                if (data && (data.trendingCareers || data.trendingSkills || data.marketInsights)) {
+                                                    setTrendingData(data);
+                                                } else {
+                                                    setTrendingData(null);
+                                                }
+                                            } else {
+                                                setTrendingData(null);
+                                            }
+                                        } catch (error) {
+                                            console.error("Error fetching trending data:", error);
+                                            setTrendingData(null);
+                                        } finally {
+                                            setLoadingTrends(false);
+                                        }
+                                    };
+                                    fetchTrending();
+                                }}
+                                variant="outline"
+                                className="mt-4"
+                            >
+                                <Loader2 className="w-4 h-4 mr-2" />
+                                Retry
+                            </Button>
+                        </div>
+                    )}
+                </motion.div>
             </main>
         </div>
     );

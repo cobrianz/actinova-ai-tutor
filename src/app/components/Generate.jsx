@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Sparkles,
   BookOpen,
@@ -19,8 +19,11 @@ import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
 
 export default function Generate({ setActiveContent }) {
-  const [topic, setTopic] = useState("");
-  const [localTopic, setLocalTopic] = useState("");
+  const searchParams = useSearchParams();
+  const initialTopic = searchParams.get("topic") || "";
+
+  const [topic, setTopic] = useState(initialTopic);
+  const [localTopic, setLocalTopic] = useState(initialTopic);
   const [format, setFormat] = useState("course");
   const [difficulty, setDifficulty] = useState("beginner");
   const [questionsCount, setQuestionsCount] = useState(10);

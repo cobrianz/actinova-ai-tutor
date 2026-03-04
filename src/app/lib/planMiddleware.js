@@ -248,7 +248,8 @@ export function withAPIRateLimit(handler, apiName) {
         try {
             const user = request.user;
             if (!user) {
-                return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+                // If auth is optional, allow request to pass without rate limiting
+                return handler(request, context);
             }
 
             const limitCheck = await checkAPILimit(user._id, apiName);
@@ -273,7 +274,7 @@ export function withAPIRateLimit(handler, apiName) {
             const response = await handler(request, context);
 
             // Add usage headers (using current check-only status)
-            if (response instanceof NextResponse) {
+            if (response && response instanceof NextResponse) {
                 response.headers.set("X-RateLimit-Limit", limitCheck.limit.toString());
                 response.headers.set("X-RateLimit-Remaining", (limitCheck.remaining).toString());
                 response.headers.set("X-RateLimit-Used", limitCheck.currentUsage.toString());
