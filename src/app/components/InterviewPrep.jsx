@@ -36,6 +36,24 @@ const InterviewPrep = () => {
     const [history, setHistory] = useState([]);
     const [error, setError] = useState(null);
     const [questions, setQuestions] = useState([]);
+    const [persistentHistory, setPersistentHistory] = useState([]);
+
+    // Fetch history from DB
+    React.useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const response = await apiClient.get("/api/career/history?type=interview");
+            if (response.ok) {
+                const data = await response.json();
+                setPersistentHistory(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch history:", err);
+        }
+    };
 
     const handleStart = async () => {
         if (!role.trim()) {
@@ -97,11 +115,22 @@ const InterviewPrep = () => {
                 }
 
                 setFeedback(data);
-                setHistory([...history, {
+                const newHistoryItem = {
                     question: questions[currentQuestionIdx],
                     answer: currentAnswer,
                     feedback: data
-                }]);
+                };
+                setHistory([...history, newHistoryItem]);
+
+                // Save to persistent history
+                await apiClient.post("/api/career/history", {
+                    type: "interview",
+                    title: `${role} Interview - Q${currentQuestionIdx + 1}`,
+                    data: newHistoryItem,
+                    metadata: { role, difficulty, questionIdx: currentQuestionIdx }
+                });
+                fetchHistory(); // Refresh list
+
                 toast.success("Answer evaluated!");
             } else {
                 const errorData = await response.json().catch(() => ({}));
@@ -138,6 +167,30 @@ const InterviewPrep = () => {
         setCurrentAnswer("");
         setCurrentQuestionIdx(0);
         setError(null);
+    };
+
+    const loadHistoryItem = (item) => {
+        setRole(item.metadata?.role || "");
+        setDifficulty(item.metadata?.difficulty || "intermediate");
+        setQuestions([item.data.question]);
+        setCurrentQuestionIdx(0);
+        setHistory([item.data]);
+        setFeedback(item.data.feedback);
+        setCurrentAnswer(item.data.answer);
+        setIsStarted(true);
+    };
+
+    const deleteHistoryItem = async (id, e) => {
+        e.stopPropagation();
+        try {
+            const response = await apiClient.delete(`/api/career/history?id=${id}`);
+            if (response.ok) {
+                toast.success("History item deleted");
+                setPersistentHistory(prev => prev.filter(item => item._id !== id));
+            }
+        } catch (err) {
+            toast.error("Failed to delete history item");
+        }
     };
 
     if (!isStarted) {
@@ -190,8 +243,8 @@ const InterviewPrep = () => {
                                             setError(null);
                                         }}
                                         className={`py-3.5 rounded-xl border-2 text-sm font-bold capitalize transition-all ${difficulty === d
-                                                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-600 shadow-lg shadow-purple-500/25"
-                                                : "hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-600 shadow-lg shadow-purple-500/25"
+                                            : "hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
                                             }`}
                                     >
                                         {d}
@@ -226,6 +279,58 @@ const InterviewPrep = () => {
                         </Button>
                     </CardContent>
                 </Card>
+
+                {/* History Section */}
+                {persistentHistory.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-12 space-y-6"
+                    >
+                        <div className="flex items-center gap-2 px-1">
+                            <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+                            <span className="text-xs font-black text-slate-500 dark:text-slate-400">Past Sessions</span>
+                            <span className="ml-auto text-xs font-bold text-slate-400 dark:text-slate-500">{persistentHistory.length} results</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {persistentHistory.map((item) => (
+                                <div
+                                    key={item._id}
+                                    onClick={() => loadHistoryItem(item)}
+                                    className="group relative bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-purple-400 dark:hover:border-purple-600 transition-all cursor-pointer shadow-lg shadow-purple-500/5"
+                                >
+                                    <button
+                                        onClick={(e) => deleteHistoryItem(item._id, e)}
+                                        className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+                                            <Award size={18} className="text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <div className="min-w-0 pr-6">
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">
+                                                {item.title}
+                                            </h4>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/30">
+                                                    {item.metadata?.difficulty || 'N/A'}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                                                    {new Date(item.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 italic">
+                                                "{item.data.question}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
             </div>
         );
     }
@@ -237,10 +342,10 @@ const InterviewPrep = () => {
                 {/* Progress Indicator */}
                 <div className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                        <span className="text-xs font-black text-purple-600 dark:text-purple-400">
                             Question {currentQuestionIdx + 1} of {questions.length}
                         </span>
-                        <span className="text-xs font-black uppercase tracking-wider bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1 rounded-lg">
+                        <span className="text-xs font-black bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1 rounded-lg">
                             {difficulty}
                         </span>
                     </div>
@@ -340,10 +445,10 @@ const InterviewPrep = () => {
                                         AI Evaluation
                                     </CardTitle>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 leading-none">Score</span>
+                                        <span className="text-xs font-black text-slate-500 dark:text-slate-400 leading-none">Score</span>
                                         <span className={`text-3xl font-black ${feedback.score >= 80 ? "text-emerald-500" :
-                                                feedback.score >= 60 ? "text-amber-500" :
-                                                    "text-red-500"
+                                            feedback.score >= 60 ? "text-amber-500" :
+                                                "text-red-500"
                                             }`}>
                                             {feedback.score || 0}
                                         </span>
@@ -357,7 +462,7 @@ const InterviewPrep = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-3">
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                             <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
                                             Strengths
                                         </h4>
@@ -373,7 +478,7 @@ const InterviewPrep = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Communication Style</h4>
+                                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400">Communication Style</h4>
                                         <p className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700 leading-relaxed">
                                             {feedback.communicationStyle || 'No communication feedback available'}
                                         </p>
@@ -382,7 +487,7 @@ const InterviewPrep = () => {
 
                                 {feedback.improvedAnswer && (
                                     <div className="space-y-2">
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Model Answer</h4>
+                                        <h4 className="text-xs font-bold text-purple-600 dark:text-purple-400">Model Answer</h4>
                                         <div className="text-sm p-4 rounded-xl border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10 leading-relaxed text-slate-700 dark:text-slate-300">
                                             {feedback.improvedAnswer}
                                         </div>
@@ -427,12 +532,12 @@ const InterviewPrep = () => {
                                 history.map((h, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${h.feedback.score >= 80 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" :
-                                                "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                                            "bg-purple-500/10 text-purple-600 dark:text-purple-400"
                                             }`}>
                                             {h.feedback.score || 'N/A'}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">Question {i + 1}</p>
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">Question {i + 1}</p>
                                             <p className="text-xs truncate text-slate-700 dark:text-slate-300">{h.question}</p>
                                         </div>
                                     </div>
@@ -468,6 +573,75 @@ const InterviewPrep = () => {
                     </CardContent>
                 </Card>
             </div>
+            {/* History Section */}
+            {!isStarted && !feedback && persistentHistory.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-12 pt-12 border-t border-slate-200 dark:border-slate-700 space-y-6"
+                >
+                    <div className="flex items-center gap-2 px-1">
+                        <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+                        <span className="text-xs font-black text-slate-500 dark:text-slate-400">Interview History</span>
+                        <span className="ml-auto text-xs font-bold text-slate-400 dark:text-slate-500">{persistentHistory.length} sessions</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {persistentHistory.map((item) => (
+                            <div
+                                key={item._id}
+                                onClick={() => {
+                                    setRole(item.metadata?.role || "");
+                                    setDifficulty(item.metadata?.difficulty || "intermediate");
+                                    setFeedback(item.data.feedback);
+                                    setQuestions([item.data.question]);
+                                    setCurrentQuestionIdx(0);
+                                    setIsStarted(true);
+                                }}
+                                className="group relative bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-purple-400 dark:hover:border-purple-600 transition-all cursor-pointer shadow-lg shadow-purple-500/5"
+                            >
+                                <button
+                                    onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                            const response = await apiClient.delete(`/api/career/history?id=${item._id}`);
+                                            if (response.ok) {
+                                                toast.success("History item deleted");
+                                                setPersistentHistory(prev => prev.filter(h => h._id !== item._id));
+                                            }
+                                        } catch (err) {
+                                            toast.error("Failed to delete history item");
+                                        }
+                                    }}
+                                    className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
+                                >
+                                    <X size={14} />
+                                </button>
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+                                        <MessageSquare size={18} className="text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <div className="min-w-0 pr-6">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">
+                                            {item.title}
+                                        </h4>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/30">
+                                                Score: {item.data.feedback.score}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                                                {new Date(item.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                            {item.data.question}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
         </div>
     );
 };

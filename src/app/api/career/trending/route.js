@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { withErrorHandling, combineMiddleware, withAuth } from "@/lib/middleware";
 import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
+import TrendingCareer from "@/models/TrendingCareer";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -10,36 +11,60 @@ const openai = new OpenAI({
 async function handleGet(request) {
     const currentYear = new Date().getFullYear();
     const user = request.user || null;
-    const userId = user?._id || "anonymous";
+    const userId = user?._id;
 
-    console.log(`[Trending API] Request received for year ${currentYear}, user: ${userId}`);
+    console.log(`[Trending API] Request received for user: ${userId || "anonymous"}`);
+
+    // If authenticated, check for existing non-expired data
+    if (userId) {
+        try {
+            const existing = await TrendingCareer.findOne({ userId });
+            if (existing && existing.expiresAt > new Date()) {
+                console.log("[Trending API] Returning cached persistent data");
+                return NextResponse.json(existing);
+            }
+        } catch (dbError) {
+            console.error("[Trending API] DB check error:", dbError);
+        }
+    }
 
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
-        console.error("[Trending API] OPENAI_API_KEY is not configured");
         return NextResponse.json({
             trendingCareers: [],
             trendingSkills: [],
-            marketInsights: "AI service is not configured. Please contact support.",
+            marketInsights: "AI service is not configured.",
             error: "OPENAI_API_KEY_MISSING"
         }, { status: 200 });
     }
 
     try {
-        console.log("[Trending API] Calling OpenAI...");
-        const systemPrompt = `You are an expert career analyst and market researcher specializing in job market trends and emerging skills.
+        // Build personalized prompt if user data exists
+        let personalizationContext = "";
+        if (user) {
+            const interests = user.interests?.join(", ") || "various technology sectors";
+            const goals = user.goals?.join(", ") || "career advancement";
+            const skillLevel = user.skillLevel || "intermediate";
+            personalizationContext = `\n\nUSER PROFILE CONTEXT:
+- Interests: ${interests}
+- Career Goals: ${goals}
+- Current Skill Level: ${skillLevel}
+Please prioritize careers and skills that align with these interests and goals while maintaining general market relevance.`;
+        }
+
+        const systemPrompt = `You are an expert career analyst.
 Analyze the current job market and provide trending careers and skills for ${currentYear}.
-Provide a comprehensive analysis in JSON format.
+Provide a comprehensive analysis in JSON format.${personalizationContext}
 
 JSON Structure:
 {
   "trendingCareers": [
     {
       "title": "Career title",
-      "growth": "percentage growth (e.g., '25%')",
-      "description": "Why this career is trending",
-      "averageSalary": "Salary range (e.g., '$80k-$120k')",
-      "skills": ["skill1", "skill2", "skill3"],
+      "growth": "percentage growth",
+      "description": "Why it's trending",
+      "averageSalary": "Salary range",
+      "skills": ["skill1", "skill2"],
       "industry": "Industry sector"
     }
   ],
@@ -47,90 +72,51 @@ JSON Structure:
     {
       "skill": "Skill name",
       "demand": "high"|"medium"|"critical",
-      "description": "Why this skill is important",
-      "relatedCareers": ["career1", "career2"],
-      "learningResources": "Suggested learning approach"
+      "description": "Importance",
+      "relatedCareers": ["career1"],
+      "learningResources": "Resources"
     }
   ],
-  "marketInsights": "Overall market trends and predictions for ${currentYear}",
-  "emergingFields": ["Field 1", "Field 2", "Field 3"]
-}
-
-Focus on:
-- AI/ML related careers and skills
-- Remote work enabling skills
-- Sustainability and green tech
-- Healthcare technology
-- Cybersecurity
-- Data science and analytics
-- Cloud computing
-- Digital marketing
-- Software development trends
-
-Be specific and data-driven. Use current market data and trends.`;
-
-        const userPrompt = `Provide trending careers and skills for ${currentYear}. Include both technical and soft skills that are in high demand.`;
+  "marketInsights": "Market trends",
+  "emergingFields": ["Field 1"]
+}`;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             temperature: 0.7,
             response_format: { type: "json_object" },
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt }
-            ],
-            max_tokens: 2000
+            messages: [{ role: "system", content: systemPrompt }]
         });
 
-        let trends;
-        try {
-            const content = completion.choices[0].message.content;
-            console.log("[Trending API] Received AI response, parsing JSON...");
-            trends = JSON.parse(content);
+        const trends = JSON.parse(completion.choices[0].message.content);
 
-            // Validate and ensure required fields exist
-            if (!trends.trendingCareers) trends.trendingCareers = [];
-            if (!trends.trendingSkills) trends.trendingSkills = [];
-            if (!trends.marketInsights) trends.marketInsights = "Market analysis unavailable at this time.";
-
-            console.log(`[Trending API] Success! Found ${trends.trendingCareers.length} careers and ${trends.trendingSkills.length} skills`);
-        } catch (parseError) {
-            console.error("[Trending API] Failed to parse AI response:", parseError);
-            console.error("[Trending API] Response content:", completion.choices[0]?.message?.content?.substring(0, 200));
-            // Return a fallback response
-            trends = {
-                trendingCareers: [],
-                trendingSkills: [],
-                marketInsights: "Unable to generate market insights at this time. Please try again later."
-            };
-        }
-
-        // Track usage if user is authenticated
-        if (userId !== "anonymous") {
+        // Persist for authenticated user
+        if (userId) {
             try {
+                // Delete any old/expired record
+                await TrendingCareer.deleteOne({ userId });
+
+                const newRecord = await TrendingCareer.create({
+                    userId,
+                    ...trends,
+                    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                });
+
                 await trackAPIUsage(userId, "career-trending");
-            } catch (e) {
-                // Ignore tracking errors
+                return NextResponse.json(newRecord);
+            } catch (saveError) {
+                console.error("[Trending API] Save error:", saveError);
             }
         }
 
-        console.log("[Trending API] Returning successful response");
         return NextResponse.json(trends);
     } catch (error) {
         console.error("[Trending API] Error occurred:", error);
-        console.error("[Trending API] Error details:", {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        });
-
-        // Return a fallback response instead of error
         return NextResponse.json({
             trendingCareers: [],
             trendingSkills: [],
-            marketInsights: "Unable to load trending data at this time. Please try again later.",
-            error: process.env.NODE_ENV === "development" ? error.message : undefined
-        }, { status: 200 }); // Return 200 with empty data instead of error
+            marketInsights: "Unable to load trending data."
+        }, { status: 200 });
     }
 }
 

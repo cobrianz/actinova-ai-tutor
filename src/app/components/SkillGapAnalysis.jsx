@@ -17,6 +17,7 @@ import {
     AlertCircle,
     X,
     ArrowRight,
+    Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -28,6 +29,24 @@ const SkillGapAnalysis = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
+    const [persistentHistory, setPersistentHistory] = useState([]);
+
+    // Fetch history from DB
+    React.useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const response = await apiClient.get("/api/career/history?type=skill-gap");
+            if (response.ok) {
+                const data = await response.json();
+                setPersistentHistory(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch history:", err);
+        }
+    };
 
     const handleAnalyze = async () => {
         if (!currentSkills.trim() || !targetRole.trim()) {
@@ -47,12 +66,22 @@ const SkillGapAnalysis = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 if (!data || typeof data !== 'object') {
                     throw new Error("Invalid response from server");
                 }
 
                 setResult(data);
+
+                // Save to persistent history
+                await apiClient.post("/api/career/history", {
+                    type: "skill-gap",
+                    title: `Skill Gap: ${targetRole}`,
+                    data: data,
+                    metadata: { currentSkills, targetRole, careerGoals }
+                });
+                fetchHistory(); // Refresh list
+
                 toast.success("Skill gap analysis complete!");
             } else {
                 const errorData = await response.json().catch(() => ({}));
@@ -67,6 +96,27 @@ const SkillGapAnalysis = () => {
             toast.error(errorMessage);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadHistoryItem = (item) => {
+        setCurrentSkills(item.metadata?.currentSkills || "");
+        setTargetRole(item.metadata?.targetRole || "");
+        setCareerGoals(item.metadata?.careerGoals || "");
+        setResult(item.data);
+        setError(null);
+    };
+
+    const deleteHistoryItem = async (id, e) => {
+        e.stopPropagation();
+        try {
+            const response = await apiClient.delete(`/api/career/history?id=${id}`);
+            if (response.ok) {
+                toast.success("History item deleted");
+                setPersistentHistory(prev => prev.filter(item => item._id !== id));
+            }
+        } catch (err) {
+            toast.error("Failed to delete history item");
         }
     };
 
@@ -137,7 +187,7 @@ const SkillGapAnalysis = () => {
                                     <Briefcase size={20} className="text-white" />
                                 </div>
                                 <div>
-                                    <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Current Skills & Experience</span>
+                                    <span className="text-xs font-black text-slate-500 dark:text-slate-400">Current Skills & Experience</span>
                                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">List your technical skills, certifications, and achievements</p>
                                 </div>
                             </div>
@@ -178,7 +228,7 @@ const SkillGapAnalysis = () => {
                                         <TrendingUp size={20} className="text-white" />
                                     </div>
                                     <div>
-                                        <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Target Role</span>
+                                        <span className="text-xs font-black text-slate-500 dark:text-slate-400">Target Role</span>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Your dream position</p>
                                     </div>
                                 </div>
@@ -204,7 +254,7 @@ const SkillGapAnalysis = () => {
                                         <Sparkles size={20} className="text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <div>
-                                        <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Career Goals</span>
+                                        <span className="text-xs font-black text-slate-500 dark:text-slate-400">Career Goals</span>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Optional: Your aspirations</p>
                                     </div>
                                 </div>
@@ -229,7 +279,7 @@ const SkillGapAnalysis = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/30 dark:via-purple-900/30 dark:to-pink-900/30 border-2 border-indigo-300 dark:border-indigo-700 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg shadow-indigo-500/10"
                         >
-                            <h3 className="text-sm font-black text-indigo-900 dark:text-indigo-100 mb-6 uppercase tracking-wider">Why use this?</h3>
+                            <h3 className="text-sm font-black text-indigo-900 dark:text-indigo-100 mb-6">Why use this?</h3>
                             <ul className="space-y-5">
                                 {[
                                     "Discover exactly what recruiters in your target field are looking for.",
@@ -278,7 +328,7 @@ const SkillGapAnalysis = () => {
                             <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white rounded-3xl p-8 sm:p-10 flex flex-col items-center justify-center text-center h-full shadow-xl shadow-indigo-500/25 relative overflow-hidden">
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_white_10%,_transparent_70%)] opacity-10" />
                                 <div className="relative z-10 w-full">
-                                    <div className="text-xs font-black uppercase tracking-wider text-indigo-200 mb-3">Market Sync</div>
+                                    <div className="text-xs font-black text-indigo-200 mb-3">Market Sync</div>
                                     <div className="text-6xl sm:text-7xl font-black mb-4 tracking-tighter">
                                         {result.matchPercentage || 0}%
                                     </div>
@@ -301,7 +351,7 @@ const SkillGapAnalysis = () => {
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                         <TrendingUp size={20} className="text-white" />
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Market Analysis</span>
+                                    <span className="text-xs font-black text-slate-500 dark:text-slate-400">Market Analysis</span>
                                 </div>
                                 <p className="text-lg sm:text-xl text-slate-700 dark:text-slate-300 leading-relaxed font-semibold border-l-4 border-indigo-500 pl-6 py-1">
                                     {result.analysis || "No analysis available"}
@@ -310,7 +360,7 @@ const SkillGapAnalysis = () => {
                                     <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-700/50">
                                         <div className="flex items-center gap-2 mb-4">
                                             <Sparkles size={16} className="text-indigo-500" />
-                                            <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Market Insights</span>
+                                            <span className="text-xs font-black text-slate-500 dark:text-slate-400">Market Insights</span>
                                         </div>
                                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
                                             {result.marketInsights}
@@ -331,7 +381,7 @@ const SkillGapAnalysis = () => {
                                         <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                                             <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400" />
                                         </div>
-                                        <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Critical Skill Gaps</span>
+                                        <span className="text-xs font-black text-slate-500 dark:text-slate-400">Critical Skill Gaps</span>
                                     </div>
                                 </div>
                                 <div className="flex-1 divide-y divide-slate-100 dark:divide-slate-700/50 overflow-y-auto">
@@ -339,13 +389,12 @@ const SkillGapAnalysis = () => {
                                         <div key={i} className="p-6 sm:p-8 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                             <div className="flex justify-between items-start mb-4">
                                                 <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">{gap.skill || 'Unknown Skill'}</h4>
-                                                <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${
-                                                    gap.priority === 'critical' 
-                                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/30' 
-                                                        : gap.priority === 'high'
+                                                <span className={`px-3 py-1 rounded-lg text-xs font-black ${gap.priority === 'critical'
+                                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/30'
+                                                    : gap.priority === 'high'
                                                         ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30'
                                                         : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30'
-                                                }`}>
+                                                    }`}>
                                                     {gap.priority || 'medium'}
                                                 </span>
                                             </div>
@@ -370,7 +419,7 @@ const SkillGapAnalysis = () => {
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                         <Map size={20} className="text-white" />
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Learning Path</span>
+                                    <span className="text-xs font-black text-slate-500 dark:text-slate-400">Learning Path</span>
                                 </div>
                                 <div className="space-y-8 sm:space-y-10 relative ml-4">
                                     <div className="absolute left-5 top-5 bottom-5 w-0.5 bg-indigo-200 dark:bg-indigo-800/30" />
@@ -380,7 +429,7 @@ const SkillGapAnalysis = () => {
                                                 {i + 1}
                                             </div>
                                             <div className="pt-2">
-                                                <div className="text-xs font-black text-indigo-500 uppercase tracking-wider mb-1">{step.topic || 'General'}</div>
+                                                <div className="text-xs font-black text-indigo-500 mb-1">{step.topic || 'General'}</div>
                                                 <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200 mb-2">{step.step || 'Step'}</h4>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                                                     {step.rationale || 'No rationale provided'}
@@ -406,7 +455,7 @@ const SkillGapAnalysis = () => {
                                     <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                                         <CheckCircle size={20} className="text-emerald-600 dark:text-emerald-400" />
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Foundational Strengths</span>
+                                    <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">Foundational Strengths</span>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     {result.foundationalSkills.map((skill, i) => (
@@ -432,6 +481,58 @@ const SkillGapAnalysis = () => {
                             Reset Analysis <ArrowRight size={16} />
                         </Button>
                     </motion.div>
+                </motion.div>
+            )}
+
+            {/* History Section */}
+            {!result && persistentHistory.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="pt-12 border-t border-slate-200 dark:border-slate-700 space-y-6"
+                >
+                    <div className="flex items-center gap-2 px-1">
+                        <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+                        <span className="text-xs font-black text-slate-500 dark:text-slate-400">Past Analyses</span>
+                        <span className="ml-auto text-xs font-bold text-slate-400 dark:text-slate-500">{persistentHistory.length} results</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {persistentHistory.map((item) => (
+                            <div
+                                key={item._id}
+                                onClick={() => loadHistoryItem(item)}
+                                className="group relative bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-indigo-400 dark:hover:border-indigo-600 transition-all cursor-pointer shadow-lg shadow-indigo-500/5"
+                            >
+                                <button
+                                    onClick={(e) => deleteHistoryItem(item._id, e)}
+                                    className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
+                                >
+                                    <X size={14} />
+                                </button>
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                                        <Target size={18} className="text-indigo-600 dark:text-indigo-400" />
+                                    </div>
+                                    <div className="min-w-0 pr-6">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">
+                                            {item.title}
+                                        </h4>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/30">
+                                                {item.data.matchPercentage}% Match
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                                                {new Date(item.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                            {item.data.analysis}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </motion.div>
             )}
         </div>

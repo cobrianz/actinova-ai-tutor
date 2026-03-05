@@ -26,7 +26,7 @@ import { apiClient } from "@/lib/csrfClient";
 const Field = ({ label, children, description }) => (
     <div className="space-y-2">
         <div>
-            <p className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">{label}</p>
+            <p className="text-xs font-black text-slate-500 dark:text-slate-400 ml-1">{label}</p>
             {description && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 ml-1">{description}</p>
             )}
@@ -47,7 +47,7 @@ const HistoryCard = ({ entry, onOpen, onDelete }) => (
         className="relative bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-violet-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-2xl sm:rounded-3xl p-6 flex flex-col gap-4 hover:border-violet-400 dark:hover:border-violet-600 transition-all cursor-pointer group relative overflow-hidden flex flex-col h-full shadow-lg hover:shadow-xl shadow-violet-500/10"
     >
         <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/5 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-violet-500/10 transition-colors" />
-        
+
         <button
             onClick={e => { e.stopPropagation(); onDelete(); }}
             className="absolute top-4 right-4 w-7 h-7 rounded-xl bg-slate-100 dark:bg-slate-700 items-center justify-center hidden group-hover:flex hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors z-10"
@@ -67,11 +67,10 @@ const HistoryCard = ({ entry, onOpen, onDelete }) => (
             <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{entry.timestamp}</p>
         </div>
         <div className="flex items-center gap-2 relative z-10">
-            <span className={`text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-lg ${
-                entry.mode === "outreach"
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30"
-                    : "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-800/30"
-            }`}>
+            <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${entry.mode === "outreach"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30"
+                : "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-800/30"
+                }`}>
                 {entry.mode === "outreach" ? entry.inputs.platform : "Mentorship"}
             </span>
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
@@ -94,6 +93,23 @@ const NetworkAI = () => {
     const [copiedIndex, setCopiedIndex] = useState(null);
     const [history, setHistory] = useState([]);
     const [error, setError] = useState(null);
+
+    // Fetch history from DB
+    React.useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const response = await apiClient.get("/api/career/history?type=network");
+            if (response.ok) {
+                const data = await response.json();
+                setHistory(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch history:", err);
+        }
+    };
 
     const handleGenerate = async () => {
         if (subMode === "outreach" && (!targetPerson.name || !targetPerson.role)) {
@@ -120,25 +136,29 @@ const NetworkAI = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 if (!data || typeof data !== 'object') {
                     throw new Error("Invalid response from server");
                 }
 
                 setResults(data);
                 const label = subMode === "outreach" ? (targetPerson.name || "Contact") : (careerGoals || "Career Goal");
-                setHistory(prev => [{
-                    mode: subMode,
-                    label,
-                    timestamp: new Date().toLocaleString(),
-                    results: data,
-                    inputs: { 
-                        targetPerson: { ...targetPerson }, 
-                        userSkills, 
-                        careerGoals, 
-                        platform 
+
+                // Save to persistent history
+                await apiClient.post("/api/career/history", {
+                    type: "network",
+                    title: label,
+                    data: data,
+                    metadata: {
+                        subMode,
+                        targetPerson: { ...targetPerson },
+                        userSkills,
+                        careerGoals,
+                        platform
                     }
-                }, ...prev]);
+                });
+                fetchHistory(); // Refresh list
+
                 toast.success("Network strategy generated!");
             } else {
                 const errorData = await response.json().catch(() => ({}));
@@ -156,7 +176,18 @@ const NetworkAI = () => {
         }
     };
 
-    const restoreEntry = (entry) => {
+    const restoreEntry = (item) => {
+        const entry = {
+            mode: item.metadata?.subMode || "outreach",
+            inputs: {
+                targetPerson: item.metadata?.targetPerson || { name: "", role: "", company: "", context: "" },
+                platform: item.metadata?.platform || "linkedin",
+                userSkills: item.metadata?.userSkills || "",
+                careerGoals: item.metadata?.careerGoals || ""
+            },
+            results: item.data
+        };
+
         setSubMode(entry.mode);
         if (entry.mode === "outreach") {
             setTargetPerson(entry.inputs.targetPerson);
@@ -176,8 +207,17 @@ const NetworkAI = () => {
         setTimeout(() => setCopiedIndex(null), 2000);
     };
 
-    const deleteHistoryEntry = (index) => {
-        setHistory(prev => prev.filter((_, i) => i !== index));
+    const deleteHistoryEntry = async (id, e) => {
+        e.stopPropagation();
+        try {
+            const response = await apiClient.delete(`/api/career/history?id=${id}`);
+            if (response.ok) {
+                toast.success("History item deleted");
+                setHistory(prev => prev.filter(item => item._id !== id));
+            }
+        } catch (err) {
+            toast.error("Failed to delete history item");
+        }
     };
 
     const containerVariants = {
@@ -240,16 +280,15 @@ const NetworkAI = () => {
                 ].map(({ id, label, icon: Icon }) => (
                     <button
                         key={id}
-                        onClick={() => { 
-                            setSubMode(id); 
-                            setResults(null); 
+                        onClick={() => {
+                            setSubMode(id);
+                            setResults(null);
                             setError(null);
                         }}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                            subMode === id
-                                ? "bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-800 dark:to-purple-800 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-600 shadow-lg shadow-violet-500/20"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                        }`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${subMode === id
+                            ? "bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-800 dark:to-purple-800 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-600 shadow-lg shadow-violet-500/20"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
                     >
                         <Icon size={15} />
                         {label}
@@ -272,11 +311,11 @@ const NetworkAI = () => {
                             <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
                                 <AnimatePresence mode="wait">
                                     {subMode === "outreach" ? (
-                                        <motion.div 
-                                            key="outreach-form" 
-                                            initial={{ opacity: 0, x: -10 }} 
-                                            animate={{ opacity: 1, x: 0 }} 
-                                            exit={{ opacity: 0, x: 10 }} 
+                                        <motion.div
+                                            key="outreach-form"
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 10 }}
                                             className="space-y-6"
                                         >
                                             <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-950/30 dark:via-pink-950/30 dark:to-rose-950/30 border-2 border-purple-200 dark:border-purple-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-6 shadow-lg shadow-purple-500/10">
@@ -288,32 +327,32 @@ const NetworkAI = () => {
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <Field label="Full Name" description="The person's full name">
-                                                        <input 
-                                                            type="text" 
-                                                            placeholder="e.g. Jane Doe" 
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. Jane Doe"
                                                             className={inputClass}
                                                             value={targetPerson.name}
                                                             onChange={e => {
                                                                 setTargetPerson({ ...targetPerson, name: e.target.value });
                                                                 setError(null);
-                                                            }} 
+                                                            }}
                                                         />
                                                     </Field>
                                                     <Field label="Current Role" description="Their job title and company">
-                                                        <input 
-                                                            type="text" 
-                                                            placeholder="e.g. CTO at TechCorp" 
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. CTO at TechCorp"
                                                             className={inputClass}
                                                             value={targetPerson.role}
                                                             onChange={e => {
                                                                 setTargetPerson({ ...targetPerson, role: e.target.value });
                                                                 setError(null);
-                                                            }} 
+                                                            }}
                                                         />
                                                     </Field>
                                                 </div>
                                                 <Field label="Connection Context" description="Why you're reaching out">
-                                                    <input 
+                                                    <input
                                                         type="text"
                                                         placeholder="e.g. Saw your talk on AI, Read your Forbes article..."
                                                         className={inputClass}
@@ -321,7 +360,7 @@ const NetworkAI = () => {
                                                         onChange={e => {
                                                             setTargetPerson({ ...targetPerson, context: e.target.value });
                                                             setError(null);
-                                                        }} 
+                                                        }}
                                                     />
                                                 </Field>
                                             </div>
@@ -338,11 +377,10 @@ const NetworkAI = () => {
                                                                 setPlatform(id);
                                                                 setError(null);
                                                             }}
-                                                            className={`flex-1 flex items-center justify-center gap-2.5 h-14 rounded-2xl border-2 text-sm font-bold transition-all ${
-                                                                platform === id
-                                                                    ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 shadow-sm"
-                                                                    : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
-                                                            }`}
+                                                            className={`flex-1 flex items-center justify-center gap-2.5 h-14 rounded-2xl border-2 text-sm font-bold transition-all ${platform === id
+                                                                ? "border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 shadow-sm"
+                                                                : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                                                                }`}
                                                         >
                                                             <Icon size={18} />
                                                             {label}
@@ -352,10 +390,10 @@ const NetworkAI = () => {
                                             </Field>
                                         </motion.div>
                                     ) : (
-                                        <motion.div 
-                                            key="mentorship-form" 
-                                            initial={{ opacity: 0, x: -10 }} 
-                                            animate={{ opacity: 1, x: 0 }} 
+                                        <motion.div
+                                            key="mentorship-form"
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 10 }}
                                             className="bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-violet-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-6 shadow-lg shadow-violet-500/10"
                                         >
@@ -366,26 +404,26 @@ const NetworkAI = () => {
                                                 <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100">Your Career Compass</h2>
                                             </div>
                                             <Field label="Key Skills & Experience" description="What you're good at">
-                                                <textarea 
-                                                    placeholder="Tell us what you're good at..." 
+                                                <textarea
+                                                    placeholder="Tell us what you're good at..."
                                                     className={`${textareaClass} h-32`}
-                                                    value={userSkills} 
+                                                    value={userSkills}
                                                     onChange={e => {
                                                         setUserSkills(e.target.value);
                                                         setError(null);
-                                                    }} 
+                                                    }}
                                                 />
                                             </Field>
                                             <Field label="Dream Career Milestone" description="Where you want to be">
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     placeholder="e.g. Become a Principal Engineer, pivot into Product..."
-                                                    className={inputClass} 
-                                                    value={careerGoals} 
+                                                    className={inputClass}
+                                                    value={careerGoals}
                                                     onChange={e => {
                                                         setCareerGoals(e.target.value);
                                                         setError(null);
-                                                    }} 
+                                                    }}
                                                 />
                                             </Field>
                                         </motion.div>
@@ -398,7 +436,7 @@ const NetworkAI = () => {
                                 <div className="bg-gradient-to-br from-violet-100 via-indigo-100 to-purple-100 dark:from-violet-900/30 dark:via-indigo-900/30 dark:to-purple-900/30 border-2 border-violet-300 dark:border-violet-700 rounded-2xl sm:rounded-3xl p-6 sm:p-7 space-y-5 shadow-lg shadow-violet-500/10">
                                     <div className="flex items-center gap-2">
                                         <Sparkles size={15} className="text-violet-500" />
-                                        <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">Pro Tips</span>
+                                        <span className="text-xs font-black text-violet-600 dark:text-violet-400">Pro Tips</span>
                                     </div>
                                     <ul className="space-y-4">
                                         {[
@@ -449,7 +487,7 @@ const NetworkAI = () => {
                                     {(results.messages || []).map((msg, i) => (
                                         <div key={i} className="bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-violet-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-2xl sm:rounded-3xl p-6 sm:p-7 flex flex-col gap-5 hover:border-violet-400 dark:hover:border-violet-600 transition-all shadow-lg hover:shadow-xl shadow-violet-500/10 group">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">{msg.title || 'Message'}</span>
+                                                <span className="text-xs font-black text-violet-600 dark:text-violet-400">{msg.title || 'Message'}</span>
                                                 <button
                                                     onClick={() => copyToClipboard(msg.content, i)}
                                                     className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-600 transition-colors"
@@ -476,11 +514,11 @@ const NetworkAI = () => {
                                                 <UserCircle size={26} />
                                             </div>
                                             <h3 className="text-xl font-black mb-1 text-slate-900 dark:text-white">{type.persona || 'Mentor Type'}</h3>
-                                            <p className="text-xs font-black uppercase tracking-wider text-violet-500 mb-4">{type.expertise || 'Expertise'}</p>
+                                            <p className="text-xs font-black text-violet-500 mb-4">{type.expertise || 'Expertise'}</p>
                                             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-5 italic">"{type.valueAdd || 'No value add description'}"</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {(type.searchKeywords || []).map((kw, j) => (
-                                                    <span key={j} className="text-xs font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg">
+                                                    <span key={j} className="text-xs font-black bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg">
                                                         #{kw}
                                                     </span>
                                                 ))}
@@ -520,18 +558,27 @@ const NetworkAI = () => {
                 >
                     <div className="flex items-center gap-2">
                         <Clock size={15} className="text-slate-400 dark:text-slate-500" />
-                        <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Session History</span>
+                        <span className="text-xs font-black text-slate-500 dark:text-slate-400">Session History</span>
                         <span className="ml-auto text-xs font-bold text-slate-400 dark:text-slate-500">{history.length} {history.length === 1 ? "result" : "results"}</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                        {history.map((entry, i) => (
-                            <HistoryCard
-                                key={i}
-                                entry={entry}
-                                onOpen={() => restoreEntry(entry)}
-                                onDelete={() => deleteHistoryEntry(i)}
-                            />
-                        ))}
+                        {history.map((item) => {
+                            const entry = {
+                                mode: item.metadata?.subMode || "outreach",
+                                label: item.title,
+                                timestamp: new Date(item.createdAt).toLocaleDateString(),
+                                inputs: { platform: item.metadata?.platform || "linkedin" },
+                                results: item.data
+                            };
+                            return (
+                                <HistoryCard
+                                    key={item._id}
+                                    entry={entry}
+                                    onOpen={() => restoreEntry(item)}
+                                    onDelete={(e) => deleteHistoryEntry(item._id, e)}
+                                />
+                            );
+                        })}
                     </div>
                 </motion.div>
             )}

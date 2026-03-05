@@ -46,14 +46,13 @@ export default function Sidebar({
 
   const navigation = [
     { name: "New", id: "generate", icon: Plus },
+    { name: "AI Chat", id: "chat", icon: MessageCircle },
     { name: "Explore", id: "explore", icon: Search },
     { name: "Library", id: "library", icon: BookOpen },
+    { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
+    { name: "Career Growth", id: "career", icon: Briefcase },
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
-    { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
-    { name: "AI Chat", id: "chat", icon: MessageCircle },
-    { name: "Career Growth", id: "career", icon: Briefcase },
-    { name: "Review Center", id: "reviews", icon: Brain },
     { name: "Premium", id: "premium-courses", icon: Star },
     // Only show upgrade when auth has finished loading and user is not pro
     !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },

@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
+import CareerHistory from "@/models/CareerHistory";
+import dbConnect from "@/lib/dbConnect";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -51,6 +53,16 @@ Candidate Answer: ${answer}`;
         });
 
         const feedback = JSON.parse(completion.choices[0].message.content);
+
+        await dbConnect();
+        const history = new CareerHistory({
+            userId,
+            type: "interview",
+            title: role,
+            data: feedback,
+            metadata: { question, difficulty }
+        });
+        await history.save();
 
         await trackAPIUsage(userId, "career-interview");
 

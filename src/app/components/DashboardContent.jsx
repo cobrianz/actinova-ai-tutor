@@ -13,7 +13,6 @@ import TestYourself from "./TestYourself";
 import ReportsLibrary from "./ReportsLibrary";
 import ProfileContent from "./ProfileContent";
 import CareerGrowth from "./CareerGrowth";
-import ReviewDashboard from "./ReviewDashboard";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 
@@ -66,7 +65,6 @@ export default function DashboardContent() {
     chat: Chat,
     profile: ProfileContent,
     career: CareerGrowth,
-    reviews: ReviewDashboard,
   };
   const ContentComponent =
     routeComponents[activeContent] || routeComponents.generate;

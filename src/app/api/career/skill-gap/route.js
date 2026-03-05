@@ -3,24 +3,26 @@ import { NextResponse } from "next/server";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
+import CareerHistory from "@/models/CareerHistory";
+import dbConnect from "@/lib/dbConnect";
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 async function handlePost(request) {
-    const user = request.user;
-    const userId = user._id;
+  const user = request.user;
+  const userId = user._id;
 
-    try {
-        const body = await request.json();
-        const { currentSkills, targetRole, careerGoals } = body;
+  try {
+    const body = await request.json();
+    const { currentSkills, targetRole, careerGoals } = body;
 
-        if (!targetRole?.trim() || !currentSkills?.trim()) {
-            return NextResponse.json({ error: "Target role and current skills are required" }, { status: 400 });
-        }
+    if (!targetRole?.trim() || !currentSkills?.trim()) {
+      return NextResponse.json({ error: "Target role and current skills are required" }, { status: 400 });
+    }
 
-        const systemPrompt = `You are an expert career strategist and technical recruiter.
+    const systemPrompt = `You are an expert career strategist and technical recruiter.
 Perform a comprehensive Skill Gap Analysis between the user's current skills and the requirements for the target role.
 Provide a detailed report in JSON format.
 
@@ -48,36 +50,46 @@ JSON Structure:
 
 Be precise. Focus on technical skills, soft skills, and specific industry tools.`;
 
-        const userPrompt = `Target Role: ${targetRole}
+    const userPrompt = `Target Role: ${targetRole}
 Current Skills/Experience: ${currentSkills}
 Career Goals: ${careerGoals || "Advancement in field"}`;
 
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            temperature: 0.7,
-            response_format: { type: "json_object" },
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt }
-            ]
-        });
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.7,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ]
+    });
 
-        const analysis = JSON.parse(completion.choices[0].message.content);
+    const analysis = JSON.parse(completion.choices[0].message.content);
 
-        await trackAPIUsage(userId, "career-skill-gap");
+    await dbConnect();
+    const history = new CareerHistory({
+      userId,
+      type: "skill-gap",
+      title: targetRole,
+      data: analysis,
+      metadata: { currentSkills, careerGoals }
+    });
+    await history.save();
 
-        return NextResponse.json(analysis);
-    } catch (error) {
-        console.error("Skill Gap Analysis error:", error);
-        return NextResponse.json({ error: "Failed to perform skill gap analysis" }, { status: 500 });
-    }
+    await trackAPIUsage(userId, "career-skill-gap");
+
+    return NextResponse.json(analysis);
+  } catch (error) {
+    console.error("Skill Gap Analysis error:", error);
+    return NextResponse.json({ error: "Failed to perform skill gap analysis" }, { status: 500 });
+  }
 }
 
 export const POST = combineMiddleware(
-    withErrorHandling,
-    withCsrf,
-    withAuth,
-    (h) => withAPIRateLimit(h, "career")
+  withErrorHandling,
+  withCsrf,
+  withAuth,
+  (h) => withAPIRateLimit(h, "career")
 )(handlePost);
 
 export const dynamic = "force-dynamic";

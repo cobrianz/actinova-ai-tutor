@@ -90,6 +90,14 @@ export default function Generate({ setActiveContent }) {
   const friendlyName =
     !loading && user ? user.firstName || user.name || "" : "";
 
+  // Auto-run generation if requested via URL
+  React.useEffect(() => {
+    const autoRun = searchParams.get("autoRun") === "true";
+    if (autoRun && topic && !isSubmitting && user && !loading) {
+      handleGenerate();
+    }
+  }, [searchParams, topic, user, loading]);
+
   const handleGenerate = async (retryCount = 0) => {
     if (!topic.trim()) return;
     if (isSubmitting) return; // prevent double submissions
