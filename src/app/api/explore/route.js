@@ -3,7 +3,13 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import User from "@/models/User";
+import PersonalizedDiscovery from "@/models/PersonalizedDiscovery";
 import { ObjectId } from "mongodb";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 
 
@@ -13,95 +19,158 @@ export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
 
-    const trendingCol = db.collection("explore_trending");
-
     // 1. Check for Authentication
+    let userId = null;
     let userInterests = [];
-    const authHeader = request.headers.get("authorization");
+    let userGoals = [];
+    let recentCourses = [];
 
+    const authHeader = request.headers.get("authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
       try {
         const token = authHeader.split(" ")[1];
-        const decoded = verifyToken(token);
+        const decoded = await import("@/lib/auth").then(m => m.verifyToken(token));
 
         if (decoded?.id) {
-          // Fetch user details
-          // Note: We need to use findOne on the collection directly or use the model
-          // Using direct collection for speed and to avoid model initialization race conditions if any
+          userId = new ObjectId(decoded.id);
           const user = await db.collection("users").findOne(
-            { _id: new ObjectId(decoded.id) },
-            { projection: { interests: 1, interestCategories: 1 } }
+            { _id: userId },
+            { projection: { interests: 1, interestCategories: 1, goals: 1 } }
           );
 
           if (user) {
             const cats = user.interestCategories || [];
             const ints = user.interests || [];
             userInterests = [...new Set([...cats, ...ints])].map(i => i.toLowerCase());
+            userGoals = user.goals || [];
+
+            // Fetch recently generated courses for better context
+            const courses = await db.collection("library")
+              .find({ userId, format: "course" })
+              .sort({ createdAt: -1 })
+              .limit(5)
+              .project({ title: 1 })
+              .toArray();
+            recentCourses = courses.map(c => c.title);
           }
         }
       } catch (e) {
-        // Invalid token - treat as guest
-        console.warn("Explore personalisation: Invalid token", e.message);
+        console.warn("Explore personalisation: Auth failed", e.message);
       }
     }
 
-    let results = [];
+    // 2. Return cached personalized discovery if available and fresh
+    if (userId) {
+      try {
+        const cached = await PersonalizedDiscovery.findOne({
+          userId,
+          type: "explore_trending",
+          expiresAt: { $gt: new Date() }
+        });
 
-    // 2. Personalization Query
-    if (userInterests.length > 0) {
-      // Create a regex array for flexible matching
-      const regexConditions = userInterests.map(interest => ({
-        $or: [
-          { category: { $regex: interest, $options: "i" } },
-          { tags: { $in: [new RegExp(interest, "i")] } },
-          { title: { $regex: interest, $options: "i" } }
-        ]
-      }));
+        if (cached) {
+          return NextResponse.json({
+            success: true,
+            personalized: true,
+            trendingTopics: cached.content,
+            source: "cache"
+          });
+        }
+      } catch (err) {
+        console.error("PersonalizedDiscovery fetch error:", err);
+      }
+    }
 
-      // Find courses matching ANY interest
-      const personalizedCourses = await trendingCol.find({
-        $or: regexConditions
-      })
+    // 3. Generate Personalized or Fetch Generic Topics
+    let topics = [];
+
+    if (userId && (userInterests.length > 0 || recentCourses.length > 0)) {
+      // AI Generation for high personalization
+      const systemPrompt = `You are an educational consultant. Generate 6 trending and highly relevant course recommendations for a learner.
+        
+USER CONTEXT:
+- Interests: ${userInterests.join(", ")}
+- Goals: ${userGoals.join(", ")}
+- Recently Studied: ${recentCourses.join(", ")}
+
+Provide courses that are currently trending in 2025 and match this user profile.
+
+JSON Structure:
+{
+  "courses": [
+    {
+      "title": "Course Name",
+      "students": number,
+      "rating": number (4.0-5.0),
+      "duration": "e.g. 4 weeks",
+      "level": "Beginner|Intermediate|Advanced",
+      "category": "Technology|Business|Arts|etc",
+      "instructor": "Name",
+      "thumbnail": "URL",
+      "description": "Short catchy description",
+      "tags": ["tag1", "tag2"],
+      "price": number,
+      "isPremium": boolean
+    }
+  ]
+}`;
+
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          temperature: 0.8,
+          response_format: { type: "json_object" },
+          messages: [{ role: "system", content: systemPrompt }]
+        });
+
+        const generated = JSON.parse(completion.choices[0].message.content);
+        topics = generated.courses || [];
+
+        // Cache the result for 30 days
+        await PersonalizedDiscovery.updateOne(
+          { userId, type: "explore_trending" },
+          {
+            $set: {
+              content: topics,
+              expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            }
+          },
+          { upsert: true }
+        );
+      } catch (aiErr) {
+        console.error("AI Explore Gen failed:", aiErr);
+        // Fallback to static trending if AI fails
+      }
+    }
+
+    // 4. Fallback: If no topics generated (guest or error), fetch from explore_trending collection
+    if (topics.length === 0) {
+      const trendingCol = db.collection("explore_trending");
+      topics = await trendingCol.find({})
         .sort({ students: -1, rating: -1 })
         .limit(6)
         .toArray();
-
-      results = personalizedCourses;
     }
 
-    // 3. Fallback / Fill up to 6 items
-    if (results.length < 6) {
-      const existingIds = results.map(r => r._id);
-
-      const genericTrending = await trendingCol.find({
-        _id: { $nin: existingIds }
-      })
-        .sort({ students: -1 })
-        .limit(6 - results.length)
-        .toArray();
-
-      results = [...results, ...genericTrending];
-    }
-
-    // 4. Clean output
-    const cleanTopics = results.map((t) => ({
+    // 5. Clean output
+    const cleanTopics = topics.map((t) => ({
       title: t.title,
-      students: t.students,
-      rating: t.rating,
-      duration: t.duration,
-      level: t.level,
-      category: t.category,
-      instructor: t.instructor,
-      thumbnail: t.thumbnail,
-      description: t.description,
-      tags: t.tags,
-      price: t.price,
-      isPremium: t.isPremium,
+      students: t.students || 0,
+      rating: t.rating || 5.0,
+      duration: t.duration || "4 weeks",
+      level: t.level || "Beginner",
+      category: t.category || "General",
+      instructor: t.instructor || "Actirova Expert",
+      thumbnail: t.thumbnail || "",
+      description: t.description || "",
+      tags: t.tags || [],
+      price: t.price || 0,
+      isPremium: t.isPremium || false,
     }));
 
     return NextResponse.json({
       success: true,
-      personalized: userInterests.length > 0,
+      personalized: !!userId,
       trendingTopics: cleanTopics,
     });
   } catch (error) {

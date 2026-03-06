@@ -45,11 +45,28 @@ async function handleGet(request) {
             const interests = user.interests?.join(", ") || "various technology sectors";
             const goals = user.goals?.join(", ") || "career advancement";
             const skillLevel = user.skillLevel || "intermediate";
+
+            // Get recently generated courses for better context
+            let recentCourses = [];
+            try {
+                const { db } = await import("@/lib/mongodb").then(m => m.connectToDatabase());
+                const courses = await db.collection("library")
+                    .find({ userId, format: "course" })
+                    .sort({ createdAt: -1 })
+                    .limit(5)
+                    .project({ title: 1 })
+                    .toArray();
+                recentCourses = courses.map(c => c.title);
+            } catch (e) {
+                console.warn("[Trending API] Failed to fetch recent courses:", e.message);
+            }
+
             personalizationContext = `\n\nUSER PROFILE CONTEXT:
 - Interests: ${interests}
 - Career Goals: ${goals}
 - Current Skill Level: ${skillLevel}
-Please prioritize careers and skills that align with these interests and goals while maintaining general market relevance.`;
+${recentCourses.length > 0 ? `- Recently Generated/Interested Courses: ${recentCourses.join(", ")}` : ""}
+Please prioritize careers and skills that align with these interests, goals, and recent activity while maintaining general market relevance.`;
         }
 
         const systemPrompt = `You are an expert career analyst.
