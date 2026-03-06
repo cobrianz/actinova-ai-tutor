@@ -2,21 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FileText, MoreVertical, Trash2, ExternalLink, ScrollText } from "lucide-react";
+import { Search, Plus, ScrollText, ExternalLink, Trash2, Filter, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
+import { motion, AnimatePresence } from "framer-motion";
+
+const TYPE_COLORS = {
+    report: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+    essay: { bg: "bg-violet-50 dark:bg-violet-900/20", text: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500" },
+    default: { bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" }
+};
 
 export default function ReportsLibrary({ setActiveContent }) {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterType, setFilterType] = useState("all");
     const router = useRouter();
     const { user } = useAuth();
 
-    useEffect(() => {
-        fetchReports();
-    }, []);
+    useEffect(() => { fetchReports(); }, []);
 
     const fetchReports = async () => {
         try {
@@ -25,131 +31,139 @@ export default function ReportsLibrary({ setActiveContent }) {
                 const data = await res.json();
                 setReports(data.reports || []);
             }
-        } catch (error) {
-            console.error("Failed to fetch reports:", error);
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { console.error("Failed to fetch reports:", error); }
+        finally { setLoading(false); }
     };
 
-    const deleteReport = async (id) => {
-        if (!confirm("Are you sure you want to delete this report?")) return;
+    const deleteReport = async (e, id) => {
+        e.stopPropagation();
+        if (!confirm("Delete this document?")) return;
         try {
             const res = await apiClient.delete(`/api/reports/${id}`);
-            if (res.ok) {
-                setReports(reports.filter(r => r._id !== id));
-                toast.success("Report deleted");
-            }
-        } catch (error) {
-            toast.error("Failed to delete report");
-        }
+            if (res.ok) { setReports(p => p.filter(r => r._id !== id)); toast.success("Deleted"); }
+        } catch { toast.error("Failed to delete"); }
     };
 
-    const filteredReports = reports.filter(r =>
-        r.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.topic?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = reports.filter(r => {
+        const matchSearch = r.title?.toLowerCase().includes(searchQuery.toLowerCase()) || r.topic?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchType = filterType === "all" || r.type?.toLowerCase() === filterType;
+        return matchSearch && matchType;
+    });
+
+    const types = ["all", ...new Set(reports.map(r => r.type?.toLowerCase()).filter(Boolean))];
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+            {/* Header */}
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Your Reports & Essays</h1>
-                    <p className="text-muted-foreground">Manage and edit your AI-generated documents</p>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white">Reports & Essays</h1>
+                    <p className="text-slate-500 mt-1 text-sm">Your AI-generated research documents</p>
                 </div>
-                <button
-                    onClick={() => setActiveContent("reports")}
-                    className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-all border border-primary/20"
-                >
-                    <Plus className="w-5 h-5" />
-                    Create New
+                <button onClick={() => setActiveContent("reports")}
+                    className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-3 rounded-2xl font-bold text-sm transition-colors shadow shadow-violet-600/20">
+                    <Plus size={17} /> Create New
                 </button>
+            </motion.div>
+
+            {/* Search + Filter */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Search by title or topic..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-400 transition-all" />
+                </div>
+                {types.length > 1 && (
+                    <div className="flex items-center gap-2">
+                        <Filter size={14} className="text-slate-400" />
+                        {types.map(t => (
+                            <button key={t} onClick={() => setFilterType(t)}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold capitalize transition-all ${filterType === t ? "bg-violet-600 text-white" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 hover:border-violet-300 hover:text-violet-600"}`}>
+                                {t === "all" ? "All" : t}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                    type="text"
-                    placeholder="Search by title or topic..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-input bg-card outline-none focus:ring-2 focus:ring-primary transition-all"
-                />
-            </div>
-
+            {/* Cards */}
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-48 bg-accent animate-pulse rounded-2xl border border-border"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
                     ))}
                 </div>
-            ) : filteredReports.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredReports.map((report) => (
-                        <div
-                            key={report._id}
-                            className="group relative bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-[32px] p-6 hover:border-primary/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden"
-                            onClick={() => router.push(`/reports/${report._id}`)}
-                        >
-                            {/* Decorative background element */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors duration-500" />
+            ) : filtered.length > 0 ? (
+                <AnimatePresence mode="wait">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {filtered.map((report, i) => {
+                            const typeKey = report.type?.toLowerCase() || "default";
+                            const colors = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
+                            return (
+                                <motion.div key={report._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                                    onClick={() => router.push(`/reports/${report._id}`)}
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 hover:border-violet-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden">
 
-                            {/* Abstract Background SVG Pattern */}
-                            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none overflow-hidden">
-                                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                    <path d="M0 100 C 20 0, 50 100, 100 0" stroke="currentColor" fill="transparent" strokeWidth="0.5" />
-                                    <path d="M0 0 C 50 100, 80 0, 100 100" stroke="currentColor" fill="transparent" strokeWidth="0.5" />
-                                </svg>
-                            </div>
+                                    {/* Background glow */}
+                                    <div className="absolute top-0 right-0 w-28 h-28 bg-violet-500/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-violet-500/10 transition-colors" />
 
-                            <div className="relative z-10">
-                                <div className="flex items-start justify-between mb-6">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-blue-500/10 dark:from-primary/30 dark:to-blue-500/20 rounded-2xl flex items-center justify-center text-primary shadow-inner border border-white/50 dark:border-slate-700/50">
-                                        <ScrollText className="w-7 h-7" />
-                                    </div>
-                                </div>
-
-                                <h3 className="font-bold text-xl mb-3 line-clamp-2 leading-tight group-hover:text-primary transition-colors duration-300">
-                                    {report.title || "Untitled Research"}
-                                </h3>
-
-                                <p className="text-sm text-muted-foreground/80 line-clamp-2 mb-6 font-medium leading-relaxed">
-                                    {report.topic}
-                                </p>
-
-                                <div className="flex flex-col gap-4 pt-5 border-t border-gray-100/50 dark:border-slate-800/50">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex gap-2">
-                                            <span className="px-3 py-1 bg-gray-100 dark:bg-slate-800 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                {report.type || "Report"}
-                                            </span>
-                                            {report.citationStyle && (
-                                                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider border border-primary/10">
-                                                    {report.citationStyle}
-                                                </span>
-                                            )}
+                                    <div className="relative z-10">
+                                        {/* Icon + delete */}
+                                        <div className="flex items-start justify-between mb-5">
+                                            <div className={`w-12 h-12 ${colors.bg} rounded-2xl flex items-center justify-center`}>
+                                                <ScrollText size={22} className={colors.text} />
+                                            </div>
+                                            <button onClick={e => deleteReport(e, report._id)}
+                                                className="opacity-100 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all">
+                                                <Trash2 size={14} />
+                                            </button>
                                         </div>
-                                        <span className="text-[11px] font-semibold text-muted-foreground/60">{new Date(report.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                    </div>
 
-                                    <div className="flex items-center gap-2 text-[11px] font-bold text-primary group-hover:translate-x-1 transition-transform duration-300">
-                                        Open Document <ExternalLink className="w-3 h-3" />
+                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white line-clamp-2 leading-snug mb-2 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
+                                            {report.title || "Untitled Research"}
+                                        </h3>
+                                        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-5">
+                                            {report.topic}
+                                        </p>
+
+                                        {/* Footer */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
+                                                <span className="text-xs font-bold text-slate-500 capitalize">{report.type || "Report"}</span>
+                                                {report.citationStyle && (
+                                                    <span className="text-xs font-bold px-2 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-full">{report.citationStyle}</span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                                                <Clock size={11} />
+                                                {new Date(report.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400 group-hover:translate-x-1 transition-transform">
+                                            Open Document <ExternalLink size={12} />
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+                </AnimatePresence>
             ) : (
-                <div className="text-center py-20 bg-accent/20 rounded-3xl border-2 border-dashed border-border">
-                    <ScrollText className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-                    <h2 className="text-xl font-bold mb-2">No documents found</h2>
-                    <p className="text-muted-foreground mb-6">Start by generating your first report or essay</p>
-                    <button
-                        onClick={() => setActiveContent("reports")}
-                        className="text-primary font-bold hover:underline"
-                    >
-                        Create your first document →
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6">
+                        <FileText size={36} className="text-slate-300 dark:text-slate-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                        {searchQuery ? "No results found" : "No documents yet"}
+                    </h2>
+                    <p className="text-slate-500 text-sm mb-6">
+                        {searchQuery ? `Try searching with different keywords` : "Create your first research report or essay"}
+                    </p>
+                    <button onClick={() => setActiveContent("reports")}
+                        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-3 rounded-2xl font-bold text-sm transition-colors">
+                        <Plus size={16} /> Create Document
                     </button>
                 </div>
             )}

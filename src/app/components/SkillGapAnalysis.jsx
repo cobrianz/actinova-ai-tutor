@@ -202,7 +202,7 @@ const SkillGapAnalysis = () => {
                                             <div className="flex items-start justify-between mb-2">
                                                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{gap.skill}</span>
                                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${gap.priority === 'critical' ? 'bg-red-100 text-red-600' :
-                                                        gap.priority === 'high' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                                                    gap.priority === 'high' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
                                                     }`}>{gap.priority}</span>
                                             </div>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{gap.description}</p>
@@ -289,9 +289,9 @@ const SkillGapAnalysis = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {persistentHistory.map(item => (
                                 <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all cursor-pointer group relative">
+                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all cursor-pointer group relative">
                                     <button onClick={e => deleteHistoryItem(item._id, e)}
-                                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all z-10">
+                                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 opacity-100 transition-all z-10">
                                         <X size={14} />
                                     </button>
                                     <div className="flex items-center gap-3 mb-3">

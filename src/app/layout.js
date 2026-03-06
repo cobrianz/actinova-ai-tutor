@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Jost, Bricolage_Grotesque } from "next/font/google";
+import { Jost, Bricolage_Grotesque, EB_Garamond } from "next/font/google";
 import { AuthProvider } from "./components/AuthProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
@@ -16,6 +16,12 @@ const bricolage = Bricolage_Grotesque({
   display: "swap",
 });
 
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"],
+  variable: "--font-eb-garamond",
+  display: "swap",
+});
+
 export const metadata = {
   title: "Actirova AI Tutor - Personalized Learning Platform",
   description: "Master any skill with AI-powered personalized learning paths",
@@ -26,7 +32,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning className={`${jost.variable} ${bricolage.variable}`}>
+    <html lang="en" dir="ltr" suppressHydrationWarning className={`${jost.variable} ${bricolage.variable} ${ebGaramond.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{

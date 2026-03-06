@@ -1219,208 +1219,79 @@ export default function Explore() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold text-foreground mb-4">
-          Explore Courses
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Discover Different Categories and latest trending topics across
-          various fields
-        </p>
+      <div className="mb-10">
+        <h1 className="text-4xl font-black text-slate-900 dark:text-white">Explore</h1>
+        <p className="text-slate-500 mt-2">Discover categories and trending AI-generated courses</p>
       </div>
 
-      {/* Search and Filters */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+      {/* Search + Filters */}
+      <div className="mb-10">
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search courses, topics, or instructors..."
-              className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search courses, topics, categories..."
+              className="w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-400 transition-all text-sm" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">All Categories</option>
-              {staticCategories.map((category) => (
-                <option key={category.name} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedDifficulty}
-              onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">All Levels</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
-            <select
-              value={isPremium}
-              onChange={(e) => setIsPremium(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">All Courses</option>
-              <option value="true">Premium Only</option>
-              <option value="false">Free Only</option>
-            </select>
+          <div className="flex gap-2">
+            {[{ val: selectedCategory, set: setSelectedCategory, opts: [{ v: '', l: 'All Categories' }, ...staticCategories.map(c => ({ v: c.name, l: c.name }))] },
+            { val: selectedDifficulty, set: setSelectedDifficulty, opts: [{ v: '', l: 'All Levels' }, { v: 'beginner', l: 'Beginner' }, { v: 'intermediate', l: 'Intermediate' }, { v: 'advanced', l: 'Advanced' }] },
+            { val: isPremium, set: setIsPremium, opts: [{ v: '', l: 'All Courses' }, { v: 'true', l: 'Premium' }, { v: 'false', l: 'Free' }] }].map((s, i) => (
+              <select key={i} value={s.val} onChange={e => s.set(e.target.value)}
+                className="px-3 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-sm outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-400 transition-all">
+                {s.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+              </select>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Trending Topics */}
-      <div className="mb-16">
+      <div className="mb-14">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="w-6 h-6 text-orange-500" />
-            <h2 className="text-2xl font-bold text-foreground">
-              Trending This Week
-            </h2>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-orange-500" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Trending This Week</h2>
           </div>
-          <button
-            onClick={() => toggleSectionMinimized("trending-topics")}
-            className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
-            title={
-              minimizedSections.has("trending-topics")
-                ? "Expand section"
-                : "Minimize section"
-            }
-          >
-            {minimizedSections.has("trending-topics") ? (
-              <ChevronDown className="w-5 h-5" />
-            ) : (
-              <ChevronUp className="w-5 h-5" />
-            )}
+          <button onClick={() => toggleSectionMinimized("trending-topics")} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            {minimizedSections.has("trending-topics") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         </div>
 
         {!minimizedSections.has("trending-topics") && (
           <>
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, index) => (
-                  <div
-                    key={index}
-                    className="bg-card border border-border rounded-lg p-6 animate-pulse"
-                  >
-                    <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded mb-3"></div>
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
-                    <div className="flex space-x-4">
-                      <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="h-4 w-12 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {[...Array(6)].map((_, i) => <div key={i} className="h-52 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />)}
               </div>
             ) : filteredTrendingTopics.length === 0 && searchQuery ? (
-              <div className="text-center py-12">
-                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No trending topics found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your search terms or check back later for new
-                  trends.
-                </p>
-              </div>
+              <div className="text-center py-12 text-slate-400">No trending topics match your search</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredTrendingTopics.map((topic, index) => (
-                  <div
-                    key={index}
-                    className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow relative group cursor-pointer"
-                    onClick={() => handleGenerateCourse(topic)}
-                  >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredTrendingTopics.map((topic, i) => (
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 hover:border-violet-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-foreground flex-1">
-                        {topic.title}
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${topic.difficulty === "beginner"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : topic.difficulty === "intermediate"
-                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                            }`}
-                        >
-                          {topic.difficulty || "Beginner"}
-                        </span>
-                      </div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex-1 group-hover:text-violet-700 transition-colors">{topic.title}</h3>
+                      <span className={`ml-2 px-2.5 py-1 text-[10px] font-bold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-50 text-emerald-600' :
+                        topic.difficulty === 'intermediate' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                        }`}>{topic.difficulty || 'Beginner'}</span>
                     </div>
-
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {topic.description}
-                    </p>
-
+                    <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-2">{topic.description}</p>
                     {topic.whyTrending && (
-                      <div className="mb-4 p-2 bg-accent rounded-lg">
-                        <p className="text-xs text-primary">
-                          <span className="font-semibold">🔥 Trending:</span>{" "}
-                          {topic.whyTrending}
-                        </p>
-                      </div>
+                      <p className="text-xs text-orange-600 bg-orange-50 rounded-xl px-3 py-2 mb-4">🔥 {topic.whyTrending}</p>
                     )}
-
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{topic.estimatedDuration || "6 weeks"}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <BookOpen className="w-4 h-4" />
-                        <span>{topic.category || "General"}</span>
-                      </div>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {topic.tags?.slice(0, 3).map((tag, j) => (
+                        <span key={j} className="px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-500 text-[10px] font-bold rounded-lg">{tag}</span>
+                      ))}
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2 flex-wrap gap-2">
-                        {topic.tags?.slice(0, 3).map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleGenerateCourse(topic);
-                        }}
-                        disabled={generatingCourse === topic.title}
-                        className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                      >
-                        {generatingCourse === topic.title ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Generating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            <span>Generate Course</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
+                      disabled={generatingCourse === topic.title}
+                      className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white py-2.5 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                      {generatingCourse === topic.title ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Course</>}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1430,167 +1301,78 @@ export default function Explore() {
       </div>
 
       {/* Categories */}
-      <div className="mb-16">
+      <div className="mb-14">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-foreground">
-            Browse by Category
-          </h2>
-          <button
-            onClick={() => toggleSectionMinimized("categories")}
-            className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
-            title={
-              minimizedSections.has("categories")
-                ? "Expand section"
-                : "Minimize section"
-            }
-          >
-            {minimizedSections.has("categories") ? (
-              <ChevronDown className="w-5 h-5" />
-            ) : (
-              <ChevronUp className="w-5 h-5" />
-            )}
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Browse by Category</h2>
+          <button onClick={() => toggleSectionMinimized("categories")} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+            {minimizedSections.has("categories") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         </div>
 
         {!minimizedSections.has("categories") && (
           <>
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, index) => (
-                  <div
-                    key={index}
-                    className="bg-card border border-border rounded-lg p-6 animate-pulse"
-                  >
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
-                    <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
-                    <div className="flex gap-2">
-                      <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                      <div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {[...Array(9)].map((_, i) => <div key={i} className="h-52 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />)}
               </div>
             ) : filteredCategories.length === 0 && searchQuery ? (
-              <div className="text-center py-12">
-                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No categories found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your search terms or browse all categories.
-                </p>
-              </div>
+              <div className="text-center py-12 text-slate-400">No categories match your search</div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredCategories
-                    .slice(0, visibleCategoriesCount)
-                    .map((category, index) => (
-                      <div
-                        key={index}
-                        className="group bg-card border border-border rounded-2xl p-6 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden border-t-4 border-t-primary/20 hover:border-t-primary"
-                      >
-                        <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
+                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 hover:border-violet-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+                      {!userIsPremium && (
+                        <div className="absolute top-3 right-3 bg-amber-50 text-amber-600 text-[10px] font-bold px-2.5 py-1 rounded-full">⭐ Premium</div>
+                      )}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-11 h-11 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center group-hover:bg-violet-600 transition-colors">
+                          <BookOpen className="w-5 h-5 text-violet-600 group-hover:text-white transition-colors" />
                         </div>
-                        {!userIsPremium && (
-                          <div className="absolute top-3 right-3">
-                            <div className="bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full flex items-center space-x-1">
-                              <span>⭐</span>
-                              <span>Premium</span>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center space-x-3 mb-4">
-                          <div className={`w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500`}>
-                            <BookOpen className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-black text-foreground tracking-tight">
-                              {category.name}
-                            </h3>
-                            <p className="text-[10px] text-muted-foreground font-bold tracking-widest leading-none mt-1">
-                              {category.count || 0} Specializations
-                            </p>
-                          </div>
+                        <div>
+                          <h3 className="text-base font-black text-slate-900 dark:text-white">{category.name}</h3>
+                          <p className="text-[10px] text-slate-400 font-bold">{category.count || 0} specializations</p>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {category.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {category.topics
-                            .slice(0, 4)
-                            .map((topic, topicIndex) => (
-                              <span
-                                key={topicIndex}
-                                className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full"
-                              >
-                                {topic}
-                              </span>
-                            ))}
-                          {category.topics.length > 4 && (
-                            <span className="px-2 py-1 bg-accent text-accent-foreground text-xs rounded-full">
-                              +{category.topics.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleExploreCategory(category)}
-                          disabled={exploringCategory === category.name}
-                          className="w-full bg-secondary hover:bg-primary hover:text-primary-foreground text-foreground py-3 px-4 rounded-xl transition-all duration-300 text-xs font-black tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 border border-border group-hover:border-primary/20"
-                        >
-                          {exploringCategory === category.name ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current/30 border-t-current"></div>
-                              <span>Accessing...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-4 h-4" />
-                              <span>Explore Curriculum</span>
-                            </>
-                          )}
-                        </button>
                       </div>
-                    ))}
+                      <p className="text-sm text-slate-500 mb-4 leading-relaxed">{category.description}</p>
+                      <div className="flex flex-wrap gap-1.5 mb-5">
+                        {category.topics.slice(0, 4).map((topic, j) => (
+                          <span key={j} className="px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-500 text-[10px] font-bold rounded-lg">{topic}</span>
+                        ))}
+                        {category.topics.length > 4 && (
+                          <span className="px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-400 text-[10px] rounded-lg">+{category.topics.length - 4}</span>
+                        )}
+                      </div>
+                      <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
+                        className="w-full bg-slate-50 dark:bg-slate-800 hover:bg-violet-600 hover:text-white text-slate-700 dark:text-slate-300 py-3 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 border border-slate-100 dark:border-slate-700 hover:border-violet-600 disabled:opacity-50 transition-all">
+                        {exploringCategory === category.name ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-4 h-4" /> Explore Curriculum</>}
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
                 {visibleCategoriesCount < filteredCategories.length && (
                   <div className="text-center mt-8">
-                    <button
-                      onClick={handleSeeMoreCategories}
-                      className="bg-muted text-muted-foreground px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-medium"
-                    >
-                      See More Categories (
-                      {filteredCategories.length - visibleCategoriesCount}{" "}
-                      remaining)
+                    <button onClick={handleSeeMoreCategories}
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-6 py-3 rounded-2xl text-sm font-bold hover:border-violet-300 hover:text-violet-600 transition-all">
+                      Show More ({filteredCategories.length - visibleCategoriesCount} remaining)
                     </button>
                   </div>
                 )}
 
-                {visibleCategoriesCount >= filteredCategories.length &&
-                  filteredCategories.length > 9 && (
-                    <div className="text-center mt-8">
-                      <div className="bg-accent border border-accent rounded-lg p-4">
-                        <Sparkles className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                        <p className="text-primary font-medium">
-                          Didn't find what you're looking for?
-                        </p>
-                        <p className="text-primary/80 text-sm mt-1 mb-4">
-                          Try generating a custom course with our AI!
-                        </p>
-                        <button
-                          onClick={() => router.push("/dashboard?tab=generate")}
-                          className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center space-x-2 mx-auto shadow-md"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          <span>Generate Custom Course</span>
-                        </button>
-                      </div>
+                {visibleCategoriesCount >= filteredCategories.length && filteredCategories.length > 9 && (
+                  <div className="text-center mt-8">
+                    <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800 rounded-3xl p-6 inline-block">
+                      <Sparkles className="w-8 h-8 text-violet-500 mx-auto mb-3" />
+                      <p className="text-violet-700 dark:text-violet-300 font-bold mb-1">Can't find what you're looking for?</p>
+                      <p className="text-violet-500 text-sm mb-4">Generate a custom course with AI</p>
+                      <button onClick={() => router.push("/dashboard?tab=generate")}
+                        className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mx-auto">
+                        <Sparkles className="w-4 h-4" /> Generate Custom Course
+                      </button>
                     </div>
-                  )}
+                  </div>
+                )}
               </>
             )}
           </>
@@ -1614,7 +1396,7 @@ export default function Explore() {
               {[...Array(6)].map((_, index) => (
                 <div
                   key={index}
-                  className="bg-card border border-border rounded-lg p-6 animate-pulse"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 animate-pulse"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded flex-1 mr-4"></div>
@@ -1684,7 +1466,7 @@ export default function Explore() {
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow relative group"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 hover:shadow-lg transition-shadow relative group"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-lg font-semibold text-foreground flex-1">

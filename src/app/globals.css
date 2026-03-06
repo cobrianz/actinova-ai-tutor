@@ -147,4 +147,75 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  .font-serif {
+    font-family: var(--font-eb-garamond), 'Georgia', serif !important;
+  }
+}
+
+/* ─── PDF Export Fix for html2canvas (No oklch support) ────────── */
+#resume-preview[data-exporting="true"],
+#resume-preview[data-exporting="true"] * {
+  --background: #ffffff !important;
+  --foreground: #1e293b !important;
+  --primary: #4f46e5 !important;
+  --secondary: #64748b !important;
+  --muted: #f8fafc !important;
+  --muted-foreground: #64748b !important;
+  --accent: #f1f5f9 !important;
+  --accent-foreground: #4338ca !important;
+  --destructive: #ef4444 !important;
+  --destructive-foreground: #f8fafc !important;
+  --border: #e2e8f0 !important;
+  --input: #e2e8f0 !important;
+  --ring: #4f46e5 !important;
+}
+
+/* Redefine essential slate colors as RGB for html2canvas */
+#resume-preview[data-exporting="true"] [class*="text-slate-950"] {
+  color: rgb(2, 6, 23) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-900"] {
+  color: rgb(15, 23, 42) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-800"] {
+  color: rgb(30, 41, 59) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-700"] {
+  color: rgb(51, 65, 85) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-600"] {
+  color: rgb(71, 85, 105) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-500"] {
+  color: rgb(100, 116, 139) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-400"] {
+  color: rgb(148, 163, 184) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="text-slate-300"] {
+  color: rgb(203, 213, 225) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="border-slate-200"] {
+  border-color: rgb(226, 232, 240) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="border-slate-100"] {
+  border-color: rgb(241, 245, 249) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="bg-slate-50"] {
+  background-color: rgb(248, 250, 252) !important;
+}
+
+#resume-preview[data-exporting="true"] [class*="bg-slate-100"] {
+  background-color: rgb(241, 245, 249) !important;
 }

@@ -719,104 +719,109 @@ export default function LearnContent() {
     // Handle headers
     html = html.replace(
       /^# (.*$)/gm,
-      '<h1 class="text-3xl font-bold text-foreground mb-6 mt-8 border-b-2 border-primary pb-2">$1</h1>'
+      '<h1 class="text-3xl font-bold font-serif text-foreground mb-10 mt-10 tracking-tight underline decoration-primary/30 underline-offset-8">$1</h1>'
     );
     html = html.replace(
       /^## (.*$)/gm,
-      '<h2 class="text-2xl font-semibold text-foreground mb-4 mt-6">$1</h2>'
+      '<h2 class="text-2xl font-bold font-serif text-foreground mb-4 mt-6">$1</h2>'
     );
     html = html.replace(
       /^### (.*$)/gm,
-      '<h3 class="text-xl font-semibold text-foreground/90 mb-3 mt-5">$1</h3>'
+      '<h3 class="text-xl font-bold font-serif text-foreground/90 mb-3 mt-5">$1</h3>'
     );
     html = html.replace(
       /^#### (.*$)/gm,
-      '<h4 class="text-lg font-semibold text-foreground/90 mb-2 mt-4">$1</h4>'
+      '<h4 class="text-lg font-bold font-serif text-foreground/90 mb-2 mt-4">$1</h4>'
     );
 
     // Handle blockquotes
     html = html.replace(
       /^> (.*$)/gm,
-      '<blockquote class="border-l-4 border-primary pl-4 py-2 my-4 bg-secondary text-muted-foreground italic rounded-r">$1</blockquote>'
+      '<blockquote class="border-l-4 border-primary pl-4 py-2 my-6 bg-secondary font-serif italic rounded-r text-foreground/80">$1</blockquote>'
     );
 
     // Handle bold - must come before italics
     html = html.replace(
       /\*\*([^\*\n]+?)\*\*/g,
-      '<strong class="font-bold text-foreground">$1</strong>'
+      '<strong class="font-bold font-serif text-foreground">$1</strong>'
+    );
+    html = html.replace(
+      /<b>([^\n]+?)<\/b>/g,
+      '<b class="font-bold font-serif text-foreground">$1</b>'
     );
 
     // Handle italics
     html = html.replace(
       /\*([^\*\n]+?)\*/g,
-      '<em class="italic text-foreground/90">$1</em>'
+      '<em class="italic font-serif text-foreground/90">$1</em>'
     );
 
-    // Handle numbered lists
-    let inOrderedList = false;
-    html = html
-      .split("\n")
-      .map((line) => {
-        if (/^\d+\.\s+/.test(line)) {
-          const content = line.replace(/^\d+\.\s+/, "");
-          if (!inOrderedList) {
-            inOrderedList = true;
-            return (
-              '<ol class="list-decimal list-inside mb-4 space-y-2 text-muted-foreground ml-4"><li class="mb-2">' +
-              content +
-              "</li>"
-            );
-          }
-          return '<li class="mb-2">' + content + "</li>";
-        } else {
-          if (inOrderedList) {
-            inOrderedList = false;
-            return "</ol>" + line;
-          }
-          return line;
-        }
-      })
-      .join("\n");
-    if (inOrderedList) html += "</ol>";
+    // Handle lists and paragraphs in a single pass to avoid mid-list resets
+    const lines = html.split("\n");
+    let processedHtml = [];
+    let listStack = [];
 
-    // Handle bullet lists
-    let inUnorderedList = false;
-    html = html
-      .split("\n")
-      .map((line) => {
-        if (/^[-•*]\s+/.test(line)) {
-          const content = line.replace(/^[-•*]\s+/, "");
-          if (!inUnorderedList) {
-            inUnorderedList = true;
-            return (
-              '<ul class="list-disc list-inside mb-4 space-y-2 text-muted-foreground ml-4"><li class="mb-2">' +
-              content +
-              "</li>"
-            );
-          }
-          return '<li class="mb-2">' + content + "</li>";
-        } else {
-          if (inUnorderedList) {
-            inUnorderedList = false;
-            return "</ul>" + line;
-          }
-          return line;
-        }
-      })
-      .join("\n");
-    if (inUnorderedList) html += "</ul>";
+    const closeList = () => {
+      if (listStack.length > 0) {
+        const type = listStack.pop();
+        processedHtml.push(type === 'ol' ? '</ol>' : '</ul>');
+      }
+    };
 
-    // Handle paragraphs
-    html = html
-      .split("\n\n")
-      .map((para) => {
-        para = para.trim();
-        if (para && !para.startsWith("<")) {
-          return `<p class="mb-4 text-foreground/90 leading-relaxed">${para}</p>`;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (!line) {
+        // Check if next meaningful line is a list item to preserve state
+        let nextMeaningfulLine = "";
+        for (let j = i + 1; j < lines.length; j++) {
+          if (lines[j].trim()) {
+            nextMeaningfulLine = lines[j].trim();
+            break;
+          }
         }
-        return para;
-      })
-      .join("\n");
+        const nextIsList = /^(\d+\.\s+|[-•*]\s+)/.test(nextMeaningfulLine);
+        if (!nextIsList) {
+          closeList();
+        }
+        processedHtml.push('<div class="h-2"></div>');
+        continue;
+      }
+
+      // List regexes
+      const olMatch = line.match(/^(\d+)\.\s+(.*)$/);
+      const ulMatch = line.match(/^([-•*])\s+(.*)$/);
+
+      if (olMatch) {
+        if (listStack[listStack.length - 1] !== 'ol') {
+          closeList();
+          processedHtml.push('<ol class="list-decimal list-outside mb-6 space-y-4 font-serif text-[1.05rem] text-foreground/80 ml-10">');
+          listStack.push('ol');
+        }
+        processedHtml.push(`<li class="pl-3">${olMatch[2]}</li>`);
+      } else if (ulMatch) {
+        if (listStack[listStack.length - 1] !== 'ul') {
+          closeList();
+          processedHtml.push('<ul class="list-disc list-outside mb-6 space-y-3 font-serif text-[1.05rem] text-foreground/80 ml-10">');
+          listStack.push('ul');
+        }
+        processedHtml.push(`<li class="pl-3">${ulMatch[2]}</li>`);
+      } else {
+        // Not a list item prefix
+        if (listStack.length > 0) {
+          // Continuation of a list item
+          processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] leading-relaxed">${line}</div>`);
+        } else if (line.startsWith('<')) {
+          // Already HTML (header, blockquote, etc.)
+          processedHtml.push(line);
+        } else {
+          // Regular paragraph
+          processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed font-serif text-[1.05rem]">${line}</p>`);
+        }
+      }
+    }
+    closeList();
+    html = processedHtml.join("\n");
 
     // Handle horizontal rules (removed as per user request)
     html = html.replace(

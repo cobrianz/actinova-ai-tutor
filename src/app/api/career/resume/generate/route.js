@@ -66,16 +66,6 @@ Ensure the content is high-quality, ATS-optimized, and specifically tailored to 
 
     const data = JSON.parse(completion.choices[0].message.content);
 
-    await dbConnect();
-    const history = new CareerHistory({
-      userId,
-      type: "resume",
-      title: role,
-      data: data,
-      metadata: { role }
-    });
-    await history.save();
-
     await trackAPIUsage(userId, "career-resume-gen");
 
     return NextResponse.json(data);

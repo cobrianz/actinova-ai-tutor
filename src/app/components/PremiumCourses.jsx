@@ -428,7 +428,7 @@ export default function PremiumCourses() {
           <Sparkles className="w-6 h-6 text-primary animate-pulse" />
           <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Curated Excellence</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black text-foreground mb-8 tracking-tight">
+        <h1 className="text-4xl md:text-6xl font-black font-serif text-foreground mb-8 tracking-tight">
           <span className="bg-gradient-to-r from-primary via-blue-600 to-accent bg-clip-text text-transparent">Premium Courses</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">

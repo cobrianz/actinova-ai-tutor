@@ -47,28 +47,46 @@ async function deleteHistoryHandler(req) {
     }
 }
 
-// POST /api/career/history
+// POST /api/career/history  — with deduplication for resume autosaves
 async function saveHistoryHandler(req) {
     await dbConnect();
     const userId = req.user._id;
     const body = await req.json();
-    const { type, title, data, metadata } = body;
+    const { id, type, title, data, metadata } = body;
 
     if (!type || !title || !data) {
         return NextResponse.json({ error: "Type, title, and data are required" }, { status: 400 });
     }
 
     try {
-        const newHistory = new CareerHistory({
-            userId,
-            type,
-            title,
-            data,
-            metadata
-        });
-        await newHistory.save();
-        return NextResponse.json(newHistory, { status: 201 });
+        // For autosaved resume drafts, upsert on userId + type + title so we don't create duplicates.
+        // For interview / network / skill-gap sessions we always want a fresh record.
+        const alwaysInsert = ["interview", "network", "skill-gap"];
+        if (alwaysInsert.includes(type)) {
+            const newHistory = new CareerHistory({ userId, type, title, data, metadata });
+            await newHistory.save();
+            return NextResponse.json(newHistory, { status: 201 });
+        }
+
+        // Update by specific ID if provided to prevent duplicates when renaming
+        if (id) {
+            const updated = await CareerHistory.findOneAndUpdate(
+                { _id: id, userId },
+                { $set: { title, data, metadata, updatedAt: new Date() } },
+                { new: true }
+            );
+            if (updated) return NextResponse.json(updated, { status: 200 });
+        }
+
+        // Upsert: update if same user + type + title exists, otherwise create
+        const record = await CareerHistory.findOneAndUpdate(
+            { userId, type, title },
+            { $set: { data, metadata, updatedAt: new Date() } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        return NextResponse.json(record, { status: 200 });
     } catch (error) {
+        console.error("Save history error:", error);
         return NextResponse.json({ error: "Failed to save history" }, { status: 500 });
     }
 }
