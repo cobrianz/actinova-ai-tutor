@@ -32,19 +32,22 @@ export function withAuth(handler, options = {}) {
       };
 
       let token = null;
-      token = req.cookies?.get?.("token")?.value || null;
-
-      if (!token) {
-        try {
-          token = nextCookies().get("token")?.value || null;
-        } catch (e) { }
-      }
+      try {
+        const cookieHeader = req.headers?.get("cookie") || "";
+        const cookiesMap = cookieHeader.split("; ").reduce((acc, cookie) => {
+          const [name, ...rest] = cookie.split("=");
+          acc[name] = rest.join("=");
+          return acc;
+        }, {});
+        token = cookiesMap.token || null;
+      } catch (e) { }
 
       if (!token) {
         try {
           token = req.headers?.get("authorization")?.replace("Bearer ", "") || null;
           if (!token) {
-            token = nextHeaders()?.get("authorization")?.replace?.("Bearer ", "") || null;
+            const headerStore = await nextHeaders();
+            token = headerStore?.get("authorization")?.replace?.("Bearer ", "") || null;
           }
         } catch (e) { }
       }
@@ -124,10 +127,16 @@ export function withCsrf(handler) {
 
     try {
       const csrfHeader = req.headers.get(CSRF_HEADER_NAME);
-      let csrfCookie = req.cookies.get(CSRF_COOKIE_NAME)?.value;
-      if (!csrfCookie) {
-        try { csrfCookie = nextCookies().get(CSRF_COOKIE_NAME)?.value; } catch (e) { }
-      }
+      let csrfCookie = null;
+      try {
+        const cookieHeader = req.headers?.get("cookie") || "";
+        const cookiesMap = cookieHeader.split("; ").reduce((acc, cookie) => {
+          const [name, ...rest] = cookie.split("=");
+          acc[name] = rest.join("=");
+          return acc;
+        }, {});
+        csrfCookie = cookiesMap[CSRF_COOKIE_NAME] || null;
+      } catch (e) { }
 
       if (!validateCsrfToken(csrfHeader, csrfCookie)) {
         return NextResponse.json(

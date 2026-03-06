@@ -225,22 +225,12 @@ const CareerGrowth = () => {
                                     <Button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setSubTab("resume", { mode: "optimize" });
+                                            setSubTab("resume");
                                         }}
-                                        className="bg-white text-slate-900 hover:bg-white/90 font-bold px-6 py-2 rounded-xl h-auto"
+                                        className="bg-white text-slate-900 hover:bg-white/90 font-bold px-6 py-2 rounded-xl h-auto w-full sm:w-auto"
                                     >
                                         <Sparkles className="w-4 h-4 mr-2" />
-                                        Optimize Resume
-                                    </Button>
-                                    <Button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSubTab("resume", { mode: "build" });
-                                        }}
-                                        className="bg-white/10 text-white border border-white/20 hover:bg-white/20 backdrop-blur-sm font-bold px-6 py-2 rounded-xl h-auto"
-                                    >
-                                        <BrainCircuit className="w-4 h-4 mr-2" />
-                                        Resume Builder
+                                        Launch Resume Builder
                                     </Button>
                                 </div>
                             </div>
