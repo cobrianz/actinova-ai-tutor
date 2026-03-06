@@ -7,6 +7,7 @@ import ResumeBuilder from "./ResumeBuilder";
 import InterviewPrep from "./InterviewPrep";
 import SkillGapAnalysis from "./SkillGapAnalysis";
 import NetworkAI from "./NetworkAI";
+import UpgradeModal from "./UpgradeModal";
 import {
     FileText,
     MessageSquare,
@@ -145,7 +146,7 @@ const CareerGrowth = () => {
 
     if (subTab !== "overview" && isPro) {
         return (
-            <div className="max-w-7xl mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8 min-h-[80vh]">
+            <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-0 sm:px-6 lg:px-8 min-h-[80vh]">
                 {renderHeader()}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.98 }}
@@ -589,71 +590,13 @@ const CareerGrowth = () => {
                 </motion.div>
             </main>
 
-            {/* Premium Upgrade Modal */}
-            <AnimatePresence>
-                {showPremiumModal && (
-                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-card rounded-2xl max-w-md w-full p-8 shadow-2xl border border-border"
-                        >
-                            <div className="text-center">
-                                <div className="mb-6 relative">
-                                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                                        <Sparkles className="w-10 h-10 text-primary" />
-                                    </div>
-                                    <div className="absolute top-0 right-1/4">
-                                        <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">PRO</div>
-                                    </div>
-                                </div>
 
-                                <h3 className="text-2xl font-black text-foreground mb-3">
-                                    Unlock Career Growth Pro
-                                </h3>
-                                <p className="text-muted-foreground mb-8 leading-relaxed">
-                                    Specialized career tools like the **Resume Accelerator**, **Mock Interview**, and **Skill Gap Analysis** are exclusive to our Pro members.
-                                </p>
-
-                                <div className="space-y-3 mb-8 text-left bg-muted/50 p-4 rounded-xl border border-border/50">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                                        <span>Unlimited AI Resume Generations</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                                        <span>Advanced Interview Simulations</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                                        <span>Personalized Career Roadmap</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowPremiumModal(false)}
-                                        className="flex-1 rounded-xl h-12 font-bold"
-                                    >
-                                        Maybe Later
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            setShowPremiumModal(false);
-                                            router.push("/pricing");
-                                        }}
-                                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl h-12 font-bold shadow-lg shadow-primary/20"
-                                    >
-                                        Upgrade Now
-                                    </Button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <UpgradeModal
+                isOpen={showPremiumModal}
+                onClose={() => setShowPremiumModal(false)}
+                featureName="Career Growth Suite"
+                description="Unlock the full power of our AI-driven Career Accelerator. Get unlimited resume optimizations, expert interview prep, and deep skill gap analysis."
+            />
         </div>
     );
 };

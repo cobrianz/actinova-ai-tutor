@@ -683,10 +683,10 @@ export default function ReportEditor({ reportId }) {
                         next = next.nextElementSibling;
                     }
                     return {
-                        Heading: h2.innerText,
+                        heading: h2.innerText,
                         paragraphs: paragraphs
                     };
-                }).filter(s => s.Heading),
+                }).filter(s => s.heading),
                 references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
             });
 
@@ -999,7 +999,7 @@ export default function ReportEditor({ reportId }) {
                                             </p>
                                         ))
                                     ) : (
-                                        <div contentEditable="false" className="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
+                                        <div contentEditable="false" suppressContentEditableWarning={true} className="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
                                             <div className="flex flex-col items-center">
                                                 <FileText className="w-12 h-12 text-slate-300 mb-3" />
                                                 <p className="text-sm text-slate-400 font-medium">Citations will be automatically compiled here</p>

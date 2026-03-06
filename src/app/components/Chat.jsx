@@ -12,6 +12,7 @@ import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
 import { apiClient } from "@/lib/csrfClient";
 import { motion, AnimatePresence } from "framer-motion";
+import UpgradeModal from "./UpgradeModal";
 
 // Render markdown-like formatting to HTML
 const renderFormattedContent = (content) => {
@@ -80,6 +81,7 @@ export default function Chat({ topic: propTopic }) {
   const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [topicToDelete, setTopicToDelete] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const loadChatTopics = async () => {
     if (!user) return;
@@ -163,7 +165,10 @@ export default function Chat({ topic: propTopic }) {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    if (!isPro) { toast.error("Premium subscription required for AI tutor chat."); router.push("/pricing"); return; }
+    if (!isPro) {
+      setShowUpgradeModal(true);
+      return;
+    }
     if (!topic) { toast.error("Please set a topic first."); return; }
 
     const userMessage = { role: "user", content: input.trim(), timestamp: new Date().toISOString() };
@@ -345,6 +350,13 @@ export default function Chat({ topic: propTopic }) {
       <ConfirmModal isOpen={showNewChatModal} onClose={() => setShowNewChatModal(false)} onConfirm={confirmNewChat} title="Start New Chat" message="Current conversation will be saved." confirmText="Start New" cancelText="Cancel" confirmColor="black" />
       <ConfirmModal isOpen={showClearHistoryModal} onClose={() => setShowClearHistoryModal(false)} onConfirm={confirmClearHistory} title="Clear Chat" message="Clear this conversation's history?" confirmText="Clear" cancelText="Cancel" confirmColor="red" />
       <ConfirmModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onConfirm={confirmDeleteTopic} title="Delete Chat" message={`Delete "${topicToDelete}"?`} confirmText="Delete" cancelText="Cancel" confirmColor="red" />
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName="AI Tutor Chat"
+        description="Experience personalized 1-on-1 learning with our advanced AI tutor. Pro members get 1,000+ messages per month."
+      />
     </div>
   );
 }

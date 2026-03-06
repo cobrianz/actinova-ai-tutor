@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+import { useAuth } from "./AuthProvider";
+import UpgradeModal from "./UpgradeModal";
 
 function InputField({ label, value, onChange, placeholder, rows, description }) {
     const base = "w-full px-4 py-3 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 transition-all";
@@ -42,6 +44,13 @@ const NetworkAI = () => {
     const [copiedIndex, setCopiedIndex] = useState(null);
     const [history, setHistory] = useState([]);
     const [error, setError] = useState(null);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const { user, loading: authLoading } = useAuth();
+
+    const isPro = !authLoading && user && (
+        (user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") ||
+        user.isPremium
+    );
 
     React.useEffect(() => { fetchHistory(); }, []);
 
@@ -58,6 +67,10 @@ const NetworkAI = () => {
         }
         if (subMode === "mentorship" && (!userSkills.trim() || !careerGoals.trim())) {
             toast.error("Please provide your skills and career goals"); return;
+        }
+        if (!isPro) {
+            setShowUpgradeModal(true);
+            return;
         }
         setLoading(true); setError(null);
         try {
@@ -110,7 +123,7 @@ const NetworkAI = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="w-full px-2 sm:px-4 py-6 sm:py-10 min_h-screen bg-slate-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white">Network AI</h1>
@@ -284,6 +297,13 @@ const NetworkAI = () => {
                     </div>
                 </div>
             )}
+
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                featureName="Network AI"
+                description="Master the art of professional outreach. Pro members get unlimited message templates and mentor archetype analysis."
+            />
         </div>
     );
 };

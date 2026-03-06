@@ -33,6 +33,10 @@ import {
   Star,
   Zap,
   Receipt,
+  MessageSquare,
+  FileText,
+  Sparkles,
+  Brain,
 } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { useTheme } from "./ThemeProvider";
@@ -407,65 +411,176 @@ export default function ProfileContent() {
                       </div>
 
                       <div className="pt-6 border-t border-border">
-                        <h2 className="text-xl font-bold mb-6">Usage Statistics</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          {/* Course Generation Usage */}
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">Course Generations</span>
-                              <span className="text-xs font-bold text-primary">
-                                {profileData?.usage?.details?.courses?.used || 0} / {profileData?.usage?.details?.courses?.limit === null ? "∞" : profileData?.usage?.details?.courses?.limit}
-                              </span>
-                            </div>
-                            <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-primary transition-all duration-700 ease-out"
-                                style={{ width: `${profileData?.usage?.details?.courses?.limit === null ? 100 : profileData?.usage?.details?.courses?.percent || 0}%` }}
-                              />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground">Monthly course creation limit</p>
+                        <div className="flex items-center justify-between mb-8">
+                          <div>
+                            <h2 className="text-2xl font-black text-foreground">Usage Analytics</h2>
+                            <p className="text-sm text-muted-foreground">Detailed breakdown of your AI-powered activities</p>
                           </div>
-
-                          {/* Flashcard Generation Usage */}
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">Flashcard Sets</span>
-                              <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
-                                {profileData?.usage?.details?.flashcards?.used || 0} / {profileData?.usage?.details?.flashcards?.limit === null ? "∞" : profileData?.usage?.details?.flashcards?.limit}
-                              </span>
-                            </div>
-                            <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-purple-600 transition-all duration-700 ease-out"
-                                style={{ width: `${profileData?.usage?.details?.flashcards?.limit === null ? 100 : profileData?.usage?.details?.flashcards?.percent || 0}%` }}
-                              />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground">Monthly flashcard set limit</p>
-                          </div>
-
-                          {/* Quiz Generation Usage */}
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">Test / Exam Sets</span>
-                              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                {profileData?.usage?.details?.quizzes?.used || 0} / {profileData?.usage?.details?.quizzes?.limit === null ? "∞" : profileData?.usage?.details?.quizzes?.limit}
-                              </span>
-                            </div>
-                            <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-emerald-600 transition-all duration-700 ease-out"
-                                style={{ width: `${profileData?.usage?.details?.quizzes?.limit === null ? 100 : profileData?.usage?.details?.quizzes?.percent || 0}%` }}
-                              />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground">Monthly assessment paper limit</p>
+                          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 border border-primary/10">
+                            <Clock size={16} className="text-primary" />
+                            <span className="text-xs font-bold text-primary">Resets in {Math.max(1, 30 - new Date().getDate())} days</span>
                           </div>
                         </div>
-                        <div className="mt-8 p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-4">
-                          <AlertCircle className="text-primary shrink-0" size={20} />
-                          <p className="text-xs text-foreground/80">
-                            Your usage resets on the <span className="font-bold">{profileData?.usage?.resetDate || "1st"}</span> of every month.
-                            {!profileData?.usage?.isPremium && " Upgrade to Pro for 10x higher limits and unlimited access."}
-                          </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {/* Course Generation Usage */}
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 border border-violet-500/10 hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/5">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="p-3 rounded-xl bg-violet-500/10 text-violet-600">
+                                <BookOpen size={24} />
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Courses Created</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs font-bold">
+                                <span className="text-muted-foreground">Monthly Limit</span>
+                                <span className="text-violet-600">
+                                  {profileData?.usage?.details?.courses?.limit === null || profileData?.usage?.details?.courses?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.courses?.limit}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-violet-500/10 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full transition-all duration-1000 ease-out"
+                                  style={{ width: `${profileData?.usage?.details?.courses?.limit === null || profileData?.usage?.details?.courses?.limit === Infinity ? 100 : profileData?.usage?.details?.courses?.percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Report Generation Usage */}
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 hover:border-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600">
+                                <FileText size={24} />
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.reports?.used || 0}</div>
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Reports & Essays</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs font-bold">
+                                <span className="text-muted-foreground">Monthly Limit</span>
+                                <span className="text-blue-600">
+                                  {profileData?.usage?.details?.reports?.limit === null || profileData?.usage?.details?.reports?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.reports?.limit}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-blue-500/10 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full transition-all duration-1000 ease-out"
+                                  style={{ width: `${profileData?.usage?.details?.reports?.limit === null || profileData?.usage?.details?.reports?.limit === Infinity ? 100 : profileData?.usage?.details?.reports?.percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Chat Messages Usage */}
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/5">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600">
+                                <MessageSquare size={24} />
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.chat?.used || 0}</div>
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Chat Context</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs font-bold">
+                                <span className="text-muted-foreground">Monthly Limit</span>
+                                <span className="text-emerald-600">
+                                  {profileData?.usage?.details?.chat?.limit === null || profileData?.usage?.details?.chat?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.chat?.limit}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-emerald-500/10 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full transition-all duration-1000 ease-out"
+                                  style={{ width: `${profileData?.usage?.details?.chat?.limit === null || profileData?.usage?.details?.chat?.limit === Infinity ? 100 : profileData?.usage?.details?.chat?.percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Flashcard Sets Usage */}
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-orange-500/5 to-yellow-500/5 border border-orange-500/10 hover:border-orange-500/30 transition-all hover:shadow-xl hover:shadow-orange-500/5">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600">
+                                <Sparkles size={24} />
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.flashcards?.used || 0}</div>
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Flashcard Sets</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs font-bold">
+                                <span className="text-muted-foreground">Monthly Limit</span>
+                                <span className="text-orange-600">
+                                  {profileData?.usage?.details?.flashcards?.limit === null || profileData?.usage?.details?.flashcards?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.flashcards?.limit}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-orange-500/10 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-orange-600 to-yellow-600 rounded-full transition-all duration-1000 ease-out"
+                                  style={{ width: `${profileData?.usage?.details?.flashcards?.limit === null || profileData?.usage?.details?.flashcards?.limit === Infinity ? 100 : profileData?.usage?.details?.flashcards?.percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quiz Sets Usage */}
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-pink-500/5 border border-indigo-500/10 hover:border-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-600">
+                                <Target size={24} />
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.quizzes?.used || 0}</div>
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Assessments</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs font-bold">
+                                <span className="text-muted-foreground">Monthly Limit</span>
+                                <span className="text-indigo-600">
+                                  {profileData?.usage?.details?.quizzes?.limit === null || profileData?.usage?.details?.quizzes?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.quizzes?.limit}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full bg-indigo-500/10 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-indigo-600 to-pink-600 rounded-full transition-all duration-1000 ease-out"
+                                  style={{ width: `${profileData?.usage?.details?.quizzes?.limit === null || profileData?.usage?.details?.quizzes?.limit === Infinity ? 100 : profileData?.usage?.details?.quizzes?.percent || 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 flex flex-col md:flex-row items-center gap-6">
+                          <div className="p-4 rounded-full bg-primary/10 text-primary">
+                            <Zap size={32} className="animate-pulse" />
+                          </div>
+                          <div className="flex-1 text-center md:text-left">
+                            <h4 className="text-lg font-bold text-foreground mb-1">
+                              {profileData?.usage?.isPremium ? "You're a Power Learner!" : "Unlock Unlimited Potential"}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {profileData?.usage?.isPremium
+                                ? "Your usage limits have been vastly expanded. Keep pushing your boundaries with AI."
+                                : "You're currently on a free plan. Pro members enjoy 10x higher limits, priority generations, and exclusive tools."}
+                            </p>
+                          </div>
+                          {!profileData?.usage?.isPremium && (
+                            <button
+                              onClick={() => setActiveTab("billing")}
+                              className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-black shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
+                            >
+                              Upgrade Now
+                            </button>
+                          )}
                         </div>
                       </div>
                     </>

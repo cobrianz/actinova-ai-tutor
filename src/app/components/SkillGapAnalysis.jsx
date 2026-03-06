@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import {
     Target, Sparkles, CheckCircle, AlertTriangle, TrendingUp,
     BookOpen, Map, Loader2, Briefcase, AlertCircle, X,
-    ArrowRight, Clock, ChevronRight, Star, Zap
+    ArrowRight, Clock, ChevronRight, Star, Zap, Lock
 } from "lucide-react";
+import { useAuth } from "./AuthProvider";
+import UpgradeModal from "./UpgradeModal";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 
@@ -35,6 +37,13 @@ const SkillGapAnalysis = () => {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
     const [persistentHistory, setPersistentHistory] = useState([]);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const { user, loading: authLoading } = useAuth();
+
+    const isPro = !authLoading && user && (
+        (user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") ||
+        user.isPremium
+    );
 
     React.useEffect(() => { fetchHistory(); }, []);
 
@@ -51,6 +60,10 @@ const SkillGapAnalysis = () => {
     const handleAnalyze = async () => {
         if (!currentSkills.trim() || !targetRole.trim()) {
             toast.error("Please provide both current skills and target role");
+            return;
+        }
+        if (!isPro) {
+            setShowUpgradeModal(true);
             return;
         }
         setLoading(true);
@@ -101,7 +114,7 @@ const SkillGapAnalysis = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="w-full px-2 sm:px-4 py-6 sm:py-10 min_h-screen bg-slate-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white">Skill Gap Analysis</h1>
@@ -311,6 +324,13 @@ const SkillGapAnalysis = () => {
                     </div>
                 )}
             </div>
+
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                featureName="Skill Gap Analysis"
+                description="Get deep insights into your professional standing. Pro members get unlimited career analysis and personalized learning paths."
+            />
         </div>
     );
 };

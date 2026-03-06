@@ -15,7 +15,8 @@ import {
   LogOut,
   TrendingUp,
   Briefcase,
-  Brain
+  Brain,
+  Lock
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -46,14 +47,14 @@ export default function Sidebar({
 
   const navigation = [
     { name: "New", id: "generate", icon: Plus },
-    { name: "AI Chat", id: "chat", icon: MessageCircle },
+    { name: "AI Chat", id: "chat", icon: MessageCircle, premium: true },
     { name: "Explore", id: "explore", icon: Search },
     { name: "Library", id: "library", icon: BookOpen },
-    { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
-    { name: "Career Growth", id: "career", icon: Briefcase },
+    { name: "Reports & Essays", id: "reports-library", icon: ScrollText, premium: true },
+    { name: "Career Growth", id: "career", icon: Briefcase, premium: true },
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
-    { name: "Premium", id: "premium-courses", icon: Star },
+    { name: "Premium", id: "premium-courses", icon: Star, premium: true },
     // Only show upgrade when auth has finished loading and user is not pro
     !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },
   ].filter(Boolean);
@@ -109,6 +110,10 @@ export default function Sidebar({
       router.push("/pricing");
       return;
     }
+
+    const item = navigation.find(n => n.id === id);
+    // Allow navigation but keep locks as indicators
+
     setActiveItem(id);
     if (setActiveContent) {
       setActiveContent(id);
@@ -210,8 +215,18 @@ export default function Sidebar({
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                           }`}
                       >
-                        <Icon className="w-5 h-5" />
-                        <span>{item.name}</span>
+                        <div className="relative">
+                          <Icon className="w-5 h-5" />
+                          {item.premium && !isPro && (
+                            <div className="absolute -top-1 -right-1 bg-amber-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
+                              <Lock size={8} className="text-amber-950" />
+                            </div>
+                          )}
+                        </div>
+                        <span className="flex-1 text-left">{item.name}</span>
+                        {item.premium && !isPro && (
+                          <Lock size={12} className="text-muted-foreground/40" />
+                        )}
                       </button>
                     </motion.li>
                   );

@@ -163,7 +163,7 @@ function FormResumePreview({ data, onUpdate }) {
         <div className="flex items-center gap-4 mb-4 mt-8 first:mt-0 group/sec relative">
             <div className="h-[1px] flex-1 bg-slate-200"></div>
             <div className="flex items-center gap-2">
-                <h3 className="text-[12px] font-black tracking-[0.1em] text-slate-500 px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full">{children}</h3>
+                <h3 className="text-base font-black tracking-[0.1em] text-slate-500 px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full">{children}</h3>
                 <button onClick={() => handleRefineText('refine', children.toString().toLowerCase())} className="p-1 px-2 rounded-full bg-violet-50 text-violet-500 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-violet-100" title="Refine this section with AI">
                     <Sparkles size={10} />
                 </button>
@@ -250,7 +250,7 @@ function FormResumePreview({ data, onUpdate }) {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => handleBlur('personalInfo', 'fullName', e.target.innerText)}
-                    className="text-3xl font-bold tracking-tight mb-2 outline-none focus:bg-slate-50 rounded px-2"
+                    className="text-5xl font-bold tracking-tight mb-2 outline-none focus:bg-slate-50 rounded px-2"
                     style={{ letterSpacing: "0.02em" }}
                 >
                     {displayName || "Your Name"}
@@ -260,15 +260,15 @@ function FormResumePreview({ data, onUpdate }) {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => handleBlur('personalInfo', 'jobTitle', e.target.innerText)}
-                    className="text-lg font-medium text-slate-600 tracking-wide italic outline-none focus:bg-slate-50 rounded px-2"
-                    style={{ fontSize: "14px" }}
+                    className="text-xl font-medium text-slate-600 tracking-wide italic outline-none focus:bg-slate-50 rounded px-2"
+                    style={{ fontSize: "18px" }}
                 >
                     {personalInfo.jobTitle || "Job Title"}
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 max-w-2xl">
                     {contactItems.map((item, i) => (
-                        <div key={i} className={`flex items-center gap-1.5 text-[11px] text-slate-500 ${!item.value ? "opacity-30 hover:opacity-100 transition-opacity" : ""}`}>
+                        <div key={i} className={`flex items-center gap-1.5 text-[13px] text-slate-500 ${!item.value ? "opacity-30 hover:opacity-100 transition-opacity" : ""}`}>
                             <item.icon size={10} className="text-slate-400" />
                             <span
                                 contentEditable
@@ -290,7 +290,7 @@ function FormResumePreview({ data, onUpdate }) {
                         contentEditable
                         suppressContentEditableWarning
                         onBlur={(e) => handleBlur('personalInfo', 'summary', e.target.innerText)}
-                        className="text-[14px] leading-relaxed text-justify px-2 italic outline-none focus:bg-slate-50 rounded"
+                        className="text-base leading-relaxed text-justify px-2 italic outline-none focus:bg-slate-50 rounded"
                         style={{ color: "#333" }}
                     >
                         {personalInfo.summary || data.summary}
@@ -323,7 +323,7 @@ function FormResumePreview({ data, onUpdate }) {
                                             contentEditable
                                             suppressContentEditableWarning
                                             onBlur={(e) => handleBlur('experience', 'company', e.target.innerText, i)}
-                                            className="text-[13px] font-semibold text-slate-600 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                            className="text-[15px] font-semibold text-slate-600 leading-none outline-none focus:bg-slate-50 rounded px-1"
                                         >
                                             {exp.company}
                                         </span>
@@ -332,7 +332,7 @@ function FormResumePreview({ data, onUpdate }) {
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => handleBlur('experience', 'dateRange', e.target.innerText, i)}
-                                        className="text-[11px] font-bold text-slate-500 uppercase tracking-wider outline-none focus:bg-slate-50 rounded px-1"
+                                        className="text-[13px] font-bold text-slate-500 uppercase tracking-wider outline-none focus:bg-slate-50 rounded px-1"
                                     >
                                         {exp.startDate} – {exp.endDate}
                                     </span>
@@ -341,7 +341,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('experience', 'description', e.target.innerText, i)}
-                                    className="text-[14px] leading-relaxed text-slate-600 whitespace-pre-line border-l-2 border-slate-50 pl-4 ml-0.5 outline-none focus:bg-slate-50 rounded"
+                                    className="text-base leading-relaxed text-slate-600 whitespace-pre-line border-l-2 border-slate-50 pl-4 ml-0.5 outline-none focus:bg-slate-50 rounded"
                                 >
                                     {exp.description}
                                 </p>
@@ -376,7 +376,7 @@ function FormResumePreview({ data, onUpdate }) {
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => handleBlur('education', 'school', e.target.innerText, i)}
-                                        className="text-[13px] font-medium text-slate-500 pl-5 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                        className="text-[15px] font-medium text-slate-500 pl-5 leading-none outline-none focus:bg-slate-50 rounded px-1"
                                     >
                                         {edu.school}, {edu.location}
                                     </p>
@@ -385,7 +385,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('education', 'dateRange', e.target.innerText, i)}
-                                    className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                    className="text-[13px] font-bold text-slate-400 uppercase tracking-widest leading-none outline-none focus:bg-slate-50 rounded px-1"
                                 >
                                     {edu.startDate} – {edu.endDate}
                                 </span>
@@ -421,7 +421,7 @@ function FormResumePreview({ data, onUpdate }) {
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => handleBlur('projects', 'technologies', e.target.innerText, i)}
-                                        className="text-[11px] font-bold text-slate-400 uppercase tracking-widest outline-none focus:bg-slate-50 rounded px-1"
+                                        className="text-[13px] font-bold text-slate-400 uppercase tracking-widest outline-none focus:bg-slate-50 rounded px-1"
                                     >
                                         {project.technologies}
                                     </span>
@@ -430,7 +430,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('projects', 'description', e.target.innerText, i)}
-                                    className="text-[14px] leading-relaxed text-slate-600 border-l-2 border-slate-50 pl-4 ml-0.5 outline-none focus:bg-slate-50 rounded"
+                                    className="text-base leading-relaxed text-slate-600 border-l-2 border-slate-50 pl-4 ml-0.5 outline-none focus:bg-slate-50 rounded"
                                 >
                                     {project.description}
                                 </p>
@@ -448,11 +448,11 @@ function FormResumePreview({ data, onUpdate }) {
                             <div key={i} className="group relative flex justify-between items-start">
                                 <button onClick={() => onUpdate('certifications', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
                                 <div>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'name', e.target.innerText)} className="text-[13px] font-bold text-slate-800 outline-none">{cert.name}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'name', e.target.innerText)} className="text-[15px] font-bold text-slate-800 outline-none">{cert.name}</span>
                                     <span className="mx-2 text-slate-300">·</span>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'issuer', e.target.innerText)} className="text-[12px] text-slate-500 outline-none">{cert.issuer}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'issuer', e.target.innerText)} className="text-[14px] text-slate-500 outline-none">{cert.issuer}</span>
                                 </div>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'date', e.target.innerText)} className="text-[11px] font-semibold text-slate-400 outline-none whitespace-nowrap ml-2">{cert.date}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 outline-none whitespace-nowrap ml-2">{cert.date}</span>
                             </div>
                         ))}
                     </div>
@@ -467,11 +467,11 @@ function FormResumePreview({ data, onUpdate }) {
                             <div key={i} className="group relative flex justify-between items-start">
                                 <button onClick={() => onUpdate('awards', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
                                 <div>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'title', e.target.innerText)} className="text-[13px] font-bold text-slate-800 outline-none">{award.title}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'title', e.target.innerText)} className="text-[15px] font-bold text-slate-800 outline-none">{award.title}</span>
                                     <span className="mx-2 text-slate-300">·</span>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'org', e.target.innerText)} className="text-[12px] text-slate-500 outline-none">{award.org}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'org', e.target.innerText)} className="text-[14px] text-slate-500 outline-none">{award.org}</span>
                                 </div>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'date', e.target.innerText)} className="text-[11px] font-semibold text-slate-400 outline-none whitespace-nowrap ml-2">{award.date}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 outline-none whitespace-nowrap ml-2">{award.date}</span>
                             </div>
                         ))}
                     </div>
@@ -485,9 +485,9 @@ function FormResumePreview({ data, onUpdate }) {
                         {(data.languages || []).map((lang, i) => (
                             <div key={i} className="group relative flex items-center gap-2">
                                 <button onClick={() => onUpdate('languages', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'language', e.target.innerText)} className="text-[13px] font-bold text-slate-800 outline-none">{lang.language}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'language', e.target.innerText)} className="text-[15px] font-bold text-slate-800 outline-none">{lang.language}</span>
                                 <span className="text-slate-200">|</span>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'level', e.target.innerText)} className="text-[12px] text-slate-500 outline-none">{lang.level}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'level', e.target.innerText)} className="text-[14px] text-slate-500 outline-none">{lang.level}</span>
                             </div>
                         ))}
                     </div>
@@ -499,7 +499,7 @@ function FormResumePreview({ data, onUpdate }) {
                     <SectionTitle onRemove={() => onUpdate('skills', 'remove', null, null)}>Skills</SectionTitle>
                     <div className="grid grid-cols-2 gap-x-12 gap-y-2 px-6">
                         {skills.map((skill, i) => (
-                            <div key={i} className="flex items-center justify-between text-[13px] group border-b border-slate-50 pb-1 relative">
+                            <div key={i} className="flex items-center justify-between text-[15px] group border-b border-slate-50 pb-1 relative">
                                 <button onClick={() => onUpdate('skills', i, 'remove')} className="absolute -left-6 p-1 rounded-full text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Trash2 size={10} />
                                 </button>
