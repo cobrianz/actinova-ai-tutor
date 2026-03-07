@@ -684,19 +684,19 @@ export default function ReportEditor({ reportId }) {
                 titlePageContent: titlePageRef.current ? titlePageRef.current.innerHTML : "",
                 // Parse the current HTML into multiple sections and paragraphs for the template
                 sections: Array.from(editorRef.current.querySelectorAll('h2')).map(h2 => {
+                    const heading = (h2.textContent || h2.innerText || '').trim();
+                    if (!heading || heading === 'undefined') return null;
                     let paragraphs = [];
                     let next = h2.nextElementSibling;
                     while (next && next.tagName !== 'H2') {
-                        if (next.tagName === 'P') {
-                            paragraphs.push(next.innerText);
+                        const text = (next.textContent || next.innerText || '').trim();
+                        if (next.tagName === 'P' && text) {
+                            paragraphs.push(text);
                         }
                         next = next.nextElementSibling;
                     }
-                    return {
-                        heading: h2.innerText,
-                        paragraphs: paragraphs
-                    };
-                }).filter(s => s.heading),
+                    return { heading, paragraphs };
+                }).filter(s => s && s.heading && s.heading !== 'undefined'),
                 references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
             });
 

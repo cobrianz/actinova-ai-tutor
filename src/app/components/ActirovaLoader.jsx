@@ -199,9 +199,6 @@ export default function ActirovaLoader({ text = "course" }) {
             />
           ))}
         </div>
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest">
-          System.Actirova_Core.Initialize()
-        </span>
       </div>
     </div>
   );

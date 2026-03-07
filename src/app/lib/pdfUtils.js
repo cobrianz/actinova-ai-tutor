@@ -23,7 +23,7 @@ const COLORS = {
  */
 const renderTextWithMarkdown = (pdf, text, xPos, y, contentWidth, margin, checkNewPage, size = 11) => {
     pdf.setFontSize(size);
-    pdf.setFont("helvetica", "normal");
+    pdf.setFont("times", "normal");
     pdf.setTextColor(...COLORS.text);
 
     const lines = pdf.splitTextToSize(text, contentWidth - (xPos - margin));
@@ -62,7 +62,7 @@ const renderTextWithMarkdown = (pdf, text, xPos, y, contentWidth, margin, checkN
                 pdf.setFont("courier", "normal");
                 pdf.setTextColor(50, 50, 50);
             } else {
-                pdf.setFont("helvetica", style);
+                pdf.setFont("times", style);
                 pdf.setTextColor(...COLORS.text);
             }
 
@@ -71,7 +71,7 @@ const renderTextWithMarkdown = (pdf, text, xPos, y, contentWidth, margin, checkN
             currentX += w;
 
             if (isCode) {
-                pdf.setFont("helvetica", "normal");
+                pdf.setFont("times", "normal");
                 pdf.setTextColor(...COLORS.text);
             }
         });
@@ -113,7 +113,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         pdf.setDrawColor(...COLORS.divider);
         pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
 
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("times", "normal");
         pdf.setFontSize(8);
         pdf.setTextColor(...COLORS.textLight);
         pdf.text("Actirova AI Tutor - Personalized Learning", margin, pageHeight - 10);
@@ -153,7 +153,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     y += 16;
 
     pdf.setTextColor(...COLORS.text);
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(48);
     pdf.text("ACTIROVA", pageWidth / 2, y, { align: "center" });
 
@@ -183,7 +183,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     if (data.module) {
         pdf.setFontSize(14);
         pdf.setTextColor(...COLORS.text);
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("times", "bold");
         pdf.text(data.module, pageWidth / 2, y, { align: "center" });
 
         y += 8;
@@ -192,7 +192,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
     if (data.course && data.course !== data.title) {
         pdf.setFontSize(12);
         pdf.setTextColor(...COLORS.textLight);
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("times", "normal");
         pdf.text(`Part of: ${data.course}`, pageWidth / 2, y, { align: "center" });
         y += 8;
     }
@@ -223,7 +223,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
             pdf.text(line, xPos + 2, y);
             y += 6;
         });
-        pdf.setFont("helvetica", "normal"); // Reset
+        pdf.setFont("times", "normal"); // Reset
     };
 
     const processContent = (content) => {
@@ -284,14 +284,14 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
             if (trimmedLine.startsWith("# ")) {
                 const headerText = stripMarkdown(trimmedLine.substring(2).trim());
                 y += 2;
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setFontSize(26);
                 pdf.setTextColor(...COLORS.text);
                 pdf.text(headerText, pageWidth / 2, y, { align: "center" });
                 y += 10;
             } else if (trimmedLine.startsWith("## ")) {
                 y += 2;
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setFontSize(20);
                 pdf.setTextColor(...COLORS.text);
                 const headerText = stripMarkdown(trimmedLine.substring(3).trim());
@@ -302,7 +302,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 y += (lines.length * 7) + 3;
             } else if (trimmedLine.startsWith("### ")) {
                 y += 2;
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setFontSize(15);
                 pdf.setTextColor(...COLORS.text);
                 const headerText = stripMarkdown(trimmedLine.substring(4));
@@ -311,7 +311,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 y += (lines.length * 7) + 1;
             } else if (trimmedLine.startsWith("#### ")) {
                 y += 2;
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setFontSize(13);
                 pdf.setTextColor(...COLORS.text);
                 const headerText = stripMarkdown(trimmedLine.substring(5));
@@ -320,7 +320,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 y += (lines.length * 6) + 2;
             } else if (trimmedLine.startsWith("> ")) {
                 const quoteText = trimmedLine.substring(2).trim();
-                pdf.setFont("helvetica", "italic");
+                pdf.setFont("times", "italic");
                 pdf.setTextColor(...COLORS.textLight);
                 const lines = pdf.splitTextToSize(quoteText, contentWidth - 10);
 
@@ -333,16 +333,16 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
                 pdf.text(lines, margin + 8, y);
                 y += (lines.length * 6) + 4;
-                pdf.setFont("helvetica", "normal"); // Reset
+                pdf.setFont("times", "normal"); // Reset
             } else if (trimmedLine.match(/^[-*•]\s/)) {
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setTextColor(...COLORS.primary);
                 pdf.text("•", margin + 2, y);
                 const txt = trimmedLine.replace(/^[-*•]\s/, "");
                 y = renderTextWithMarkdown(pdf, txt, margin + 8, y, contentWidth, margin, checkNewPage, 11);
             } else if (trimmedLine.match(/^\d+\.\s/)) {
                 const n = trimmedLine.match(/^\d+\./)[0];
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setTextColor(...COLORS.primary);
                 pdf.text(n, margin, y);
                 const txt = trimmedLine.replace(/^\d+\.\s/, "");
@@ -358,7 +358,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         const modules = data.modules || data.courseData?.modules || [];
 
         // Add Table of Contents
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("times", "bold");
         pdf.setFontSize(24);
         pdf.setTextColor(...COLORS.primary);
         pdf.text("Table of Contents", margin, y);
@@ -367,7 +367,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         modules.forEach((mod, idx) => {
             checkNewPage(10);
             pdf.setFontSize(12);
-            pdf.setFont("helvetica", "normal");
+            pdf.setFont("times", "normal");
             pdf.setTextColor(...COLORS.text);
             pdf.text(`Module ${idx + 1}: ${mod.title}`, margin, y);
             y += 8;
@@ -381,7 +381,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
             // Module Title
             pdf.setFillColor(...COLORS.primaryLight);
             pdf.rect(margin, y - 8, contentWidth, 15, "F");
-            pdf.setFont("helvetica", "bold");
+            pdf.setFont("times", "bold");
             pdf.setFontSize(20);
             pdf.setTextColor(...COLORS.primary);
             pdf.text(`Module ${idx + 1}: ${mod.title}`, margin + 5, y + 2);
@@ -389,7 +389,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
             mod.lessons?.forEach((lesson, lIdx) => {
                 checkNewPage(20);
-                pdf.setFont("helvetica", "bold");
+                pdf.setFont("times", "bold");
                 pdf.setFontSize(16);
                 pdf.setTextColor(...COLORS.text);
                 pdf.text(`${idx + 1}.${lIdx + 1} ${lesson.title || lesson}`, margin, y);
@@ -438,7 +438,7 @@ export const downloadQuizAsPDF = async (data) => {
         pdf.setDrawColor(...COLORS.divider);
         pdf.setLineWidth(0.2);
         pdf.line(margin, 15, pageWidth - margin, 15);
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("times", "normal");
         pdf.setFontSize(8);
         pdf.setTextColor(...COLORS.textLight);
         pdf.text(`Actirova AI Tutor - Assessment: ${data.title}`, margin, 12);
@@ -448,7 +448,7 @@ export const downloadQuizAsPDF = async (data) => {
     addBranding();
 
     // Title Section
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(24);
     pdf.setTextColor(...COLORS.primary);
     pdf.text("ASSESSMENT PAPER", pageWidth / 2, y, { align: "center" });
@@ -468,7 +468,7 @@ export const downloadQuizAsPDF = async (data) => {
     data.questions.forEach((q, index) => {
         checkNewPage(40);
 
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("times", "bold");
         pdf.setFontSize(12);
         pdf.setTextColor(...COLORS.text);
 
@@ -479,7 +479,7 @@ export const downloadQuizAsPDF = async (data) => {
         y += 5;
 
         if (q.options) {
-            pdf.setFont("helvetica", "normal");
+            pdf.setFont("times", "normal");
             pdf.setFontSize(11);
             q.options.forEach((opt, optIdx) => {
                 checkNewPage(12);
@@ -503,7 +503,7 @@ export const downloadQuizAsPDF = async (data) => {
     pdf.addPage();
     addBranding();
     y = 30;
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(18);
     pdf.setTextColor(...COLORS.primary);
     pdf.text("ANSWER KEY", margin, y);
@@ -516,10 +516,10 @@ export const downloadQuizAsPDF = async (data) => {
             addBranding();
             y = 25;
         }
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("times", "bold");
         pdf.setTextColor(...COLORS.text);
         pdf.text(`${index + 1}: `, margin, y);
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("times", "normal");
         pdf.setTextColor(...COLORS.primary);
         pdf.text(String(q.correctAnswer), margin + 10, y);
         y += 8;
@@ -576,18 +576,18 @@ export const downloadReceiptAsPDF = async (data) => {
         pdf.addImage("/logo.png", "PNG", MARGIN, y, 22, 22);
     } catch { }
 
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(14);
     pdf.setTextColor(...COLORS.text);
     pdf.text(BRAND.name, MARGIN + 30, y + 8);
 
-    pdf.setFont("helvetica", "normal");
+    pdf.setFont("times", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(...COLORS.muted);
     pdf.text(BRAND.website, MARGIN + 30, y + 14);
     pdf.text(`Support: ${BRAND.support}`, MARGIN + 30, y + 19);
 
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(14);
     pdf.text("RECEIPT", PAGE_WIDTH - MARGIN, y + 10, { align: "right" });
 
@@ -605,12 +605,12 @@ export const downloadReceiptAsPDF = async (data) => {
        RECEIPT META (LEFT / RIGHT BLOCK)
     ------------------------------------------------------------------ */
     const drawMetaRow = (label, value, x, yPos) => {
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("times", "bold");
         pdf.setFontSize(9);
         pdf.setTextColor(...COLORS.muted);
         pdf.text(label, x, yPos);
 
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("times", "normal");
         pdf.setTextColor(...COLORS.text);
         pdf.text(String(value || "N/A"), x + 40, yPos);
     };
@@ -637,7 +637,7 @@ export const downloadReceiptAsPDF = async (data) => {
     /* ------------------------------------------------------------------
        LINE ITEM TABLE
     ------------------------------------------------------------------ */
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(10);
     pdf.setTextColor(...COLORS.text);
 
@@ -650,7 +650,7 @@ export const downloadReceiptAsPDF = async (data) => {
     pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
     y += 8;
 
-    pdf.setFont("helvetica", "normal");
+    pdf.setFont("times", "normal");
     pdf.setFontSize(10);
 
     pdf.text(data.plan || "Pro Subscription", MARGIN, y);
@@ -676,7 +676,7 @@ export const downloadReceiptAsPDF = async (data) => {
     pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
     y += 10;
 
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("times", "bold");
     pdf.setFontSize(12);
     pdf.text("Total Paid", PAGE_WIDTH - MARGIN - 60, y);
     pdf.text(
@@ -700,7 +700,7 @@ export const downloadReceiptAsPDF = async (data) => {
     );
 
     y += 10;
-    pdf.setFont("helvetica", "normal");
+    pdf.setFont("times", "normal");
     pdf.setTextColor(...COLORS.muted);
     pdf.text(
         `Processed on ${data.timestamp || "N/A"}`,

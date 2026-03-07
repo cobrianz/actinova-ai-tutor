@@ -57,6 +57,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
     lastLogin: Date,
+    lastContentRefresh: Date,
     loginAttempts: {
       type: Number,
       default: 0,

@@ -310,10 +310,6 @@ export default function Generate({ setActiveContent }) {
             ? `Welcome back, ${friendlyName}`
             : "Welcome to Actirova AI Tutor"}
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Ready to test your knowledge? Create comprehensive tests to challenge
-          yourself and track your progress.
-        </p>
       </div>
 
       <div className="bg-card p-8 mb-10 border border-border rounded-xl">

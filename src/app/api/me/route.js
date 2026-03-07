@@ -28,6 +28,23 @@ async function handleGet(request) {
     );
   }
 
+  // USER REQUEST: Refresh content on login (or daily)
+  const lastRefresh = user.lastContentRefresh ? new Date(user.lastContentRefresh) : null;
+  const isRefreshTime = !lastRefresh || (now.getTime() - lastRefresh.getTime() > 24 * 60 * 60 * 1000);
+
+  if (isRefreshTime) {
+    try {
+      const { refreshUserContent } = await import("@/app/lib/refreshContent");
+      await refreshUserContent(user._id.toString());
+      await usersCol.updateOne(
+        { _id: user._id },
+        { $set: { lastContentRefresh: now } }
+      );
+    } catch (err) {
+      console.error("Delayed refresh failed:", err);
+    }
+  }
+
   const { getUserPlanLimits } = await import("@/lib/planLimits");
   const limits = getUserPlanLimits(user);
   const isPremium = user.isPremium ||

@@ -686,9 +686,8 @@ const ResumeBuilder = () => {
     }, [formData, generatedResume, coverLetter, applicationLetter, portfolioPrompts, editorTab]);
 
     React.useEffect(() => {
-        // Load from local storage on mount
+        // Load from local storage on mount - but ONLY if there's no current in-memory content to avoid overwriting it
         try {
-            const isResume = editorTab === 'both' || editorTab === 'editor';
             const isCL = editorTab === 'cover-letter';
             const isAL = editorTab === 'application-letter';
             const isPP = editorTab === 'portfolio';
@@ -701,25 +700,39 @@ const ResumeBuilder = () => {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (type === "resume") {
-                    setFormData(prev => ({ ...prev, ...parsed.data }));
-                    setGeneratedResume(parsed.data);
+                    // Only restore from localStorage if there's no current in-memory content
+                    const hasCurrentContent = generatedResume ||
+                        formData.personalInfo.fullName || formData.personalInfo.jobTitle ||
+                        (formData.projects || []).length > 0 || (formData.experience || []).length > 0 ||
+                        (formData.education || []).length > 0 || (formData.skills || []).length > 0;
+                    if (!hasCurrentContent) {
+                        setFormData(prev => ({ ...prev, ...parsed.data }));
+                        setGeneratedResume(parsed.data);
+                    }
                 } else if (type === "cover-letter") {
-                    setCoverLetter(parsed.data.content || "");
-                    setCoverLetterCompany(parsed.data.company || "");
+                    if (!coverLetter) {
+                        setCoverLetter(parsed.data.content || "");
+                        setCoverLetterCompany(parsed.data.company || "");
+                    }
                 } else if (type === "application-letter") {
-                    setApplicationLetter(parsed.data.content || "");
-                    setCoverLetterCompany(parsed.data.company || "");
+                    if (!applicationLetter) {
+                        setApplicationLetter(parsed.data.content || "");
+                        setCoverLetterCompany(parsed.data.company || "");
+                    }
                 } else if (type === "portfolio") {
-                    setPortfolioPrompts(parsed.data.prompts || []);
+                    if (!portfolioPrompts.length) {
+                        setPortfolioPrompts(parsed.data.prompts || []);
+                    }
                 }
-                if (parsed.metadata?.jobDescription) {
+                if (parsed.metadata?.jobDescription && !jobDescription) {
                     setJobDescription(parsed.metadata.jobDescription);
                 }
             }
         } catch (e) {
             console.error("Failed to load draft from local storage:", e);
         }
-    }, [editorTab]); // Reload local draft when tab changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editorTab]); // Reload local draft when tab changes — guards prevent overwrite
 
     const saveToDatabase = async () => {
         const isResume = editorTab === 'both' || editorTab === 'editor';
@@ -761,7 +774,8 @@ const ResumeBuilder = () => {
             title = `Portfolio Prompts: ${jobDescription || 'Ideas'}`;
         } else {
             const hasContent = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.jobTitle ||
-                (dataToSave.experience || []).length > 0 || (dataToSave.skills || []).length > 0;
+                (dataToSave.experience || []).length > 0 || (dataToSave.skills || []).length > 0 ||
+                (dataToSave.projects || []).length > 0 || (dataToSave.education || []).length > 0;
             if (!hasContent) {
                 toast.error("Add some content to your resume before saving");
                 return;
@@ -822,15 +836,24 @@ const ResumeBuilder = () => {
         if (item.type === "resume") {
             setGeneratedResume(item.data);
             setFormData(prev => ({ ...prev, ...item.data }));
+            setSavedResumeId(item._id); // Track ID so saves are updates, not duplicates
             setEditorTab('editor');
             toast.success("Resume restored!");
         } else if (item.type === "cover-letter") {
             setCoverLetter(item.data.content || "");
             setCoverLetterCompany(item.data.company || "");
+            setSavedCLId(item._id);
             setEditorTab('cover-letter');
             toast.success("Cover letter restored!");
+        } else if (item.type === "application-letter") {
+            setApplicationLetter(item.data.content || "");
+            setCoverLetterCompany(item.data.company || "");
+            setSavedALId(item._id);
+            setEditorTab('application-letter');
+            toast.success("Application letter restored!");
         } else if (item.type === "portfolio") {
             setPortfolioPrompts(item.data.prompts || []);
+            setSavedPPId(item._id);
             setEditorTab('portfolio');
             toast.success("Portfolio ideas restored!");
         }
@@ -1029,8 +1052,28 @@ const ResumeBuilder = () => {
                 }
                 setGeneratedResume(data);
                 setFormData(prev => ({ ...prev, ...data }));
-                fetchHistory();
                 toast.success("Resume generated successfully!", { id: toastId });
+
+                // Auto-save to DB and capture ID to prevent future duplicates
+                try {
+                    const title = data.personalInfo?.fullName || data.personalInfo?.name || jobDescription || "Draft Resume";
+                    const saved = await apiClient.post("/api/career/history", {
+                        id: savedResumeId || undefined,
+                        type: "resume",
+                        title,
+                        data,
+                        metadata: { jobDescription }
+                    }).then(r => r.json());
+                    if (saved._id) {
+                        setSavedResumeId(saved._id);
+                        setHistory(prev => {
+                            const filtered = prev.filter(h => h._id !== saved._id);
+                            return [saved, ...filtered].slice(0, 20);
+                        });
+                    }
+                } catch (saveErr) {
+                    console.error("Auto-save after generate failed:", saveErr);
+                }
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || "Failed to generate resume");
@@ -1056,7 +1099,30 @@ const ResumeBuilder = () => {
             if (response.ok) {
                 const data = await response.json();
                 setPortfolioPrompts(prev => prev.map((p, i) => i === index ? { ...p, description: data.content, refined: true } : p));
-                toast.success("Project refined with AI!", { id: toastId });
+
+                // USER REQUEST: Auto-insert into resume instead of just showing it
+                const newProject = {
+                    name: project.title,
+                    description: data.content,
+                    technologies: Array.isArray(project.technologies) ? project.technologies.join(", ") : (project.technologies || "")
+                };
+
+                setFormData(prev => ({
+                    ...prev,
+                    projects: [...(prev.projects || []), newProject]
+                }));
+
+                setGeneratedResume(prev => {
+                    const base = prev || formData;
+                    return {
+                        ...base,
+                        projects: [...(base.projects || []), newProject]
+                    };
+                });
+
+                toast.success("Project refined and added to resume!", { id: toastId });
+                setEditorTab("editor");
+                setActiveSection("projects");
             }
         } catch (error) {
             toast.error("Failed to refine project", { id: toastId });
@@ -1162,25 +1228,84 @@ const ResumeBuilder = () => {
         }
     };
     const exportToPDF = async () => {
-        const element = document.getElementById('resume-preview');
+        const toastId = toast.loading("Preparing your PDF...");
+
+        let targetId = 'resume-preview';
+        let fileName = (generatedResume?.personalInfo?.fullName || formData?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
+
+        if (editorTab === 'cover-letter') {
+            if (!coverLetter) { toast.error("No cover letter to export", { id: toastId }); return; }
+            targetId = 'cover-letter-export';
+            fileName = `${fileName}_Cover_Letter`;
+        } else if (editorTab === 'application-letter') {
+            if (!applicationLetter) { toast.error("No application letter to export", { id: toastId }); return; }
+            targetId = 'application-letter-export';
+            fileName = `${fileName}_Application_Letter`;
+        }
+
+        const element = document.getElementById(targetId);
         if (!element) {
-            toast.error("Resume preview not found");
+            toast.error("Preview not found", { id: toastId });
             return;
         }
 
-        const toastId = toast.loading("Preparing your PDF...");
         try {
-            // Set exporting attribute to trigger RGB/Hex CSS overrides in globals.css
+            // Setup for export
             element.setAttribute('data-exporting', 'true');
+            const originalOpacity = element.style.opacity;
+            const originalZIndex = element.style.zIndex;
+
+            // If it's a letter, we need to make the hidden export div visible temporarily
+            if (editorTab !== 'editor') {
+                element.style.opacity = '1';
+                element.style.zIndex = '50';
+            }
 
             // Wait a tiny bit for styles to apply if needed, though mostly synchronous
             await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Strip unsupported oklch/color-mix color functions from all elements in the clone
+            const stripUnsupportedColors = (clonedDoc) => {
+                const FALLBACK_BG = '#ffffff';
+                const FALLBACK_COLOR = '#1a1a2e';
+                const UNSUPPORTED = /oklch\s*\(|color-mix\s*\(|lab\s*\(|lch\s*\(/i;
+
+                // Use the cloned document's window context for computed styles
+                const win = clonedDoc.defaultView || window;
+                const allElements = clonedDoc.querySelectorAll('*');
+
+                allElements.forEach(el => {
+                    const computed = win.getComputedStyle(el);
+
+                    // Check background-color
+                    if (UNSUPPORTED.test(computed.backgroundColor)) {
+                        el.style.setProperty('background-color', el === clonedDoc.body ? FALLBACK_BG : 'transparent', 'important');
+                    }
+                    // Check color
+                    if (UNSUPPORTED.test(computed.color)) {
+                        el.style.setProperty('color', FALLBACK_COLOR, 'important');
+                    }
+                    // Check border-color
+                    if (UNSUPPORTED.test(computed.borderColor)) {
+                        el.style.setProperty('border-color', '#e2e8f0', 'important');
+                    }
+                    // Sweep inline style attribute
+                    if (el.hasAttribute('style')) {
+                        let style = el.getAttribute('style');
+                        style = style.replace(/oklch\([^)]*\)/gi, FALLBACK_COLOR);
+                        el.setAttribute('style', style);
+                    }
+                });
+            };
 
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
-                backgroundColor: "#ffffff"
+                backgroundColor: "#ffffff",
+                onclone: (_clonedDoc, clonedElement) => {
+                    stripUnsupportedColors(_clonedDoc);
+                }
             });
 
             const imgData = canvas.toDataURL('image/png');
@@ -1190,17 +1315,23 @@ const ResumeBuilder = () => {
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            const name = (generatedResume?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
-            pdf.save(`${name}.pdf`);
+            pdf.save(`${fileName}.pdf`);
 
-            // Cleanup attribute
+            // Cleanup
             element.removeAttribute('data-exporting');
+            if (editorTab !== 'editor') {
+                element.style.opacity = originalOpacity;
+                element.style.zIndex = originalZIndex;
+            }
 
             toast.success("Downloaded!", { id: toastId });
         } catch (error) {
             console.error("PDF export error:", error);
-            // Ensure cleanup on error
             element.removeAttribute('data-exporting');
+            if (editorTab !== 'editor') {
+                element.style.opacity = '0';
+                element.style.zIndex = '-50';
+            }
             toast.error("Failed to export PDF", { id: toastId });
         }
     };
@@ -1266,7 +1397,7 @@ const ResumeBuilder = () => {
                 <div className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
                     {editorTab === 'editor' && (
                         <div className="h-full">
-                            {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle) ? (
+                            {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle || (formData.projects || []).length > 0 || (formData.experience || []).length > 0 || (formData.education || []).length > 0 || (formData.skills || []).length > 0) ? (
                                 <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
                                     <div className="w-20 h-20 rounded-3xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6">
                                         <FileText className="w-10 h-10 text-violet-500" />
@@ -1412,11 +1543,19 @@ const ResumeBuilder = () => {
                     {editorTab === 'cover-letter' && (
                         <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
                             {coverLetter ? (
-                                <textarea
-                                    value={coverLetter}
-                                    onChange={e => setCoverLetter(e.target.value)}
-                                    className="w-full min-h-[900px] p-2 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
-                                />
+                                <div id="cover-letter-preview" className="w-full relative min-h-[900px]">
+                                    <textarea
+                                        value={coverLetter}
+                                        onChange={e => setCoverLetter(e.target.value)}
+                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-[#1a1a2e]"
+                                    />
+                                    <div
+                                        id="cover-letter-export"
+                                        className="absolute top-0 left-0 w-full p-14 bg-white font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-[#1a1a2e]"
+                                    >
+                                        {coverLetter}
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
                                     <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
@@ -1446,11 +1585,19 @@ const ResumeBuilder = () => {
                     {editorTab === 'application-letter' && (
                         <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
                             {applicationLetter ? (
-                                <textarea
-                                    value={applicationLetter}
-                                    onChange={e => setApplicationLetter(e.target.value)}
-                                    className="w-full min-h-[900px] p-2 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
-                                />
+                                <div id="application-letter-preview" className="w-full relative min-h-[900px]">
+                                    <textarea
+                                        value={applicationLetter}
+                                        onChange={e => setApplicationLetter(e.target.value)}
+                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-[#1a1a2e]"
+                                    />
+                                    <div
+                                        id="application-letter-export"
+                                        className="absolute top-0 left-0 w-full p-14 bg-white font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-[#1a1a2e]"
+                                    >
+                                        {applicationLetter}
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
                                     <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">

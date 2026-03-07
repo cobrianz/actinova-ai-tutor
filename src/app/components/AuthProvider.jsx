@@ -367,6 +367,9 @@ export function AuthProvider({ children }) {
 
   const clearError = () => setError(null);
 
+  const isPro = user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise";
+  const isEnterprise = user?.subscription?.plan === "enterprise";
+
   return (
     <AuthContext.Provider
       value={{
@@ -383,6 +386,8 @@ export function AuthProvider({ children }) {
         setUserData,
         fetchUser,
         clearError,
+        isPro,
+        isEnterprise,
       }}
     >
       {children}
