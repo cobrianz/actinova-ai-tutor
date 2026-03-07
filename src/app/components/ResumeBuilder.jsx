@@ -1263,7 +1263,7 @@ const ResumeBuilder = () => {
                     </Button>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
+                <div className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
                     {editorTab === 'editor' && (
                         <div className="h-full">
                             {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle) ? (
@@ -1415,7 +1415,7 @@ const ResumeBuilder = () => {
                                 <textarea
                                     value={coverLetter}
                                     onChange={e => setCoverLetter(e.target.value)}
-                                    className="w-full min-h-[900px] p-4 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
+                                    className="w-full min-h-[900px] p-2 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
                                 />
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
@@ -1449,7 +1449,7 @@ const ResumeBuilder = () => {
                                 <textarea
                                     value={applicationLetter}
                                     onChange={e => setApplicationLetter(e.target.value)}
-                                    className="w-full min-h-[900px] p-4 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
+                                    className="w-full min-h-[900px] p-2 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
                                 />
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
@@ -1478,7 +1478,7 @@ const ResumeBuilder = () => {
                         </div>
                     )}
                     {editorTab === 'portfolio' && (
-                        <div className="p-4 md:p-12 min-h-[600px]">
+                        <div className="p-2 md:p-12 min-h-[600px]">
                             <div className="max-w-4xl mx-auto">
                                 <div className="flex flex-col items-center text-center mb-12">
                                     <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">

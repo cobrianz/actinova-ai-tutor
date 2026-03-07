@@ -139,7 +139,7 @@ export default function ReportEditor({ reportId }) {
         }
 
         if (r && r.references && referencesRef.current && referencesRef.current.innerHTML === '') {
-            referencesRef.current.innerHTML = r.references.map(ref => `<p style="font-size: 0.95rem; margin-bottom: 1rem; padding-left: 2rem; text-indent: -2rem; line-height: 1.7; text-align: left; color: var(--report-text-color, #475569); font-family: Inter, system-ui, sans-serif;">${ref}</p>`).join('');
+            referencesRef.current.innerHTML = r.references.map(ref => `<p class="report-reference">${ref}</p>`).join('');
         }
 
         // Mark as fully loaded — autosave is now safe
@@ -918,7 +918,17 @@ export default function ReportEditor({ reportId }) {
                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     </button>
 
-                    <button onClick={exportAsDOCX} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full transition-all shadow-lg hover:shadow-xl" title="Download Word (.docx)">
+                    <button
+                        onClick={() => {
+                            if (isPro || isEnterprise) {
+                                exportAsDOCX();
+                            } else {
+                                setShowUpgradeModal(true);
+                            }
+                        }}
+                        className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full transition-all shadow-lg hover:shadow-xl"
+                        title="Download Word (.docx)"
+                    >
                         <Download className="w-5 h-5" />
                     </button>
                 </div>
@@ -1014,16 +1024,7 @@ export default function ReportEditor({ reportId }) {
                                 >
                                     {allReferences.length > 0 ? (
                                         allReferences.map((ref, i) => (
-                                            <p key={i} style={{
-                                                fontSize: '0.95rem',
-                                                marginBottom: '1rem',
-                                                paddingLeft: '2rem',
-                                                textIndent: '-2rem',
-                                                lineHeight: '1.7',
-                                                textAlign: 'left',
-                                                color: 'var(--report-text-color)',
-                                                fontFamily: 'Inter, system-ui, sans-serif'
-                                            }}>
+                                            <p key={i} className="report-reference">
                                                 {ref}
                                             </p>
                                         ))

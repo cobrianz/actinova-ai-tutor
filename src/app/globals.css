@@ -151,6 +151,26 @@
   .font-serif {
     font-family: var(--font-eb-garamond), 'Georgia', serif !important;
   }
+
+  .report-reference {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    text-indent: -2rem;
+    line-height: 1.7;
+    text-align: left;
+    color: var(--report-text-color, #475569);
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  @media (max-width: 640px) {
+    .report-reference {
+      font-size: 10px !important;
+      padding-left: 1.2rem !important;
+      text-indent: -1.2rem !important;
+      line-height: 1.5 !important;
+    }
+  }
 }
 
 /* ─── PDF Export Fix for html2canvas (No oklch support) ────────── */
