@@ -12,7 +12,7 @@ import {
     GraduationCap, Star, UserCircle, Briefcase,
     User, Mail, Phone, MapPin, Globe, Linkedin, Github,
     Award, FolderOpen, Languages, Heart, Users, Wrench,
-    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save
+    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, Settings
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -574,6 +574,7 @@ const ResumeBuilder = () => {
     const [libraryCourses, setLibraryCourses] = useState([]);
     const [librarySearch, setLibrarySearch] = useState("");
     const [libraryLoading, setLibraryLoading] = useState(false);
+    const [showMobileActions, setShowMobileActions] = useState(false);
     const libraryPickerOpen = showLibraryPicker;
 
     const [formData, setFormData] = useState(initialFormData);
@@ -1210,10 +1211,10 @@ const ResumeBuilder = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
-            <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
-                <h1 className="text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
-                <p className="text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
+        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
+            <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
+                <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
             </motion.header>
 
             {error && (
@@ -1223,8 +1224,8 @@ const ResumeBuilder = () => {
                 </div>
             )}
 
-            <div className="flex flex-col items-center gap-6">
-                <nav className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-full">
+            <div className="flex flex-col items-center gap-4 md:gap-6">
+                <nav className="hidden md:flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-full">
                     {[
                         { id: 'editor', label: 'Resume', icon: Edit2 },
                         { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
@@ -1239,451 +1240,450 @@ const ResumeBuilder = () => {
                     ))}
                 </nav>
 
-                <div className="w-full max-w-4xl flex flex-col gap-4 px-2 md:px-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 transition-all font-bold text-xs">
-                            <Plus size={14} className="mr-1.5" /> {
-                                editorTab === 'cover-letter' ? 'New Cover Letter' :
-                                    editorTab === 'application-letter' ? 'New Application' :
-                                        editorTab === 'portfolio' ? 'New Ideas' : 'New Resume'
-                            }
-                        </Button>
-                        <Button onClick={saveToDatabase} className="h-10 px-5 rounded-xl bg-slate-900 hover:bg-black text-white shadow-lg shadow-slate-200 transition-all font-bold text-xs">
-                            <Save size={14} className="mr-1.5" /> Save
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => setEditorTab('insights')}
-                            className="bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-bold"
-                        >
-                            <TrendingUp size={16} className="mr-2" /> Match to Job
-                        </Button>
-                        <Button variant="outline" onClick={exportToPDF} className="bg-white">
-                            <Download size={16} className="mr-2" /> Export PDF
-                        </Button>
-                    </div>
-
-                    <div className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
-                        {editorTab === 'editor' && (
-                            <div className="h-full">
-                                {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle) ? (
-                                    <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
-                                        <div className="w-20 h-20 rounded-3xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6">
-                                            <FileText className="w-10 h-10 text-violet-500" />
-                                        </div>
-                                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Your resume preview</h3>
-                                        <p className="text-slate-500 max-w-sm mb-8">Start filling in your information and watch your professional resume come to life in real time.</p>
-                                        <div className="w-full max-w-md space-y-4">
-                                            <InputField
-                                                label="Target Job Role"
-                                                value={jobDescription}
-                                                onChange={e => setJobDescription(e.target.value)}
-                                                placeholder="e.g. Senior Fullstack Developer"
-                                                icon={Target}
-                                            />
-                                            <div className="flex gap-3">
-                                                <Button onClick={handleGenerate} disabled={isGenerating || !jobDescription} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl">
-                                                    {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                                                    Generate with AI
-                                                </Button>
-                                                <div className="flex-1 relative">
-                                                    <Button variant="outline" onClick={() => {
-                                                        const willOpen = !showLibraryPicker;
-                                                        setShowLibraryPicker(willOpen);
-                                                        if (willOpen) {
-                                                            setLibraryCourses([]); setLibrarySearch(''); setLibraryLoading(true);
-                                                            apiClient.get('/api/library?type=course&limit=50').then(r => r.json()).then(d => {
-                                                                setLibraryCourses(d.items || []);
-                                                            }).catch(() => { }).finally(() => setLibraryLoading(false));
-                                                        }
-                                                    }} className="w-full border-slate-200 py-6 rounded-2xl hover:bg-slate-50">
-                                                        <FolderOpen className="mr-2 text-violet-500" /> From Library
-                                                    </Button>
-                                                    {showLibraryPicker && (
-                                                        <div className="absolute top-full left-0 w-80 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden">
-                                                            <div className="p-3 border-b border-slate-100 dark:border-slate-800">
-                                                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                                                    <GraduationCap size={14} className="text-slate-400 shrink-0" />
-                                                                    <input
-                                                                        autoFocus
-                                                                        value={librarySearch}
-                                                                        onChange={e => {
-                                                                            setLibrarySearch(e.target.value);
-                                                                            setLibraryLoading(true);
-                                                                            clearTimeout(window._libSearchTimer);
-                                                                            window._libSearchTimer = setTimeout(() => {
-                                                                                apiClient.get(`/api/library?type=course&limit=30&search=${encodeURIComponent(e.target.value)}`).then(r => r.json()).then(d => setLibraryCourses(d.items || [])).catch(() => { }).finally(() => setLibraryLoading(false));
-                                                                            }, 350);
-                                                                        }}
-                                                                        placeholder="Search your courses..."
-                                                                        className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
-                                                                    />
-                                                                    {libraryLoading && <Loader2 size={13} className="animate-spin text-slate-400 shrink-0" />}
-                                                                </div>
-                                                            </div>
-                                                            <div className="overflow-y-auto max-h-60 p-2 space-y-1">
-                                                                {libraryLoading && libraryCourses.length === 0 ? (
-                                                                    <p className="text-xs text-slate-400 text-center py-6">Loading courses...</p>
-                                                                ) : libraryCourses.length === 0 ? (
-                                                                    <p className="text-xs text-slate-400 text-center py-6 italic">No courses found</p>
-                                                                ) : libraryCourses.map(course => (
-                                                                    <button key={course.id}
-                                                                        onClick={() => {
-                                                                            setShowLibraryPicker(false);
-                                                                            handleGenerateFromLibrary(course.title, course);
-                                                                        }}
-                                                                        className="w-full text-left px-3 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl transition-colors group">
-                                                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-violet-700 truncate">{course.title}</p>
-                                                                        <div className="flex items-center gap-2 mt-0.5">
-                                                                            <span className="text-[10px] text-slate-400 capitalize">{course.category}</span>
-                                                                            <span className="text-slate-200 dark:text-slate-700">·</span>
-                                                                            <span className="text-[10px] text-slate-400 capitalize">{course.difficulty}</span>
-                                                                        </div>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                            <div className="p-2 border-t border-slate-100 dark:border-slate-800">
-                                                                <button onClick={() => setShowLibraryPicker(false)} className="w-full text-xs text-slate-400 hover:text-slate-600 py-1.5 text-center">Cancel</button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <FormResumePreview
-                                        data={generatedResume || formData}
-                                        onUpdate={(section, indexOrField, fieldOrValue, value) => {
-                                            if (section === 'personalInfo') {
-                                                updatePersonalInfo(indexOrField, fieldOrValue);
-                                                setGeneratedResume(prev => prev ? { ...prev, personalInfo: { ...prev.personalInfo, [indexOrField]: fieldOrValue } } : prev);
-                                            } else if (indexOrField === 'remove') {
-                                                // Remove entire section: onUpdate(section, 'remove')
-                                                updateItem(section, null, 'remove');
-                                                if (generatedResume) {
-                                                    setGeneratedResume(prev => ({ ...prev, [section]: [] }));
-                                                }
-                                            } else if (fieldOrValue === 'remove') {
-                                                // Remove specific item: onUpdate(section, index, 'remove')
-                                                updateItem(section, indexOrField, 'remove');
-                                                if (generatedResume) {
-                                                    setGeneratedResume(prev => ({
-                                                        ...prev,
-                                                        [section]: prev[section]?.filter((_, i) => i !== indexOrField)
-                                                    }));
-                                                }
-                                            } else if (indexOrField === 'add') {
-                                                // Add item: onUpdate(section, 'add', template)
-                                                addItem(section, fieldOrValue);
-                                                if (generatedResume) {
-                                                    setGeneratedResume(prev => ({
-                                                        ...prev,
-                                                        [section]: [...(prev[section] || []), fieldOrValue]
-                                                    }));
-                                                }
-                                            } else if (typeof indexOrField === 'number') {
-                                                // Update specific item field: onUpdate(section, index, field, value)
-                                                updateItem(section, indexOrField, fieldOrValue, value);
-                                                if (generatedResume) {
-                                                    setGeneratedResume(prev => ({
-                                                        ...prev,
-                                                        [section]: prev[section]?.map((item, i) => i === indexOrField ? { ...item, [fieldOrValue]: value } : item)
-                                                    }));
-                                                }
-                                            } else if (section === 'skills') {
-                                                // Update skill at index: onUpdate('skills', index, newValue)
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    skills: prev.skills.map((s, i) => i === indexOrField ? fieldOrValue : s)
-                                                }));
-                                                if (generatedResume) {
-                                                    setGeneratedResume(prev => ({
-                                                        ...prev,
-                                                        skills: prev.skills?.map((s, i) => i === indexOrField ? fieldOrValue : s)
-                                                    }));
-                                                }
-                                            }
-                                        }}
-                                    />
-                                )}
-                            </div>
-                        )}
-                        {editorTab === 'cover-letter' && (
-                            <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
-                                {coverLetter ? (
-                                    <textarea
-                                        value={coverLetter}
-                                        onChange={e => setCoverLetter(e.target.value)}
-                                        className="w-full min-h-[900px] p-6 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
-                                    />
-                                ) : (
-                                    <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-                                        <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
-                                            <div className="w-16 h-16 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6 mx-auto">
-                                                <FileText className="w-8 h-8 text-violet-500" />
-                                            </div>
-                                            <h3 className="text-xl font-bold mb-2">Cover Letter Designer</h3>
-                                            <p className="text-sm text-slate-500 mb-8">Craft a compelling narrative for your next role.</p>
-                                            <div className="space-y-4 text-left">
-                                                <InputField label="Target Role" value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="e.g. Frontend Engineer" />
-                                                <InputField label="Company Name (Optional)" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
-                                            </div>
-                                            <div className="flex flex-col gap-3 mt-8">
-                                                <Button onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL || !jobDescription} className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold">
-                                                    {isGeneratingCL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                                                    Draft using AI
-                                                </Button>
-                                                <Button variant="outline" onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL} className="w-full border-2 border-violet-100 text-violet-600 py-6 rounded-2xl font-bold bg-violet-50/50">
-                                                    Generate from Resume
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {editorTab === 'application-letter' && (
-                            <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
-                                {applicationLetter ? (
-                                    <textarea
-                                        value={applicationLetter}
-                                        onChange={e => setApplicationLetter(e.target.value)}
-                                        className="w-full min-h-[900px] p-6 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
-                                    />
-                                ) : (
-                                    <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-                                        <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
-                                            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6 mx-auto">
-                                                <Target className="w-8 h-8 text-indigo-500" />
-                                            </div>
-                                            <h3 className="text-xl font-bold mb-2">Application Letter Designer</h3>
-                                            <p className="text-sm text-slate-500 mb-8">Formalize your intent with a professional application letter.</p>
-                                            <div className="space-y-4 text-left">
-                                                <InputField label="Target Role" value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="e.g. Frontend Engineer" />
-                                                <InputField label="Company Name" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
-                                            </div>
-                                            <div className="flex flex-col gap-3 mt-8">
-                                                <Button onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL || !jobDescription || !coverLetterCompany} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 rounded-2xl font-bold">
-                                                    {isGeneratingAL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                                                    Draft using AI
-                                                </Button>
-                                                <Button variant="outline" onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL} className="w-full border-2 border-indigo-100 text-indigo-600 py-6 rounded-2xl font-bold bg-indigo-50/50">
-                                                    Generate from Resume
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {editorTab === 'portfolio' && (
-                            <div className="p-12 min-h-[600px]">
-                                <div className="max-w-4xl mx-auto">
-                                    <div className="flex flex-col items-center text-center mb-12">
-                                        <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
-                                            <FolderOpen className="w-8 h-8 text-emerald-500" />
-                                        </div>
-                                        <h2 className="text-2xl font-bold mb-2">Portfolio Ideas</h2>
-                                        <p className="text-slate-500 max-w-md">Get market-ready project suggestions tailored to your career goals.</p>
-                                    </div>
-
-                                    {!portfolioPrompts.length ? (
-                                        <div className="max-w-md mx-auto p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700">
-                                            <InputField
-                                                label="What role are you targeting?"
-                                                value={jobDescription}
-                                                onChange={e => setJobDescription(e.target.value)}
-                                                placeholder="e.g. Backend Engineer"
-                                            />
-                                            <Button
-                                                onClick={handleGeneratePortfolio}
-                                                disabled={isGeneratingPP || !jobDescription}
-                                                className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl"
-                                            >
-                                                {isGeneratingPP ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                                                Generate Project Ideas
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {portfolioPrompts.map((prompt, i) => (
-                                                <div key={i} className="p-6 rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-xl transition-all group overflow-hidden relative">
-                                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                                        <BrainCircuit size={40} className="text-emerald-500" />
-                                                    </div>
-                                                    <h4 className="text-lg font-bold mb-2 flex items-center gap-2 text-slate-800 dark:text-white relative z-20">
-                                                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                                        {prompt.title}
-                                                    </h4>
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3 relative z-20">{prompt.description}</p>
-                                                    <div className="flex flex-wrap gap-2 mb-6">
-                                                        {prompt.technologies?.map((tech, j) => (
-                                                            <span key={j} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">{tech}</span>
-                                                        ))}
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            onClick={() => prompt.refined ? copyToClipboard(prompt.description) : handleGenerateProjectAI(i)}
-                                                            className={`flex-1 text-xs py-5 rounded-xl border-emerald-100 hover:bg-emerald-50 text-emerald-600 ${prompt.refined ? 'bg-emerald-50 border-emerald-500' : ''}`}
-                                                        >
-                                                            {prompt.refined ? <Copy size={14} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
-                                                            {prompt.refined ? 'Copy Prompt' : 'Gen with AI'}
-                                                        </Button>
-                                                        <Button
-                                                            onClick={() => addToResume(prompt)}
-                                                            className="flex-1 text-xs py-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
-                                                        >
-                                                            <Plus size={14} className="mr-1" /> Add to Resume
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                        {editorTab === 'insights' && (
-                            <div className="p-8 min-h-[600px]">
-                                {!jobMatchResult ? (
-                                    <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center">
-                                        <div className="w-20 h-20 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6">
-                                            <TrendingUp className="w-10 h-10 text-emerald-500" />
-                                        </div>
-                                        <h2 className="text-2xl font-bold mb-2">Job Match Analysis</h2>
-                                        <p className="text-slate-500 max-w-md mb-8">Paste a job description below to see how well your resume matches and what keywords you're missing.</p>
-                                        <div className="w-full max-w-lg space-y-4">
-                                            <textarea
-                                                value={jobMatchDescription}
-                                                onChange={e => setJobMatchDescription(e.target.value)}
-                                                placeholder="Paste the job description here..."
-                                                rows={6}
-                                                className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 focus:border-emerald-400 focus:bg-white outline-none transition-all text-sm resize-none"
-                                            />
-                                            <Button onClick={handleJobMatch} disabled={isMatchingJob || !jobMatchDescription.trim()} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-bold">
-                                                {isMatchingJob ? <><Loader2 className="animate-spin mr-2" /> Analyzing...</> : <><TrendingUp className="mr-2" /> Analyze Match Score</>}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-6 max-w-3xl mx-auto">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <h2 className="text-2xl font-bold">ATS Match Report</h2>
-                                                <p className="text-slate-500 text-sm mt-1">{jobMatchResult.summary}</p>
-                                            </div>
-                                            <button onClick={() => setJobMatchResult(null)} className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500">
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                        {/* Score */}
-                                        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 text-white text-center">
-                                            <div className="text-7xl font-black mb-2">{jobMatchResult.matchScore}%</div>
-                                            <div className="text-emerald-100 font-medium">ATS Match Score</div>
-                                            <div className="mt-4 h-3 bg-white/20 rounded-full overflow-hidden">
-                                                <div className="h-full bg-white rounded-full transition-all" style={{ width: `${Math.min(jobMatchResult.matchScore, 100)}%` }} />
-                                            </div>
-                                        </div>
-                                        {/* Keywords */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
-                                                <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-3 flex items-center gap-2"><CheckCircle size={16} /> Keywords Found</h4>
-                                                <div className="flex flex-wrap gap-2">{(jobMatchResult.keywordsFound || []).map((kw, i) => <span key={i} className="px-3 py-1 bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-lg">{kw}</span>)}</div>
-                                            </div>
-                                            <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800">
-                                                <h4 className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2"><AlertCircle size={16} /> Keywords Missing</h4>
-                                                <div className="flex flex-wrap gap-2">{(jobMatchResult.keywordsMissing || []).map((kw, i) => <span key={i} className="px-3 py-1 bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-lg">{kw}</span>)}</div>
-                                            </div>
-                                        </div>
-                                        {/* Strengths & Gaps */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                                <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Strengths</h4>
-                                                <ul className="space-y-2">{(jobMatchResult.strengths || []).map((s, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-emerald-500 mt-0.5">•</span>{s}</li>)}</ul>
-                                            </div>
-                                            <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                                <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Recommendations</h4>
-                                                <ul className="space-y-2">{(jobMatchResult.recommendations || []).map((r, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-violet-500 mt-0.5">•</span>{r}</li>)}</ul>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col gap-3">
-                                            <Button onClick={handleRefineResume} disabled={isRefining} className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold">
-                                                {isRefining ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                                                Refine Resume with AI
-                                            </Button>
-                                            <Button onClick={() => setJobMatchResult(null)} variant="outline" className="w-full rounded-2xl py-5 border-slate-200">
-                                                Run Another Analysis
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                <div className="w-full max-w-4xl hidden md:flex flex-wrap items-center justify-center gap-2">
+                    <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 transition-all font-bold text-xs">
+                        <Plus size={14} className="mr-1.5" /> {
+                            editorTab === 'cover-letter' ? 'New Cover Letter' :
+                                editorTab === 'application-letter' ? 'New Application' :
+                                    editorTab === 'portfolio' ? 'New Ideas' : 'New Resume'
+                        }
+                    </Button>
+                    <Button onClick={saveToDatabase} className="h-10 px-5 rounded-xl bg-slate-900 hover:bg-black text-white shadow-lg shadow-slate-200 transition-all font-bold text-xs">
+                        <Save size={14} className="mr-1.5" /> Save
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setEditorTab('insights')}
+                        className="h-10 px-4 rounded-xl bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-bold text-xs"
+                    >
+                        <TrendingUp size={14} className="mr-1.5" /> Match to Job
+                    </Button>
+                    <Button variant="outline" onClick={exportToPDF} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
+                        <Download size={14} className="mr-1.5" /> Export PDF
+                    </Button>
                 </div>
 
-                {history.length > 0 && (
-                    <div className="w-full mt-16 max-w-6xl">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-                                <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
-                                    <Clock size={20} className="text-violet-600 dark:text-violet-400" />
-                                </div>
-                                Recent Work
-                            </h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {history.map(item => (
-                                <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                    className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-violet-500/10 transition-colors" />
-                                    <div className="flex justify-between items-start mb-4 relative z-10">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' ? 'bg-indigo-50 dark:bg-indigo-900/20' :
-                                                item.type === 'portfolio' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
-                                                    'bg-violet-50 dark:bg-violet-900/20'
-                                                }`}>
-                                                {item.type === 'cover-letter' ? <FileText size={18} className="text-indigo-600 dark:text-indigo-400" /> :
-                                                    item.type === 'portfolio' ? <FolderOpen size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                                                        <Target size={18} className="text-violet-600 dark:text-violet-400" />}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-400 capitalize">{item.type || "Document"}</span>
-                                                <span className="text-xs font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span>
+                <div className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
+                    {editorTab === 'editor' && (
+                        <div className="h-full">
+                            {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle) ? (
+                                <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
+                                    <div className="w-20 h-20 rounded-3xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6">
+                                        <FileText className="w-10 h-10 text-violet-500" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Your resume preview</h3>
+                                    <p className="text-slate-500 max-w-sm mb-8">Start filling in your information and watch your professional resume come to life in real time.</p>
+                                    <div className="w-full max-w-md space-y-4">
+                                        <InputField
+                                            label="Target Job Role"
+                                            value={jobDescription}
+                                            onChange={e => setJobDescription(e.target.value)}
+                                            placeholder="e.g. Senior Fullstack Developer"
+                                            icon={Target}
+                                        />
+                                        <div className="flex gap-3">
+                                            <Button onClick={handleGenerate} disabled={isGenerating || !jobDescription} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl">
+                                                {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                                Generate with AI
+                                            </Button>
+                                            <div className="flex-1 relative">
+                                                <Button variant="outline" onClick={() => {
+                                                    const willOpen = !showLibraryPicker;
+                                                    setShowLibraryPicker(willOpen);
+                                                    if (willOpen) {
+                                                        setLibraryCourses([]); setLibrarySearch(''); setLibraryLoading(true);
+                                                        apiClient.get('/api/library?type=course&limit=50').then(r => r.json()).then(d => {
+                                                            setLibraryCourses(d.items || []);
+                                                        }).catch(() => { }).finally(() => setLibraryLoading(false));
+                                                    }
+                                                }} className="w-full border-slate-200 py-6 rounded-2xl hover:bg-slate-50">
+                                                    <FolderOpen className="mr-2 text-violet-500" /> From Library
+                                                </Button>
+                                                {showLibraryPicker && (
+                                                    <div className="absolute top-full left-0 w-80 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden">
+                                                        <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                                                            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                                                                <GraduationCap size={14} className="text-slate-400 shrink-0" />
+                                                                <input
+                                                                    autoFocus
+                                                                    value={librarySearch}
+                                                                    onChange={e => {
+                                                                        setLibrarySearch(e.target.value);
+                                                                        setLibraryLoading(true);
+                                                                        clearTimeout(window._libSearchTimer);
+                                                                        window._libSearchTimer = setTimeout(() => {
+                                                                            apiClient.get(`/api/library?type=course&limit=30&search=${encodeURIComponent(e.target.value)}`).then(r => r.json()).then(d => setLibraryCourses(d.items || [])).catch(() => { }).finally(() => setLibraryLoading(false));
+                                                                        }, 350);
+                                                                    }}
+                                                                    placeholder="Search your courses..."
+                                                                    className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                                                                />
+                                                                {libraryLoading && <Loader2 size={13} className="animate-spin text-slate-400 shrink-0" />}
+                                                            </div>
+                                                        </div>
+                                                        <div className="overflow-y-auto max-h-60 p-2 space-y-1">
+                                                            {libraryLoading && libraryCourses.length === 0 ? (
+                                                                <p className="text-xs text-slate-400 text-center py-6">Loading courses...</p>
+                                                            ) : libraryCourses.length === 0 ? (
+                                                                <p className="text-xs text-slate-400 text-center py-6 italic">No courses found</p>
+                                                            ) : libraryCourses.map(course => (
+                                                                <button key={course.id}
+                                                                    onClick={() => {
+                                                                        setShowLibraryPicker(false);
+                                                                        handleGenerateFromLibrary(course.title, course);
+                                                                    }}
+                                                                    className="w-full text-left px-3 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl transition-colors group">
+                                                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-violet-700 truncate">{course.title}</p>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <span className="text-[10px] text-slate-400 capitalize">{course.category}</span>
+                                                                        <span className="text-slate-200 dark:text-slate-700">·</span>
+                                                                        <span className="text-[10px] text-slate-400 capitalize">{course.difficulty}</span>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        <div className="p-2 border-t border-slate-100 dark:border-slate-800">
+                                                            <button onClick={() => setShowLibraryPicker(false)} className="w-full text-xs text-slate-400 hover:text-slate-600 py-1.5 text-center">Cancel</button>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <button onClick={e => deleteHistoryItem(e, item._id)} className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors opacity-100">
-                                            <Trash2 size={14} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <FormResumePreview
+                                    data={generatedResume || formData}
+                                    onUpdate={(section, indexOrField, fieldOrValue, value) => {
+                                        if (section === 'personalInfo') {
+                                            updatePersonalInfo(indexOrField, fieldOrValue);
+                                            setGeneratedResume(prev => prev ? { ...prev, personalInfo: { ...prev.personalInfo, [indexOrField]: fieldOrValue } } : prev);
+                                        } else if (indexOrField === 'remove') {
+                                            // Remove entire section: onUpdate(section, 'remove')
+                                            updateItem(section, null, 'remove');
+                                            if (generatedResume) {
+                                                setGeneratedResume(prev => ({ ...prev, [section]: [] }));
+                                            }
+                                        } else if (fieldOrValue === 'remove') {
+                                            // Remove specific item: onUpdate(section, index, 'remove')
+                                            updateItem(section, indexOrField, 'remove');
+                                            if (generatedResume) {
+                                                setGeneratedResume(prev => ({
+                                                    ...prev,
+                                                    [section]: prev[section]?.filter((_, i) => i !== indexOrField)
+                                                }));
+                                            }
+                                        } else if (indexOrField === 'add') {
+                                            // Add item: onUpdate(section, 'add', template)
+                                            addItem(section, fieldOrValue);
+                                            if (generatedResume) {
+                                                setGeneratedResume(prev => ({
+                                                    ...prev,
+                                                    [section]: [...(prev[section] || []), fieldOrValue]
+                                                }));
+                                            }
+                                        } else if (typeof indexOrField === 'number') {
+                                            // Update specific item field: onUpdate(section, index, field, value)
+                                            updateItem(section, indexOrField, fieldOrValue, value);
+                                            if (generatedResume) {
+                                                setGeneratedResume(prev => ({
+                                                    ...prev,
+                                                    [section]: prev[section]?.map((item, i) => i === indexOrField ? { ...item, [fieldOrValue]: value } : item)
+                                                }));
+                                            }
+                                        } else if (section === 'skills') {
+                                            // Update skill at index: onUpdate('skills', index, newValue)
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                skills: prev.skills.map((s, i) => i === indexOrField ? fieldOrValue : s)
+                                            }));
+                                            if (generatedResume) {
+                                                setGeneratedResume(prev => ({
+                                                    ...prev,
+                                                    skills: prev.skills?.map((s, i) => i === indexOrField ? fieldOrValue : s)
+                                                }));
+                                            }
+                                        }
+                                    }}
+                                />
+                            )}
+                        </div>
+                    )}
+                    {editorTab === 'cover-letter' && (
+                        <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
+                            {coverLetter ? (
+                                <textarea
+                                    value={coverLetter}
+                                    onChange={e => setCoverLetter(e.target.value)}
+                                    className="w-full min-h-[900px] p-4 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
+                                />
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
+                                    <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
+                                        <div className="w-16 h-16 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6 mx-auto">
+                                            <FileText className="w-8 h-8 text-violet-500" />
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2">Cover Letter Designer</h3>
+                                        <p className="text-sm text-slate-500 mb-8">Craft a compelling narrative for your next role.</p>
+                                        <div className="space-y-4 text-left">
+                                            <InputField label="Target Role" value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="e.g. Frontend Engineer" />
+                                            <InputField label="Company Name (Optional)" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
+                                        </div>
+                                        <div className="flex flex-col gap-3 mt-8">
+                                            <Button onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL || !jobDescription} className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold">
+                                                {isGeneratingCL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                                Draft using AI
+                                            </Button>
+                                            <Button variant="outline" onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL} className="w-full border-2 border-violet-100 text-violet-600 py-6 rounded-2xl font-bold bg-violet-50/50">
+                                                Generate from Resume
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {editorTab === 'application-letter' && (
+                        <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
+                            {applicationLetter ? (
+                                <textarea
+                                    value={applicationLetter}
+                                    onChange={e => setApplicationLetter(e.target.value)}
+                                    className="w-full min-h-[900px] p-4 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
+                                />
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
+                                    <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
+                                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6 mx-auto">
+                                            <Target className="w-8 h-8 text-indigo-500" />
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2">Application Letter Designer</h3>
+                                        <p className="text-sm text-slate-500 mb-8">Formalize your intent with a professional application letter.</p>
+                                        <div className="space-y-4 text-left">
+                                            <InputField label="Target Role" value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="e.g. Frontend Engineer" />
+                                            <InputField label="Company Name" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
+                                        </div>
+                                        <div className="flex flex-col gap-3 mt-8">
+                                            <Button onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL || !jobDescription || !coverLetterCompany} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 rounded-2xl font-bold">
+                                                {isGeneratingAL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                                Draft using AI
+                                            </Button>
+                                            <Button variant="outline" onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL} className="w-full border-2 border-indigo-100 text-indigo-600 py-6 rounded-2xl font-bold bg-indigo-50/50">
+                                                Generate from Resume
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {editorTab === 'portfolio' && (
+                        <div className="p-4 md:p-12 min-h-[600px]">
+                            <div className="max-w-4xl mx-auto">
+                                <div className="flex flex-col items-center text-center mb-12">
+                                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
+                                        <FolderOpen className="w-8 h-8 text-emerald-500" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold mb-2">Portfolio Ideas</h2>
+                                    <p className="text-slate-500 max-w-md">Get market-ready project suggestions tailored to your career goals.</p>
+                                </div>
+
+                                {!portfolioPrompts.length ? (
+                                    <div className="max-w-md mx-auto p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700">
+                                        <InputField
+                                            label="What role are you targeting?"
+                                            value={jobDescription}
+                                            onChange={e => setJobDescription(e.target.value)}
+                                            placeholder="e.g. Backend Engineer"
+                                        />
+                                        <Button
+                                            onClick={handleGeneratePortfolio}
+                                            disabled={isGeneratingPP || !jobDescription}
+                                            className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl"
+                                        >
+                                            {isGeneratingPP ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                            Generate Project Ideas
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {portfolioPrompts.map((prompt, i) => (
+                                            <div key={i} className="p-6 rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-xl transition-all group overflow-hidden relative">
+                                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                    <BrainCircuit size={40} className="text-emerald-500" />
+                                                </div>
+                                                <h4 className="text-lg font-bold mb-2 flex items-center gap-2 text-slate-800 dark:text-white relative z-20">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    {prompt.title}
+                                                </h4>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3 relative z-20">{prompt.description}</p>
+                                                <div className="flex flex-wrap gap-2 mb-6">
+                                                    {prompt.technologies?.map((tech, j) => (
+                                                        <span key={j} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">{tech}</span>
+                                                    ))}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => prompt.refined ? copyToClipboard(prompt.description) : handleGenerateProjectAI(i)}
+                                                        className={`flex-1 text-xs py-5 rounded-xl border-emerald-100 hover:bg-emerald-50 text-emerald-600 ${prompt.refined ? 'bg-emerald-50 border-emerald-500' : ''}`}
+                                                    >
+                                                        {prompt.refined ? <Copy size={14} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
+                                                        {prompt.refined ? 'Copy Prompt' : 'Gen with AI'}
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => addToResume(prompt)}
+                                                        className="flex-1 text-xs py-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                    >
+                                                        <Plus size={14} className="mr-1" /> Add to Resume
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    {editorTab === 'insights' && (
+                        <div className="p-8 min-h-[600px]">
+                            {!jobMatchResult ? (
+                                <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center">
+                                    <div className="w-20 h-20 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6">
+                                        <TrendingUp className="w-10 h-10 text-emerald-500" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold mb-2">Job Match Analysis</h2>
+                                    <p className="text-slate-500 max-w-md mb-8">Paste a job description below to see how well your resume matches and what keywords you're missing.</p>
+                                    <div className="w-full max-w-lg space-y-4">
+                                        <textarea
+                                            value={jobMatchDescription}
+                                            onChange={e => setJobMatchDescription(e.target.value)}
+                                            placeholder="Paste the job description here..."
+                                            rows={6}
+                                            className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 focus:border-emerald-400 focus:bg-white outline-none transition-all text-sm resize-none"
+                                        />
+                                        <Button onClick={handleJobMatch} disabled={isMatchingJob || !jobMatchDescription.trim()} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-bold">
+                                            {isMatchingJob ? <><Loader2 className="animate-spin mr-2" /> Analyzing...</> : <><TrendingUp className="mr-2" /> Analyze Match Score</>}
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 max-w-3xl mx-auto">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-bold">ATS Match Report</h2>
+                                            <p className="text-slate-500 text-sm mt-1">{jobMatchResult.summary}</p>
+                                        </div>
+                                        <button onClick={() => setJobMatchResult(null)} className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500">
+                                            <X size={16} />
                                         </button>
                                     </div>
-                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 line-clamp-1 border-b border-slate-50 dark:border-slate-800 pb-3 relative z-10">
-                                        {item.title || "Untitled Document"}
-                                    </h4>
-                                    <div className="flex-1 relative z-10">
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 italic">
-                                            {item.type === 'cover-letter' ? `Cover letter for ${item.data?.company || 'Company'}` :
-                                                item.type === 'portfolio' ? `${item.data?.prompts?.length || 0} Project Ideas` :
-                                                    item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft..."}
-                                        </p>
-                                    </div>
-                                    <div className="mt-4 pt-4 flex justify-between items-center relative z-10 text-[10px] font-black">
-                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                            Saved
+                                    {/* Score */}
+                                    <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 text-white text-center">
+                                        <div className="text-7xl font-black mb-2">{jobMatchResult.matchScore}%</div>
+                                        <div className="text-emerald-100 font-medium">ATS Match Score</div>
+                                        <div className="mt-4 h-3 bg-white/20 rounded-full overflow-hidden">
+                                            <div className="h-full bg-white rounded-full transition-all" style={{ width: `${Math.min(jobMatchResult.matchScore, 100)}%` }} />
                                         </div>
-                                        <span className="text-violet-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                                            Open document <ArrowRight size={12} />
-                                        </span>
+                                    </div>
+                                    {/* Keywords */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                                            <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-3 flex items-center gap-2"><CheckCircle size={16} /> Keywords Found</h4>
+                                            <div className="flex flex-wrap gap-2">{(jobMatchResult.keywordsFound || []).map((kw, i) => <span key={i} className="px-3 py-1 bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-lg">{kw}</span>)}</div>
+                                        </div>
+                                        <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800">
+                                            <h4 className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2"><AlertCircle size={16} /> Keywords Missing</h4>
+                                            <div className="flex flex-wrap gap-2">{(jobMatchResult.keywordsMissing || []).map((kw, i) => <span key={i} className="px-3 py-1 bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-lg">{kw}</span>)}</div>
+                                        </div>
+                                    </div>
+                                    {/* Strengths & Gaps */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Strengths</h4>
+                                            <ul className="space-y-2">{(jobMatchResult.strengths || []).map((s, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-emerald-500 mt-0.5">•</span>{s}</li>)}</ul>
+                                        </div>
+                                        <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Recommendations</h4>
+                                            <ul className="space-y-2">{(jobMatchResult.recommendations || []).map((r, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-violet-500 mt-0.5">•</span>{r}</li>)}</ul>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-3">
+                                        <Button onClick={handleRefineResume} disabled={isRefining} className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold">
+                                            {isRefining ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                            Refine Resume with AI
+                                        </Button>
+                                        <Button onClick={() => setJobMatchResult(null)} variant="outline" className="w-full rounded-2xl py-5 border-slate-200">
+                                            Run Another Analysis
+                                        </Button>
                                     </div>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-            <style jsx global>{`
+
+            {history.length > 0 && (
+                <div className="w-full mt-16 max-w-6xl">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                            <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
+                                <Clock size={20} className="text-violet-600 dark:text-violet-400" />
+                            </div>
+                            Recent Work
+                        </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {history.map(item => (
+                            <div key={item._id} onClick={() => loadHistoryItem(item)}
+                                className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-violet-500/10 transition-colors" />
+                                <div className="flex justify-between items-start mb-4 relative z-10">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' ? 'bg-indigo-50 dark:bg-indigo-900/20' :
+                                            item.type === 'portfolio' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
+                                                'bg-violet-50 dark:bg-violet-900/20'
+                                            }`}>
+                                            {item.type === 'cover-letter' ? <FileText size={18} className="text-indigo-600 dark:text-indigo-400" /> :
+                                                item.type === 'portfolio' ? <FolderOpen size={18} className="text-emerald-600 dark:text-emerald-400" /> :
+                                                    <Target size={18} className="text-violet-600 dark:text-violet-400" />}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-400 capitalize">{item.type || "Document"}</span>
+                                            <span className="text-xs font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    <button onClick={e => deleteHistoryItem(e, item._id)} className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors opacity-100">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 line-clamp-1 border-b border-slate-50 dark:border-slate-800 pb-3 relative z-10">
+                                    {item.title || "Untitled Document"}
+                                </h4>
+                                <div className="flex-1 relative z-10">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 italic">
+                                        {item.type === 'cover-letter' ? `Cover letter for ${item.data?.company || 'Company'}` :
+                                            item.type === 'portfolio' ? `${item.data?.prompts?.length || 0} Project Ideas` :
+                                                item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft..."}
+                                    </p>
+                                </div>
+                                <div className="mt-4 pt-4 flex justify-between items-center relative z-10 text-[10px] font-black">
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                        Saved
+                                    </div>
+                                    <span className="text-violet-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                        Open document <ArrowRight size={12} />
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .no-scrollbar::-webkit-scrollbar {
                     display: none;
                 }
@@ -1691,20 +1691,106 @@ const ResumeBuilder = () => {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
                 }
-                @media (max-width: 640px) {
-                    #resume-preview {
-                        padding: 1.5rem !important;
-                        min-height: 100vh !important;
-                    }
-                    #resume-preview h1 { font-size: 2rem !important; margin-bottom: 0.5rem !important; }
-                    #resume-preview h4 { font-size: 13px !important; }
+                @media (max-width: 768px) {
+                    #resume-preview { padding: 1rem !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+                    #resume-preview * { font-size: 10px !important; }
+                    #resume-preview h1 { font-size: 18px !important; margin-bottom: 0.5rem !important; }
+                    #resume-preview h3 { font-size: 12px !important; margin-top: 1rem !important; }
                     #resume-preview p, #resume-preview div { font-size: 11px !important; line-height: 1.5 !important; }
                     #resume-preview .text-base { font-size: 11px !important; }
                     #resume-preview .text-[15px] { font-size: 12px !important; }
                     #resume-preview .text-[13px] { font-size: 10px !important; }
                     #resume-preview section { margin-bottom: 1.5rem !important; }
                 }
-            `}</style>
+            ` }} />
+
+            {/* Floating Mobile Action Center Button */}
+            <div className="md:hidden fixed bottom-6 right-6 z-[60]">
+                <button
+                    onClick={() => setShowMobileActions(true)}
+                    className="w-14 h-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+                >
+                    <Settings className="w-6 h-6" />
+                </button>
+            </div>
+
+            {/* Mobile Action Center Drawer */}
+            {
+                showMobileActions && (
+                    <div className="md:hidden fixed inset-0 z-[100] flex flex-col justify-end">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobileActions(false)} />
+                        <motion.div
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            className="relative bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 shadow-2xl border-t border-slate-200 dark:border-slate-800 max-h-[85vh] overflow-y-auto"
+                        >
+                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8" />
+
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white">Action Center</h3>
+                                <button onClick={() => setShowMobileActions(false)} className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Navigation Tabs (Mobile) */}
+                            <div className="grid grid-cols-2 gap-3 mb-8">
+                                {[
+                                    { id: 'editor', label: 'Resume', icon: Edit2 },
+                                    { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
+                                    { id: 'application-letter', label: 'App Letter', icon: Target },
+                                    { id: 'portfolio', label: 'Portfolios', icon: FolderOpen }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => { setEditorTab(tab.id); setShowMobileActions(false); }}
+                                        className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${editorTab === tab.id
+                                            ? "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-600"
+                                            : "bg-slate-50 dark:bg-slate-800/50 border-transparent text-slate-500"
+                                            }`}
+                                    >
+                                        <tab.icon size={20} />
+                                        <span className="text-[10px] font-black">{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Critical Actions */}
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-black text-slate-400 mb-2">Actions</h4>
+
+                                <Button onClick={() => { handleNew(); setShowMobileActions(false); }} variant="outline" className="w-full py-7 rounded-2xl border-slate-200 text-slate-900 dark:text-white font-black text-xs">
+                                    <Plus size={16} className="mr-3" /> New {
+                                        editorTab === 'cover-letter' ? 'Cover Letter' :
+                                            editorTab === 'application-letter' ? 'Application' :
+                                                editorTab === 'portfolio' ? 'Project' : 'Resume'
+                                    }
+                                </Button>
+
+                                <Button onClick={() => { saveToDatabase(); setShowMobileActions(false); }} className="w-full py-7 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-xs shadow-xl">
+                                    <Save size={16} className="mr-3" /> Save to Database
+                                </Button>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => { setEditorTab('insights'); setShowMobileActions(false); }}
+                                        className="py-7 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-600 font-black text-[10px]"
+                                    >
+                                        <TrendingUp size={16} className="mr-2" /> Match Job
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => { exportToPDF(); setShowMobileActions(false); }}
+                                        className="py-7 rounded-2xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-[10px]"
+                                    >
+                                        <Download size={16} className="mr-2" /> Export PDF
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
         </div>
     );
 };
