@@ -70,7 +70,7 @@
 | **Paystack** ⭐ | 1.5% + ₦100 local / 3.9% intl | Nigerian / African users |
 | **Stripe** | 2.9% + $0.30 per transaction | International users |
 
-> On a $10/mo Pro plan: Paystack takes ~$0.45, you net ~$9.55.
+> On a $45/mo Pro plan: Paystack takes ~$1.5, you net ~$43.5.
 
 ---
 
@@ -107,13 +107,13 @@
 
 ## 💡 Break-Even Analysis
 
-At **$10/mo Pro plan** pricing:
+At **$45/mo Pro plan** pricing:
 
 | Users | Monthly Revenue | Monthly Costs | Profit | Margin |
 |-------|----------------|--------------|--------|--------|
-| 10 Pro subscribers | $100 | ~$40 | $60 | 60% |
-| 50 Pro subscribers | $500 | ~$80 | $420 | 84% |
-| 200 Pro subscribers | $2,000 | ~$200 | $1,800 | **90%** |
-| 1,000 Pro subscribers | $10,000 | ~$790 | $9,210 | **92%** |
+| 10 Pro subscribers | $450 | ~$40 | $410 | 91% |
+| 50 Pro subscribers | $2,250 | ~$80 | $2,170 | 96% |
+| 200 Pro subscribers | $9,000 | ~$200 | $8,800 | **97%** |
+| 1,000 Pro subscribers | $45,000 | ~$790 | $44,210 | **98%** |
 
 The model is highly profitable at scale — OpenAI costs grow linearly while subscriptions give predictable recurring revenue. The tighter the Free tier limits, the better your margins.

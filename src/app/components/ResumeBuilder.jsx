@@ -1224,7 +1224,7 @@ const ResumeBuilder = () => {
             )}
 
             <div className="flex flex-col items-center gap-6">
-                <nav className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                <nav className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-full">
                     {[
                         { id: 'editor', label: 'Resume', icon: Edit2 },
                         { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
@@ -1232,14 +1232,14 @@ const ResumeBuilder = () => {
                         { id: 'portfolio', label: 'Portfolio Ideas', icon: FolderOpen }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setEditorTab(tab.id)}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-violet-600" : "text-slate-500 hover:text-slate-900"}`}>
+                            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-violet-600" : "text-slate-500 hover:text-slate-900"}`}>
                             <tab.icon size={16} />
                             {tab.label}
                         </button>
                     ))}
                 </nav>
 
-                <div className="w-full max-w-4xl flex flex-col gap-4">
+                <div className="w-full max-w-4xl flex flex-col gap-4 px-2 md:px-0">
                     <div className="flex flex-wrap items-center gap-2">
                         <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 transition-all font-bold text-xs">
                             <Plus size={14} className="mr-1.5" /> {
@@ -1263,7 +1263,7 @@ const ResumeBuilder = () => {
                         </Button>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden min-h-[800px]">
+                    <div className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
                         {editorTab === 'editor' && (
                             <div className="h-full">
                                 {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle) ? (
@@ -1410,12 +1410,12 @@ const ResumeBuilder = () => {
                             </div>
                         )}
                         {editorTab === 'cover-letter' && (
-                            <div className="flex flex-col w-full min-h-[800px]">
+                            <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
                                 {coverLetter ? (
                                     <textarea
                                         value={coverLetter}
                                         onChange={e => setCoverLetter(e.target.value)}
-                                        className="w-full min-h-[900px] p-10 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-lg leading-relaxed outline-none"
+                                        className="w-full min-h-[900px] p-6 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
                                     />
                                 ) : (
                                     <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
@@ -1444,12 +1444,12 @@ const ResumeBuilder = () => {
                             </div>
                         )}
                         {editorTab === 'application-letter' && (
-                            <div className="flex flex-col w-full min-h-[800px]">
+                            <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
                                 {applicationLetter ? (
                                     <textarea
                                         value={applicationLetter}
                                         onChange={e => setApplicationLetter(e.target.value)}
-                                        className="w-full min-h-[900px] p-10 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-lg leading-relaxed outline-none"
+                                        className="w-full min-h-[900px] p-6 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-sm md:text-lg leading-relaxed outline-none"
                                     />
                                 ) : (
                                     <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
@@ -1683,6 +1683,28 @@ const ResumeBuilder = () => {
                     </div>
                 )}
             </div>
+            <style jsx global>{`
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                @media (max-width: 640px) {
+                    #resume-preview {
+                        padding: 1.5rem !important;
+                        min-height: 100vh !important;
+                    }
+                    #resume-preview h1 { font-size: 2rem !important; margin-bottom: 0.5rem !important; }
+                    #resume-preview h4 { font-size: 13px !important; }
+                    #resume-preview p, #resume-preview div { font-size: 11px !important; line-height: 1.5 !important; }
+                    #resume-preview .text-base { font-size: 11px !important; }
+                    #resume-preview .text-[15px] { font-size: 12px !important; }
+                    #resume-preview .text-[13px] { font-size: 10px !important; }
+                    #resume-preview section { margin-bottom: 1.5rem !important; }
+                }
+            `}</style>
         </div>
     );
 };

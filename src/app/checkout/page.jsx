@@ -25,19 +25,22 @@ const PLAN_UI_METADATA = {
     icon: Zap,
     gradient: "from-violet-600 via-purple-600 to-indigo-600",
     shadowColor: "shadow-purple-500/25",
-    defaultOriginalPrice: 14.99,
+    defaultOriginalPrice: 59.99, // Was 14.99
+    currentPrice: 45.00,
   },
   enterprise: {
     icon: Crown,
     gradient: "from-amber-500 via-orange-500 to-red-500",
     shadowColor: "shadow-orange-500/25",
-    defaultOriginalPrice: 49.99,
+    defaultOriginalPrice: 249.99, // Was 49.99
+    currentPrice: 200.00,
   },
   pro: {
     icon: Zap,
     gradient: "from-violet-600 via-purple-600 to-indigo-600",
     shadowColor: "shadow-purple-500/25",
-    defaultOriginalPrice: 14.99,
+    defaultOriginalPrice: 59.99, // Was 14.99
+    currentPrice: 45.00,
   }
 };
 

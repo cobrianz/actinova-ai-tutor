@@ -14,6 +14,8 @@ import { apiClient } from "@/lib/csrfClient";
 import { useRouter } from "next/navigation";
 import { saveAs } from "file-saver";
 import { useTheme } from "./ThemeProvider";
+import { useAuth } from "./AuthProvider";
+import UpgradeModal from "./UpgradeModal";
 import {
     Document,
     Packer,
@@ -25,6 +27,7 @@ import {
 
 export default function ReportEditor({ reportId }) {
     const { theme } = useTheme();
+    const { isPro, isEnterprise } = useAuth();
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generatingSection, setGeneratingSection] = useState(null);
@@ -54,6 +57,7 @@ export default function ReportEditor({ reportId }) {
     const [isRewriting, setIsRewriting] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const pendingContentRef = useRef(null); // holds fullContent until editor mounts
     const pendingTitlePageContentRef = useRef(null); // holds titlePageContent until editor mounts
     const pendingReportRef = useRef(null);  // holds report data until editor mounts
@@ -660,6 +664,12 @@ export default function ReportEditor({ reportId }) {
     const exportAsDOCX = async () => {
         if (!editorRef.current) return;
 
+        // Premium Gating
+        if (!isPro && !isEnterprise) {
+            setShowUpgradeModal(true);
+            return;
+        }
+
         try {
             // Server-side docx generation using docxtemplater
             const res = await apiClient.post("/api/generate-doc", {
@@ -780,619 +790,628 @@ export default function ReportEditor({ reportId }) {
         <div className="flex w-full h-[calc(100vh-68px)] bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden font-inter">
 
             {/* Professional Metadata Sidebar */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Document Metadata</h3>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => saveReport()}
-                            disabled={saving}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors"
-                            title="Save Changes"
-                        >
-                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        </button>
-                        <button
-                            onClick={exportAsDOCX}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors"
-                            title="Download Word (.docx)"
-                        >
-                            <Download className="w-4 h-4" />
-                        </button>
+            <div className="hidden xl:flex flex-col w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Document Metadata</h3>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => saveReport()}
+                                disabled={saving}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors"
+                                title="Save Changes"
+                            >
+                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            </button>
+                            <button
+                                onClick={exportAsDOCX}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors"
+                                title="Download Word (.docx)"
+                            >
+                                <Download className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                </div>
-
-                <div className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Title</label>
-                        <input
-                            type="text"
-                            value={report?.title || ''}
-                            onChange={(e) => setReport({ ...report, title: e.target.value })}
-                            placeholder="Report title"
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Student Name</label>
-                        <input
-                            type="text"
-                            value={studentName}
-                            onChange={(e) => setStudentName(e.target.value)}
-                            placeholder="Student name"
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Institution</label>
-                        <input
-                            type="text"
-                            value={institution}
-                            onChange={(e) => setInstitution(e.target.value)}
-                            placeholder="Institution"
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Course</label>
-                        <input
-                            type="text"
-                            value={courseName}
-                            onChange={(e) => setCourseName(e.target.value)}
-                            placeholder="Course name"
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Author</label>
-                        <input
-                            type="text"
-                            value={authorName}
-                            onChange={(e) => setAuthorName(e.target.value)}
-                            placeholder="Author name"
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Date</label>
-                        <input
-                            type="text"
-                            value={submissionDate}
-                            onChange={(e) => setSubmissionDate(e.target.value)}
-                            placeholder="Submission date"
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Progress</span>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="font-medium">{Object.values(report?.sections || {}).filter(Boolean).length}</span>
-                    <span>of</span>
-                    <span className="font-medium">{report?.outline?.length || 0}</span>
-                    <span>sections drafted</span>
-                </div>
-                <div className="mt-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                    <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
-                        style={{ width: `${report?.outline ? (Object.values(report?.sections || {}).filter(Boolean).length / report.outline.length) * 100 : 0}%` }}
-                    />
-                </div>
-            </div>
-        </div>
-
-            {/* Main Content Area */ }
-    <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0">
-
-        {/* Floating Action Buttons */}
-        <div className="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-[60] flex items-center gap-2 no-print xl:hidden">
-            <button
-                onClick={() => setShowOutline(v => !v)}
-                className={`p-3 rounded-full transition-all shadow-lg hover:shadow-xl ${showOutline ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}
-                title={showOutline ? 'Hide Outline' : 'Show Outline'}
-            >
-                <PanelRight className="w-5 h-5" />
-            </button>
-
-            <button onClick={() => saveReport()} disabled={saving} className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50" title="Save Changes">
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-            </button>
-
-            <button onClick={exportAsDOCX} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full transition-all shadow-lg hover:shadow-xl" title="Download Word (.docx)">
-                <Download className="w-5 h-5" />
-            </button>
-        </div>
-
-        {/* Document Page Wrapper */}
-        <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-12">
-
-            {/* Multi-page visualization container */}
-            <div className="document-container relative bg-transparent w-full max-w-full md:max-w-[260mm] mb-32 p-0 md:p-4 lg:p-10 flex flex-col items-center">
-
-                {/* Title Page */}
-                <div
-                    className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm] mb-8"
-                    style={{
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
-                        padding: 'clamp(1rem, 5vw, 1.5cm)',
-                        minHeight: '29.7cm'
-                    }}
-                >
-                    <div
-                        ref={titlePageRef}
-                        contentEditable="true"
-                        onInput={handleEditorInput}
-                        suppressContentEditableWarning={true}
-                        className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 h-full"
-                        style={{
-                            fontFamily: 'Inter, system-ui, sans-serif'
-                        }}
-                    />
-                </div>
-
-                {/* Visual Page Gap */}
-                <div className="h-4 w-full no-print" />
-
-                {/* Main Content Page - Professional Design */}
-                <div
-                    className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
-                    style={{
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
-                        padding: 'clamp(1rem, 5vw, 1.5cm)'
-                    }}
-                >
-                    <div className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 min-h-[29.7cm]"
-                        style={{
-                            fontFamily: 'Inter, system-ui, sans-serif',
-                            fontSize: {
-                                "1": "10px",
-                                "2": "12px",
-                                "3": "16px",
-                                "4": "18px",
-                                "5": "24px"
-                            }[selectedFontSize] || "16px",
-                            lineHeight: selectedLineHeight,
-                            wordSpacing: '0.05em'
-                        }}
-                        ref={editorRef}
-                        contentEditable="true"
-                        onInput={(e) => {
-                            handleEditorInput();
-                            updateHeaderOffsets();
-                        }}
-                        suppressContentEditableWarning={true}
-                        placeholder="Start typing your research report..."
-                    />
-                </div>
-
-                {/* Visual Page Gap */}
-                <div className="h-8 w-full no-print" />
-
-                {/* References Page */}
-                <div
-                    className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
-                    style={{
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
-                        padding: 'clamp(1rem, 5vw, 1.5cm)',
-                        minHeight: '29.7cm'
-                    }}
-                >
-                    <div className="relative z-10 w-full h-full flex flex-col">
-                        <div className="flex items-center gap-4 mb-8 md:mb-16">
-                            <div className="flex-1 h-px bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800" />
-                            <span className="px-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">References</span>
-                            <div className="flex-1 h-px bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800" />
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Title</label>
+                            <input
+                                type="text"
+                                value={report?.title || ''}
+                                onChange={(e) => setReport({ ...report, title: e.target.value })}
+                                placeholder="Report title"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            />
                         </div>
 
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Student Name</label>
+                            <input
+                                type="text"
+                                value={studentName}
+                                onChange={(e) => setStudentName(e.target.value)}
+                                placeholder="Student name"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Institution</label>
+                            <input
+                                type="text"
+                                value={institution}
+                                onChange={(e) => setInstitution(e.target.value)}
+                                placeholder="Institution"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Course</label>
+                            <input
+                                type="text"
+                                value={courseName}
+                                onChange={(e) => setCourseName(e.target.value)}
+                                placeholder="Course name"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Author</label>
+                            <input
+                                type="text"
+                                value={authorName}
+                                onChange={(e) => setAuthorName(e.target.value)}
+                                placeholder="Author name"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Date</label>
+                            <input
+                                type="text"
+                                value={submissionDate}
+                                onChange={(e) => setSubmissionDate(e.target.value)}
+                                placeholder="Submission date"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Progress</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="font-medium">{Object.values(report?.sections || {}).filter(Boolean).length}</span>
+                        <span>of</span>
+                        <span className="font-medium">{report?.outline?.length || 0}</span>
+                        <span>sections drafted</span>
+                    </div>
+                    <div className="mt-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                         <div
-                            ref={referencesRef}
-                            contentEditable="true"
-                            onInput={handleEditorInput}
-                            suppressContentEditableWarning={true}
-                            className="space-y-6 prose dark:prose-invert max-w-none flex-1 outline-none min-h-[500px]"
-                        >
-                            {allReferences.length > 0 ? (
-                                allReferences.map((ref, i) => (
-                                    <p key={i} style={{
-                                        fontSize: '0.95rem',
-                                        marginBottom: '1rem',
-                                        paddingLeft: '2rem',
-                                        textIndent: '-2rem',
-                                        lineHeight: '1.7',
-                                        textAlign: 'left',
-                                        color: 'var(--report-text-color)',
-                                        fontFamily: 'Inter, system-ui, sans-serif'
-                                    }}>
-                                        {ref}
-                                    </p>
-                                ))
-                            ) : (
-                                <div contentEditable="false" suppressContentEditableWarning={true} className="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
-                                    <div className="flex flex-col items-center">
-                                        <FileText className="w-12 h-12 text-slate-300 mb-3" />
-                                        <p className="text-sm text-slate-400 font-medium">Citations will be automatically compiled here</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                            className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
+                            style={{ width: `${report?.outline ? (Object.values(report?.sections || {}).filter(Boolean).length / report.outline.length) * 100 : 0}%` }}
+                        />
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {/* Right Sidebar Outline Panel - Desktop Only */ }
-    {
-        showOutline && (
-            <div className="hidden xl:flex flex-col w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
-                {/* Header */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-800 dark:to-slate-800/50">
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Outline & Content</h3>
-                        </div>
-                        <button
-                            onClick={runStructuralValidation}
-                            disabled={isValidating}
-                            className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400 transition-colors"
-                            title="Run Structural Validation"
-                        >
-                            {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                        </button>
-                    </div>
-                    <button onClick={() => setShowOutline(false)} className="absolute top-6 right-6 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-all">
-                        <X className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+            {/* Main Content Area */}
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0">
+
+                {/* Floating Action Buttons */}
+                <div className="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-[60] flex items-center gap-2 no-print xl:hidden">
+                    <button
+                        onClick={() => setShowOutline(v => !v)}
+                        className={`p-3 rounded-full transition-all shadow-lg hover:shadow-xl ${showOutline ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}
+                        title={showOutline ? 'Hide Outline' : 'Show Outline'}
+                    >
+                        <PanelRight className="w-5 h-5" />
+                    </button>
+
+                    <button onClick={() => saveReport()} disabled={saving} className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50" title="Save Changes">
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    </button>
+
+                    <button onClick={exportAsDOCX} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full transition-all shadow-lg hover:shadow-xl" title="Download Word (.docx)">
+                        <Download className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Validation Results Panel */}
-                {validationResults && (
-                    <div className="mx-4 mt-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-900/10">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <Activity className="w-4 h-4 text-indigo-600" />
-                                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Structure Score</span>
-                            </div>
-                            <span className={`text-sm font-black ${validationResults.structureScore > 80 ? 'text-emerald-500' : validationResults.structureScore > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
-                                {validationResults.structureScore}%
-                            </span>
-                        </div>
+                {/* Document Page Wrapper */}
+                <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-12" >
 
-                        <div className="space-y-2">
-                            {validationResults.missingSections.length > 0 && (
-                                <div className="flex items-start gap-2">
-                                    <AlertCircle className="w-3.5 h-3.5 text-rose-500 mt-0.5 flex-shrink-0" />
-                                    <p className="text-[10px] text-rose-600 leading-tight">Missing: {validationResults.missingSections.join(', ')}</p>
-                                </div>
-                            )}
-                            {validationResults.emptySections.length > 0 && (
-                                <div className="flex items-start gap-2">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                                    <p className="text-[10px] text-amber-600 leading-tight">Empty: {validationResults.emptySections.join(', ')}</p>
-                                </div>
-                            )}
-                            {validationResults.distributionWarnings.map((warn, i) => (
-                                <div key={i} className="flex items-start gap-2">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                                    <p className="text-[10px] text-amber-600 leading-tight">{warn}</p>
-                                </div>
-                            ))}
-                            {validationResults.structuralDrift.length > 0 && (
-                                <div className="flex items-start gap-2">
-                                    <RefreshCcw className="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" />
-                                    <p className="text-[10px] text-indigo-600 leading-tight">Structure drift detected in {validationResults.structuralDrift.length} sections.</p>
-                                </div>
-                            )}
-                            {validationResults.structureScore === 100 && (
-                                <div className="flex items-center gap-2 py-1">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                    <p className="text-[10px] text-emerald-600 font-bold">Perfect academic structure!</p>
-                                </div>
-                            )}
-                        </div>
+                    {/* Multi-page visualization container */}
+                    <div className="document-container relative bg-transparent w-full max-w-full md:max-w-[260mm] mb-32 p-0 md:p-4 lg:p-10 flex flex-col items-center" >
 
-                        <button
-                            onClick={() => setValidationResults(null)}
-                            className="w-full mt-3 py-1 text-[9px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                        {/* Title Page */}
+                        <div
+                            className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm] mb-8"
+                            style={{
+                                boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
+                                padding: 'clamp(1rem, 5vw, 1.5cm)',
+                                minHeight: '29.7cm'
+                            }
+                            }
                         >
-                            Dismiss
-                        </button>
-                    </div>
-                )}
+                            <div
+                                ref={titlePageRef}
+                                contentEditable="true"
+                                onInput={handleEditorInput}
+                                suppressContentEditableWarning={true}
+                                className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 h-full"
+                                style={{
+                                    fontFamily: 'Inter, system-ui, sans-serif'
+                                }}
+                            />
+                        </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-                    <div className="p-4 space-y-3">
-                        {/* Abstract Card */}
-                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-slate-800/50 dark:to-slate-800/30 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Abstract</span>
-                                {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        {/* Visual Page Gap */}
+                        <div className="h-4 w-full no-print" />
+
+                        {/* Main Content Page - Professional Design */}
+                        <div
+                            className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            style={{
+                                boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
+                                padding: 'clamp(1rem, 5vw, 1.5cm)'
+                            }}
+                        >
+                            <div className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 min-h-[29.7cm]"
+                                style={{
+                                    fontFamily: 'Inter, system-ui, sans-serif',
+                                    fontSize: {
+                                        "1": "10px",
+                                        "2": "12px",
+                                        "3": "16px",
+                                        "4": "18px",
+                                        "5": "24px"
+                                    }[selectedFontSize] || "16px",
+                                    lineHeight: selectedLineHeight,
+                                    wordSpacing: '0.05em'
+                                }}
+                                ref={editorRef}
+                                contentEditable="true"
+                                onInput={(e) => {
+                                    handleEditorInput();
+                                    updateHeaderOffsets();
+                                }}
+                                suppressContentEditableWarning={true}
+                                placeholder="Start typing your research report..."
+                            />
+                        </div>
+
+                        {/* Visual Page Gap */}
+                        <div className="h-8 w-full no-print" />
+
+                        {/* References Page */}
+                        <div
+                            className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            style={{
+                                boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
+                                padding: 'clamp(1rem, 5vw, 1.5cm)',
+                                minHeight: '29.7cm'
+                            }}
+                        >
+                            <div className="relative z-10 w-full h-full flex flex-col">
+                                <div className="flex items-center gap-4 mb-8 md:mb-16">
+                                    <div className="flex-1 h-px bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800" />
+                                    <span className="px-6 text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">References</span>
+                                    <div className="flex-1 h-px bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800" />
+                                </div>
+
+                                <div
+                                    ref={referencesRef}
+                                    contentEditable="true"
+                                    onInput={handleEditorInput}
+                                    suppressContentEditableWarning={true}
+                                    className="space-y-6 prose dark:prose-invert max-w-none flex-1 outline-none min-h-[500px] references-container"
+                                >
+                                    {allReferences.length > 0 ? (
+                                        allReferences.map((ref, i) => (
+                                            <p key={i} style={{
+                                                fontSize: '0.95rem',
+                                                marginBottom: '1rem',
+                                                paddingLeft: '2rem',
+                                                textIndent: '-2rem',
+                                                lineHeight: '1.7',
+                                                textAlign: 'left',
+                                                color: 'var(--report-text-color)',
+                                                fontFamily: 'Inter, system-ui, sans-serif'
+                                            }}>
+                                                {ref}
+                                            </p>
+                                        ))
+                                    ) : (
+                                        <div contentEditable="false" suppressContentEditableWarning={true} className="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
+                                            <div className="flex flex-col items-center">
+                                                <FileText className="w-12 h-12 text-slate-300 mb-3" />
+                                                <p className="text-sm text-slate-400 font-medium">Citations will be automatically compiled here</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">Concise overview of the entire document</p>
-                            <button
-                                onClick={generateAbstract}
-                                disabled={generatingAbstract}
-                                className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                                    report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
-                                        'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                                    }`}
-                            >
-                                {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                <span>{generatingAbstract ? 'Generating...' : report.abstract ? 'Regenerate' : 'Generate'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                feature="Report Export"
+                description="Exporting reports as Word Documents (.docx) is a premium feature."
+            />
+
+            {/* Right Sidebar Outline Panel - Desktop Only */}
+            {
+                showOutline && (
+                    <div className="hidden xl:flex flex-col w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
+                        {/* Header */}
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-800 dark:to-slate-800/50">
+                            <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Outline & Content</h3>
+                                </div>
+                                <button
+                                    onClick={runStructuralValidation}
+                                    disabled={isValidating}
+                                    className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400 transition-colors"
+                                    title="Run Structural Validation"
+                                >
+                                    {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            <button onClick={() => setShowOutline(false)} className="absolute top-6 right-6 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-all">
+                                <X className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                             </button>
                         </div>
 
-                        {/* Section Cards */}
-                        {report.outline.map((section, idx) => {
-                            const isGenerating = generatingSection === section.id;
-                            const isDone = report.sections?.[section.id];
-                            const currentTargetLength = sectionLengths[section.id] || 1;
-
-                            return (
-                                <div
-                                    key={section.id}
-                                    className={`p-4 rounded-xl border transition-all group ${isDone
-                                        ? 'bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
-                                        : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'
-                                        }`}
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Section {idx + 1}</span>
-                                        {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+                        {/* Validation Results Panel */}
+                        {validationResults && (
+                            <div className="mx-4 mt-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-900/10">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-indigo-600" />
+                                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Structure Score</span>
                                     </div>
-                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2">{section.title}</h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed">{section.description}</p>
+                                    <span className={`text-sm font-black ${validationResults.structureScore > 80 ? 'text-emerald-500' : validationResults.structureScore > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                        {validationResults.structureScore}%
+                                    </span>
+                                </div>
 
-                                    {!isDone && (
-                                        <div className="mb-3 flex items-center gap-1 bg-white dark:bg-slate-700 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
-                                            {[1, 2, 3].map(pages => (
-                                                <button
-                                                    key={pages}
-                                                    onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
-                                                    className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
-                                                        }`}
-                                                >{pages}p</button>
-                                            ))}
+                                <div className="space-y-2">
+                                    {validationResults.missingSections.length > 0 && (
+                                        <div className="flex items-start gap-2">
+                                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-rose-600 leading-tight">Missing: {validationResults.missingSections.join(', ')}</p>
                                         </div>
                                     )}
-
-                                    <button
-                                        onClick={() => generateSection(section)}
-                                        disabled={isGenerating}
-                                        className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${isGenerating
-                                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                                            isDone
-                                                ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                                            }`}
-                                    >
-                                        {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                        <span>{isGenerating ? 'Drafting...' : isDone ? 'Regenerate' : 'Draft'}</span>
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    {/* Mobile Outline Drawer — slides up from bottom on small screens when toggled */ }
-    {
-        showOutline && (
-            <div className="xl:hidden fixed inset-0 z-[80] flex flex-col justify-end">
-                {/* Backdrop */}
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowOutline(false)} />
-
-                {/* Drawer panel - Professional bottom sheet */}
-                <div className="relative bg-white dark:bg-slate-900 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto shadow-2xl border-t border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                            <h3 className="font-bold text-slate-900 dark:text-white">Document Settings</h3>
-                        </div>
-                        <button onClick={() => setShowOutline(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                            <X className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        </button>
-                    </div>
-
-                    {/* Mobile Metadata Inputs */}
-                    <div className="mb-8 space-y-4">
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Metadata</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Title</label>
-                                <input
-                                    type="text"
-                                    value={report?.title || ''}
-                                    onChange={(e) => setReport({ ...report, title: e.target.value })}
-                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    value={studentName}
-                                    onChange={(e) => setStudentName(e.target.value)}
-                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Institution</label>
-                                <input
-                                    type="text"
-                                    value={institution}
-                                    onChange={(e) => setInstitution(e.target.value)}
-                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Course</label>
-                                <input
-                                    type="text"
-                                    value={courseName}
-                                    onChange={(e) => setCourseName(e.target.value)}
-                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-4">
-                        <Sparkles className="w-4 h-4 text-indigo-600" />
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">AI Outline</h4>
-                    </div>
-
-                    {/* Abstract card */}
-                    <div className="mb-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-slate-800/50 dark:to-slate-800/30">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Abstract</span>
-                            {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                        </div>
-                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
-                        <button
-                            onClick={() => { generateAbstract(); setShowOutline(false); }}
-                            disabled={generatingAbstract}
-                            className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all mt-3 ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                                report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
-                                    'bg-indigo-600 text-white hover:bg-indigo-700'
-                                }`}
-                        >
-                            {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                            <span>{generatingAbstract ? 'Generating...' : report.abstract ? 'Regenerate' : 'Generate'}</span>
-                        </button>
-                    </div>
-
-                    {/* Section Cards */}
-                    <div className="space-y-3">
-                        {report.outline.map((section, idx) => {
-                            const isGenerating = generatingSection === section.id;
-                            const isDone = report.sections?.[section.id];
-                            const currentTargetLength = sectionLengths[section.id] || 1;
-
-                            return (
-                                <div
-                                    key={section.id}
-                                    className={`p-4 rounded-lg border transition-all ${isDone
-                                        ? 'bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
-                                        : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700'
-                                        }`}
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Section {idx + 1}</span>
-                                        {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                                    </div>
-                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{section.title}</h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{section.description}</p>
-
-                                    {!isDone && (
-                                        <div className="mb-3 flex items-center gap-1 bg-white dark:bg-slate-700 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
-                                            {[1, 2, 3].map(pages => (
-                                                <button
-                                                    key={pages}
-                                                    onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
-                                                    className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
-                                                        ? 'bg-indigo-600 text-white'
-                                                        : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
-                                                        }`}
-                                                >{pages}p</button>
-                                            ))}
+                                    {validationResults.emptySections.length > 0 && (
+                                        <div className="flex items-start gap-2">
+                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-amber-600 leading-tight">Empty: {validationResults.emptySections.join(', ')}</p>
                                         </div>
                                     )}
+                                    {validationResults.distributionWarnings.map((warn, i) => (
+                                        <div key={i} className="flex items-start gap-2">
+                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-amber-600 leading-tight">{warn}</p>
+                                        </div>
+                                    ))}
+                                    {validationResults.structuralDrift.length > 0 && (
+                                        <div className="flex items-start gap-2">
+                                            <RefreshCcw className="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-indigo-600 leading-tight">Structure drift detected in {validationResults.structuralDrift.length} sections.</p>
+                                        </div>
+                                    )}
+                                    {validationResults.structureScore === 100 && (
+                                        <div className="flex items-center gap-2 py-1">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                            <p className="text-[10px] text-emerald-600 font-bold">Perfect academic structure!</p>
+                                        </div>
+                                    )}
+                                </div>
 
+                                <button
+                                    onClick={() => setValidationResults(null)}
+                                    className="w-full mt-3 py-1 text-[9px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+                            <div className="p-4 space-y-3">
+                                {/* Abstract Card */}
+                                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-slate-800/50 dark:to-slate-800/30 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Abstract</span>
+                                        {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                                    </div>
+                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">Concise overview of the entire document</p>
                                     <button
-                                        onClick={() => { generateSection(section); setShowOutline(false); }}
-                                        disabled={isGenerating}
-                                        className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${isGenerating
-                                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                                            isDone
-                                                ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                        onClick={generateAbstract}
+                                        disabled={generatingAbstract}
+                                        className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
+                                            report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
+                                                'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
                                             }`}
                                     >
-                                        {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                        <span>{isGenerating ? 'Drafting...' : isDone ? 'Regenerate' : 'Draft'}</span>
+                                        {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                        <span>{generatingAbstract ? 'Generating...' : report.abstract ? 'Regenerate' : 'Generate'}</span>
                                     </button>
                                 </div>
-                            );
-                        })}
+
+                                {/* Section Cards */}
+                                {report.outline.map((section, idx) => {
+                                    const isGenerating = generatingSection === section.id;
+                                    const isDone = report.sections?.[section.id];
+                                    const currentTargetLength = sectionLengths[section.id] || 1;
+
+                                    return (
+                                        <div
+                                            key={section.id}
+                                            className={`p-4 rounded-xl border transition-all group ${isDone
+                                                ? 'bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
+                                                : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Section {idx + 1}</span>
+                                                {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+                                            </div>
+                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2">{section.title}</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed">{section.description}</p>
+
+                                            {!isDone && (
+                                                <div className="mb-3 flex items-center gap-1 bg-white dark:bg-slate-700 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
+                                                    {[1, 2, 3].map(pages => (
+                                                        <button
+                                                            key={pages}
+                                                            onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
+                                                            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
+                                                                ? 'bg-indigo-600 text-white shadow-sm'
+                                                                : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
+                                                                }`}
+                                                        >{pages}p</button>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <button
+                                                onClick={() => generateSection(section)}
+                                                disabled={isGenerating}
+                                                className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${isGenerating
+                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
+                                                    isDone
+                                                        ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+                                                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                                                    }`}
+                                            >
+                                                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                                <span>{isGenerating ? 'Drafting...' : isDone ? 'Regenerate' : 'Draft'}</span>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        )
-    }
+                )
+            }
 
-    {/* Selection AI Toolbar */ }
-    {
-        toolbar.visible && (
-            <div
-                className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl p-1 animate-in fade-in zoom-in duration-200"
-                style={{ left: toolbar.x, top: toolbar.y }}
-            >
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => handleRewrite('regenerate')}
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                        title="Regenerate"
-                    >
-                        <RefreshCcw className="w-3.5 h-3.5 group-hover:text-indigo-600" />
-                        <span className="text-[10px] font-medium">Regen</span>
-                    </button>
-                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
-                    <button
-                        onClick={() => handleRewrite('reparaphrase')}
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                        title="Paraphrase"
-                    >
-                        <ArrowLeftRight className="w-3.5 h-3.5 group-hover:text-emerald-600" />
-                        <span className="text-[10px] font-medium">Paraphrase</span>
-                    </button>
-                    <button
-                        onClick={() => handleRewrite('expand')}
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                        title="Expand"
-                    >
-                        <Maximize2 className="w-3.5 h-3.5 group-hover:text-amber-600" />
-                        <span className="text-[10px] font-medium">Expand</span>
-                    </button>
-                    <button
-                        onClick={() => handleRewrite('shorten')}
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                        title="Shorten"
-                    >
-                        <Minimize2 className="w-3.5 h-3.5 group-hover:text-rose-600" />
-                        <span className="text-[10px] font-medium">Shorten</span>
-                    </button>
-                </div>
+            {/* Mobile Outline Drawer — slides up from bottom on small screens when toggled */}
+            {
+                showOutline && (
+                    <div className="xl:hidden fixed inset-0 z-[80] flex flex-col justify-end">
+                        {/* Backdrop */}
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowOutline(false)} />
 
-                {isRewriting && (
-                    <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                        <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                        {/* Drawer panel - Professional bottom sheet */}
+                        <div className="relative bg-white dark:bg-slate-900 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto shadow-2xl border-t border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                    <h3 className="font-bold text-slate-900 dark:text-white">Document Settings</h3>
+                                </div>
+                                <button onClick={() => setShowOutline(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                                    <X className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                                </button>
+                            </div>
+
+                            {/* Mobile Metadata Inputs */}
+                            <div className="mb-8 space-y-4">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Metadata</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Title</label>
+                                        <input
+                                            type="text"
+                                            value={report?.title || ''}
+                                            onChange={(e) => setReport({ ...report, title: e.target.value })}
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Name</label>
+                                        <input
+                                            type="text"
+                                            value={studentName}
+                                            onChange={(e) => setStudentName(e.target.value)}
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Institution</label>
+                                        <input
+                                            type="text"
+                                            value={institution}
+                                            onChange={(e) => setInstitution(e.target.value)}
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Course</label>
+                                        <input
+                                            type="text"
+                                            value={courseName}
+                                            onChange={(e) => setCourseName(e.target.value)}
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 mb-4">
+                                <Sparkles className="w-4 h-4 text-indigo-600" />
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white">AI Outline</h4>
+                            </div>
+
+                            {/* Abstract card */}
+                            <div className="mb-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-slate-800/50 dark:to-slate-800/30">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Abstract</span>
+                                    {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                                </div>
+                                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
+                                <button
+                                    onClick={() => { generateAbstract(); setShowOutline(false); }}
+                                    disabled={generatingAbstract}
+                                    className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all mt-3 ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
+                                        report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
+                                            'bg-indigo-600 text-white hover:bg-indigo-700'
+                                        }`}
+                                >
+                                    {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    <span>{generatingAbstract ? 'Generating...' : report.abstract ? 'Regenerate' : 'Generate'}</span>
+                                </button>
+                            </div>
+
+                            {/* Section Cards */}
+                            <div className="space-y-3">
+                                {report.outline.map((section, idx) => {
+                                    const isGenerating = generatingSection === section.id;
+                                    const isDone = report.sections?.[section.id];
+                                    const currentTargetLength = sectionLengths[section.id] || 1;
+
+                                    return (
+                                        <div
+                                            key={section.id}
+                                            className={`p-4 rounded-lg border transition-all ${isDone
+                                                ? 'bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
+                                                : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700'
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Section {idx + 1}</span>
+                                                {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                                            </div>
+                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{section.title}</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{section.description}</p>
+
+                                            {!isDone && (
+                                                <div className="mb-3 flex items-center gap-1 bg-white dark:bg-slate-700 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
+                                                    {[1, 2, 3].map(pages => (
+                                                        <button
+                                                            key={pages}
+                                                            onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
+                                                            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
+                                                                ? 'bg-indigo-600 text-white'
+                                                                : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
+                                                                }`}
+                                                        >{pages}p</button>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <button
+                                                onClick={() => { generateSection(section); setShowOutline(false); }}
+                                                disabled={isGenerating}
+                                                className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${isGenerating
+                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
+                                                    isDone
+                                                        ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+                                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                    }`}
+                                            >
+                                                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                                <span>{isGenerating ? 'Drafting...' : isDone ? 'Regenerate' : 'Draft'}</span>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
-        )
-    }
+                )
+            }
 
-    <style dangerouslySetInnerHTML={{
-        __html: `
+            {/* Selection AI Toolbar */}
+            {
+                toolbar.visible && (
+                    <div
+                        className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl p-1 animate-in fade-in zoom-in duration-200"
+                        style={{ left: toolbar.x, top: toolbar.y }}
+                    >
+                        <div className="flex items-center gap-0.5">
+                            <button
+                                onClick={() => handleRewrite('regenerate')}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
+                                title="Regenerate"
+                            >
+                                <RefreshCcw className="w-3.5 h-3.5 group-hover:text-indigo-600" />
+                                <span className="text-[10px] font-medium">Regen</span>
+                            </button>
+                            <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
+                            <button
+                                onClick={() => handleRewrite('reparaphrase')}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
+                                title="Paraphrase"
+                            >
+                                <ArrowLeftRight className="w-3.5 h-3.5 group-hover:text-emerald-600" />
+                                <span className="text-[10px] font-medium">Paraphrase</span>
+                            </button>
+                            <button
+                                onClick={() => handleRewrite('expand')}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
+                                title="Expand"
+                            >
+                                <Maximize2 className="w-3.5 h-3.5 group-hover:text-amber-600" />
+                                <span className="text-[10px] font-medium">Expand</span>
+                            </button>
+                            <button
+                                onClick={() => handleRewrite('shorten')}
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
+                                title="Shorten"
+                            >
+                                <Minimize2 className="w-3.5 h-3.5 group-hover:text-rose-600" />
+                                <span className="text-[10px] font-medium">Shorten</span>
+                            </button>
+                        </div>
+
+                        {isRewriting && (
+                            <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                            </div>
+                        )}
+                    </div>
+                )
+            }
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
         :root {
           --report-text-color: #1e293b;
         }
@@ -1499,15 +1518,20 @@ export default function ReportEditor({ reportId }) {
           margin-bottom: 0.75rem;
         }
 
-        .prose p { 
-          margin-bottom: 1.5rem; 
-          color: var(--report-text-color); 
-          text-align: justify;
-          line-height: 2;
-          font-size: 1rem;
+        .no-references-placeholder p {
+          text-align: center !important;
+        }
+
+        .references-container p {
+          font-size: 0.95rem;
         }
 
         @media (max-width: 640px) {
+          .references-container p {
+            font-size: 10px !important;
+            line-height: 1.5 !important;
+            margin-bottom: 0.5rem !important;
+          }
           .prose h1 { font-size: 1.5rem; margin-top: 1.5rem; padding-bottom: 0.75rem; }
           .prose h2 { font-size: 1.25rem; margin-top: 1.25rem; padding-left: 0.75rem; }
           .prose h3 { font-size: 1.1rem; margin-top: 1rem; }

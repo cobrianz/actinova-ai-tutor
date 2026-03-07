@@ -40,7 +40,7 @@ CRITICAL RULES:
 1. Make the ${docType} CONCISE and punchy. It must NOT be too long. Aim for 3-4 short paragraphs maximum.
 2. Structure it professionally with placeholders for contact info if not provided.
 3. Highlight the most relevant skills from the resume for the specific role${company ? ` and emphasize value brought to ${company}` : ''}.
-Return the output in a JSON format: { "content": "..." }`;
+Return the output in a JSON format: { "content": "..." }. DO NOT use any emojis in your response.`;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",

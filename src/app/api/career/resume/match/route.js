@@ -26,7 +26,7 @@ Job Description:
 Resume Data:
 ${JSON.stringify(resume || {})}
 
-Return ONLY a valid JSON object in this exact format:
+Return ONLY a valid JSON object in this exact format, and DO NOT use any emojis in your response:
 {
   "matchScore": 72,
   "summary": "Brief 2-sentence summary of overall fit",
