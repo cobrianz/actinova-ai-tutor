@@ -161,7 +161,7 @@ const NetworkAI = () => {
                             <AnimatePresence mode="wait">
                                 {subMode === "outreach" ? (
                                     <motion.div key="outreach" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-                                        className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-5">
+                                        className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 p-4 sm:p-6 md:p-8 space-y-5">
                                         <div className="flex items-center gap-3 mb-1">
                                             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center"><Target size={16} className="text-blue-600" /></div>
                                             <h2 className="font-bold text-slate-800 dark:text-slate-200">Target Contact</h2>
@@ -185,7 +185,7 @@ const NetworkAI = () => {
                                     </motion.div>
                                 ) : (
                                     <motion.div key="mentorship" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-                                        className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-5">
+                                        className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 p-4 sm:p-6 md:p-8 space-y-5">
                                         <div className="flex items-center gap-3 mb-1">
                                             <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center"><Compass size={16} className="text-violet-600" /></div>
                                             <h2 className="font-bold text-slate-800 dark:text-slate-200">Your Career Compass</h2>
@@ -233,7 +233,7 @@ const NetworkAI = () => {
                         {subMode === "outreach" ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                 {(results.messages || []).map((msg, i) => (
-                                    <div key={i} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4 hover:border-violet-300 transition-all group">
+                                    <div key={i} className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 p-4 sm:p-5 md:p-6 flex flex-col gap-4 hover:border-violet-300 transition-all group">
                                         <div className="flex items-center justify-between">
                                             <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{msg.title || `Message ${i + 1}`}</span>
                                             <button onClick={() => copyToClipboard(msg.content, i)}
@@ -251,7 +251,7 @@ const NetworkAI = () => {
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                                 {(results.mentorArchetypes || []).map((type, i) => (
-                                    <div key={i} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 hover:border-violet-300 transition-all">
+                                    <div key={i} className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 p-4 sm:p-5 md:p-6 hover:border-violet-300 transition-all">
                                         <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-4">
                                             <UserCircle size={24} className="text-violet-600 dark:text-violet-400" />
                                         </div>
@@ -282,7 +282,7 @@ const NetworkAI = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {history.map(item => (
                             <div key={item._id} onClick={() => restoreEntry(item)}
-                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 hover:border-violet-300 hover:shadow-lg transition-all cursor-pointer group relative">
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-4 md:p-5 hover:border-violet-300 hover:shadow-lg transition-all cursor-pointer group relative">
                                 <button onClick={e => deleteEntry(item._id, e)} className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 opacity-100 transition-all"><X size={13} /></button>
                                 <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-3">
                                     {item.metadata?.subMode === "outreach" ? <MessageSquare size={16} className="text-violet-600" /> : <Compass size={16} className="text-violet-600" />}

@@ -129,15 +129,15 @@ const InterviewPrep = () => {
 
     /* ── Setup screen ── */
     if (!isStarted) return (
-        <div className="max-w-7xl mx-auto px-4 py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="w-full max-w-full md:max-w-7xl mx-auto px-2 sm:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white">AI Mock Interview</h1>
                 <p className="text-slate-500 mt-2">Practice with AI-powered feedback tailored to your desired role</p>
             </motion.div>
 
-            <div className="max-w-2xl mx-auto">
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <div className="p-8 space-y-6">
+            <div className="w-full max-w-full md:max-w-2xl mx-auto">
+                <div className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="p-4 sm:p-6 md:p-8 space-y-6">
                         <InputField label="What role are you applying for? *" value={role} onChange={e => { setRole(e.target.value); setError(null); }} placeholder="e.g. Senior Software Engineer, Product Manager" />
 
                         <div>
@@ -192,7 +192,7 @@ const InterviewPrep = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {persistentHistory.map(item => (
                                 <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 hover:border-violet-300 hover:shadow-lg transition-all cursor-pointer group relative">
+                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-4 md:p-5 hover:border-violet-300 hover:shadow-lg transition-all cursor-pointer group relative">
                                     <button onClick={e => deleteHistoryItem(item._id, e)} className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-rose-500 opacity-100 transition-all"><X size={14} /></button>
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center"><MessageSquare size={16} className="text-violet-600" /></div>
@@ -215,7 +215,7 @@ const InterviewPrep = () => {
 
     /* ── Interview session screen ── */
     return (
-        <div className="max-w-7xl mx-auto px-4 py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="w-full max-w-full md:max-w-7xl mx-auto px-2 sm:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main area */}
                 <div className="lg:col-span-2 space-y-5">
@@ -231,8 +231,8 @@ const InterviewPrep = () => {
                     </div>
 
                     {/* Question */}
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-violet-50 dark:bg-violet-900/10">
+                    <div className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-violet-50 dark:bg-violet-900/10">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-relaxed">{questions[currentQuestionIdx]}</h2>
                         </div>
                         <div className="p-6">
@@ -267,7 +267,7 @@ const InterviewPrep = () => {
                     <AnimatePresence>
                         {feedback && (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                <div className="bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden">
                                     <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Sparkles size={18} className="text-amber-500" />

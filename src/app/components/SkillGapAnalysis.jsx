@@ -150,8 +150,8 @@ const SkillGapAnalysis = () => {
             <div className="flex flex-col items-center gap-6">
                 {!result ? (
                     /* Input Form */
-                    <div className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                        <div className="p-10 space-y-6">
+                    <div className="w-full max-w-full md:max-w-4xl bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div className="p-4 sm:p-6 md:p-10 space-y-6">
                             <InputField
                                 label="Current Skills & Experience" required
                                 value={currentSkills} onChange={e => setCurrentSkills(e.target.value)} rows={5}
@@ -181,7 +181,7 @@ const SkillGapAnalysis = () => {
                     </div>
                 ) : (
                     /* Results */
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl space-y-6">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-full md:max-w-4xl space-y-6 pb-20">
                         {/* Score Card */}
                         <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-8 text-white">
                             <div className="flex items-center justify-between mb-6">
@@ -293,7 +293,7 @@ const SkillGapAnalysis = () => {
 
                 {/* History */}
                 {!result && persistentHistory.length > 0 && (
-                    <div className="w-full max-w-4xl mt-10">
+                    <div className="w-full max-w-full md:max-w-4xl mt-10 px-2 sm:px-0">
                         <div className="flex items-center gap-2 mb-6">
                             <Clock size={16} className="text-slate-400" />
                             <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Past Analyses</span>
@@ -302,7 +302,7 @@ const SkillGapAnalysis = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {persistentHistory.map(item => (
                                 <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all cursor-pointer group relative">
+                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-4 md:p-5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all cursor-pointer group relative">
                                     <button onClick={e => deleteHistoryItem(item._id, e)}
                                         className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 opacity-100 transition-all z-10">
                                         <X size={14} />
