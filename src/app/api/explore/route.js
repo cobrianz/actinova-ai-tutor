@@ -19,11 +19,15 @@ export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
 
-    // 1. Check for Authentication
+      // 1. Check for Authentication
     let userId = null;
     let userInterests = [];
     let userGoals = [];
     let recentCourses = [];
+    let userSkillLevel = "beginner";
+    let userLearningStyle = "";
+    let userAgeGroup = "";
+    let userTimeCommitment = "";
 
     const authHeader = request.headers.get("authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -35,7 +39,17 @@ export async function GET(request) {
           userId = new ObjectId(decoded.id);
           const user = await db.collection("users").findOne(
             { _id: userId },
-            { projection: { interests: 1, interestCategories: 1, goals: 1 } }
+            {
+              projection: {
+                interests: 1,
+                interestCategories: 1,
+                goals: 1,
+                skillLevel: 1,
+                learningStyle: 1,
+                ageGroup: 1,
+                timeCommitment: 1
+              }
+            }
           );
 
           if (user) {
@@ -43,6 +57,10 @@ export async function GET(request) {
             const ints = user.interests || [];
             userInterests = [...new Set([...cats, ...ints])].map(i => i.toLowerCase());
             userGoals = user.goals || [];
+            userSkillLevel = user.skillLevel || "beginner";
+            userLearningStyle = user.learningStyle || "";
+            userAgeGroup = user.ageGroup || "";
+            userTimeCommitment = user.timeCommitment || "";
 
             // Fetch recently generated courses for better context
             const courses = await db.collection("library")
@@ -89,11 +107,15 @@ export async function GET(request) {
       const systemPrompt = `You are an educational consultant. Generate 6 trending and highly relevant course recommendations for a learner.
         
 USER CONTEXT:
-- Interests: ${userInterests.join(", ")}
-- Goals: ${userGoals.join(", ")}
-- Recently Studied: ${recentCourses.join(", ")}
+- Interests: ${userInterests.join(", ") || "General"}
+- Goals: ${userGoals.join(", ") || "Improve skills"}
+- Skill Level: ${userSkillLevel}
+- Learning Style: ${userLearningStyle || "Any"}
+- Age Group: ${userAgeGroup || "Adult"}
+- Time Commitment: ${userTimeCommitment || "Flexible"}
+- Recently Studied: ${recentCourses.join(", ") || "None"}
 
-Provide courses that are currently trending in 2025 and match this user profile.
+Provide courses that are currently trending in 2025 and match this user profile exactly. Prioritize courses that align with the user's skill level and learning style.
 
 JSON Structure:
 {

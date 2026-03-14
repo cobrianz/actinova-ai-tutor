@@ -140,11 +140,16 @@ export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
 
-    // 1. Check for Authentication
+        // 1. Check for Authentication
     let userId = null;
     let userInterests = [];
     let userGoals = [];
     let recentCourses = [];
+    let userSkillLevel = "intermediate";
+    let userLearningStyle = "";
+    let userAgeGroup = "";
+    let userEducationLevel = "";
+    let userTimeCommitment = "";
 
     const authHeader = request.headers.get("authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -156,7 +161,18 @@ export async function GET(request) {
           userId = new ObjectId(decoded.id);
           const user = await db.collection("users").findOne(
             { _id: userId },
-            { projection: { interests: 1, interestCategories: 1, goals: 1 } }
+            {
+              projection: {
+                interests: 1,
+                interestCategories: 1,
+                goals: 1,
+                skillLevel: 1,
+                learningStyle: 1,
+                ageGroup: 1,
+                educationLevel: 1,
+                timeCommitment: 1
+              }
+            }
           );
 
           if (user) {
@@ -164,6 +180,11 @@ export async function GET(request) {
             const ints = user.interests || [];
             userInterests = [...new Set([...cats, ...ints])].map(i => i.toLowerCase());
             userGoals = user.goals || [];
+            userSkillLevel = user.skillLevel || "intermediate";
+            userLearningStyle = user.learningStyle || "";
+            userAgeGroup = user.ageGroup || "";
+            userEducationLevel = user.educationLevel || "";
+            userTimeCommitment = user.timeCommitment || "";
 
             const courses = await db.collection("library")
               .find({ userId, format: "course" })
@@ -200,14 +221,19 @@ export async function GET(request) {
     let finalResult = null;
 
     if (userId && (userInterests.length > 0 || recentCourses.length > 0)) {
-      const systemPrompt = `You are a high-end educational curator. Generate 3-5 premium, "Masterclass" style course recommendations for a learner.
+            const systemPrompt = `You are a high-end educational curator. Generate 3-5 premium, "Masterclass" style course recommendations for a learner.
         
 USER CONTEXT:
-- Interests: ${userInterests.join(", ")}
-- Goals: ${userGoals.join(", ")}
-- Previous Courses: ${recentCourses.join(", ")}
+- Interests: ${userInterests.join(", ") || "General learning"}
+- Goals: ${userGoals.join(", ") || "Career advancement"}
+- Skill Level: ${userSkillLevel}
+- Learning Style: ${userLearningStyle || "Any"}
+- Age Group: ${userAgeGroup || "Adult"}
+- Education Level: ${userEducationLevel || "Any"}
+- Time Commitment: ${userTimeCommitment || "Flexible"}
+- Previous Courses: ${recentCourses.join(", ") || "None"}
 
-Think of these as "Elite" or "Pro" level courses that provide deep industry value.
+Think of these as "Elite" or "Pro" level courses that provide deep industry value. Match the user's skill level and learning style.
 
 JSON Structure:
 {

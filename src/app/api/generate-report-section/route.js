@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
+import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -126,12 +127,15 @@ Return the refined JSON in the same structure:
 
         const refinement = await openai.chat.completions.create({
             model: "gpt-4o",
-            temperature: 0.3, // Lower temperature for refinement
+            temperature: 0.3,
             response_format: { type: "json_object" },
             messages: [{ role: "system", content: refinementPrompt }],
         });
 
         const refinedData = JSON.parse(refinement.choices[0].message.content);
+
+        // Track usage AFTER successful generation (per-section, shared reportGenerations limit)
+        await trackAPIUsage(userId, "generate-report-section");
 
         return NextResponse.json({
             success: true,
@@ -147,8 +151,6 @@ Return the refined JSON in the same structure:
 export const POST = combineMiddleware(
     withErrorHandling,
     withAuth,
-    (handler) => {
-        const { withAPIRateLimit } = require("@/lib/planMiddleware");
-        return withAPIRateLimit(handler, "generate-report-section");
-    }
+    (handler) => withAPIRateLimit(handler, "generate-report-section")
 )(handlePost);
+

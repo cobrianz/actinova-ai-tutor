@@ -56,11 +56,11 @@ export default function PremiumCourses() {
     return { daysLeft, progress };
   };
 
-  // Check if user is Pro
+  // Check if user is Pro - use subscription.tier (set by billing) and verify active status
   const isPro =
     user &&
     ((user.subscription &&
-      (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
+      (user.subscription.tier === "pro" || user.subscription.tier === "enterprise") &&
       user.subscription.status === "active") ||
       user.isPremium);
 

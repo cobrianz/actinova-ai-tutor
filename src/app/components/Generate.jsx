@@ -75,12 +75,11 @@ export default function Generate({ setActiveContent }) {
   }, [showLoader]);
 
   // Strict check for Premium access (Pro or Enterprise)
-  // Ensure we check status is active.
+  // Check tier (set by billing) and ensure status is active.
   const isPremium =
-    !!(
-      (user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise") &&
-      user?.subscription?.status === "active"
-    ) || !!user?.isPremium;
+    !!((
+      user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise"
+    ) && user?.subscription?.status === "active") || !!user?.isPremium;
 
   const atLimit = !!(
     user?.usage?.isAtLimit ||
@@ -233,6 +232,15 @@ export default function Generate({ setActiveContent }) {
 
         if (!response.ok) {
           const errorData = await response.json();
+          if (response.status === 429) {
+            toast.error(
+              `Monthly report limit reached (${errorData.used || 0}/${errorData.limit || 1}). Upgrade to Pro for more reports.`,
+              { duration: 6000 }
+            );
+            setShowLoader(false);
+            setIsSubmitting(false);
+            return;
+          }
           throw new Error(errorData.error || "Failed to generate report outline");
         }
 

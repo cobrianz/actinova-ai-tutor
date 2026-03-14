@@ -849,10 +849,10 @@ export default function Explore() {
   const [limitModalData, setLimitModalData] = useState(null);
   const coursesPerPage = 12;
 
-  // Check if user is premium using consistent logic
+  // Check if user is premium using consistent logic - use tier (set by billing)
   const userIsPremium =
     !!(
-      user?.subscription?.plan === "pro" &&
+      (user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise") &&
       user?.subscription?.status === "active"
     ) || !!user?.isPremium;
 

@@ -367,8 +367,12 @@ export function AuthProvider({ children }) {
 
   const clearError = () => setError(null);
 
-  const isPro = user?.subscription?.plan === "pro" || user?.subscription?.plan === "enterprise";
-  const isEnterprise = user?.subscription?.plan === "enterprise";
+  const isPro =
+    !!(user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise") &&
+    user?.subscription?.status === "active";
+  const isEnterprise =
+    user?.subscription?.tier === "enterprise" &&
+    user?.subscription?.status === "active";
 
   return (
     <AuthContext.Provider
