@@ -26,6 +26,7 @@ const renderTextWithMarkdown = (pdf, text, xPos, y, contentWidth, margin, checkN
     pdf.setFont("times", "normal");
     pdf.setTextColor(...COLORS.text);
 
+    text = typeof cleanLatex === "function" ? cleanLatex(text) : text;
     const lines = pdf.splitTextToSize(text, contentWidth - (xPos - margin));
 
     lines.forEach((line) => {
@@ -85,6 +86,69 @@ const renderTextWithMarkdown = (pdf, text, xPos, y, contentWidth, margin, checkN
  */
 const stripMarkdown = (text) => {
     return text.replace(/(\*\*\*|\*\*|\*|___|__|__|`)/g, "");
+};
+
+/**
+ * Parses and cleans LaTeX math expressions to readable plaintext symbols
+ */
+const cleanLatex = (text) => {
+    if (!text || typeof text !== "string") return text;
+    return text
+        // Math wrappers
+        .replace(/\\\[/g, "")
+        .replace(/\\\]/g, "")
+        .replace(/\$\$/g, "")
+        .replace(/\\\(/g, "")
+        .replace(/\\\)/g, "")
+        // Handle $ inline math (match pairs)
+        .replace(/\$([^\$\n]+)\$/g, "$1")
+        // Subscripts and superscripts with brackets (e.g. x_{i} -> x_i)
+        .replace(/_\{([^{}]+)\}/g, "_$1")
+        .replace(/\^\{([^{}]+)\}/g, "^$1")
+        // Formatting
+        .replace(/\\text\s*\{([^{}]+)\}/g, "$1")
+        .replace(/\\mathbf\s*\{([^{}]+)\}/g, "$1")
+        .replace(/\\mathit\s*\{([^{}]+)\}/g, "$1")
+        .replace(/\\mathrm\s*\{([^{}]+)\}/g, "$1")
+        // Sums and Integrals
+        .replace(/\\sum_\{([^{}]+)\}\^\{([^{}]+)\}/g, "Σ (from $1 to $2)")
+        .replace(/\\int_\{([^{}]+)\}\^\{([^{}]+)\}/g, "∫ (from $1 to $2)")
+        .replace(/\\sum/g, "Σ")
+        .replace(/\\int/g, "∫")
+        // Common fractions and roots
+        .replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "($1)/($2)")
+        .replace(/\\sqrt\s*\{([^{}]+)\}/g, "√($1)")
+        // Operators & Relations
+        .replace(/\\times\b/g, "×")
+        .replace(/\\cdot\b/g, "·")
+        .replace(/\\div\b/g, "÷")
+        .replace(/\\pm\b/g, "±")
+        .replace(/\\approx\b/g, "≈")
+        .replace(/\\neq\b/g, "≠")
+        .replace(/\\leq\b/g, "≤")
+        .replace(/\\geq\b/g, "≥")
+        // Arrows
+        .replace(/\\rightarrow\b/g, "→")
+        .replace(/\\Rightarrow\b/g, "⇒")
+        // Greek letters
+        .replace(/\\pi\b/g, "π")
+        .replace(/\\alpha\b/g, "α")
+        .replace(/\\beta\b/g, "β")
+        .replace(/\\gamma\b/g, "γ")
+        .replace(/\\delta\b/g, "δ")
+        .replace(/\\theta\b/g, "θ")
+        .replace(/\\lambda\b/g, "λ")
+        .replace(/\\mu\b/g, "μ")
+        .replace(/\\sigma\b/g, "σ")
+        .replace(/\\omega\b/g, "ω")
+        .replace(/\\Delta\b/g, "Δ")
+        .replace(/\\Sigma\b/g, "Σ")
+        .replace(/\\infty\b/g, "∞")
+        // Strip out generic commands (like \left \right)
+        .replace(/\\[a-zA-Z]+\b/g, "")
+        // Escaped delimiters
+        .replace(/\\{/g, "{")
+        .replace(/\\}/g, "}");
 };
 
 export const downloadCourseAsPDF = async (data, mode = "course") => {
@@ -245,6 +309,8 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
                 renderCodeLine(line, margin + 4);
                 return;
             }
+
+            trimmedLine = typeof cleanLatex === "function" ? cleanLatex(trimmedLine) : trimmedLine;
 
             // Handle horizontal rule (bypass rendering but keep spacing if needed)
             if (trimmedLine.match(/^\s*[-*_]{3,}\s*$/)) {
