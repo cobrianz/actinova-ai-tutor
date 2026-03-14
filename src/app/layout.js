@@ -23,8 +23,39 @@ const ebGaramond = EB_Garamond({
 });
 
 export const metadata = {
-  title: "Actirova AI Tutor - Personalized Learning Platform",
-  description: "Master any skill with AI-powered personalized learning paths",
+  metadataBase: new URL("https://actirova.com"),
+  title: {
+    default: "Actirova AI Tutor - Personalized Learning Platform",
+    template: "%s | Actirova AI",
+  },
+  description: "Master any skill with AI-powered personalized learning paths, instant feedback, and dynamic courses. Your smartest AI tutor.",
+  keywords: ["AI tutor", "personalized learning", "online courses", "AI education", "skill mastery", "flashcards", "study tools"],
+  authors: [{ name: "Actirova" }],
+  creator: "Actirova",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://actirova.com",
+    title: "Actirova AI Tutor - Personalized Learning Platform",
+    description: "Master any skill with AI-powered personalized learning paths.",
+    siteName: "Actirova AI",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Actirova AI Tutor",
+    description: "Master any skill with our cutting-edge AI personalized learning platform.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: "/favicon.ico",
   },
