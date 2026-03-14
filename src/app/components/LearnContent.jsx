@@ -719,25 +719,25 @@ export default function LearnContent() {
     // Handle headers
     html = html.replace(
       /^# (.*$)/gm,
-      '<h1 class="text-3xl font-bold font-serif text-foreground mb-10 mt-10 tracking-tight underline decoration-primary/30 underline-offset-8">$1</h1>'
+      '<h1 class="text-3xl lg:text-5xl font-bold font-serif text-foreground mb-10 mt-10 tracking-tight underline decoration-primary/30 underline-offset-8">$1</h1>'
     );
     html = html.replace(
       /^## (.*$)/gm,
-      '<h2 class="text-2xl font-bold font-serif text-foreground mb-4 mt-6">$1</h2>'
+      '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-4 mt-8">$1</h2>'
     );
     html = html.replace(
       /^### (.*$)/gm,
-      '<h3 class="text-xl font-bold font-serif text-foreground/90 mb-3 mt-5">$1</h3>'
+      '<h3 class="text-xl lg:text-3xl font-bold font-serif text-foreground/90 mb-3 mt-6">$1</h3>'
     );
     html = html.replace(
       /^#### (.*$)/gm,
-      '<h4 class="text-lg font-bold font-serif text-foreground/90 mb-2 mt-4">$1</h4>'
+      '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-4">$1</h4>'
     );
 
     // Handle blockquotes
     html = html.replace(
       /^> (.*$)/gm,
-      '<blockquote class="border-l-4 border-primary pl-4 py-2 my-6 bg-secondary font-serif italic rounded-r text-foreground/80">$1</blockquote>'
+      '<blockquote class="border-l-4 border-primary pl-4 py-2 my-6 bg-secondary font-serif italic rounded-r text-foreground/80 lg:text-xl">$1</blockquote>'
     );
 
     // Handle bold - must come before italics
@@ -795,14 +795,14 @@ export default function LearnContent() {
       if (olMatch) {
         if (listStack[listStack.length - 1] !== 'ol') {
           closeList();
-          processedHtml.push('<ol class="list-decimal list-outside mb-6 space-y-4 font-serif text-[1.05rem] text-foreground/80 ml-10">');
+          processedHtml.push('<ol class="list-decimal list-outside mb-6 space-y-4 font-serif text-[1.05rem] lg:text-xl text-foreground/80 ml-10">');
           listStack.push('ol');
         }
         processedHtml.push(`<li class="pl-3">${olMatch[2]}</li>`);
       } else if (ulMatch) {
         if (listStack[listStack.length - 1] !== 'ul') {
           closeList();
-          processedHtml.push('<ul class="list-disc list-outside mb-6 space-y-3 font-serif text-[1.05rem] text-foreground/80 ml-10">');
+          processedHtml.push('<ul class="list-disc list-outside mb-6 space-y-3 font-serif text-[1.05rem] lg:text-xl text-foreground/80 ml-10">');
           listStack.push('ul');
         }
         processedHtml.push(`<li class="pl-3">${ulMatch[2]}</li>`);
@@ -810,13 +810,13 @@ export default function LearnContent() {
         // Not a list item prefix
         if (listStack.length > 0) {
           // Continuation of a list item
-          processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] leading-relaxed">${line}</div>`);
+          processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] lg:text-lg leading-relaxed">${line}</div>`);
         } else if (line.startsWith('<')) {
           // Already HTML (header, blockquote, etc.)
           processedHtml.push(line);
         } else {
           // Regular paragraph
-          processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed font-serif text-[1.05rem]">${line}</p>`);
+          processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed font-serif text-[1.05rem] lg:text-xl lg:leading-loose">${line}</p>`);
         }
       }
     }
@@ -1564,7 +1564,7 @@ export default function LearnContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-background font-serif overflow-hidden">
       {/* Permanent Navbar Header */}
       <div className="bg-card backdrop-blur-md border-b border-border p-3 sm:p-4 z-50 shadow-sm relative">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
