@@ -296,7 +296,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         let isInCodeBlock = false;
 
         lines.forEach(line => {
-            const trimmedLine = line.trim();
+            let trimmedLine = line.trim();
 
             // Handle code block toggle
             if (trimmedLine.startsWith("```")) {
