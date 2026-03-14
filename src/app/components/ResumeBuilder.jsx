@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -1250,46 +1250,31 @@ const ResumeBuilder = () => {
         }
 
         try {
-            // Setup for export
             element.setAttribute('data-exporting', 'true');
             const originalOpacity = element.style.opacity;
             const originalZIndex = element.style.zIndex;
 
-            // If it's a letter, we need to make the hidden export div visible temporarily
             if (editorTab !== 'editor') {
                 element.style.opacity = '1';
                 element.style.zIndex = '50';
             }
 
-            // Wait a tiny bit for styles to apply if needed, though mostly synchronous
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 150));
 
-            // Strip unsupported oklch/color-mix color functions from all elements in the clone
+            // Strip unsupported CSS color functions (oklch, color-mix) for canvas rendering
             const stripUnsupportedColors = (clonedDoc) => {
                 const FALLBACK_BG = '#ffffff';
                 const FALLBACK_COLOR = '#1a1a2e';
                 const UNSUPPORTED = /oklch\s*\(|color-mix\s*\(|lab\s*\(|lch\s*\(/i;
-
-                // Use the cloned document's window context for computed styles
                 const win = clonedDoc.defaultView || window;
-                const allElements = clonedDoc.querySelectorAll('*');
-
-                allElements.forEach(el => {
+                clonedDoc.querySelectorAll('*').forEach(el => {
                     const computed = win.getComputedStyle(el);
-
-                    // Check background-color
-                    if (UNSUPPORTED.test(computed.backgroundColor)) {
+                    if (UNSUPPORTED.test(computed.backgroundColor))
                         el.style.setProperty('background-color', el === clonedDoc.body ? FALLBACK_BG : 'transparent', 'important');
-                    }
-                    // Check color
-                    if (UNSUPPORTED.test(computed.color)) {
+                    if (UNSUPPORTED.test(computed.color))
                         el.style.setProperty('color', FALLBACK_COLOR, 'important');
-                    }
-                    // Check border-color
-                    if (UNSUPPORTED.test(computed.borderColor)) {
+                    if (UNSUPPORTED.test(computed.borderColor))
                         el.style.setProperty('border-color', '#e2e8f0', 'important');
-                    }
-                    // Sweep inline style attribute
                     if (el.hasAttribute('style')) {
                         let style = el.getAttribute('style');
                         style = style.replace(/oklch\([^)]*\)/gi, FALLBACK_COLOR);
@@ -1298,26 +1283,57 @@ const ResumeBuilder = () => {
                 });
             };
 
+            // Capture at 3× for crisp print quality
             const canvas = await html2canvas(element, {
-                scale: 2,
+                scale: 3,
                 useCORS: true,
                 logging: false,
                 backgroundColor: "#ffffff",
-                onclone: (_clonedDoc, clonedElement) => {
+                onclone: (_clonedDoc) => {
                     stripUnsupportedColors(_clonedDoc);
+                    // Hide interactive UI overlays (add buttons, tooltips) from the export
+                    _clonedDoc.querySelectorAll('[data-exporting]').forEach(el => el.removeAttribute('data-exporting'));
+                    _clonedDoc.querySelectorAll('.group\\/sec').forEach(el => {
+                        el.querySelectorAll('button').forEach(b => b.style.setProperty('display', 'none', 'important'));
+                    });
                 }
             });
 
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            const pageWidthMM = pdf.internal.pageSize.getWidth();
+            const pageHeightMM = pdf.internal.pageSize.getHeight();
+
+            // Calculate how many pixels one A4 page maps to in the canvas
+            const imgWidthPx = canvas.width;
+            const imgHeightPx = canvas.height;
+            const imgWidthMM = pageWidthMM;
+            const imgHeightMM = (imgHeightPx / imgWidthPx) * pageWidthMM;
+
+            const pageHeightPx = (pageHeightMM / imgWidthMM) * imgWidthPx;
+            const totalPages = Math.ceil(imgHeightPx / pageHeightPx);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page > 0) pdf.addPage();
+
+                // Slice the source canvas for this page
+                const srcY = page * pageHeightPx;
+                const sliceHeight = Math.min(pageHeightPx, imgHeightPx - srcY);
+
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = imgWidthPx;
+                pageCanvas.height = sliceHeight;
+                const ctx = pageCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, srcY, imgWidthPx, sliceHeight, 0, 0, imgWidthPx, sliceHeight);
+
+                const pageImgData = pageCanvas.toDataURL('image/png');
+                const pageImgHeightMM = (sliceHeight / imgWidthPx) * pageWidthMM;
+                pdf.addImage(pageImgData, 'PNG', 0, 0, pageWidthMM, pageImgHeightMM);
+            }
+
             pdf.save(`${fileName}.pdf`);
 
-            // Cleanup
             element.removeAttribute('data-exporting');
             if (editorTab !== 'editor') {
                 element.style.opacity = originalOpacity;
