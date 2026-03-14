@@ -34,7 +34,7 @@ async function handleGet(request) {
 
   if (isRefreshTime) {
     try {
-      const { refreshUserContent } = await import("@/app/lib/refreshContent");
+      const { refreshUserContent } = await import("@/lib/refreshContent");
       await refreshUserContent(user._id.toString());
       await usersCol.updateOne(
         { _id: user._id },

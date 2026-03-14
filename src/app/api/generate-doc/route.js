@@ -89,8 +89,16 @@ async function handlePost(request) {
             allReferences = data.references.map(ref => typeof ref === 'string' ? ref : ref.text || "");
         }
 
+        // Normalize sections for different template variants (e.g., casing of "Heading")
+        const normalizedSections = (data.sections || []).map(sec => ({
+            ...sec,
+            Heading: sec.heading || sec.title,
+            heading: sec.heading || sec.title,
+            paragraphs: sec.paragraphs || (sec.content ? [sec.content] : [])
+        }));
+
         templateData = {
-            title: data.title || "Academic Paper",
+            title: data.title || data.topic || "Academic Paper",
             author: data.author || "Research Author",
             first_name: firstName,
             last_name: lastName,
@@ -102,27 +110,27 @@ async function handlePost(request) {
             student_name: studentName,
             date: data.date || "",
             abstract: data.abstract || "",
-            sections: data.sections || [],
+            sections: normalizedSections,
             // Fallbacks for Chicago templating
             paragraphs: allParagraphs,
             bibliography: allReferences,
-            references: data.references || [],
+            references: allReferences,
             page_number: "1",
         };
 
         // Prepare data for template
-        doc.setData(templateData);
-
-        doc.render();
+        doc.render(templateData);
 
         const buffer = doc.getZip().generate({
             type: "nodebuffer",
         });
 
+        const safeTitle = (templateData.title).replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "_").substring(0, 100);
+
         return new NextResponse(buffer, {
             headers: {
                 "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "Content-Disposition": `attachment; filename="${(data.title || "actinova-report").replace(/\s+/g, "_")}.docx"`,
+                "Content-Disposition": `attachment; filename="${safeTitle}.docx"`,
             },
         });
 

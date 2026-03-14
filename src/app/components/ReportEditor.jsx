@@ -57,6 +57,7 @@ export default function ReportEditor({ reportId }) {
     const [isRewriting, setIsRewriting] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
+    const [citationStyle, setCitationStyle] = useState("APA 7");
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const pendingContentRef = useRef(null); // holds fullContent until editor mounts
     const pendingTitlePageContentRef = useRef(null); // holds titlePageContent until editor mounts
@@ -84,6 +85,7 @@ export default function ReportEditor({ reportId }) {
                 if (r.courseName) setCourseName(r.courseName);
                 if (r.studentName) setStudentName(r.studentName);
                 if (r.submissionDate) setSubmissionDate(r.submissionDate);
+                if (r.citationStyle) setCitationStyle(r.citationStyle);
                 // Restore section length preferences
                 if (r.sectionLengths) setSectionLengths(r.sectionLengths);
                 // Store content to be applied after the editor mounts
@@ -247,6 +249,7 @@ export default function ReportEditor({ reportId }) {
                 courseName,
                 studentName,
                 submissionDate,
+                citationStyle,
             });
 
             if (res.ok) {
@@ -257,7 +260,7 @@ export default function ReportEditor({ reportId }) {
         } finally {
             setSaving(false);
         }
-    }, [reportId, report, allReferences, authorName, institution, courseName, studentName, submissionDate]);
+    }, [reportId, report, allReferences, authorName, institution, courseName, studentName, submissionDate, citationStyle]);
 
     const handleEditorInput = useCallback(() => {
         if (!loadedRef.current) return; // skip saves during initial content restore
@@ -441,7 +444,7 @@ export default function ReportEditor({ reportId }) {
                 handleEditorInput();
             }
         }
-    }, [studentName, authorName, courseName, institution, submissionDate, report?.title, report?.citationStyle]);
+    }, [studentName, authorName, courseName, institution, submissionDate, report?.title, citationStyle]);
 
     // Keyboard shortcuts handler
     useEffect(() => {
@@ -679,7 +682,7 @@ export default function ReportEditor({ reportId }) {
                 course: courseName,
                 name: studentName,
                 date: submissionDate,
-                citationStyle: report.citationStyle,
+                citationStyle: citationStyle,
                 abstract: report.abstract || "",
                 titlePageContent: titlePageRef.current ? titlePageRef.current.innerHTML : "",
                 // Parse the current HTML into multiple sections and paragraphs for the template
@@ -703,7 +706,8 @@ export default function ReportEditor({ reportId }) {
             if (!res.ok) throw new Error("Failed to generate DOCX");
 
             const blob = await res.blob();
-            saveAs(blob, `${report.title || "Report"}.docx`);
+            const fileName = (report.title || "Report").replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "_").substring(0, 100);
+            saveAs(blob, `${fileName}.docx`);
             toast.success("DOCX Exported (Template Layout)");
         } catch (error) {
             console.error("DOCX Error:", error);
@@ -877,6 +881,21 @@ export default function ReportEditor({ reportId }) {
                                 placeholder="Submission date"
                                 className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Citation Style / Template</label>
+                            <select
+                                value={citationStyle}
+                                onChange={(e) => setCitationStyle(e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                            >
+                                <option value="APA 7">APA 7th Edition</option>
+                                <option value="MLA 9">MLA 9th Edition</option>
+                                <option value="Chicago">Chicago Style</option>
+                                <option value="Academic">Standard Academic</option>
+                            </select>
+                            <p className="mt-1 text-[10px] text-slate-400">Selects the .docx template used for export</p>
                         </div>
                     </div>
                 </div>

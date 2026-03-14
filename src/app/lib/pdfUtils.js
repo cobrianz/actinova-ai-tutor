@@ -413,7 +413,8 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
         addPageDecoration(i, totalPages);
     }
 
-    const fileName = `${data.title?.replace(/\s+/g, "_").toLowerCase() || "actirova_study"}.pdf`;
+    const title = data.title || data.topic || "Actirova_Study";
+    const fileName = `${title.replace(/\s+/g, "_").toLowerCase()}.pdf`;
     pdf.save(fileName);
 };
 

@@ -49,7 +49,8 @@ async function handlePatch(request, { params }) {
         const {
             fullContent, titlePageContent, sections, title, abstract, references,
             // metadata fields
-            authorName, institution, courseName, studentName, submissionDate, outline, sectionLengths
+            authorName, institution, courseName, studentName, submissionDate, outline, sectionLengths,
+            citationStyle
         } = body;
 
         const { db } = await connectToDatabase();
@@ -68,6 +69,7 @@ async function handlePatch(request, { params }) {
         if (submissionDate !== undefined) updateData.submissionDate = submissionDate;
         if (outline !== undefined) updateData.outline = outline;
         if (sectionLengths !== undefined) updateData.sectionLengths = sectionLengths;
+        if (citationStyle !== undefined) updateData.citationStyle = citationStyle;
 
         const result = await db.collection("reports").updateOne(
             { _id: new ObjectId(id), userId: new ObjectId(user._id) },
