@@ -1289,12 +1289,29 @@ const ResumeBuilder = () => {
                 useCORS: true,
                 logging: false,
                 backgroundColor: "#ffffff",
-                onclone: (_clonedDoc) => {
-                    stripUnsupportedColors(_clonedDoc);
-                    // Hide interactive UI overlays (add buttons, tooltips) from the export
-                    _clonedDoc.querySelectorAll('[data-exporting]').forEach(el => el.removeAttribute('data-exporting'));
-                    _clonedDoc.querySelectorAll('.group\\/sec').forEach(el => {
-                        el.querySelectorAll('button').forEach(b => b.style.setProperty('display', 'none', 'important'));
+                onclone: (_clonedDoc, clonedElement) => {
+                    // The only reliable fix for oklch: read computed styles from the
+                    // ORIGINAL elements (browsers resolve oklch → rgb in getComputedStyle)
+                    // and apply those resolved rgb values to the clone as inline styles.
+                    const originalAll = [element, ...element.querySelectorAll('*')];
+                    const clonedAll = [clonedElement, ...clonedElement.querySelectorAll('*')];
+
+                    originalAll.forEach((origEl, idx) => {
+                        const cloneEl = clonedAll[idx];
+                        if (!cloneEl) return;
+                        const cs = window.getComputedStyle(origEl);
+                        cloneEl.style.setProperty('color', cs.color, 'important');
+                        cloneEl.style.setProperty('background-color', cs.backgroundColor, 'important');
+                        cloneEl.style.setProperty('border-color', cs.borderColor, 'important');
+                    });
+
+                    // Hide interactive edit buttons from the PDF output
+                    clonedElement.querySelectorAll('[data-exporting]').forEach(el => el.removeAttribute('data-exporting'));
+                    clonedElement.querySelectorAll('button').forEach(b => {
+                        // Keep visible structural buttons but hide floating action ones
+                        if (b.closest('.group\\/sec') || b.title === 'Refine this section with AI' || b.title === 'Remove section') {
+                            b.style.setProperty('display', 'none', 'important');
+                        }
                     });
                 }
             });
