@@ -118,22 +118,21 @@ export async function GET(request) {
         completed: false,
       };
       items.push({
-        items.push({
-          id: `course_${c._id}`,
-          type: "course",
-          title: c.title || c.topic || c.originalTopic || (c.courseData?.title) || "Untitled Course",
-          topic: c.originalTopic || c.topic,
-          difficulty: c.difficulty || c.level,
-          progress: courseProgress.progress,
-          totalLessons: c.totalLessons || (c.courseData?.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)) || 0,
-          modules: c.totalModules || (c.courseData?.modules?.length) || 0,
-          isPremium: c.isPremium || false,
-          pinned: (library?.pinned || []).includes(`course_${c._id}`),
-          createdAt: c.createdAt,
-          lastAccessed: c.lastAccessed,
-          thumbnail: null,
-        });
+        id: `course_${c._id}`,
+        type: "course",
+        title: c.title || c.topic || c.originalTopic || (c.courseData?.title) || "Untitled Course",
+        topic: c.originalTopic || c.topic,
+        difficulty: c.difficulty || c.level,
+        progress: courseProgress.progress,
+        totalLessons: c.totalLessons || (c.courseData?.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)) || 0,
+        modules: c.totalModules || (c.courseData?.modules?.length) || 0,
+        isPremium: c.isPremium || false,
+        pinned: (library?.pinned || []).includes(`course_${c._id}`),
+        createdAt: c.createdAt,
+        lastAccessed: c.lastAccessed,
+        thumbnail: null,
       });
+    });
 
       cardSets.forEach((cs) => {
         items.push({
