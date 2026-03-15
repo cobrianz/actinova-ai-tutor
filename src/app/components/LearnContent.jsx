@@ -1142,9 +1142,10 @@ export default function LearnContent() {
             if (courseData.modules) {
               courseData.modules.forEach((module) => {
                 if (module.lessons) {
-                  module.lessons.forEach((lesson) => {
-                    if (lesson.completed && lesson.id) {
-                      completedLessonsFromDB.add(lesson.id);
+                  module.lessons.forEach((lesson, lessonIndex) => {
+                    if (lesson.completed) {
+                      const lessonId = lesson.id || `${module.id}-${lessonIndex}`;
+                      completedLessonsFromDB.add(lessonId);
                     }
                   });
                 }
