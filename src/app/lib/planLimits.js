@@ -84,7 +84,7 @@ function getFreeLimits() {
         aiResponses: 3, // per day (ai-tutor-chat)
         generateCourseLimit: 5, // per month
         quizGenerations: 2, // per month
-        reportGenerations: 3, // per month
+        reportGenerations: 0, // Locked for free users as requested
         careerLimit: 2, // per month
     };
 }

@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   ScrollText,
   HelpCircle,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
@@ -34,7 +35,7 @@ export default function Generate({ setActiveContent }) {
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { user, loading, refreshToken } = useAuth();
+  const { user, loading, refreshToken, isPro } = useAuth();
 
   // Ensure overlay loader is cleared when component unmounts
   React.useEffect(() => {
@@ -76,10 +77,7 @@ export default function Generate({ setActiveContent }) {
 
   // Strict check for Premium access (Pro or Enterprise)
   // Check tier (set by billing) and ensure status is active.
-  const isPremium =
-    !!((
-      user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise"
-    ) && user?.subscription?.status === "active") || !!user?.isPremium;
+  const isPremium = isPro || !!user?.isPremium;
 
   const atLimit = !!(
     user?.usage?.isAtLimit ||
@@ -218,6 +216,11 @@ export default function Generate({ setActiveContent }) {
 
     // Handle report generation directly
     if (format === "report") {
+      if (!isPremium) {
+        toast.error("Report generation is a Pro feature. Please upgrade to continue.");
+        router.push("/pricing");
+        return;
+      }
       setShowLoader(true);
       setIsSubmitting(true);
 
@@ -418,16 +421,29 @@ export default function Generate({ setActiveContent }) {
                 </span>
               </button>
               <button
-                onClick={() => setFormat("report")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "report"
+                onClick={() => {
+                  if (!isPremium) {
+                    toast.error("Pro subscription required for Reports & Essays.");
+                    router.push("/pricing");
+                    return;
+                  }
+                  setFormat("report");
+                }}
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center relative ${format === "report"
                   ? "border-primary bg-accent"
                   : "border-border hover:border-foreground/30"
-                  }`}
+                  } ${!isPremium ? "opacity-80" : ""}`}
               >
+                {!isPremium && (
+                  <div className="absolute top-2 right-2">
+                    <Lock className="w-3 h-3 text-orange-500" />
+                  </div>
+                )}
                 <ScrollText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
                 <span className="font-medium text-xs sm:text-sm">
                   Report & Essay
                 </span>
+                {!isPremium && <span className="text-[10px] text-orange-600 font-bold uppercase mt-1">Pro</span>}
               </button>
             </div>
           </div>

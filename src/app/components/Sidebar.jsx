@@ -35,15 +35,8 @@ export default function Sidebar({
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
 
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, logout, loading: authLoading, isPro, isEnterprise } = useAuth();
 
-  const isPro =
-    !authLoading &&
-    user &&
-    ((user.subscription &&
-      (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
-      user.subscription.status === "active") ||
-      user.isPremium);
 
   const navigation = [
     { name: "New", id: "generate", icon: Plus },
@@ -269,7 +262,7 @@ export default function Sidebar({
                       </span>
                     </div>
                     <span className="text-xs text-blue-700 dark:text-blue-300">
-                      {user?.subscription?.plan === 'enterprise' ? "Enterprise" : (usage.isPremium ? "Pro" : "Free")}
+                      {isEnterprise ? "Enterprise" : (isPro ? "Pro" : "Free")}
                     </span>
                   </div>
                   <div className="space-y-2">

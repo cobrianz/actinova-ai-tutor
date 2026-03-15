@@ -84,12 +84,21 @@ async function updateSubscriptionPeriod(user, data) {
     expiresAt.setMonth(now.getMonth() + 1);
   }
 
+  const incomingPlan = data.metadata?.plan || "pro";
+  let tier = "pro";
+  if (incomingPlan.toLowerCase().includes("enterprise")) {
+    tier = "enterprise";
+  } else if (incomingPlan.toLowerCase() === "free") {
+    tier = "free";
+  }
+
   await User.findByIdAndUpdate(
     user._id,
     {
       $set: {
-        isPremium: true,
-        "subscription.plan": data.metadata?.plan || "pro",
+        isPremium: tier !== "free",
+        "subscription.plan": incomingPlan,
+        "subscription.tier": tier,
         "subscription.status": "active",
         "subscription.billingCycle": cycle,
         "subscription.currentPeriodStart": now,

@@ -45,9 +45,13 @@ async function handleGet(request) {
     }
   }
 
-  const { getUserPlanLimits } = await import("@/lib/planLimits");
+  const { getUserPlanLimits, TIERS } = await import("@/lib/planLimits");
   const limits = getUserPlanLimits(user);
-  const isPremium = user.isPremium ||
+  
+  const tier = user.subscription?.tier || (user.isPremium ? TIERS.PRO : TIERS.FREE);
+  const isPremium = user.isPremium || 
+    tier === TIERS.PRO || 
+    tier === TIERS.ENTERPRISE ||
     (user.subscription?.plan === "premium" && user.subscription?.status === "active");
 
   const usage = {

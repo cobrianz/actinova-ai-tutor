@@ -26,7 +26,7 @@ import { apiClient } from "@/lib/csrfClient";
 
 export default function PremiumCourses() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isPro } = useAuth();
 
   if (authLoading) return <ActirovaLoader />;
   if (!user) return null;
@@ -56,13 +56,6 @@ export default function PremiumCourses() {
     return { daysLeft, progress };
   };
 
-  // Check if user is Pro - use subscription.tier (set by billing) and verify active status
-  const isPro =
-    user &&
-    ((user.subscription &&
-      (user.subscription.tier === "pro" || user.subscription.tier === "enterprise") &&
-      user.subscription.status === "active") ||
-      user.isPremium);
 
   useEffect(() => {
     if (isPro) {

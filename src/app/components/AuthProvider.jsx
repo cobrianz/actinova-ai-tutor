@@ -367,11 +367,16 @@ export function AuthProvider({ children }) {
 
   const clearError = () => setError(null);
 
+  const tier = user?.subscription?.tier;
+  const plan = user?.subscription?.plan?.toLowerCase();
+  
   const isPro =
-    !!(user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise") &&
+    !!(tier === "pro" || tier === "enterprise" || 
+       plan === "pro" || plan === "enterprise" || plan === "premium" || plan === "team") &&
     user?.subscription?.status === "active";
+    
   const isEnterprise =
-    user?.subscription?.tier === "enterprise" &&
+    (tier === "enterprise" || plan === "enterprise") &&
     user?.subscription?.status === "active";
 
   return (
