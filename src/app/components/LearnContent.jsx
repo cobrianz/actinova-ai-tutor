@@ -617,7 +617,7 @@ export default function LearnContent() {
     html = html.replace(/```(\w+)?\s*\n([\s\S]*?)```/g, (match, lang, code) => {
       const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
       codeBlocks.push(
-        `<pre class="bg-slate-900 p-4 rounded-lg overflow-x-auto my-4 border border-border"><code class="text-sm text-green-400 language-${lang || "plaintext"}">${code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`
+        `<pre class="bg-slate-100 p-4 rounded-lg overflow-x-auto my-4 border border-border"><code class="text-sm text-slate-800 language-${lang || "plaintext"}">${code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`
       );
       return placeholder;
     });

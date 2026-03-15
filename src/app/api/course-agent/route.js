@@ -274,11 +274,11 @@ Include:
 - In-depth step-by-step explanations with multiple examples
 - Industry best practices and common pitfalls
 - Detailed code examples (if relevant) with line-by-line explanations
-- Real-world analogies and visuals (describe in detail)
+- Real-world analogies and visuals (describe in detail, but AVOID providing Python code for visuals)
 - 3-5 Practice exercises with solutions
 - Comprehensive Key takeaways
 - A specific "Further Reading" section with suggested topics
-
+- CRITICAL: DO NOT provide Python code (like matplotlib, seaborn, etc.) to generate visuals. Instead, describe the visuals or use simple Markdown formatting.
 Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
 CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.
 IMPORTANT: Avoid being concise. Dive deep into every sub-topic.`;
