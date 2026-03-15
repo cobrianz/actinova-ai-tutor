@@ -3,6 +3,7 @@ import { Jost, Bricolage_Grotesque, EB_Garamond } from "next/font/google";
 import { AuthProvider } from "./components/AuthProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -93,6 +94,7 @@ export default function RootLayout({ children }) {
           <ThemeProvider>
             {children}
             <ToasterClient />
+            <SpeedInsights />
           </ThemeProvider>
         </AuthProvider>
       </body>
