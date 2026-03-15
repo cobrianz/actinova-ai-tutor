@@ -50,17 +50,11 @@ async function handler(req) {
 
     // Send email
     try {
-      const result = await sendPasswordResetCodeEmail({
+      await sendPasswordResetCodeEmail({
         to: user.email,
         name: user.firstName || "Learner",
         code: resetCode,
       });
-      if (!result.success) {
-        console.error(
-          `[Forgot Password] Resend error for ${email}:`,
-          result.error
-        );
-      }
     } catch (emailError) {
       console.error(`[Forgot Password] Email failed for ${email}:`, emailError);
     }

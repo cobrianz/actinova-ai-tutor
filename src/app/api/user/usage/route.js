@@ -112,7 +112,7 @@ export async function GET(request) {
       courses: isEnterprise ? Infinity : (isPremium ? 20 : 2),
       flashcards: isEnterprise ? Infinity : (isPremium ? 30 : 5),
       quizzes: isEnterprise ? Infinity : (isPremium ? 30 : 2),
-      reports: isEnterprise ? Infinity : (isPremium ? 50 : 3),
+      reports: isEnterprise ? Infinity : (isPremium ? 20 : 3),
       chat: isEnterprise ? Infinity : (isPremium ? 1000 : 20)
     };
 

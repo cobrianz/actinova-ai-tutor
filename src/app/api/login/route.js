@@ -13,6 +13,9 @@ export async function POST(request) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   const now = Date.now();
 
+  // Ensure attempts object exists for this IP
+  let attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: 0 };
+
   // Rate limiting removed per user request
 
 

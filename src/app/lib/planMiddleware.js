@@ -162,6 +162,19 @@ export async function checkCourseAccess(userId, courseId) {
 }
 
 /**
+ * Map API name to feature name used in plan limits
+ */
+function getFeatureName(apiName) {
+    if (apiName === "generate-course") return "generateCourseLimit";
+    if (apiName === "generate-flashcards") return "flashcards";
+    if (apiName === "quiz") return "quizGenerations";
+    if (apiName === "ai-tutor-chat") return "aiResponses";
+    if (apiName === "generate-report-outline" || apiName === "generate-report-section") return "reportGenerations";
+    if (apiName === "career" || apiName === "career-skill-gap" || apiName === "career-interview" || apiName === "career-network" || apiName === "career-cover-letter") return "careerLimit";
+    return apiName;
+}
+
+/**
  * Track API usage for rate limiting by plan tier
  */
 export async function trackAPIUsage(userId, apiName) {
@@ -169,11 +182,12 @@ export async function trackAPIUsage(userId, apiName) {
         const { db } = await connectToDatabase();
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const featureName = getFeatureName(apiName);
 
         const result = await db.collection("api_usage").findOneAndUpdate(
             {
                 userId: new ObjectId(userId),
-                apiName,
+                apiName: featureName,
                 month: monthStart,
             },
             {
@@ -216,14 +230,8 @@ export async function checkAPILimit(userId, apiName) {
         const { getUserPlanLimits } = await import("./planLimits");
         const planLimits = getUserPlanLimits(user);
 
-        // Map apiName to feature name in planLimits if necessary
-        let featureName = apiName;
-        if (apiName === "generate-course") featureName = "generateCourseLimit";
-        if (apiName === "generate-flashcards") featureName = "flashcards";
-        if (apiName === "quiz") featureName = "quizGenerations";
-        if (apiName === "ai-tutor-chat") featureName = "aiResponses";
-        if (apiName === "generate-report-outline" || apiName === "generate-report-section") featureName = "reportGenerations";
-        if (apiName === "career" || apiName === "career-skill-gap" || apiName === "career-interview" || apiName === "career-network" || apiName === "career-cover-letter") featureName = "careerLimit";
+        // Map apiName to feature name in planLimits
+        const featureName = getFeatureName(apiName);
 
         const tierLimit = planLimits[featureName] || planLimits[apiName] || 5;
 
