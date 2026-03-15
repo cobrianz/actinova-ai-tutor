@@ -502,6 +502,7 @@ export default function LearnContent() {
       const relevanceCheck = await apiClient.post("/api/course-agent", {
         action: "checkRelevance",
         question: userMessage.message,
+        messages: chatMessages, // Include history
         courseContent: allCourseContent,
         lessonTitle: currentLesson?.title || "",
         context: `Course: ${courseData?.title || ""
@@ -539,6 +540,7 @@ export default function LearnContent() {
       const response = await apiClient.post("/api/course-agent", {
         action: "answer",
         question: userMessage.message,
+        messages: chatMessages, // Include history
         courseContent: allCourseContent,
         lessonTitle: currentLesson?.title || "",
         context: `Course: ${courseData?.title || ""
@@ -643,7 +645,7 @@ export default function LearnContent() {
 
     // Handle LaTeX with \[ \] delimiters (display mode)
     html = html.replace(
-      /\\\[([^\]]*?)\\\]/g,
+      /\\\[([\s\S]*?)\\\]/g,
       (match, equation) => {
         try {
           const rendered = katex.renderToString(equation.trim(), {
@@ -651,7 +653,7 @@ export default function LearnContent() {
             throwOnError: false,
             output: 'html'
           });
-          return `<div class="my-4 p-4 bg-accent text-accent-foreground rounded-lg overflow-x-auto">${rendered}</div>`;
+          return `<div class="my-6 p-4 text-foreground overflow-x-auto font-sans">${rendered}</div>`;
         } catch (e) {
           return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${equation}</div>`;
         }
@@ -660,7 +662,7 @@ export default function LearnContent() {
 
     // Handle LaTeX with \( \) delimiters (inline mode)
     html = html.replace(
-      /\\\(([^\)]*?)\\\)/g,
+      /\\\(([\s\S]*?)\\\)/g,
       (match, equation) => {
         try {
           const rendered = katex.renderToString(equation.trim(), {
@@ -669,7 +671,7 @@ export default function LearnContent() {
             output: 'html',
             strict: false
           });
-          return `<span class="inline-block align-middle mx-0.5">${rendered}</span>`;
+          return `<span class="inline-block align-middle mx-1">${rendered}</span>`;
         } catch (e) {
           return `<span class="text-destructive text-xs">LaTeX Error: ${equation}</span>`;
         }
@@ -686,7 +688,7 @@ export default function LearnContent() {
             throwOnError: false,
             output: 'html'
           });
-          return `<div class="my-4 p-4 bg-accent text-accent-foreground rounded-lg overflow-x-auto">${rendered}</div>`;
+          return `<div class="my-6 p-4 text-foreground overflow-x-auto font-sans">${rendered}</div>`;
         } catch (e) {
           return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${equation}</div>`;
         }
@@ -694,11 +696,10 @@ export default function LearnContent() {
     );
 
     // Handle equations - inline mode $...$
-    // Use a more specific pattern to avoid matching dollar signs in regular text
     html = html.replace(
       /\$([^\$\n]+?)\$/g,
       (match, equation) => {
-        // Skip if it looks like a price (e.g., $100 or $5.99)
+        // Skip if it looks like a price ($100 or $5.99)
         if (/^\d+(\.\d{2})?$/.test(equation.trim())) {
           return match;
         }
@@ -709,18 +710,15 @@ export default function LearnContent() {
             output: 'html',
             strict: false
           });
-          return `<span class="inline-block align-middle mx-0.5">${rendered}</span>`;
+          return `<span class="inline-block align-middle mx-1">${rendered}</span>`;
         } catch (e) {
           return `<span class="text-destructive text-xs">LaTeX Error: ${equation}</span>`;
         }
       }
     );
 
-    // Handle headers
-    html = html.replace(
-      /^# (.*$)/gm,
-      '<h1 class="text-3xl lg:text-5xl font-bold font-serif text-foreground mb-10 mt-10 tracking-tight underline decoration-primary/30 underline-offset-8">$1</h1>'
-    );
+    // Handle headers (removed main title as per user request)
+    html = html.replace(/^# (.*$)/gm, "");
     html = html.replace(
       /^## (.*$)/gm,
       '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-4 mt-8">$1</h2>'
@@ -808,7 +806,11 @@ export default function LearnContent() {
         processedHtml.push(`<li class="pl-3">${ulMatch[2]}</li>`);
       } else {
         // Not a list item prefix
-        if (listStack.length > 0) {
+        if (line.match(/^\s*[-*_]{3,}\s*$/)) {
+          // Horizontal rule handling - clean it up before list/paragraph wrapping
+          closeList();
+          processedHtml.push('<hr class="my-8 border-t-2 border-primary/20 hidden" />');
+        } else if (listStack.length > 0) {
           // Continuation of a list item
           processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] lg:text-lg leading-relaxed">${line}</div>`);
         } else if (line.startsWith('<')) {
@@ -829,15 +831,9 @@ export default function LearnContent() {
       ''
     );
 
-    // Underline Module and Lesson labels (as per user request)
-    html = html.replace(
-      /^(Module: .*)$/gm,
-      '<span class="underline decoration-primary/30 underline-offset-4">$1</span>'
-    );
-    html = html.replace(
-      /^(Lesson: .*)$/gm,
-      '<span class="underline decoration-primary/30 underline-offset-4">$1</span>'
-    );
+    // Underline Module and Lesson labels (removed as per user request)
+    html = html.replace(/^(Module: .*)$/gm, "");
+    html = html.replace(/^(Lesson: .*)$/gm, "");
 
     // Restore code blocks
     codeBlocks.forEach((block, i) => {
@@ -1564,7 +1560,7 @@ export default function LearnContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background font-serif overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-background font-serif overflow-hidden">
       {/* Permanent Navbar Header */}
       <div className="bg-card backdrop-blur-md border-b border-border p-3 sm:p-4 z-50 shadow-sm relative">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
@@ -1587,13 +1583,6 @@ export default function LearnContent() {
               <Menu className="w-4 h-4" />
               <span className="hidden md:inline">Modules</span>
             </button>
-          </div>
-
-          {/* Center Title (Desktop only or scaled) */}
-          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2">
-            <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em] line-clamp-1 max-w-[300px]">
-              {courseData?.title}
-            </h2>
           </div>
 
           {/* Right Group - Controls (Always visible for easy access) */}

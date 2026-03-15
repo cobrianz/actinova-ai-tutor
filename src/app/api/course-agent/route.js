@@ -83,6 +83,7 @@ export async function POST(request) {
 async function handleAIQuestion(body, userId, db) {
   const {
     question,
+    messages = [], // Chat history
     courseContent = "",
     lessonTitle = "the lesson",
     context = "",
@@ -102,23 +103,30 @@ async function handleAIQuestion(body, userId, db) {
     ? courseTitleMatch[1].trim()
     : lessonTitle;
 
+  // Prepare messages for OpenAI
+  const history = messages.map(msg => ({
+    role: msg.type === "ai" ? "assistant" : "user",
+    content: msg.message
+  })).slice(-10); // Keep last 10 messages for context
+
   if (action === "checkRelevance") {
     // Only check if question is related to course
     const relevancePrompt = `You are evaluating if a student's question is related to their course.
-
+    
 Course Title: ${courseTitle}
 Course Context: ${context.substring(0, 500)}
 Course Content Preview: ${courseContent.substring(0, 2000)}
 
 Question: "${question}"
 
-Respond with ONLY "YES" if the question is related to the course topic or any content in the course.
+Respond with ONLY "YES" if the question is related to the course topic, any content in the course, or is a follow-up to the previous conversation about the course.
 Respond with ONLY "NO" if the question is completely unrelated to the course.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: relevancePrompt },
+        ...history,
         { role: "user", content: question.trim() },
       ],
       temperature: 0.1, // Low temperature for consistent yes/no
@@ -147,7 +155,7 @@ Respond with ONLY "NO" if the question is completely unrelated to the course.`;
   // Action: "answer" - provide the actual answer
   const systemPrompt = `You are an expert AI tutor helping students learn from their course material.
 
-Provide a direct, concise answer to the student's question based on the course content. Use markdown formatting to **bold** key terms and concepts.
+Provide a direct, concise answer to the student's question based on the course content and conversation history. Use markdown formatting to **bold** key terms and concepts.
 
 RULES:
 - Answer ONLY the question asked
@@ -155,6 +163,7 @@ RULES:
 - Be direct and to the point
 - **Bold** important terms, concepts, and key words using markdown
 - Use the course content as reference but don't quote it verbatim
+- If the student asks a follow-up, use the previous context to provide a helpful answer
 - If the question asks for a definition, give just the definition
 - If the question asks for an explanation, give just the explanation needed
 
@@ -165,10 +174,11 @@ Course Content Reference: ${courseContent.substring(0, 12000)}`;
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
+      ...history,
       { role: "user", content: question.trim() },
     ],
     temperature: 0.7,
-    max_tokens: 200, // Reduced for concise answers
+    max_tokens: 250, 
   });
 
   const response = completion.choices[0]?.message?.content?.trim();

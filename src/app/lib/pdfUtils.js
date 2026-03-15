@@ -93,62 +93,116 @@ const stripMarkdown = (text) => {
  */
 const cleanLatex = (text) => {
     if (!text || typeof text !== "string") return text;
-    return text
+    
+    // First, handle display math blocks which might span multiple lines if they were somehow preserved
+    let cleaned = text;
+    
+    // Expand the symbol mapping significantly
+    const symbolMap = {
+        '\\\\': '\n',             // Newline
+        '\\times': '×',
+        '\\cdot': '·',
+        '\\div': '÷',
+        '\\pm': '±',
+        '\\mp': '∓',
+        '\\approx': '≈',
+        '\\neq': '≠',
+        '\\leq': '≤',
+        '\\geq': '≥',
+        '\\ll': '≪',
+        '\\gg': '≫',
+        '\\in': '∈',
+        '\\notin': '∉',
+        '\\subset': '⊂',
+        '\\supset': '⊃',
+        '\\subseteq': '⊆',
+        '\\supseteq': '⊇',
+        '\\forall': '∀',
+        '\\exists': '∃',
+        '\\partial': '∂',
+        '\\nabla': '∇',
+        '\\infty': '∞',
+        '\\propto': '∝',
+        '\\angle': '∠',
+        '\\parallel': '∥',
+        '\\perp': '⊥',
+        '\\rightarrow': '→',
+        '\\Rightarrow': '⇒',
+        '\\leftarrow': '←',
+        '\\Leftarrow': '⇐',
+        '\\leftrightarrow': '↔',
+        '\\Leftrightarrow': '⇔',
+        '\\pi': 'π',
+        '\\alpha': 'α',
+        '\\beta': 'β',
+        '\\gamma': 'γ',
+        '\\delta': 'δ',
+        '\\epsilon': 'ε',
+        '\\zeta': 'ζ',
+        '\\eta': 'η',
+        '\\theta': 'θ',
+        '\\iota': 'ι',
+        '\\kappa': 'κ',
+        '\\lambda': 'λ',
+        '\\mu': 'μ',
+        '\\nu': 'ν',
+        '\\xi': 'ξ',
+        '\\omicron': 'ο',
+        '\\rho': 'ρ',
+        '\\sigma': 'σ',
+        '\\tau': 'τ',
+        '\\upsilon': 'υ',
+        '\\phi': 'φ',
+        '\\chi': 'χ',
+        '\\psi': 'ψ',
+        '\\omega': 'ω',
+        '\\Delta': 'Δ',
+        '\\Gamma': 'Γ',
+        '\\Theta': 'Θ',
+        '\\Lambda': 'Λ',
+        '\\Xi': 'Ξ',
+        '\\Pi': 'Π',
+        '\\Sigma': 'Σ',
+        '\\Phi': 'Φ',
+        '\\Psi': 'Ψ',
+        '\\Omega': 'Ω'
+    };
+
+    // Replace known symbols first
+    Object.entries(symbolMap).forEach(([latex, unicode]) => {
+        const regex = new RegExp(latex.replace(/\\/g, '\\\\') + '\\b', 'g');
+        cleaned = cleaned.replace(regex, unicode);
+    });
+
+    return cleaned
         // Math wrappers
-        .replace(/\\\[/g, "")
-        .replace(/\\\]/g, "")
-        .replace(/\$\$/g, "")
-        .replace(/\\\(/g, "")
-        .replace(/\\\)/g, "")
-        // Handle $ inline math (match pairs)
-        .replace(/\$([^\$\n]+)\$/g, "$1")
-        // Subscripts and superscripts with brackets (e.g. x_{i} -> x_i)
-        .replace(/_\{([^{}]+)\}/g, "_$1")
-        .replace(/\^\{([^{}]+)\}/g, "^$1")
-        // Formatting
+        .replace(/\\\[([\s\S]*?)\\\]/g, "$1")
+        .replace(/\\\(([\s\S]*?)\\\)/g, "$1")
+        .replace(/\$\$([\s\S]*?)\$\$/g, "$1")
+        .replace(/\$([^\$\n]+?)\$/g, "$1")
+        // Formatting commands with braces
         .replace(/\\text\s*\{([^{}]+)\}/g, "$1")
-        .replace(/\\mathbf\s*\{([^{}]+)\}/g, "$1")
-        .replace(/\\mathit\s*\{([^{}]+)\}/g, "$1")
+        .replace(/\\textbf\s*\{([^{}]+)\}/g, "$1")
+        .replace(/\\textit\s*\{([^{}]+)\}/g, "$1")
         .replace(/\\mathrm\s*\{([^{}]+)\}/g, "$1")
-        // Sums and Integrals
-        .replace(/\\sum_\{([^{}]+)\}\^\{([^{}]+)\}/g, "Σ (from $1 to $2)")
-        .replace(/\\int_\{([^{}]+)\}\^\{([^{}]+)\}/g, "∫ (from $1 to $2)")
-        .replace(/\\sum/g, "Σ")
-        .replace(/\\int/g, "∫")
-        // Common fractions and roots
+        .replace(/\\mathbf\s*\{([^{}]+)\}/g, "$1")
+        .replace(/\\mathcal\s*\{([^{}]+)\}/g, "$1")
+        // Fractions & Roots
         .replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "($1)/($2)")
         .replace(/\\sqrt\s*\{([^{}]+)\}/g, "√($1)")
-        // Operators & Relations
-        .replace(/\\times\b/g, "×")
-        .replace(/\\cdot\b/g, "·")
-        .replace(/\\div\b/g, "÷")
-        .replace(/\\pm\b/g, "±")
-        .replace(/\\approx\b/g, "≈")
-        .replace(/\\neq\b/g, "≠")
-        .replace(/\\leq\b/g, "≤")
-        .replace(/\\geq\b/g, "≥")
-        // Arrows
-        .replace(/\\rightarrow\b/g, "→")
-        .replace(/\\Rightarrow\b/g, "⇒")
-        // Greek letters
-        .replace(/\\pi\b/g, "π")
-        .replace(/\\alpha\b/g, "α")
-        .replace(/\\beta\b/g, "β")
-        .replace(/\\gamma\b/g, "γ")
-        .replace(/\\delta\b/g, "δ")
-        .replace(/\\theta\b/g, "θ")
-        .replace(/\\lambda\b/g, "λ")
-        .replace(/\\mu\b/g, "μ")
-        .replace(/\\sigma\b/g, "σ")
-        .replace(/\\omega\b/g, "ω")
-        .replace(/\\Delta\b/g, "Δ")
-        .replace(/\\Sigma\b/g, "Σ")
-        .replace(/\\infty\b/g, "∞")
-        // Strip out generic commands (like \left \right)
+        .replace(/\\sqrt\[([0-9]+)\]\{([^{}]+)\}/g, "($2)^(1/$1)")
+        // Superscript/Subscript with braces
+        .replace(/\^\{([^{}]+)\}/g, "^($1)")
+        .replace(/_\{([^{}]+)\}/g, "_($1)")
+        // Sized delimiters
+        .replace(/\\left[({[\\]|\\right[)}\]\\]/g, "")
+        // Generic commands leftovers
         .replace(/\\[a-zA-Z]+\b/g, "")
-        // Escaped delimiters
+        // Escaped characters
+        .replace(/\\([%&$#_{}]) /g, "$1")
         .replace(/\\{/g, "{")
-        .replace(/\\}/g, "}");
+        .replace(/\\}/g, "}")
+        .trim();
 };
 
 export const downloadCourseAsPDF = async (data, mode = "course") => {
