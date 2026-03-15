@@ -337,6 +337,52 @@ export default function LearnContent() {
         // Silent fail for localStorage
       }
 
+      // Auto-mark lesson as completed now that content has been generated
+      const lessonId = `${moduleId}-${lessonIndex}`;
+      const courseId = courseData?._id ? String(courseData._id) : null;
+
+      // Update local completion state
+      setCompletedLessons((prev) => {
+        const next = new Set(prev);
+        next.add(lessonId);
+        // Persist to localStorage
+        try {
+          localStorage.setItem(progressKey(), JSON.stringify(Array.from(next)));
+        } catch (_) {}
+        return next;
+      });
+
+      // Also mark completed on the courseData lesson object (for UI consistency)
+      setCourseData((prevData) => {
+        const newData = { ...prevData };
+        if (newData.modules?.[moduleId - 1]?.lessons?.[lessonIndex]) {
+          newData.modules[moduleId - 1].lessons[lessonIndex].completed = true;
+        }
+        return newData;
+      });
+
+      // Persist completed flag to backend DB
+      if (courseId) {
+        try {
+          const currentCompleted = new Set(completedLessons);
+          currentCompleted.add(lessonId);
+          const totalLessons = courseData?.totalLessons || 100;
+          const progress = Math.round((currentCompleted.size / totalLessons) * 100);
+
+          await apiClient.post("/api/course-progress", {
+            courseId,
+            progress,
+            completed: progress >= 100,
+            isLessonCompleted: true,
+            lessonId,
+            userId: String(user?._id || user?.id || ""),
+          });
+        } catch (progressErr) {
+          // Silent fail — don't block the user from reading content
+          console.warn("Failed to auto-save lesson completion:", progressErr);
+        }
+      }
+
       // Show typing animation
       setTypingContent(data.content);
     } catch (error) {
@@ -377,13 +423,25 @@ export default function LearnContent() {
 
     // --- Save progress ---
     try {
-      // 1. Save to Local Storage for immediate persistence
+      const isNowCompleted = newCompleted.has(lessonId);
+
+      // 1. Update lesson.completed on courseData in memory for instant UI feedback
+      setCourseData((prevData) => {
+        const newData = { ...prevData };
+        const mod = newData.modules?.find((m) => m.id === moduleId);
+        if (mod?.lessons?.[lessonIndex]) {
+          mod.lessons[lessonIndex].completed = isNowCompleted;
+        }
+        return newData;
+      });
+
+      // 2. Save to Local Storage for immediate persistence
       localStorage.setItem(
         progressKey(),
         JSON.stringify(Array.from(newCompleted))
       );
 
-      // 2. Save to backend database
+      // 3. Save to backend database
       const courseId = courseData?._id ? String(courseData._id) : null;
       if (courseId) {
         const totalLessons = courseData?.totalLessons || 0;
@@ -396,7 +454,7 @@ export default function LearnContent() {
           courseId,
           progress,
           completed: progress === 100,
-          isLessonCompleted: newCompleted.has(lessonId),
+          isLessonCompleted: isNowCompleted,
           userId: String(user?._id || user?.id || ""),
           lessonId: lessonId,
         }, {
