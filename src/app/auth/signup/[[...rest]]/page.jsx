@@ -98,14 +98,14 @@ export default function SignupPage() {
           </div>
 
           <div className="text-left mb-6">
-            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">Create Account</h2>
-            <p className="text-gray-500 font-medium">Join us and start your learning journey</p>
+            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">create account</h2>
+            <p className="text-gray-500 font-medium">join us and start your learning journey</p>
           </div>
 
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">first name</Label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
@@ -119,7 +119,7 @@ export default function SignupPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">last name</Label>
                 <Input
                   id="lastName"
                   placeholder="Doe"
@@ -132,7 +132,7 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">email address</Label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -149,7 +149,7 @@ export default function SignupPage() {
 
 
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">password</Label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -207,7 +207,7 @@ export default function SignupPage() {
 
 
             <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">confirm password</Label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -235,7 +235,7 @@ export default function SignupPage() {
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p className="text-[11px] font-bold text-red-500 mt-1 ml-1">Passwords do not match</p>
+                <p className="text-[11px] font-bold text-red-500 mt-1 ml-1">passwords do not match</p>
               )}
             </div>
 
@@ -250,10 +250,10 @@ export default function SignupPage() {
                 htmlFor="acceptTerms"
                 className="text-xs font-medium text-gray-500 leading-normal cursor-pointer"
               >
-                I agree to the{" "}
-                <Link href="/terms" className="text-purple-600 hover:underline">Terms of Service</Link>
+                i agree to the{" "}
+                <Link href="/terms" className="text-purple-600 hover:underline">terms of service</Link>
                 {" "}and{" "}
-                <Link href="/privacy" className="text-purple-600 hover:underline">Privacy Policy</Link>
+                <Link href="/privacy" className="text-purple-600 hover:underline">privacy policy</Link>
               </label>
             </div>
 
@@ -266,7 +266,7 @@ export default function SignupPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Create Account
+                  create account
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -278,12 +278,12 @@ export default function SignupPage() {
           </div>
 
           <p className="mt-8 text-center text-sm font-medium text-gray-500">
-            Already have an account?{" "}
+            already have an account?{" "}
             <Link
               href="/auth/login"
               className="text-purple-600 font-bold hover:text-purple-700 underline decoration-2 underline-offset-4"
             >
-              Sign In
+              sign in
             </Link>
           </p>
         </div>

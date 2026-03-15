@@ -44,9 +44,9 @@ export const data = {
     },
     {
       icon: "Award",
-      title: "Certifications & Badges",
+      title: "Reports & Essays",
       description:
-        "Earn industry-recognized certificates and badges as you complete courses. Showcase your achievements on LinkedIn and stand out to employers.",
+        "Generate comprehensive reports and essays based on your learning journey. Synthesize knowledge and document your insights effectively.",
     },
     {
       icon: "TrendingUp",
@@ -88,7 +88,7 @@ export const data = {
     },
     {
       title: "Master & Achieve",
-      description: "Complete courses, earn certifications, and showcase your new skills to the world."
+      description: "Complete courses, generate detailed reports, and showcase your new skills to the world."
     }
   ],
   testimonials: [
@@ -140,9 +140,9 @@ export const data = {
         "We offer a 30-day money-back guarantee. If you're not completely satisfied, we'll refund your subscription, no questions asked.",
     },
     {
-      question: "Do you offer certificates?",
+      question: "Can I generate reports or essays?",
       answer:
-        "Yes, you'll receive industry-recognized certificates upon course completion. These can be shared on LinkedIn and added to your resume.",
+        "Yes, you can generate comprehensive reports and essays based on your learning materials to help synthesize your knowledge and document insights.",
     },
   ],
 };

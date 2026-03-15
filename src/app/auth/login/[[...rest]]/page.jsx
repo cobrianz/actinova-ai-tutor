@@ -77,13 +77,13 @@ export default function LoginPage() {
           </div>
 
           <div className="text-left mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">Welcome Back</h2>
-            <p className="text-gray-500 font-medium">Sign in to your account to continue</p>
+            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">welcome back</h2>
+            <p className="text-gray-500 font-medium">sign in to your account to continue</p>
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">email address</Label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -100,12 +100,12 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">password</Label>
                 <Link
                   href="/auth/forgot-password"
                   className="text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors"
                 >
-                  Forgot password?
+                  forgot password?
                 </Link>
               </div>
               <div className="relative">
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 htmlFor="remember"
                 className="text-sm font-medium text-gray-600 cursor-pointer select-none"
               >
-                Remember me for 30 days
+                remember me for 30 days
               </label>
             </div>
 
@@ -157,7 +157,7 @@ export default function LoginPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Sign In
+                  sign in
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -165,12 +165,12 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-10 text-center text-sm font-medium text-gray-500">
-            Don't have an account?{" "}
+            don't have an account?{" "}
             <Link
               href="/auth/signup"
               className="text-purple-600 font-bold hover:text-purple-700 underline decoration-2 underline-offset-4"
             >
-              Create account
+              create account
             </Link>
           </p>
         </div>
