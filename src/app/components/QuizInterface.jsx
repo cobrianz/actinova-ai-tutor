@@ -13,6 +13,7 @@ import { downloadQuizAsPDF } from "@/lib/pdfUtils";
 import { apiClient } from "@/lib/csrfClient";
 
 const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
+  const { user, loading: authLoading, isPro, isEnterprise } = useAuth();
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
@@ -474,7 +475,22 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                   <Button onClick={handleRetake} variant="outline">
                     Retake Test
                   </Button>
-                  <Button onClick={() => downloadQuizAsPDF(quizData)} variant="secondary" className="bg-indigo-600 hover:bg-indigo-700 text-white border-none transition-all shadow-md hover:shadow-lg">
+                  <Button 
+                    onClick={() => {
+                      if (isPro || isEnterprise) {
+                        downloadQuizAsPDF(quizData);
+                      } else {
+                        toast.error("Upgrade to Pro to download assessments", {
+                          action: {
+                            label: "Upgrade",
+                            onClick: () => window.location.href = "/pricing"
+                          }
+                        });
+                      }
+                    }} 
+                    variant="secondary" 
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white border-none transition-all shadow-md hover:shadow-lg"
+                  >
                     <Download className="w-4 h-4 mr-2" />
                     Download Exam
                   </Button>

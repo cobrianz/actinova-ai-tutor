@@ -531,6 +531,16 @@ export const downloadQuizAsPDF = async (data) => {
     pdf.line(margin, y, pageWidth - margin, y);
     y += 15;
 
+    // Check Page Overflow
+    const checkNewPage = (neededSpace) => {
+        if (y + neededSpace > pageHeight - 25) {
+            pdf.addPage();
+            y = 25;
+            return true;
+        }
+        return false;
+    };
+
     // Questions
     data.questions.forEach((q, index) => {
         checkNewPage(40);
