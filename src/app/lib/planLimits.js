@@ -74,15 +74,16 @@ export function getUserPlanName(user) {
 // Plan limit definitions
 function getFreeLimits() {
     return {
-        courses: 2,
+        courses: 2,          // max premium courses free user can generate
         quizzes: 1,
         flashcards: 8,
-        modules: 3,
-        lessonsPerModule: 3,
-        totalLessons: 9,
+        modules: 20,         // course always has 20 modules (full structure generated)
+        lessonsPerModule: 5, // each module always has 5 lessons
+        totalLessons: 100,   // 20 × 5
+        freeReadableModules: 3, // free users can read modules 1–3; rest are padlocked
         difficulties: ['beginner'],
         aiResponses: 3, // per day (ai-tutor-chat)
-        generateCourseLimit: 5, // per month
+        generateCourseLimit: 2, // per month (2 premium courses for free users)
         quizGenerations: 2, // per month
         reportGenerations: 0, // Locked for free users as requested
         careerLimit: 2, // per month
@@ -97,6 +98,7 @@ function getProLimits() {
         modules: 20,
         lessonsPerModule: 5,
         totalLessons: 100,
+        freeReadableModules: 20, // Pro can read all modules
         difficulties: ['beginner', 'intermediate', 'advanced'],
         aiResponses: -1, // unlimited
         generateCourseLimit: 50, // per month
@@ -114,6 +116,7 @@ function getEnterpriseLimits() {
         modules: 20,
         lessonsPerModule: 5,
         totalLessons: 100,
+        freeReadableModules: 20, // Enterprise can read all modules
         difficulties: ['beginner', 'intermediate', 'advanced'],
         aiResponses: -1, // unlimited
         generateCourseLimit: -1, // unlimited

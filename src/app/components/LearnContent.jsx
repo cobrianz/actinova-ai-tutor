@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Home,
   Pin,
+  Lock,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -60,6 +61,9 @@ export default function LearnContent() {
   });
   const [notes, setNotes] = useState("");
   const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
+  // Free users can read modules 1-3; modules 4+ are padlocked
+  const FREE_READABLE_MODULES = 3;
+  const freeReadableModules = isPro ? Infinity : FREE_READABLE_MODULES;
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [chatMessages, setChatMessages] = useState([
@@ -213,6 +217,17 @@ export default function LearnContent() {
   };
 
   const selectLesson = async (moduleId, lessonIndex) => {
+    // Check if module is locked for free users (moduleId is 1-based)
+    if (!isPro && moduleId > FREE_READABLE_MODULES) {
+      toast.error(" This module is locked. Upgrade to Pro to unlock all 20 modules.", {
+        action: {
+          label: "Upgrade",
+          onClick: () => router.push("/pricing"),
+        },
+      });
+      return;
+    }
+
     setActiveLesson({ moduleId, lessonIndex });
 
     // Only auto-close sidebar on smaller screens
@@ -1747,18 +1762,47 @@ export default function LearnContent() {
                   className="border-b border-border last:border-b-0"
                 >
                   <button
-                    onClick={() => toggleModule(module.id)}
-                    className="w-full p-4 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+                    onClick={() => {
+                      if (!isPro && moduleIndex >= FREE_READABLE_MODULES) {
+                        toast.error("Upgrade to Pro to unlock all 20 modules.", {
+                          action: {
+                            label: "Upgrade",
+                            onClick: () => router.push("/pricing"),
+                          },
+                        });
+                        return;
+                      }
+                      toggleModule(module.id);
+                    }}
+                    className={`w-full p-4 flex items-center justify-between transition-colors ${
+                      !isPro && moduleIndex >= FREE_READABLE_MODULES
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-secondary/50"
+                    }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-500/10 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
-                        {moduleIndex + 1}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        !isPro && moduleIndex >= FREE_READABLE_MODULES
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-blue-500/10 text-blue-600"
+                      }`}>
+                        {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
+                          <Lock className="w-4 h-4" />
+                        ) : (
+                          moduleIndex + 1
+                        )}
                       </div>
-                      <span className="text-sm font-medium text-foreground text-left">
+                      <span className={`text-sm font-medium text-left ${
+                        !isPro && moduleIndex >= FREE_READABLE_MODULES
+                          ? "text-muted-foreground"
+                          : "text-foreground"
+                      }`}>
                         {module.title}
                       </span>
                     </div>
-                    {expandedModules.has(module.id) ? (
+                    {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
+                      <Lock className="w-3.5 h-3.5 text-muted-foreground/50" />
+                    ) : expandedModules.has(module.id) ? (
                       <ChevronUp className="w-4 h-4 text-muted-foreground" />
                     ) : (
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -1815,6 +1859,27 @@ export default function LearnContent() {
                 </div>
               ))}
           </div>
+
+          {/* Free user upgrade CTA at the bottom of the sidebar */}
+          {!isPro && (
+            <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-blue-500/5">
+              <div className="flex items-center space-x-2 mb-2">
+                <Lock className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold text-foreground">
+                  {courseData.totalModules - FREE_READABLE_MODULES} modules locked
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                You can read modules 1–3 for free. Upgrade to Pro to unlock all 20 modules.
+              </p>
+              <button
+                onClick={() => router.push("/pricing")}
+                className="w-full py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Main Content Area */}

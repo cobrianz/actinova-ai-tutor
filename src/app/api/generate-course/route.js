@@ -113,27 +113,34 @@ async function handlePost(request) {
         The JSON must strictly follow this structure:
         {
           "title": "Comprehensive Course Title",
-          "totalModules": ${modules},
-          "totalLessons": ${totalLessons},
+          "totalModules": 20,
+          "totalLessons": 100,
           "modules": [
             {
               "title": "Module Title",
               "lessons": [
+                { "title": "Detailed Lesson Title" },
+                { "title": "Detailed Lesson Title" },
+                { "title": "Detailed Lesson Title" },
+                { "title": "Detailed Lesson Title" },
                 { "title": "Detailed Lesson Title" }
               ]
             }
           ]
         }
         
-        Requirements:
-        1. Be academically rigorous and logically structured.
-        2. Ensure lesson titles are specific and descriptive.
-        3. Do not include lesson content; focus only on titles and structure.
-        4. Return ONLY the JSON object.`,
+        CRITICAL REQUIREMENTS:
+        1. You MUST return EXACTLY 20 modules. Not 19, not 21 — exactly 20.
+        2. Each module MUST contain EXACTLY 5 lessons. Not 4, not 6 — exactly 5.
+        3. Total lessons = 20 × 5 = 100.
+        4. Be academically rigorous and logically structured.
+        5. Ensure lesson titles are specific and descriptive.
+        6. Do not include lesson content; focus only on titles and structure.
+        7. Return ONLY the JSON object.`,
             },
             {
               role: "user",
-              content: `Create a ${difficulty} level course on "${topic}" with ${modules} modules and ${totalLessons} lessons total.`,
+              content: `Create a ${difficulty} level course on "${topic}" with EXACTLY 20 modules and EXACTLY 5 lessons per module (100 lessons total).`,
             },
           ],
         });
@@ -145,14 +152,15 @@ async function handlePost(request) {
           course = fallbackCourse(topic, difficulty, modules, lessonsPerModule);
         }
 
+        const normalizedModules = normalizeModules(course.modules || [], topic, lessonsPerModule);
         const updatedCourseDoc = {
           title: course.title,
-          totalModules: course.totalModules || modules,
-          totalLessons: course.totalLessons || totalLessons,
-          modules: (course.modules || []).map((m, i) => ({
+          totalModules: 20,
+          totalLessons: 100,
+          modules: normalizedModules.map((m, i) => ({
             ...m,
             id: i + 1,
-            lessons: (m.lessons || []).map((l, j) => ({
+            lessons: m.lessons.map((l, j) => ({
               title: typeof l === "string" ? l : l.title || `Lesson ${j + 1}`,
               id: `${i + 1}-${j + 1}`,
               content: "",
@@ -225,27 +233,34 @@ async function handlePost(request) {
         The JSON must strictly follow this structure:
         {
           "title": "${finalTitle}",
-          "totalModules": ${modules},
-          "totalLessons": ${totalLessons},
+          "totalModules": 20,
+          "totalLessons": 100,
           "modules": [
             {
               "title": "Module Title",
               "lessons": [
+                { "title": "Detailed Lesson Title" },
+                { "title": "Detailed Lesson Title" },
+                { "title": "Detailed Lesson Title" },
+                { "title": "Detailed Lesson Title" },
                 { "title": "Detailed Lesson Title" }
               ]
             }
           ]
         }
         
-        Requirements:
-        1. Be academically rigorous and logically structured.
-        2. Ensure lesson titles are specific and descriptive.
-        3. Do not include lesson content; focus only on titles and structure.
-        4. Return ONLY the JSON object.`,
+        CRITICAL REQUIREMENTS:
+        1. You MUST return EXACTLY 20 modules. Not 19, not 21 — exactly 20.
+        2. Each module MUST contain EXACTLY 5 lessons. Not 4, not 6 — exactly 5.
+        3. Total lessons = 20 × 5 = 100.
+        4. Be academically rigorous and logically structured.
+        5. Ensure lesson titles are specific and descriptive.
+        6. Do not include lesson content; focus only on titles and structure.
+        7. Return ONLY the JSON object.`,
         },
         {
           role: "user",
-          content: `Create a ${difficulty} level course on "${topic}" with ${modules} modules and ${totalLessons} lessons total.`,
+          content: `Create a ${difficulty} level course on "${topic}" with EXACTLY 20 modules and EXACTLY 5 lessons per module (100 lessons total).`,
         },
       ],
     });
@@ -257,6 +272,7 @@ async function handlePost(request) {
       course = fallbackCourse(topic, difficulty, modules, lessonsPerModule);
     }
 
+    const normalizedModules = normalizeModules(course.modules || [], topic, lessonsPerModule);
     const courseId = new ObjectId();
     const courseDoc = {
       _id: courseId,
@@ -267,12 +283,12 @@ async function handlePost(request) {
       difficulty,
       format: "course",
       level: difficulty,
-      totalModules: course.totalModules || modules,
-      totalLessons: course.totalLessons || totalLessons,
-      modules: (course.modules || []).map((m, i) => ({
+      totalModules: 20,
+      totalLessons: 100,
+      modules: normalizedModules.map((m, i) => ({
         ...m,
         id: i + 1,
-        lessons: (m.lessons || []).map((l, j) => ({
+        lessons: m.lessons.map((l, j) => ({
           title: typeof l === "string" ? l : l.title || `Lesson ${j + 1}`,
           id: `${i + 1}-${j + 1}`,
           content: "",
@@ -305,8 +321,8 @@ async function handlePost(request) {
         title: course.title,
         topic: topic,
         level: difficulty,
-        totalModules: course.totalModules,
-        totalLessons: course.totalLessons,
+        totalModules: 20,
+        totalLessons: 100,
         modules: courseDoc.modules,
       },
       difficulty,
@@ -473,18 +489,73 @@ Return ONLY valid JSON with this exact structure:
   }
 }
 
+// Normalize modules: enforce exactly 20 modules with exactly 5 lessons each
+function normalizeModules(modules, topic, lessonsPerModule = 5) {
+  const TARGET_MODULES = 20;
+  const TARGET_LESSONS = 5;
+
+  // Pad or trim modules to exactly 20
+  let result = Array.from({ length: TARGET_MODULES }, (_, i) => {
+    const existing = modules[i];
+    const moduleNum = i + 1;
+    const moduleTitle = existing?.title || `Module ${moduleNum}: ${getDefaultModuleTitle(i, topic)}`;
+    const existingLessons = existing?.lessons || [];
+
+    // Pad or trim lessons to exactly 5
+    const lessons = Array.from({ length: TARGET_LESSONS }, (_, j) => {
+      const existingLesson = existingLessons[j];
+      if (existingLesson) {
+        return typeof existingLesson === "string"
+          ? { title: existingLesson }
+          : { title: existingLesson.title || `Lesson ${j + 1}` };
+      }
+      return { title: `Lesson ${j + 1}: Core Topic ${j + 1}` };
+    });
+
+    return { title: moduleTitle, lessons };
+  });
+
+  return result;
+}
+
+function getDefaultModuleTitle(index, topic) {
+  const phases = [
+    "Introduction & Foundations",
+    "Core Concepts",
+    "Fundamentals in Depth",
+    "Practical Application",
+    "Intermediate Techniques",
+    "Advanced Methods",
+    "Real-World Projects",
+    "Problem Solving",
+    "Best Practices",
+    "Optimization Strategies",
+    "Expert Patterns",
+    "System Design",
+    "Testing & Quality",
+    "Security & Performance",
+    "Deployment & Scaling",
+    "Ecosystem & Tooling",
+    "Case Studies",
+    "Industry Insights",
+    "Capstone Project",
+    "Mastery & Next Steps",
+  ];
+  return phases[index] || `Advanced Topic ${index + 1}`;
+}
+
 // Fallback if AI fails
-function fallbackCourse(topic, difficulty, modules, lessonsPerModule) {
+function fallbackCourse(topic, difficulty, modules = 20, lessonsPerModule = 5) {
   return {
     title: `${topic} - ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Course`,
     level: difficulty,
-    totalModules: modules,
-    totalLessons: modules * lessonsPerModule,
-    modules: Array.from({ length: modules }, (_, i) => ({
+    totalModules: 20,
+    totalLessons: 100,
+    modules: Array.from({ length: 20 }, (_, i) => ({
       id: i + 1,
-      title: `Module ${i + 1}: ${i === 0 ? "Getting Started" : i === 1 ? "Core Concepts" : `Advanced Topics`}`,
-      lessons: Array.from({ length: lessonsPerModule }, (_, j) => ({
-        title: `Lesson ${i * lessonsPerModule + j + 1}: Key Concept ${j + 1}`,
+      title: `Module ${i + 1}: ${getDefaultModuleTitle(i, topic)}`,
+      lessons: Array.from({ length: 5 }, (_, j) => ({
+        title: `Lesson ${i * 5 + j + 1}: Key Concept ${j + 1}`,
         content: "",
       })),
     })),
