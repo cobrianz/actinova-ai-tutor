@@ -688,6 +688,20 @@ export default function LearnContent() {
     // Handle code blocks FIRST (before other replacements) - CRITICAL
     const codeBlocks = [];
     html = html.replace(/```(\w+)?\s*\n([\s\S]*?)```/g, (match, lang, code) => {
+      // If the code block is explicitly marked as math or latex, render with KaTeX
+      if (lang === "math" || lang === "latex" || lang === "tex") {
+        try {
+          const rendered = katex.renderToString(code.trim(), {
+            displayMode: true,
+            throwOnError: false,
+            output: "html"
+          });
+          return `<div class="my-6 p-4 text-foreground overflow-x-auto font-sans">${rendered}</div>`;
+        } catch (e) {
+          return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${code.trim()}</div>`;
+        }
+      }
+      
       const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
       codeBlocks.push(
         `<pre class="bg-slate-100 p-4 rounded-lg overflow-x-auto my-4 border border-border"><code class="text-sm text-slate-800 language-${lang || "plaintext"}">${code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`

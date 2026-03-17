@@ -166,6 +166,7 @@ RULES:
 - If the student asks a follow-up, use the previous context to provide a helpful answer
 - If the question asks for a definition, give just the definition
 - If the question asks for an explanation, give just the explanation needed
+- CRITICAL for Math Equations: ALWAYS wrap inline math equations in \\( ... \\) and display math equations in \\[ ... \\]. NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
 
 Course Title: ${courseTitle}
 Course Content Reference: ${courseContent.substring(0, 12000)}`;
@@ -278,6 +279,7 @@ Include:
 - 3-5 Practice exercises with solutions
 - Comprehensive Key takeaways
 - A specific "Further Reading" section with suggested topics
+- CRITICAL for Math Equations: ALWAYS wrap inline math equations in \\( ... \\) and display math equations in \\[ ... \\]. NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
 - CRITICAL: DO NOT provide Python code (like matplotlib, seaborn, etc.) to generate visuals. Instead, describe the visuals or use simple Markdown formatting.
 Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
 CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.
