@@ -41,12 +41,12 @@ export default function CTA({ handleGetStarted }) {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
               <button
                 onClick={handleGetStarted}
-                className="group w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                className="group w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
               >
                 Get Started for Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="w-full sm:w-auto px-10 py-5 bg-background/10 hover:bg-background/20 text-background rounded-2xl font-bold text-lg border border-background/20 transition-all">
+              <button className="w-full sm:w-auto px-8 py-4 bg-background/10 hover:bg-background/20 text-background rounded-xl font-bold text-base border border-background/20 transition-all">
                 Schedule a Demo
               </button>
             </div>

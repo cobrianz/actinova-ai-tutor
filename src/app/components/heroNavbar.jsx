@@ -105,7 +105,7 @@ export default function HeroNavbar({ handleGetStarted }) {
             {user ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 Dashboard
               </button>
@@ -119,7 +119,7 @@ export default function HeroNavbar({ handleGetStarted }) {
                 </Link>
                 <button
                   onClick={() => router.push("/auth/signup")}
-                  className="px-6 py-2.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-all flex items-center gap-2"
+                  className="px-5 py-2 rounded-lg bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-all flex items-center gap-2"
                 >
                   Join Now
                   <ArrowRight className="w-4 h-4" />

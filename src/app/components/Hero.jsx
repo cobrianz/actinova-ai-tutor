@@ -83,7 +83,7 @@ export default function Hero({ handleGetStarted }) {
           >
             <button
               onClick={handleCTAClick}
-              className="group relative px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-semibold text-lg overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] hover:scale-[1.02] active:scale-[0.98]"
+              className="group relative px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-base overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="relative z-10 flex items-center gap-2">
                 {user ? "Continue Your Journey" : "Start Learning Free"}
@@ -106,7 +106,7 @@ export default function Hero({ handleGetStarted }) {
                   });
                 }
               }}
-              className="px-8 py-4 bg-secondary hover:bg-secondary/80 text-foreground rounded-2xl font-semibold text-lg border border-border transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground rounded-xl font-semibold text-base border border-border transition-all flex items-center gap-2"
             >
               <Play className="w-5 h-5 fill-current" />
               See How It Works
