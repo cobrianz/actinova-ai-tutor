@@ -338,7 +338,9 @@ export default function LearnContent() {
       }
 
       // Auto-mark lesson as completed now that content has been generated
-      const lessonId = `${moduleId}-${lessonIndex}`;
+      const module = courseData?.modules?.find((m) => m.id === moduleId);
+      const lesson = module?.lessons?.[lessonIndex];
+      const lessonId = lesson?.id || `${moduleId}-${lessonIndex}`;
       const courseId = courseData?._id ? String(courseData._id) : null;
 
       // Update local completion state
