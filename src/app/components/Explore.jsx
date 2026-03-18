@@ -825,6 +825,10 @@ const staticCategories = [
   },
 ];
 
+const getButtonColorStyles = () => {
+  return "bg-violet-600 hover:bg-violet-700 text-white border-violet-600";
+};
+
 export default function Explore() {
   const router = useRouter();
   const { user, refreshToken } = useAuth();
@@ -1017,19 +1021,24 @@ export default function Explore() {
   const handleGenerateCourse = async (topic) => {
     if (generatingCourse) return;
 
+    // Plan enforcement for difficulty levels (Intermediate/Advanced require Pro)
+    const topicDifficulty = (topic.difficulty || "beginner").toLowerCase();
+    if (!userIsPremium && (topicDifficulty === "intermediate" || topicDifficulty === "advanced")) {
+      toast.error("Intermediate and Advanced levels require a Pro subscription. Redirecting to upgrade...");
+      setTimeout(() => router.push("/pricing"), 2000);
+      return;
+    }
+
     setGeneratingCourse(topic.title);
     toast.loading(`Generating course: ${topic.title}...`, { id: "generating" });
 
     try {
-      // 1. Determine difficulty based on user status and topic difficulty
-      let difficulty = (topic.difficulty || "beginner").toLowerCase();
-
-      // 2. Validate difficulty matches API whitelist
+      // 1. Determine difficulty (already checked for premium, but safe to force beginner for UI consistency)
+      let difficulty = topicDifficulty;
       if (!["beginner", "intermediate", "advanced"].includes(difficulty)) {
         difficulty = "beginner";
       }
 
-      // 3. Force beginner for free users (Premium is required for Intermediate/Advanced)
       if (!userIsPremium) {
         difficulty = "beginner";
       }
@@ -1271,7 +1280,7 @@ export default function Explore() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredTrendingTopics.map((topic, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 hover:border-violet-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
+                  <div key={i} className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:border-violet-300 shadow-none hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white flex-1 group-hover:text-violet-700 transition-colors">{topic.title}</h3>
                       <span className={`ml-2 px-2.5 py-1 text-[10px] font-bold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-50 text-emerald-600' :
@@ -1289,8 +1298,8 @@ export default function Explore() {
                     </div>
                     <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
                       disabled={generatingCourse === topic.title}
-                      className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white py-2.5 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                      {generatingCourse === topic.title ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate Course</>}
+                      className={`w-full ${getButtonColorStyles()} disabled:opacity-50 py-2.5 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border-none shadow-none`}>
+                      {generatingCourse === topic.title ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate course</>}
                     </button>
                   </div>
                 ))}
@@ -1321,7 +1330,7 @@ export default function Explore() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
-                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 hover:border-violet-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+                    <div key={i} className="group bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 hover:border-violet-500 shadow-none hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
                       {!userIsPremium && (
                         <div className="absolute top-3 right-3 bg-amber-50 text-amber-600 text-[10px] font-bold px-2.5 py-1 rounded-full">⭐ Premium</div>
                       )}
@@ -1344,8 +1353,8 @@ export default function Explore() {
                         )}
                       </div>
                       <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
-                        className="w-full bg-slate-50 dark:bg-slate-800 hover:bg-violet-600 hover:text-white text-slate-700 dark:text-slate-300 py-3 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 border border-slate-100 dark:border-slate-700 hover:border-violet-600 disabled:opacity-50 transition-all">
-                        {exploringCategory === category.name ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-4 h-4" /> Explore Curriculum</>}
+                        className={`w-full ${getButtonColorStyles()} py-3 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-none border-none disabled:opacity-50`}>
+                        {exploringCategory === category.name ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-4 h-4" /> Explore curriculum</>}
                       </button>
                     </div>
                   ))}
@@ -1466,7 +1475,7 @@ export default function Explore() {
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 hover:shadow-lg transition-shadow relative group"
+                    className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-none hover:border-violet-500 transition-all relative group"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-lg font-semibold text-foreground flex-1">
@@ -1517,7 +1526,7 @@ export default function Explore() {
                           handleGenerateCourse(course);
                         }}
                         disabled={generatingCourse === course.title}
-                        className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        className={`w-full ${getButtonColorStyles()} py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-none border-none`}
                       >
                         {generatingCourse === course.title ? (
                           <>
@@ -1527,7 +1536,7 @@ export default function Explore() {
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4" />
-                            <span>Generate Course</span>
+                            <span>Generate course</span>
                           </>
                         )}
                       </button>
