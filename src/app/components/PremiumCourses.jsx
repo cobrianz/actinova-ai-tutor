@@ -427,7 +427,7 @@ export default function PremiumCourses() {
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
           <span className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">Premium Courses</span>
         </h1>
-        <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed font-medium">
+        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
           Professional-grade curricula designed for deep mastery. Experience advanced AI tutoring, expert instruction, and comprehensive materials tailored to your learning goals.
         </p>
       </motion.div>
@@ -446,7 +446,7 @@ export default function PremiumCourses() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search curricula, topics, or skills..."
-            className="w-full pl-12 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all text-base font-medium"
+            className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium"
           />
         </div>
         <div className="flex items-center gap-3">
@@ -478,7 +478,7 @@ export default function PremiumCourses() {
             </div>
             <button
               onClick={() => handleUpgradePlan("pro")}
-              className="shrink-0 bg-white text-violet-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+              className="shrink-0 bg-white text-primary px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors cursor-pointer"
             >
               Upgrade to Pro
             </button>
@@ -510,21 +510,17 @@ export default function PremiumCourses() {
             {trendingCourses.slice(1).map((course, index) => (
               <motion.div
                 key={course.id || index}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="group bg-card/60 backdrop-blur-xl border border-border rounded-2xl overflow-hidden hover:border-orange-400 transition-all duration-500 flex flex-col h-full"
+                whileHover={{ y: -4 }}
+                className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-orange-500/50 transition-all duration-300 flex flex-col h-full"
               >
-                <div className="relative h-36 overflow-hidden">
-                  <div className="absolute inset-0 bg-slate-800 transition-transform duration-700 group-hover:scale-110">
-                    <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
-                  </div>
-                  <div className="absolute top-5 left-5 bg-black/20 backdrop-blur-xl text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center space-x-2 border border-white/20 ring-1 ring-white/10">
-                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-ping" />
-                    <span>Trending This Week</span>
-                  </div>
-                </div>
-
                 <div className="p-8 flex flex-col flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="px-3 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-orange-500/20">
+                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      Trending
+                    </div>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{course.category || "General"}</span>
+                  </div>
                   <h3 className="text-xl font-black text-foreground mb-3 tracking-tight group-hover:text-primary transition-colors">
                     {course.title}
                   </h3>
@@ -577,8 +573,7 @@ export default function PremiumCourses() {
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-4 h-4 group-hover/btn:animate-bounce" />
-                            <span>Enroll in Trend</span>
+                            <span>Start Learning</span>
                           </>
                         )}
                       </div>
@@ -596,60 +591,60 @@ export default function PremiumCourses() {
       {
         isPro && featured && (
           <motion.div
-            className="relative overflow-hidden rounded-2xl border border-border bg-card/40 backdrop-blur-xl mb-16"
+            className="relative overflow-hidden rounded-3xl border border-primary/20 bg-card mb-16 shadow-2xl shadow-primary/5"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            {/* Decorative background elements */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-700" />
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-[100px]" />
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/20 rounded-full blur-[80px]" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-pink-500/20 rounded-full blur-[120px]" />
+            {/* Professional vibrant background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-indigo-600/5 dark:from-violet-900/10 dark:to-indigo-900/10" />
+            <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-primary/10 to-transparent opacity-50" />
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]" />
 
             <div className="relative z-10 p-8 md:p-12 lg:p-16">
               <div className="flex flex-col lg:flex-row gap-12 items-center">
                 {/* Left Column - Content */}
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-8">
-                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30">
-                      <Crown className="w-6 h-6 text-white" />
+                    <div className="p-3 bg-primary/10 rounded-2xl border border-primary/20">
+                      <Crown className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <span className="bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent font-black text-xs uppercase tracking-[0.2em]">
+                      <span className="text-primary font-black text-xs uppercase tracking-[0.2em]">
                         Featured Curriculum
                       </span>
-                      <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mt-1">
+                      <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">
                         {isPro ? "Premium Exclusive" : "Upgrade to Access"}
                       </p>
                     </div>
                   </div>
 
-                  <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tight">
+                  <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight tracking-tight">
                     {featured.title}
                   </h2>
-                  <p className="text-lg text-white/80 mb-8 leading-relaxed font-medium">
+                  <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-medium">
                     {featured.description}
                   </p>
 
-                  <div className="bg-white/10 border border-white/20 rounded-2xl p-4 mb-8 max-w-xl">
-                    <p className="text-white text-xs font-bold leading-relaxed flex items-center gap-2">
+                  <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 mb-8 max-w-xl">
+                    <p className="text-primary text-xs font-bold leading-relaxed flex items-center gap-2">
                       <Sparkles className="w-4 h-4" />
                       <span>Personalized for your learning goals. Refreshes monthly.</span>
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-8 mb-8">
-                    <div className="flex items-center space-x-2 text-white/80 font-bold bg-white/10 px-4 py-2 rounded-xl border border-white/20">
+                    <div className="flex items-center space-x-2 text-foreground font-bold bg-secondary/50 px-4 py-2 rounded-xl border border-border">
                       <Clock className="w-4 h-4 text-primary" />
                       <span className="text-sm">{featured.duration}</span>
                     </div>
-                    <div className="flex items-center space-x-2 bg-white/10 px-4 py-2 rounded-xl border border-white/20">
+                    <div className="flex items-center space-x-2 bg-secondary/50 px-4 py-2 rounded-xl border border-border">
                       <div className="flex items-center space-x-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className="w-3 h-3 text-yellow-500 fill-yellow-500"
+                            className="w-3 h-3 text-amber-500 fill-amber-500"
                           />
                         ))}
                         <span className="ml-2 font-black text-sm text-foreground">
@@ -679,18 +674,18 @@ export default function PremiumCourses() {
 
                 {/* Right Column - CTA & Premium Quote */}
                 <div className="w-full lg:w-1/3 flex flex-col gap-6">
-                  <div className="bg-white/10 border border-white/20 rounded-3xl p-8 relative group hover:bg-white/20 transition-colors">
-                    <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
-                      <Crown className="w-12 h-12 text-white" />
+                  <div className="bg-secondary/30 border border-border rounded-3xl p-8 relative group hover:bg-secondary/50 transition-colors">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-primary">
+                      <Crown className="w-12 h-12" />
                     </div>
-                    <p className="text-white font-bold italic text-lg leading-relaxed relative mb-4">
+                    <p className="text-foreground font-bold italic text-lg leading-relaxed relative mb-4">
                       "{featured.premiumNote || featured.staffNote}"
                     </p>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
-                      <p className="text-white/70 text-xs font-black uppercase tracking-widest">
+                      <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">
                         Actirova Premium Team
                       </p>
                     </div>
@@ -757,25 +752,16 @@ export default function PremiumCourses() {
                 <motion.div
                   key={course.id || index}
                   variants={itemVariants}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className="group relative bg-card/60 backdrop-blur-xl border border-border rounded-xl overflow-hidden hover:border-primary/40 transition-all duration-500 flex flex-col h-full"
+                  whileHover={{ y: -4 }}
+                  className="group relative bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 flex flex-col h-full"
                 >
-                  {/* Visual Header */}
-                  <div className="relative h-36 overflow-hidden">
-                    <div className={`absolute inset-0 transition-transform duration-700 group-hover:scale-110 ${index % 3 === 0 ? "bg-blue-600" :
-                      index % 3 === 1 ? "bg-purple-600" :
-                        "bg-indigo-600"
-                      }`}>
-                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+                  {/* Content Header */}
+                  <div className="px-6 pt-6 flex justify-between items-start">
+                    <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border ${getBadgeColor(course.badge)}`}>
+                      {getBadgeIcon(course.badge)}
+                      {course.badge}
                     </div>
-
-                    {/* Badges */}
-                    <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                      <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md ${getBadgeColor(course.badge)}`}>
-                        {getBadgeIcon(course.badge)}
-                        {course.badge}
-                      </div>
-                    </div>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{course.category || "General"}</span>
                   </div>
 
                   {/* Content */}
@@ -843,14 +829,13 @@ export default function PremiumCourses() {
                         <button
                           onClick={() => handleStartLearning(course)}
                           disabled={preparingCourse === course.id}
-                          className="w-full py-3 px-6 rounded-xl bg-primary text-primary-foreground font-semibold hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
+                          className="w-full py-3 px-6 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn"
                         >
                           {preparingCourse === course.id ? (
                             <><div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground"></div> Preparing...</>
                           ) : (
                             <>
-                              <Sparkles className="w-5 h-5 group-hover/btn:animate-pulse" />
-                              <span>Start Learning Now</span>
+                              <span>Start Learning</span>
                             </>
                           )}
                         </button>
@@ -888,9 +873,9 @@ export default function PremiumCourses() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`min-w-[44px] h-11 px-4 rounded-xl text-sm font-semibold transition-all ${currentPage === page
-                      ? "bg-violet-600 text-white border border-violet-600"
-                      : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-violet-300 hover:text-violet-600"
+                    className={`min-w-[40px] h-10 px-4 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${currentPage === page
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-primary/50"
                       }`}
                   >
                     {page}

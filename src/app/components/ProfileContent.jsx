@@ -271,7 +271,7 @@ export default function ProfileContent() {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div
-          className="bg-card border border-border rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          className="bg-card border border-border rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         >
           <div
             className="sticky top-0 flex items-center justify-between p-6 border-b border-border bg-card"
@@ -298,7 +298,7 @@ export default function ProfileContent() {
         <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-7xl mx-auto">
             {/* Professional Profile Header */}
-            <div className="mb-8 p-6 rounded-2xl bg-card text-foreground shadow-sm border border-border">
+            <div className="mb-8 p-6 rounded-2xl bg-card text-foreground border border-border">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Avatar */}
                 <Avatar className="w-24 h-24 cursor-default border-2 border-primary/20 bg-primary/5">
@@ -359,8 +359,8 @@ export default function ProfileContent() {
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${isActive
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                      : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground shadow-sm border border-border"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
                       }`}
                   >
                     <Icon size={16} />
@@ -371,7 +371,7 @@ export default function ProfileContent() {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 rounded-2xl bg-card text-foreground shadow-sm border border-border">
+            <div className="p-6 rounded-2xl bg-card text-foreground border border-border">
               {activeTab === "my-profile" && (
                 <div className="space-y-10">
                   {loading ? (
@@ -428,7 +428,7 @@ export default function ProfileContent() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {/* Course Generation Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 border border-violet-500/10 hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/5">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 border border-violet-500/10 hover:border-violet-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
                               <div className="p-3 rounded-xl bg-violet-500/10 text-violet-600">
                                 <BookOpen size={24} />
@@ -455,7 +455,7 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Report Generation Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 hover:border-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 hover:border-blue-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
                               <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600">
                                 <FileText size={24} />
@@ -482,7 +482,7 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Chat Messages Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/5">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
                               <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600">
                                 <MessageSquare size={24} />
@@ -509,7 +509,7 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Flashcard Sets Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-orange-500/5 to-yellow-500/5 border border-orange-500/10 hover:border-orange-500/30 transition-all hover:shadow-xl hover:shadow-orange-500/5">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-orange-500/5 to-yellow-500/5 border border-orange-500/10 hover:border-orange-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
                               <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600">
                                 <Sparkles size={24} />
@@ -536,7 +536,7 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Quiz Sets Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-pink-500/5 border border-indigo-500/10 hover:border-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-pink-500/5 border border-indigo-500/10 hover:border-indigo-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
                               <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-600">
                                 <Target size={24} />
@@ -580,7 +580,7 @@ export default function ProfileContent() {
                           {!profileData?.usage?.isPremium && (
                             <button
                               onClick={() => setActiveTab("billing")}
-                              className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-black shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
+                              className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-black hover:scale-[1.02] transition-transform"
                             >
                               Upgrade Now
                             </button>
@@ -634,7 +634,7 @@ export default function ProfileContent() {
                     <button
                       onClick={handlePasswordChange}
                       disabled={updating}
-                      className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/30 flex items-center gap-2"
+                      className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all flex items-center gap-2"
                     >
                       {updating && <Loader2 size={16} className="animate-spin" />}
                       Update Password
@@ -688,7 +688,7 @@ export default function ProfileContent() {
                     <button
                       onClick={handleSaveSettings}
                       disabled={updating}
-                      className="px-8 py-2.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl font-semibold shadow-lg hover:shadow-primary/30 transition-all"
+                      className="px-8 py-2.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl font-semibold transition-all"
                     >
                       {updating ? "Saving..." : "Save Preferences"}
                     </button>
@@ -698,7 +698,7 @@ export default function ProfileContent() {
 
               {activeTab === "billing" && (
                 <div className="space-y-8">
-                  <div className={`p-6 rounded-2xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/20" : "bg-muted border border-border"}`}>
+                  <div className={`p-6 rounded-2xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-blue-600 to-blue-400 text-white" : "bg-muted border border-border"}`}>
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-4">
                         <div>
@@ -722,7 +722,7 @@ export default function ProfileContent() {
                         {!profileData?.usage?.isPremium && (
                           <button
                             onClick={() => router.push("/pricing")}
-                            className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-xl shadow-primary/20 hover:bg-primary/90"
+                            className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90"
                           >
                             Upgrade to Pro
                           </button>
@@ -737,7 +737,7 @@ export default function ProfileContent() {
                       <Receipt size={20} /> Billing History
                     </h3>
 
-                    <div className="overflow-hidden rounded-xl border border-border shadow-sm">
+                    <div className="overflow-hidden rounded-xl border border-border">
                       {profileData?.user?.billingHistory?.length > 0 ? (
                         <table className="w-full text-sm text-left">
                           <thead className="text-xs uppercase bg-muted text-muted-foreground border-b border-border">
