@@ -205,6 +205,7 @@ export async function GET(request) {
         loginCount: user.loginCount || 0,
         settings: user.settings || {},
         billingHistory: user.billingHistory || [],
+        avatar: user.avatar || null,
       },
     });
   } catch (error) {

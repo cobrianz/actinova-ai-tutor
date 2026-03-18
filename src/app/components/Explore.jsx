@@ -1267,7 +1267,7 @@ export default function Explore() {
 
       {/* Search + Filters */}
       <div className="mb-10">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -1320,7 +1320,7 @@ export default function Explore() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTrendingTopics.map((topic, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
                     <div className="flex items-start justify-between mb-4">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-violet-600 transition-colors">{topic.title}</h3>
                       <span className={`ml-2 px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
@@ -1381,7 +1381,7 @@ export default function Explore() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
-                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 overflow-hidden relative">
+                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 transition-all duration-300 overflow-hidden relative">
                       {!userIsPremium && (
                         <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span className="text-xs">⭐</span> Premium</div>
                       )}
@@ -1427,7 +1427,7 @@ export default function Explore() {
                       <p className="text-violet-700 dark:text-violet-300 font-bold text-lg mb-2">Can't find what you're looking for?</p>
                       <p className="text-violet-500 text-sm mb-5">Generate a custom course with AI</p>
                       <button onClick={() => router.push("/dashboard?tab=generate")}
-                        className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all hover:shadow-lg hover:shadow-violet-500/25">
+                        className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all">
                         <Sparkles className="w-4 h-4" /> Generate Custom Course
                       </button>
                     </div>
@@ -1526,7 +1526,7 @@ export default function Explore() {
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 relative group"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 transition-all duration-300 relative group"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-violet-600 transition-colors">
@@ -1618,7 +1618,7 @@ export default function Explore() {
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`min-w-[44px] h-11 px-4 rounded-xl text-sm font-semibold transition-all ${currentPage === page
-                    ? "bg-violet-600 text-white shadow-lg shadow-violet-500/25"
+                    ? "bg-violet-600 text-white border border-violet-600"
                     : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400"
                     }`}
                 >
@@ -1645,10 +1645,11 @@ export default function Explore() {
       {/* Premium Upgrade Modal */}
       {showPremiumModal && selectedCategoryForModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 border border-slate-200 dark:border-slate-700">
             <div className="text-center">
               <div className="mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/25">
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                  <span className="text-3xl">⭐</span>
                   <span className="text-3xl">⭐</span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
@@ -1675,7 +1676,7 @@ export default function Explore() {
                     setSelectedCategoryForModal(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+                  className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold transition-all"
                 >
                   Upgrade Now
                 </button>
@@ -1688,10 +1689,10 @@ export default function Explore() {
       {/* Monthly Limit Reached Modal */}
       {showLimitModal && limitModalData && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 border border-slate-200 dark:border-slate-700">
             <div className="text-center">
               <div className="mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/25">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-5">
                   <Clock className="text-white w-10 h-10" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
@@ -1729,7 +1730,7 @@ export default function Explore() {
                     setLimitModalData(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+                  className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold transition-all"
                 >
                   Upgrade to Pro
                 </button>

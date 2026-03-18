@@ -38,6 +38,7 @@ import {
   Sparkles,
   Brain,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "./AuthProvider";
 import { useTheme } from "./ThemeProvider";
 import { toast } from "sonner";
@@ -300,9 +301,12 @@ export default function ProfileContent() {
             <div className="mb-8 p-6 rounded-2xl bg-card text-foreground shadow-sm border border-border">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Avatar */}
-                <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0 bg-primary/10 text-primary">
-                  {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
-                </div>
+                <Avatar className="w-24 h-24 cursor-default border-2 border-primary/20 bg-primary/5">
+                  <AvatarImage src={profileData?.user?.avatar || user?.avatar} alt={profileData?.user?.firstName || user?.name} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
+                    {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
 
                 {/* Info */}
                 <div className="flex-1 text-center md:text-left">

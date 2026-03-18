@@ -11,6 +11,17 @@ import {
   Users,
   Sparkles,
   Clock,
+  Headphones,
+  Building,
+  Handshake,
+  Globe,
+  ArrowRight,
+  Twitter,
+  Linkedin,
+  Instagram,
+  LifeBuoy,
+  Briefcase,
+  Newspaper,
 } from "lucide-react";
 import Link from "next/link";
 import HeroNavbar from "../components/heroNavbar";
@@ -43,7 +54,7 @@ export default function ContactPage() {
       if (!res.ok) throw new Error(data?.error || "Failed to send message");
 
       toast.success(
-        "Your message was sent. You'll receive the response in 72hrs"
+        "Your message was sent. You'll receive a response within 24-48 hours"
       );
       setFormData({
         name: "",
@@ -63,87 +74,88 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: "Email Us",
-      description: "Send us an email and we'll respond within 24 hours",
+      description: "Send us an email anytime",
       contact: "hello@actirova.ai",
       action: "mailto:hello@actirova.ai",
+      availability: "24/7 Response",
     },
     {
       icon: Phone,
       title: "Call Us",
-      description: "Speak with our team during business hours",
+      description: "Speak with our team",
       contact: "+254 702 764 907",
       action: "tel:+254702764907",
+      availability: "Mon-Fri, 9AM-6PM EAT",
     },
     {
       icon: MapPin,
       title: "Visit Us",
-      description: "Come visit our team in Nairobi",
+      description: "Come say hello",
       contact: "Nairobi, Kenya",
-      action:
-        "https://www.google.com/maps/search/?api=1&query=Nairobi%2C+Kenya",
+      action: "https://www.google.com/maps/search/?api=1&query=Nairobi%2C+Kenya",
+      availability: "By appointment",
     },
   ];
 
-  const faqs = [
+  const departments = [
     {
-      question: "How quickly do you respond to inquiries?",
-      answer:
-        "We typically respond to all inquiries within 24 hours during business days.",
+      icon: Headphones,
+      title: "Customer Support",
+      description: "For technical issues and general inquiries",
+      email: "support@actirova.ai",
     },
     {
-      question: "Do you offer enterprise solutions?",
-      answer:
-        "Yes! We have dedicated enterprise plans with custom features and support.",
+      icon: Building,
+      title: "Enterprise Sales",
+      description: "Custom solutions for organizations",
+      email: "enterprise@actirova.ai",
     },
     {
-      question: "Can I schedule a demo?",
-      answer: "Contact us to schedule a personalized demo of our platform.",
+      icon: Handshake,
+      title: "Partnerships",
+      description: "Collaborate with us",
+      email: "partners@actirova.ai",
     },
     {
-      question: "Do you provide technical support?",
-      answer:
-        "Yes, we offer comprehensive technical support for all our users.",
+      icon: Newspaper,
+      title: "Press & Media",
+      description: "For media inquiries",
+      email: "press@actirova.ai",
     },
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
+  const socialLinks = [
+    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
+    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
+    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <HeroNavbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
         {/* Header */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+          <div className="w-20 h-20 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <MessageCircle className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
             Get in Touch
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
             Have questions about our platform? Want to explore enterprise
             solutions? We'd love to hear from you and help you on your learning
             journey.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Form */}
           <motion.div
             className="lg:col-span-2"
@@ -151,17 +163,20 @@ export default function ContactPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                 Send us a message
               </h2>
+              <p className="text-slate-500 dark:text-slate-400 mb-6">
+                Fill out the form below and we'll get back to you as soon as possible.
+              </p>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label
                       htmlFor="name"
-                      className="block text-sm font-medium text-foreground mb-2"
+                      className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
                     >
                       Full Name
                     </label>
@@ -172,15 +187,15 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-border rounded-lg bg-secondary text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      placeholder="Your full name"
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                      placeholder="John Doe"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-sm font-medium text-foreground mb-2"
+                      className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
                     >
                       Email Address
                     </label>
@@ -191,8 +206,8 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-border rounded-lg bg-secondary text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      placeholder="your@email.com"
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                      placeholder="john@example.com"
                     />
                   </div>
                 </div>
@@ -200,7 +215,7 @@ export default function ContactPage() {
                 <div>
                   <label
                     htmlFor="category"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
                   >
                     Category
                   </label>
@@ -209,7 +224,7 @@ export default function ContactPage() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-border rounded-lg bg-secondary text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
                   >
                     <option value="general">General Inquiry</option>
                     <option value="support">Technical Support</option>
@@ -222,7 +237,7 @@ export default function ContactPage() {
                 <div>
                   <label
                     htmlFor="subject"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
                   >
                     Subject
                   </label>
@@ -233,15 +248,15 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-border rounded-lg bg-secondary text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    placeholder="What's this about?"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                    placeholder="How can we help you?"
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="message"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
                   >
                     Message
                   </label>
@@ -251,8 +266,8 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleChange}
                     required
-                    rows={6}
-                    className="w-full px-4 py-3 border border-border rounded-lg bg-secondary text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    rows={5}
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 resize-none"
                     placeholder="Tell us more about your inquiry..."
                   />
                 </div>
@@ -260,13 +275,13 @@ export default function ContactPage() {
                 <motion.button
                   type="submit"
                   disabled={isSubmitting}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3.5 px-6 rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
                       <span>Sending...</span>
                     </>
                   ) : (
@@ -280,16 +295,16 @@ export default function ContactPage() {
             </div>
           </motion.div>
 
-          {/* Contact Info & FAQ */}
+          {/* Sidebar */}
           <motion.div
-            className="space-y-8"
+            className="space-y-6"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             {/* Contact Information */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-              <h3 className="text-xl font-bold text-foreground mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">
                 Contact Information
               </h3>
 
@@ -300,20 +315,20 @@ export default function ContactPage() {
                     <motion.a
                       key={index}
                       href={info.action}
-                      className="flex items-start space-x-4 p-4 rounded-lg hover:bg-secondary transition-colors group"
+                      className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
                       whileHover={{ x: 5 }}
                     >
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <Icon className="w-5 h-5 text-primary" />
+                      <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center group-hover:bg-violet-600 transition-colors">
+                        <Icon className="w-5 h-5 text-violet-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900 dark:text-white">
                           {info.title}
                         </h4>
-                        <p className="text-sm text-muted-foreground mb-1">
+                        <p className="text-xs text-slate-500 mb-1">
                           {info.description}
                         </p>
-                        <p className="text-sm font-medium text-primary">
+                        <p className="text-sm font-medium text-violet-600">
                           {info.contact}
                         </p>
                       </div>
@@ -324,102 +339,127 @@ export default function ContactPage() {
             </div>
 
             {/* Business Hours */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Clock className="w-5 h-5 text-primary" />
-                <h3 className="text-xl font-bold text-foreground">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <Clock className="w-5 h-5 text-violet-600" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   Business Hours
                 </h3>
               </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Monday - Friday
-                  </span>
-                  <span className="text-foreground">
-                    9:00 AM - 6:00 PM PST
-                  </span>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Monday - Friday</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">9:00 AM - 6:00 PM EAT</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Saturday
-                  </span>
-                  <span className="text-foreground">
-                    10:00 AM - 4:00 PM PST
-                  </span>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Saturday</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">10:00 AM - 4:00 PM EAT</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Sunday
-                  </span>
-                  <span className="text-foreground">Closed</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Sunday</span>
+                  <span className="font-medium text-slate-400">Closed</span>
                 </div>
               </div>
             </div>
 
-            {/* Quick FAQ removed per request */}
+            {/* Department Contacts */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">
+                Department Contacts
+              </h3>
+
+              <div className="space-y-3">
+                {departments.map((dept, index) => {
+                  const Icon = dept.icon;
+                  return (
+                    <a
+                      key={index}
+                      href={`mailto:${dept.email}`}
+                      className="block p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-4 h-4 text-violet-600" />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{dept.title}</p>
+                          <p className="text-xs text-slate-500">{dept.email}</p>
+                        </div>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           </motion.div>
         </div>
 
-        {/* Alternative Contact Methods */}
+        {/* Social Links */}
         <motion.div
-          className="mt-16 text-center"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          className="mt-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <h2 className="text-2xl font-bold text-foreground mb-8">
-            Other Ways to Connect
-          </h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+              Follow Us
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-xl mx-auto">
+              Stay connected with us on social media for the latest updates, learning tips, and community news.
+            </p>
+            <div className="flex justify-center gap-4">
+              {socialLinks.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-600 transition-colors"
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.div
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              className="bg-card rounded-xl p-6 border border-border"
-            >
-              <MessageCircle className="w-8 h-8 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">
-                Call Us
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Call our team for quick assistance
-              </p>
-              <a
-                href="tel:+254702764907"
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hover:bg-primary/90 transition-colors inline-block"
-              >
-                Call +254702764907
-              </a>
-            </motion.div>
-
-            <motion.div
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              className="bg-card rounded-xl p-6 border border-border"
-            >
-              <Users className="w-8 h-8 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">
-                Community (Coming Soon)
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                We are launching our community soon
-              </p>
-              <button
-                disabled
-                className="bg-secondary text-muted-foreground px-4 py-2 rounded-lg text-sm cursor-not-allowed inline-block border border-border"
-              >
-                Coming Soon
-              </button>
-            </motion.div>
-
-            <motion.div
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-800"
-            >
-            </motion.div>
+        {/* Quick Links */}
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link href="/help" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-violet-300 transition-colors group">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">Visit Help Center</p>
+                  <p className="text-sm text-slate-500">BrowseFAQs and guides</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+              </div>
+            </Link>
+            
+            <Link href="/pricing" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-violet-300 transition-colors group">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">View Pricing</p>
+                  <p className="text-sm text-slate-500">Plans for every need</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+              </div>
+            </Link>
+            
+            <Link href="/about" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-violet-300 transition-colors group">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">Learn About Us</p>
+                  <p className="text-sm text-slate-500">Our mission and story</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+              </div>
+            </Link>
           </div>
         </motion.div>
       </div>
