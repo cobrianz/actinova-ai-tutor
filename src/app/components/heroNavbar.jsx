@@ -38,7 +38,6 @@ export default function HeroNavbar({ handleGetStarted }) {
 
   const navLinks = [
     { href: "#features", label: "Features", isAnchor: true },
-    { href: "#faq", label: "FAQ", isAnchor: true },
     { href: "/pricing", label: "Pricing", isAnchor: false },
     { href: "/blog", label: "Blog", isAnchor: false },
     { href: "/about", label: "About", isAnchor: false },
@@ -47,6 +46,14 @@ export default function HeroNavbar({ handleGetStarted }) {
   const handleNavClick = (e, href, isAnchor) => {
     if (isAnchor && href.startsWith("#")) {
       e.preventDefault();
+      setIsMenuOpen(false);
+
+      // If not on homepage, navigate there first then scroll
+      if (pathname !== "/") {
+        router.push("/" + href);
+        return;
+      }
+
       const element = document.querySelector(href);
       if (element) {
         const offset = 100;
@@ -59,7 +66,6 @@ export default function HeroNavbar({ handleGetStarted }) {
           top: offsetPosition,
           behavior: "smooth"
         });
-        setIsMenuOpen(false);
       }
     }
   };
