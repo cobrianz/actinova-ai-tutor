@@ -34,6 +34,54 @@ import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
+const TrendsSkeleton = () => (
+    <div className="space-y-10 sm:space-y-12">
+        {/* Trending Careers Skeleton */}
+        <div>
+            <div className="h-8 w-64 bg-slate-100 dark:bg-slate-800/50 rounded-lg mb-6 animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <div key={i} className="bg-white dark:bg-slate-900/40 border-2 border-slate-100 dark:border-slate-800/60 rounded-2xl p-6 h-[280px] flex flex-col justify-between shadow-sm">
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div className="h-6 w-3/4 bg-slate-100 dark:bg-slate-800/80 rounded-md animate-pulse" />
+                                <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800/80 rounded-md animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-4 w-full bg-slate-100 dark:bg-slate-800/50 rounded-md animate-pulse" />
+                                <div className="h-4 w-5/6 bg-slate-100 dark:bg-slate-800/50 rounded-md animate-pulse opacity-60" />
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                            <div className="h-10 flex-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl animate-pulse" />
+                            <div className="h-10 flex-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl animate-pulse" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Trending Skills Skeleton */}
+        <div>
+            <div className="h-8 w-48 bg-slate-100 dark:bg-slate-800/50 rounded-lg mb-6 animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <div key={i} className="bg-white dark:bg-slate-900/40 border-2 border-slate-100 dark:border-slate-800/60 rounded-2xl p-6 h-[220px] flex flex-col justify-between shadow-sm">
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div className="h-6 w-1/2 bg-slate-100 dark:bg-slate-800/80 rounded-md animate-pulse" />
+                                <div className="h-5 w-12 bg-slate-100 dark:bg-slate-800/80 rounded-md animate-pulse" />
+                            </div>
+                            <div className="h-4 w-full bg-slate-100 dark:bg-slate-800/50 rounded-md animate-pulse opacity-60" />
+                        </div>
+                        <div className="h-10 w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl mt-6 animate-pulse" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
 const CareerGrowth = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -447,208 +495,226 @@ const CareerGrowth = () => {
                         </p>
                     </div>
 
-                    {loadingTrends ? (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 animate-spin text-violet-600 mb-4" />
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Loading trending careers and skills...</p>
-                        </div>
-                    ) : trendingData ? (
-                        <div className="space-y-8 sm:space-y-10">
-                            {/* Trending Careers */}
-                            {trendingData.trendingCareers && trendingData.trendingCareers.length > 0 && (
-                                <div>
-                                    <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-                                        <Briefcase className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                                        Trending Careers
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-                                        {trendingData.trendingCareers.slice(0, 6).map((career, idx) => (
-                                            <motion.div
-                                                key={idx}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.1 * idx }}
-                                                className="bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950/30 dark:via-indigo-950/30 dark:to-purple-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
-                                            >
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
-                                                        {career.title}
-                                                    </h4>
-                                                    <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black">
-                                                        {career.growth || "Growing"}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-                                                    {career.description}
-                                                </p>
-                                                <div className="space-y-3">
-                                                    {career.averageSalary && (
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                                            <span className="font-semibold text-slate-700 dark:text-slate-300">{career.averageSalary}</span>
-                                                        </div>
-                                                    )}
-                                                    {career.industry && (
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                                                            <span className="text-slate-600 dark:text-slate-400">{career.industry}</span>
-                                                        </div>
-                                                    )}
-                                                    {career.skills && career.skills.length > 0 && (
-                                                        <div className="flex flex-wrap gap-2 pt-2">
-                                                            {career.skills.slice(0, 3).map((skill, i) => (
-                                                                <span key={i} className="px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-bold">
-                                                                    {skill}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="mt-5 pt-5 border-t border-violet-100 dark:border-violet-800/50 flex gap-3">
-                                                    <Button
-                                                        variant="default"
-                                                        className="flex-1 bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
-                                                        onClick={() => handleGenerateCourse(career.title)}
-                                                        disabled={generatingCourse === career.title}
-                                                    >
-                                                        {generatingCourse === career.title ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
-                                                        {generatingCourse === career.title ? "Generating..." : "Course"}
-                                                    </Button>
-                                                    <Button
-                                                        variant="secondary"
-                                                        className="flex-1 bg-violet-100 hover:bg-violet-200 text-violet-700 dark:bg-violet-900/50 dark:hover:bg-violet-900 dark:text-violet-300 shadow-sm"
-                                                        onClick={() => {
-                                                            toast.loading(`Generating professional resume for ${career.title}...`);
-                                                            setTimeout(() => {
-                                                                setSubTab("resume", { role: career.title, autoGenerate: "true", mode: "build" });
-                                                            }, 1000);
-                                                        }}
-                                                    >
-                                                        <FileText className="w-4 h-4 mr-2" />
-                                                        Resume
-                                                    </Button>
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Trending Skills */}
-                            {trendingData.trendingSkills && trendingData.trendingSkills.length > 0 && (
-                                <div>
-                                    <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-                                        <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                                        Trending Skills to Learn
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-                                        {trendingData.trendingSkills.slice(0, 6).map((skill, idx) => (
-                                            <motion.div
-                                                key={idx}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.1 * idx }}
-                                                className="bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 dark:from-indigo-950/30 dark:via-blue-950/30 dark:to-cyan-950/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
-                                            >
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
-                                                        {skill.skill}
-                                                    </h4>
-                                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${skill.demand === 'critical' ? 'bg-red-500 text-white' :
-                                                        skill.demand === 'high' ? 'bg-orange-500 text-white' :
-                                                            'bg-yellow-500 text-white'
-                                                        }`}>
-                                                        {skill.demand || 'Medium'}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-                                                    {skill.description}
-                                                </p>
-                                                {skill.relatedCareers && skill.relatedCareers.length > 0 && (
-                                                    <div className="pt-3 border-t border-indigo-200 dark:border-indigo-800 mb-4">
-                                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Related Careers</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {skill.relatedCareers.slice(0, 2).map((career, i) => (
-                                                                <span key={i} className="px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
-                                                                    {career}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <Button
-                                                    variant="ghost"
-                                                    className="w-full justify-between items-center bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-800/50"
-                                                    onClick={() => handleGenerateCourse(skill.skill)}
-                                                    disabled={generatingCourse === skill.skill}
+                    <AnimatePresence mode="wait">
+                        {loadingTrends ? (
+                            <motion.div
+                                key="skeleton"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <TrendsSkeleton />
+                            </motion.div>
+                        ) : trendingData ? (
+                            <motion.div
+                                key="content"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="space-y-8 sm:space-y-10"
+                            >
+                                {/* Trending Careers */}
+                                {trendingData.trendingCareers && trendingData.trendingCareers.length > 0 && (
+                                    <div>
+                                        <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                            <Briefcase className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                            Trending Careers
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                            {trendingData.trendingCareers.slice(0, 6).map((career, idx) => (
+                                                <motion.div
+                                                    key={idx}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.1 * idx }}
+                                                    className="bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950/30 dark:via-indigo-950/30 dark:to-purple-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
                                                 >
-                                                    <div className="flex items-center">
-                                                        {generatingCourse === skill.skill && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                                        {generatingCourse === skill.skill ? "Generating..." : "Start Learning"}
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
+                                                            {career.title}
+                                                        </h4>
+                                                        <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black">
+                                                            {career.growth || "Growing"}
+                                                        </span>
                                                     </div>
-                                                    {!generatingCourse && <ArrowRight className="w-4 h-4 ml-2" />}
-                                                </Button>
-                                            </motion.div>
-                                        ))}
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+                                                        {career.description}
+                                                    </p>
+                                                    <div className="space-y-3">
+                                                        {career.averageSalary && (
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                                                <span className="font-semibold text-slate-700 dark:text-slate-300">{career.averageSalary}</span>
+                                                            </div>
+                                                        )}
+                                                        {career.industry && (
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                                <span className="text-slate-600 dark:text-slate-400">{career.industry}</span>
+                                                            </div>
+                                                        )}
+                                                        {career.skills && career.skills.length > 0 && (
+                                                            <div className="flex flex-wrap gap-2 pt-2">
+                                                                {career.skills.slice(0, 3).map((skill, i) => (
+                                                                    <span key={i} className="px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-bold">
+                                                                        {skill}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-5 pt-5 border-t border-violet-100 dark:border-violet-800/50 flex gap-3">
+                                                        <Button
+                                                            variant="default"
+                                                            className="flex-1 bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
+                                                            onClick={() => handleGenerateCourse(career.title)}
+                                                            disabled={generatingCourse === career.title}
+                                                        >
+                                                            {generatingCourse === career.title ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
+                                                            {generatingCourse === career.title ? "Generating..." : "Course"}
+                                                        </Button>
+                                                        <Button
+                                                            variant="secondary"
+                                                            className="flex-1 bg-violet-100 hover:bg-violet-200 text-violet-700 dark:bg-violet-900/50 dark:hover:bg-violet-900 dark:text-violet-300 shadow-sm"
+                                                            onClick={() => {
+                                                                toast.loading(`Generating professional resume for ${career.title}...`);
+                                                                setTimeout(() => {
+                                                                    setSubTab("resume", { role: career.title, autoGenerate: "true", mode: "build" });
+                                                                }, 1000);
+                                                            }}
+                                                        >
+                                                            <FileText className="w-4 h-4 mr-2" />
+                                                            Resume
+                                                        </Button>
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {/* Market Insights */}
-                            {trendingData.marketInsights && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl sm:rounded-2xl p-6 sm:p-8"
-                                >
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                                        <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Market Insights</h3>
+                                {/* Trending Skills */}
+                                {trendingData.trendingSkills && trendingData.trendingSkills.length > 0 && (
+                                    <div>
+                                        <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                            <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                                            Trending Skills to Learn
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                            {trendingData.trendingSkills.slice(0, 6).map((skill, idx) => (
+                                                <motion.div
+                                                    key={idx}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.1 * idx }}
+                                                    className="bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 dark:from-indigo-950/30 dark:via-blue-950/30 dark:to-cyan-950/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
+                                                >
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
+                                                            {skill.skill}
+                                                        </h4>
+                                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${skill.demand === 'critical' ? 'bg-red-500 text-white' :
+                                                            skill.demand === 'high' ? 'bg-orange-500 text-white' :
+                                                                'bg-yellow-500 text-white'
+                                                            }`}>
+                                                            {skill.demand || 'Medium'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+                                                        {skill.description}
+                                                    </p>
+                                                    {skill.relatedCareers && skill.relatedCareers.length > 0 && (
+                                                        <div className="pt-3 border-t border-indigo-200 dark:border-indigo-800 mb-4">
+                                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Related Careers</p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {skill.relatedCareers.slice(0, 2).map((career, i) => (
+                                                                    <span key={i} className="px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                                                                        {career}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="w-full justify-between items-center bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-800/50"
+                                                        onClick={() => handleGenerateCourse(skill.skill)}
+                                                        disabled={generatingCourse === skill.skill}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            {generatingCourse === skill.skill && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                                            {generatingCourse === skill.skill ? "Generating..." : "Start Learning"}
+                                                        </div>
+                                                        {!generatingCourse && <ArrowRight className="w-4 h-4 ml-2" />}
+                                                    </Button>
+                                                </motion.div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
-                                        {trendingData.marketInsights}
-                                    </p>
-                                </motion.div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <AlertCircle className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-                            <p className="text-slate-600 dark:text-slate-400 mb-4">Unable to load trending data.</p>
-                            <Button
-                                onClick={() => {
-                                    setLoadingTrends(true);
-                                    setTrendingData(null);
-                                    const fetchTrending = async () => {
-                                        try {
-                                            const response = await apiClient.get("/api/career/trending");
-                                            if (response.ok) {
-                                                const data = await response.json();
-                                                if (data && (data.trendingCareers || data.trendingSkills || data.marketInsights)) {
-                                                    setTrendingData(data);
+                                )}
+
+                                {/* Market Insights */}
+                                {trendingData.marketInsights && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl sm:rounded-2xl p-6 sm:p-8"
+                                    >
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                            <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Market Insights</h3>
+                                        </div>
+                                        <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
+                                            {trendingData.marketInsights}
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="error"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="text-center py-12"
+                            >
+                                <AlertCircle className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+                                <p className="text-slate-600 dark:text-slate-400 mb-4">Unable to load trending data.</p>
+                                <Button
+                                    onClick={() => {
+                                        setLoadingTrends(true);
+                                        setTrendingData(null);
+                                        const fetchTrending = async () => {
+                                            try {
+                                                const response = await apiClient.get("/api/career/trending");
+                                                if (response.ok) {
+                                                    const data = await response.json();
+                                                    if (data && (data.trendingCareers || data.trendingSkills || data.marketInsights)) {
+                                                        setTrendingData(data);
+                                                    } else {
+                                                        setTrendingData(null);
+                                                    }
                                                 } else {
                                                     setTrendingData(null);
                                                 }
-                                            } else {
+                                            } catch (error) {
+                                                console.error("Error fetching trending data:", error);
                                                 setTrendingData(null);
+                                            } finally {
+                                                setLoadingTrends(false);
                                             }
-                                        } catch (error) {
-                                            console.error("Error fetching trending data:", error);
-                                            setTrendingData(null);
-                                        } finally {
-                                            setLoadingTrends(false);
-                                        }
-                                    };
-                                    fetchTrending();
-                                }}
-                                variant="outline"
-                                className="mt-4"
-                            >
-                                <Loader2 className="w-4 h-4 mr-2" />
-                                Retry
-                            </Button>
-                        </div>
-                    )}
+                                        };
+                                        fetchTrending();
+                                    }}
+                                    variant="outline"
+                                    className="mt-4"
+                                >
+                                    <Loader2 className="w-4 h-4 mr-2" />
+                                    Retry
+                                </Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </main>
 
