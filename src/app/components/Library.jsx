@@ -10,7 +10,6 @@ import {
   Grid,
   List,
   Play,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -24,7 +23,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import ConfirmModal from "./ConfirmModal";
+
 import { toast } from "sonner";
 import { downloadCourseAsPDF } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
@@ -39,8 +38,7 @@ export default function Library({ setActiveContent }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
   const [stats, setStats] = useState({});
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState(null);
+
   const [pinnedCourses, setPinnedCourses] = useState(new Set());
 
   const { user, loading: authLoading, refreshToken } = useAuth();
@@ -214,51 +212,7 @@ export default function Library({ setActiveContent }) {
     }
   };
 
-  const handleDelete = (courseId) => {
-    const course = courses.find((c) => c.id === courseId);
-    if (!course) return;
 
-    setCourseToDelete({
-      id: courseId,
-      title: course.title,
-    });
-    setDeleteModalOpen(true);
-  };
-
-  const confirmDelete = async (retryAfterRefresh = true) => {
-    if (!courseToDelete) return;
-
-    // Optimistic removal
-    setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
-
-    try {
-      const res = await apiClient.post("/api/library", { action: "delete", itemId: courseToDelete.id }, {
-        headers: {
-          "x-user-id": user?._id || user?.id || "",
-        }
-      });
-
-      if (res.status === 401 && retryAfterRefresh) {
-        // Try to refresh token and retry
-        const refreshSuccess = await refreshToken();
-        if (refreshSuccess) {
-          return confirmDelete(false);
-        }
-      }
-
-      if (res.ok) {
-        toast.success("Course deleted from library");
-      } else {
-        throw new Error("Delete failed");
-      }
-    } catch (err) {
-      toast.error("Failed to delete course");
-      fetchLibraryData(); // Re-fetch to restore
-    } finally {
-      setDeleteModalOpen(false);
-      setCourseToDelete(null);
-    }
-  };
 
   const isPremium =
     !!(
@@ -583,12 +537,7 @@ export default function Library({ setActiveContent }) {
                             className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`}
                           />
                         </button>
-                        <button
-                          onClick={() => handleDelete(course.id)}
-                          className="p-2 hover:bg-secondary rounded text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
                       </div>
                     </div>
 
@@ -673,20 +622,7 @@ export default function Library({ setActiveContent }) {
         </div>
       )}
 
-      {/* Delete Modal */}
-      <ConfirmModal
-        isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setCourseToDelete(null);
-        }}
-        onConfirm={confirmDelete}
-        title="Delete Course"
-        message={`Are you sure you want to delete "${courseToDelete?.title}"? This cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        confirmColor="red"
-      />
+
     </div>
   );
 }

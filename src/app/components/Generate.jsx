@@ -34,8 +34,40 @@ export default function Generate({ setActiveContent }) {
   const [showLoader, setShowLoader] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usageData, setUsageData] = useState(null);
   const router = useRouter();
   const { user, loading, refreshToken, isPro } = useAuth();
+
+  // Fetch live usage data from the server
+  const fetchUsage = React.useCallback(async () => {
+    try {
+      const res = await apiClient.get("/api/user/usage");
+      if (res.ok) {
+        const data = await res.json();
+        setUsageData(data);
+      }
+    } catch {
+      // silently fail — limits will be enforced server-side
+    }
+  }, []);
+
+  // Fetch usage on mount and when user changes
+  React.useEffect(() => {
+    if (user) fetchUsage();
+  }, [user, fetchUsage]);
+
+  // Refresh usage after usageUpdated event
+  React.useEffect(() => {
+    const onUpdate = () => fetchUsage();
+    if (typeof window !== "undefined") {
+      window.addEventListener("usageUpdated", onUpdate);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("usageUpdated", onUpdate);
+      }
+    };
+  }, [fetchUsage]);
 
   // Ensure overlay loader is cleared when component unmounts
   React.useEffect(() => {
@@ -79,10 +111,29 @@ export default function Generate({ setActiveContent }) {
   // Check tier (set by billing) and ensure status is active.
   const isPremium = isPro || !!user?.isPremium;
 
-  const atLimit = !!(
-    user?.usage?.isAtLimit ||
-    (!isPremium && user?.usage?.remaining === 0)
-  );
+  // Per-format limit checks from live usage data
+  const formatLimit = (formatKey) => {
+    if (!usageData || !usageData.details) return { used: 0, limit: Infinity, atLimit: false };
+    const detail = usageData.details[formatKey];
+    if (!detail) return { used: 0, limit: Infinity, atLimit: false };
+    const atLimit = detail.limit !== -1 && detail.limit !== null && detail.limit !== Infinity && detail.used >= detail.limit;
+    return { used: detail.used, limit: detail.limit, atLimit };
+  };
+
+  const courseLimitInfo = formatLimit("courses");
+  const flashcardsLimitInfo = formatLimit("flashcards");
+  const quizzesLimitInfo = formatLimit("quizzes");
+  const reportsLimitInfo = formatLimit("reports");
+
+  const currentFormatAtLimit = () => {
+    if (format === "course") return courseLimitInfo.atLimit;
+    if (format === "flashcards") return flashcardsLimitInfo.atLimit;
+    if (format === "quiz") return quizzesLimitInfo.atLimit;
+    if (format === "report") return reportsLimitInfo.atLimit;
+    return false;
+  };
+
+  const atLimit = currentFormatAtLimit();
 
   const friendlyName =
     !loading && user ? user.firstName || user.name || "" : "";
@@ -98,13 +149,14 @@ export default function Generate({ setActiveContent }) {
   const handleGenerate = async (retryCount = 0) => {
     if (!topic.trim()) return;
     if (isSubmitting) return; // prevent double submissions
-    
-    // AutoRun Bypass Fix: check limits before generating
-    if (format === "course" && atLimit) {
+
+    // Per-format limit enforcement before generating
+    if (currentFormatAtLimit()) {
+      const formatLabel = format === "course" ? "course" : format === "flashcards" ? "flashcard set" : format === "quiz" ? "quiz" : "report";
       toast.error(
-        !isPremium 
-          ? "You hit free limits — upgrade to get more generations" 
-          : "You have reached your course generation limit."
+        isPremium
+          ? `You have reached your monthly ${formatLabel} limit. It resets at the start of next month.`
+          : `You've reached your free ${formatLabel} limit — upgrade to Pro for more.`
       );
       return;
     }
@@ -160,6 +212,13 @@ export default function Generate({ setActiveContent }) {
 
       } catch (error) {
         console.error("Flashcard generation failed:", error);
+        if (error.message?.includes("limit") || error.message?.includes("429")) {
+          toast.error(isPremium ? "Monthly flashcard limit reached." : "Free flashcard limit reached. Upgrade to Pro for more!");
+          setShowLoader(false);
+          setIsSubmitting(false);
+          fetchUsage(); // refresh usage display
+          return;
+        }
         toast.error(error.message || "Failed to generate flashcards");
         setShowLoader(false);
         setIsSubmitting(false);
@@ -342,9 +401,13 @@ export default function Generate({ setActiveContent }) {
           <p className="text-muted-foreground">
             Enter a topic below to generate a personalized course or flashcards
           </p>
+          {/* Limit warning for non-premium users on current format */}
           {!isPremium && atLimit && (
             <div className="mt-4 mx-auto max-w-md p-3 rounded-lg border border-destructive bg-destructive/10 text-destructive text-sm">
-              You hit free limits. Upgrade to get more generations.
+              {format === "course" && `Course limit reached (${courseLimitInfo.used}/${courseLimitInfo.limit}).`}
+              {format === "flashcards" && `Flashcard limit reached (${flashcardsLimitInfo.used}/${flashcardsLimitInfo.limit}).`}
+              {format === "quiz" && `Quiz limit reached (${quizzesLimitInfo.used}/${quizzesLimitInfo.limit}).`}
+              {" "}<button onClick={() => router.push("/pricing")} className="underline font-semibold">Upgrade to Pro</button> for more.
             </div>
           )}
         </div>
@@ -628,13 +691,13 @@ export default function Generate({ setActiveContent }) {
 
           <button
             onClick={handleGenerate}
-            disabled={!topic.trim() || (!!user && !isPremium && format === "course" && atLimit)}
+            disabled={!topic.trim() || (!!user && atLimit)}
             className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]"
           >
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>
-              {!isPremium && format === "course" && atLimit
-                ? "You've hit your free course limit — upgrade!"
+              {atLimit
+                ? `${format === "course" ? "Course" : format === "flashcards" ? "Flashcard" : format === "quiz" ? "Quiz" : "Report"} limit reached — upgrade!`
                 : "Generate"}
             </span>
           </button>
