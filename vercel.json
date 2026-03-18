@@ -3,6 +3,22 @@
         {
             "path": "/api/cron/generate-weekly-blogs",
             "schedule": "0 0 * * 0"
+        },
+        {
+            "path": "/api/cron/plan-expiry",
+            "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/cron/trending-topics",
+            "schedule": "0 0 * * 0"
+        },
+        {
+            "path": "/api/cron/trending-career",
+            "schedule": "0 0 * * 0"
+        },
+        {
+            "path": "/api/cron/trending-premium",
+            "schedule": "0 0 * * 0"
         }
     ]
-} 
+}

@@ -133,8 +133,19 @@ export async function checkCourseAccess(userId, courseId) {
             return { hasAccess: true };
         }
 
-        // Premium courses require a paid plan
+        // Premium courses require a paid plan, UNLESS the user is already enrolled
         const userTier = user.subscription?.tier || TIERS.FREE;
+        
+        // Check if user is already "enrolled" (exists in their courses array)
+        const isEnrolled = user.courses?.some(c => 
+            (c.courseId instanceof ObjectId ? c.courseId.equals(new ObjectId(courseId)) : c.courseId.toString() === courseId.toString())
+        );
+
+        if (isEnrolled) {
+            console.log(`[Access Control] Allowing access to course ${courseId} because user ${userId} is previously enrolled.`);
+            return { hasAccess: true };
+        }
+
         if (!hasPaidPlan(userTier)) {
             return {
                 hasAccess: false,

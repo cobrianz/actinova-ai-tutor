@@ -15,10 +15,10 @@ const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 // Monthly cleanup logic
 export const dynamic = "force-dynamic";
 
-async function generateTrendingCourses(user = null) {
+export async function generateTrendingCourses(user = null) {
   const { db } = await connectToDatabase();
   const col = db.collection("premium_trending_courses");
-  const userId = user?._id?.toString() || user?.id?.toString() || "anonymous";
+  const userId = user?._id?.toString() || user?.id?.toString() || "global";
 
   // Try cache first (user-specific)
   if (cachedCourses && cacheTime && Date.now() - cacheTime < CACHE_TTL) {
@@ -101,9 +101,14 @@ Prioritize 2025 trends across ALL fields, not just tech: AI agents, sustainable 
       response_format: { type: "json_object" },
     });
 
-    let courses = JSON.parse(completion.choices[0].message.content);
-
-    if (!Array.isArray(courses)) courses = courses.courses || [];
+    let result = JSON.parse(completion.choices[0].message.content);
+    let courses = result.courses || result.trendingCourses || [];
+    if (!Array.isArray(courses) && result.courses) courses = result.courses;
+    if (!Array.isArray(courses)) {
+        // Handle case where AI returns an object with array inside
+        const possibleKey = Object.keys(result).find(k => Array.isArray(result[k]));
+        if (possibleKey) courses = result[possibleKey];
+    }
 
     courses = courses.slice(0, 6).map((c, i) => ({
       ...c,
@@ -117,6 +122,7 @@ Prioritize 2025 trends across ALL fields, not just tech: AI agents, sustainable 
 
     // Save to DB
     if (courses.length > 0) {
+      await col.deleteMany({ userId }); // Clear old ones for this user/global
       await col.insertMany(courses);
     }
 
@@ -129,7 +135,7 @@ Prioritize 2025 trends across ALL fields, not just tech: AI agents, sustainable 
   }
 }
 
-function formatCourse(c) {
+export function formatCourse(c) {
   return {
     id: c.id,
     title: c.title,
@@ -231,7 +237,14 @@ export async function GET(request) {
     );
   }
 
+  // Try to get trending courses (personalized or global fallback)
   const courses = await generateTrendingCourses(user);
+  
+  // If user-specific failed/not found, try global explicitly if user was null
+  if ((!courses || courses.length === 0) && user) {
+      const globalCourses = await generateTrendingCourses(null);
+      return NextResponse.json({ courses: globalCourses, personalized: false });
+  }
 
-  return NextResponse.json({ courses });
+  return NextResponse.json({ courses, personalized: !!user });
 }

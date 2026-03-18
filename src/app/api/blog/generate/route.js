@@ -54,68 +54,72 @@ function buildPrompt(period) {
 Return JSON with keys: title, tags (array), summary (2-3 sentences), content_markdown (long markdown with headings, lists, and a short code block). Keep it original.`;
 }
 
+export async function generateBlogPost(period = "monthly") {
+  await connectToDatabase();
+  const periodKey = period === "monthly" ? getMonthKey() : getWeekKey();
+
+  // Idempotency: skip if existing for period
+  const exists = await Post.findOne({ period, periodKey }).lean();
+  if (exists) {
+    return {
+      success: true,
+      skipped: true,
+      message: "Already generated for this period",
+    };
+  }
+
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const prompt = buildPrompt(period);
+  const completion = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    input: prompt,
+    text: { format: "json" },
+  });
+  const raw = completion.output_text || "{}";
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    data = {};
+  }
+
+  const title =
+    data.title ||
+    (period === "monthly"
+      ? `AI Tutoring Featured ${periodKey}`
+      : `AI Tutoring Weekly ${periodKey}`);
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const post = new Post({
+    title,
+    slug,
+    summary: data.summary || "",
+    content: data.content_markdown || "# AI Tutoring\n\nContent unavailable.",
+    tags: Array.isArray(data.tags) ? data.tags : ["AI", "Tutoring"],
+    author: { name: "Admin", role: "admin" },
+    featured: period === "monthly",
+    period,
+    periodKey,
+    publishedAt: new Date(),
+    status: "published",
+  });
+
+  await post.save();
+  return { success: true, post };
+}
+
 export async function POST(req) {
   try {
     await ensureAdmin(req);
-    await connectToDatabase();
-
     const { period = "monthly" } = await req
       .json()
       .catch(() => ({ period: "monthly" }));
-    const periodKey = period === "monthly" ? getMonthKey() : getWeekKey();
-
-    // Idempotency: skip if existing for period
-    const exists = await Post.findOne({ period, periodKey }).lean();
-    if (exists) {
-      return NextResponse.json({
-        success: true,
-        skipped: true,
-        message: "Already generated for this period",
-      });
-    }
-
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const prompt = buildPrompt(period);
-    const completion = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: prompt,
-      text: { format: "json" },
-    });
-    const raw = completion.output_text || "{}";
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      data = {};
-    }
-
-    const title =
-      data.title ||
-      (period === "monthly"
-        ? `AI Tutoring Featured ${periodKey}`
-        : `AI Tutoring Weekly ${periodKey}`);
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    const post = new Post({
-      title,
-      slug,
-      summary: data.summary || "",
-      content: data.content_markdown || "# AI Tutoring\n\nContent unavailable.",
-      tags: Array.isArray(data.tags) ? data.tags : ["AI", "Tutoring"],
-      author: { name: "Admin", role: "admin" },
-      featured: period === "monthly",
-      period,
-      periodKey,
-      publishedAt: new Date(),
-      status: "published",
-    });
-
-    await post.save();
-
-    return NextResponse.json({ success: true, post });
+    
+    const result = await generateBlogPost(period);
+    return NextResponse.json(result);
   } catch (error) {
     if (error.message === "unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

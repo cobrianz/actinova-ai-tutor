@@ -231,7 +231,24 @@ async function handleGenerateLesson(body, userId, db) {
     );
   }
 
-  const isPremium = await getPremiumStatus(db, userId);
+  // === Determine Premium Status ===
+  let isPremium = false;
+  
+  // 1. Check Course Document First
+  if (courseId && ObjectId.isValid(courseId)) {
+    const courseDoc = await db.collection("library").findOne({ _id: new ObjectId(courseId) }) || 
+                     await db.collection("courses").findOne({ _id: new ObjectId(courseId) });
+    
+    if (courseDoc?.isPremium) {
+      isPremium = true;
+      console.log(`[AI Tutor] Using PREMIUM depth for course ${courseId}.`);
+    }
+  }
+
+  // 2. Fallback to User Status
+  if (!isPremium && userId) {
+    isPremium = await getPremiumStatus(db, userId);
+  }
   const wordCount = isPremium ? "2500–3000" : "1500–2000";
 
   // === Check Cache First ===

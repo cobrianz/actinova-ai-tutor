@@ -13,7 +13,7 @@ import { ObjectId } from "mongodb";
 // Verify cron secret to prevent unauthorized calls
 const CRON_SECRET = process.env.CRON_SECRET || "your-secret-key";
 
-export async function POST(request) {
+async function handleCron(request) {
   try {
     // Verify cron secret
     const secret = request.headers.get("x-cron-secret");
@@ -156,6 +156,14 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request) {
+  return handleCron(request);
+}
+
+export async function POST(request) {
+  return handleCron(request);
 }
 
 /**

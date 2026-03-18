@@ -8,68 +8,41 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function handleGet(request) {
+export async function generateCareerTrending(user = null) {
     const currentYear = new Date().getFullYear();
-    const user = request.user || null;
-    const userId = user?._id;
+    const userId = user?._id || "global";
 
-    console.log(`[Trending API] Request received for user: ${userId || "anonymous"}`);
+    // Build personalized prompt if user data exists
+    let personalizationContext = "";
+    if (user) {
+        const interests = user.interests?.join(", ") || "various technology sectors";
+        const goals = user.goals?.join(", ") || "career advancement";
+        const skillLevel = user.skillLevel || "intermediate";
 
-    // If authenticated, check for existing non-expired data
-    if (userId) {
+        // Get recently generated courses for better context
+        let recentCourses = [];
         try {
-            const existing = await TrendingCareer.findOne({ userId });
-            if (existing && existing.expiresAt > new Date()) {
-                console.log("[Trending API] Returning cached persistent data");
-                return NextResponse.json(existing);
-            }
-        } catch (dbError) {
-            console.error("[Trending API] DB check error:", dbError);
+            const { db } = await import("@/lib/mongodb").then(m => m.connectToDatabase());
+            const courses = await db.collection("library")
+                .find({ userId, format: "course" })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .project({ title: 1 })
+                .toArray();
+            recentCourses = courses.map(c => c.title);
+        } catch (e) {
+            console.warn("[Trending API] Failed to fetch recent courses:", e.message);
         }
-    }
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-        return NextResponse.json({
-            trendingCareers: [],
-            trendingSkills: [],
-            marketInsights: "AI service is not configured.",
-            error: "OPENAI_API_KEY_MISSING"
-        }, { status: 200 });
-    }
-
-    try {
-        // Build personalized prompt if user data exists
-        let personalizationContext = "";
-        if (user) {
-            const interests = user.interests?.join(", ") || "various technology sectors";
-            const goals = user.goals?.join(", ") || "career advancement";
-            const skillLevel = user.skillLevel || "intermediate";
-
-            // Get recently generated courses for better context
-            let recentCourses = [];
-            try {
-                const { db } = await import("@/lib/mongodb").then(m => m.connectToDatabase());
-                const courses = await db.collection("library")
-                    .find({ userId, format: "course" })
-                    .sort({ createdAt: -1 })
-                    .limit(5)
-                    .project({ title: 1 })
-                    .toArray();
-                recentCourses = courses.map(c => c.title);
-            } catch (e) {
-                console.warn("[Trending API] Failed to fetch recent courses:", e.message);
-            }
-
-            personalizationContext = `\n\nUSER PROFILE CONTEXT:
+        personalizationContext = `\n\nUSER PROFILE CONTEXT:
 - Interests: ${interests}
 - Career Goals: ${goals}
 - Current Skill Level: ${skillLevel}
 ${recentCourses.length > 0 ? `- Recently Generated/Interested Courses: ${recentCourses.join(", ")}` : ""}
 Please prioritize careers and skills that align with these interests, goals, and recent activity while maintaining general market relevance.`;
-        }
+    }
 
-        const systemPrompt = `You are an expert career analyst.
+    const systemPrompt = `You are an expert career analyst.
 Analyze the current job market and provide trending careers and skills for ${currentYear}.
 Provide a comprehensive analysis in JSON format.${personalizationContext}
 
@@ -98,34 +71,73 @@ JSON Structure:
   "emergingFields": ["Field 1"]
 }`;
 
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            temperature: 0.7,
-            response_format: { type: "json_object" },
-            messages: [{ role: "system", content: systemPrompt }]
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+        messages: [{ role: "system", content: systemPrompt }]
+    });
+
+    const trends = JSON.parse(completion.choices[0].message.content);
+
+    // Persist
+    try {
+        // Delete any old/expired record
+        await TrendingCareer.deleteOne({ userId });
+
+        const newRecord = await TrendingCareer.create({
+            userId,
+            ...trends,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         });
 
-        const trends = JSON.parse(completion.choices[0].message.content);
-
-        // Persist for authenticated user
-        if (userId) {
-            try {
-                // Delete any old/expired record
-                await TrendingCareer.deleteOne({ userId });
-
-                const newRecord = await TrendingCareer.create({
-                    userId,
-                    ...trends,
-                    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                });
-
-                await trackAPIUsage(userId, "career-trending");
-                return NextResponse.json(newRecord);
-            } catch (saveError) {
-                console.error("[Trending API] Save error:", saveError);
-            }
+        if (userId !== "global") {
+            await trackAPIUsage(userId, "career-trending");
         }
+        return newRecord;
+    } catch (saveError) {
+        console.error("[Trending API] Save error:", saveError);
+        return trends;
+    }
+}
 
+async function handleGet(request) {
+    const user = request.user || null;
+    const userId = user?._id;
+
+    console.log(`[Trending API] Request received for user: ${userId || "anonymous"}`);
+
+    // If authenticated, check for existing non-expired data
+    if (userId) {
+        try {
+            const existing = await TrendingCareer.findOne({ userId });
+            if (existing && existing.expiresAt > new Date()) {
+                console.log("[Trending API] Returning cached persistent data");
+                return NextResponse.json(existing);
+            }
+        } catch (dbError) {
+            console.error("[Trending API] DB check error:", dbError);
+        }
+    } else {
+        // check global cache
+        const globalCache = await TrendingCareer.findOne({ userId: "global" });
+        if (globalCache && globalCache.expiresAt > new Date()) {
+            return NextResponse.json(globalCache);
+        }
+    }
+
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+        return NextResponse.json({
+            trendingCareers: [],
+            trendingSkills: [],
+            marketInsights: "AI service is not configured.",
+            error: "OPENAI_API_KEY_MISSING"
+        }, { status: 200 });
+    }
+
+    try {
+        const trends = await generateCareerTrending(user);
         return NextResponse.json(trends);
     } catch (error) {
         console.error("[Trending API] Error occurred:", error);

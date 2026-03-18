@@ -94,7 +94,20 @@ export async function POST(request) {
 
     // === Determine Premium Status ===
     let isPremium = false;
-    if (userId) {
+    
+    // Always check the course itself first (preferred)
+    if (courseId && ObjectId.isValid(courseId)) {
+        const courseDoc = await db.collection("library").findOne({ _id: new ObjectId(courseId) }) || 
+                         await db.collection("courses").findOne({ _id: new ObjectId(courseId) });
+        
+        if (courseDoc?.isPremium) {
+            isPremium = true;
+            console.log(`[Content Gen] Using PREMIUM depth because course ${courseId} is marked as premium.`);
+        }
+    }
+
+    // Fallback to active subscription check if course is not premium but user is
+    if (!isPremium && userId) {
       const user = await db
         .collection("users")
         .findOne(
@@ -107,10 +120,9 @@ export async function POST(request) {
             },
           }
         );
-      isPremium =
-        user?.isPremium ||
-        (user?.subscription?.plan === "pro" &&
-          user?.subscription?.status === "active");
+      if (user?.isPremium || (user?.subscription?.plan === "pro" && user?.subscription?.status === "active")) {
+          isPremium = true;
+      }
     }
 
     const wordCount = isPremium ? "2400–3200" : "1400–1900";
