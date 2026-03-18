@@ -4,6 +4,7 @@ import { AuthProvider } from "./components/AuthProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -90,13 +91,15 @@ export default function RootLayout({ children }) {
         className="font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground"
         suppressHydrationWarning={true}
       >
-        <AuthProvider>
-          <ThemeProvider>
-            {children}
-            <ToasterClient />
-            <SpeedInsights />
-          </ThemeProvider>
-        </AuthProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+          <AuthProvider>
+            <ThemeProvider>
+              {children}
+              <ToasterClient />
+              <SpeedInsights />
+            </ThemeProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -149,7 +149,7 @@ export default function ActirovaLoader({ text = "course" }) {
             className="flex flex-col items-center"
           >
             <h2 className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-white dark:to-blue-400 mb-2">
-              Actirova OS
+              Actirova
             </h2>
             <div className="h-1 w-12 bg-blue-600/20 rounded-full mb-6" />
 

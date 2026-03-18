@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useGoogleLogin } from "@react-oauth/google";
+import GoogleIcon from "@/components/GoogleIcon";
 import {
   Sparkles,
   CheckCircle2,
@@ -24,7 +26,7 @@ import {
 } from "lucide-react";
 
 export default function SignupPage() {
-  const { signup } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +38,19 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
     acceptTerms: false
+  });
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const result = await loginWithGoogle(tokenResponse);
+      if (result.success) {
+        toast.success("Welcome aboard!");
+      } else {
+        toast.error(result.error || "Google login failed");
+      }
+    },
+    onError: () => toast.error("Google login failed"),
+    use_fedcm_for_prompt: true,
   });
 
   const handleChange = (e) => {
@@ -90,7 +105,7 @@ export default function SignupPage() {
         <div className="max-w-md w-full flex flex-col">
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
               <span className="font-bricolage">Actirova AI</span>
@@ -111,7 +126,7 @@ export default function SignupPage() {
                   <Input
                     id="firstName"
                     placeholder="John"
-                    className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                     value={formData.firstName}
                     onChange={handleChange}
                     required
@@ -123,7 +138,7 @@ export default function SignupPage() {
                 <Input
                   id="lastName"
                   placeholder="Doe"
-                  className="h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -139,7 +154,7 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -156,7 +171,7 @@ export default function SignupPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="At least 8 characters"
-                  className="pl-10 pr-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 pr-10 h-11 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -164,7 +179,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -214,7 +229,7 @@ export default function SignupPage() {
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Repeat your password"
-                  className={`pl-10 pr-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
+                  className={`pl-10 pr-10 h-11 bg-gray-50/50 border rounded-xl focus:ring-primary/20 focus:border-primary transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
                     ? "border-red-300 bg-red-50/30"
                     : "border-slate-200 dark:border-slate-800"
                     }`}
@@ -225,7 +240,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -244,22 +259,22 @@ export default function SignupPage() {
                 id="acceptTerms"
                 checked={formData.acceptTerms}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, acceptTerms: checked }))}
-                className="mt-1 border-gray-200 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                className="mt-1 border-gray-200 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <label
                 htmlFor="acceptTerms"
                 className="text-xs font-medium text-gray-500 leading-normal cursor-pointer"
               >
                 i agree to the{" "}
-                <Link href="/terms" className="text-purple-600 hover:underline">terms of service</Link>
+                <Link href="/terms" className="text-primary hover:underline">terms of service</Link>
                 {" "}and{" "}
-                <Link href="/privacy" className="text-purple-600 hover:underline">privacy policy</Link>
+                <Link href="/privacy" className="text-primary hover:underline">privacy policy</Link>
               </label>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-11 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] group"
+              className="w-full h-11 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] group"
               disabled={loading}
             >
               {loading ? (
@@ -273,6 +288,28 @@ export default function SignupPage() {
             </Button>
           </form>
 
+          <div className="relative my-7">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-200"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500 font-bold">or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center w-full">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => googleLogin()}
+              className="w-[240px] h-11 border-slate-200 hover:bg-slate-50 text-gray-700 font-bold rounded-full transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+            >
+              <GoogleIcon size={18} />
+              <span>sign up with google</span>
+            </Button>
+          </div>
+
           <div className="relative my-6 text-center">
             {/* Social signup removed */}
           </div>
@@ -281,7 +318,7 @@ export default function SignupPage() {
             already have an account?{" "}
             <Link
               href="/auth/login"
-              className="text-purple-600 font-bold hover:text-purple-700 underline decoration-2 underline-offset-4"
+              className="text-primary font-bold hover:opacity-80 underline decoration-2 underline-offset-4"
             >
               sign in
             </Link>

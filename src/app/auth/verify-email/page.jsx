@@ -166,7 +166,7 @@ function VerifyEmailContent() {
         <div className="max-w-md w-full flex flex-col">
           <div className="text-center mb-10">
             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
               <span className="font-bricolage">Actirova AI</span>
@@ -174,8 +174,8 @@ function VerifyEmailContent() {
           </div>
 
           <div className="text-left mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-6">
-              <Mail className="w-6 h-6 text-purple-600" />
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-6">
+              <Mail className="w-6 h-6 text-primary" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">Verify Email</h2>
             <p className="text-gray-500 font-medium leading-relaxed">
@@ -196,7 +196,7 @@ function VerifyEmailContent() {
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="block w-full text-center text-3xl font-mono tracking-[0.5em] pl-10 h-14 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="block w-full text-center text-3xl font-mono tracking-[0.5em] pl-10 h-14 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="000000"
                   />
                 </div>
@@ -214,7 +214,7 @@ function VerifyEmailContent() {
               <button
                 type="submit"
                 disabled={loading || !code.trim() || code.length < 6}
-                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
+                className="w-full py-4 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
               >
                 {loading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
@@ -231,7 +231,7 @@ function VerifyEmailContent() {
                   type="button"
                   onClick={handleResendEmail}
                   disabled={resendLoading || resendCooldown > 0}
-                  className="text-purple-600 hover:text-purple-700 disabled:opacity-50"
+                  className="text-primary font-bold hover:opacity-80 disabled:opacity-50"
                 >
                   {resendLoading
                     ? "Sending..."
@@ -243,7 +243,7 @@ function VerifyEmailContent() {
 
               <Link
                 href="/auth/login"
-                className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-purple-600 transition-colors"
+                className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-primary transition-colors"
               >
                 <ArrowLeft size={16} className="mr-2" />
                 Back to sign in

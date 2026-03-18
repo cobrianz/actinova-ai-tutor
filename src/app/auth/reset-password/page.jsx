@@ -158,7 +158,7 @@ function ResetPasswordForm() {
   if (token && tokenValid === null) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-100 border-t-purple-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/10 border-t-primary"></div>
       </div>
     );
   }
@@ -179,7 +179,7 @@ function ResetPasswordForm() {
           </p>
           <Link
             href="/auth/forgot-password"
-            className="inline-flex items-center px-8 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200"
+            className="inline-flex items-center px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20"
           >
             New Reset Request
           </Link>
@@ -203,7 +203,7 @@ function ResetPasswordForm() {
           </p>
           <Link
             href="/auth/login"
-            className="inline-flex items-center px-8 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200"
+            className="inline-flex items-center px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20"
           >
             Sign In Now
           </Link>
@@ -219,7 +219,7 @@ function ResetPasswordForm() {
         <div className="max-w-md w-full flex flex-col">
           <div className="text-center mb-10">
             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
               <span className="font-bricolage">Actirova AI</span>
@@ -227,8 +227,8 @@ function ResetPasswordForm() {
           </div>
 
           <div className="text-left mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-6">
-              <Lock className="w-6 h-6 text-purple-600" />
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-6">
+              <Lock className="w-6 h-6 text-primary" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">Set New Password</h2>
             <p className="text-gray-500 font-medium">Please enter a strong, unique password</p>
@@ -252,7 +252,7 @@ function ResetPasswordForm() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="••••••••"
                   />
                   <button
@@ -261,9 +261,9 @@ function ResetPasswordForm() {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-purple-600" />
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-primary" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-purple-600" />
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-primary" />
                     )}
                   </button>
                 </div>
@@ -285,7 +285,7 @@ function ResetPasswordForm() {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="••••••••"
                   />
                   <button
@@ -294,16 +294,16 @@ function ResetPasswordForm() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-purple-600" />
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-primary" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-purple-600" />
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-primary" />
                     )}
                   </button>
                 </div>
               </div>
 
-              <div className="bg-purple-50 border border-purple-100 rounded-xl p-5">
-                <h4 className="text-[11px] font-black text-purple-900 uppercase tracking-wider mb-2">
+              <div className="bg-primary/5 border border-primary/10 rounded-xl p-5">
+                <h4 className="text-[11px] font-black text-primary uppercase tracking-wider mb-2">
                   Validation Checklist:
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
@@ -313,8 +313,8 @@ function ResetPasswordForm() {
                     "At least one number",
                     "Special character (@$!%*?&)"
                   ].map((text, i) => (
-                    <div key={i} className="flex items-center space-x-2 text-[10px] font-bold text-purple-700">
-                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full" />
+                    <div key={i} className="flex items-center space-x-2 text-[10px] font-bold text-primary/80">
+                      <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
                       <span>{text}</span>
                     </div>
                   ))}
@@ -324,7 +324,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
+                className="w-full py-4 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
               >
                 {loading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
@@ -337,7 +337,7 @@ function ResetPasswordForm() {
             <div className="pt-6 text-center">
               <Link
                 href="/auth/login"
-                className="text-sm font-bold text-gray-500 hover:text-purple-600 transition-colors"
+                className="text-sm font-bold text-gray-500 hover:text-primary transition-colors"
               >
                 Return to Login
               </Link>

@@ -226,6 +226,41 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+  
+  const loginWithGoogle = async (tokenData) => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      const res = await fetch("/api/login/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(
+          typeof tokenData === "string" 
+            ? { credential: tokenData } 
+            : { accessToken: tokenData.access_token }
+        ),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Google login failed");
+      }
+
+      // Sync client state from server-side secure cookie via `/api/me`
+      const freshUser = await fetchUser();
+      return { success: true, user: freshUser };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signup = async (userData) => {
     try {
@@ -386,6 +421,7 @@ export function AuthProvider({ children }) {
         loading,
         error,
         login,
+        loginWithGoogle,
         signup,
         logout,
         forgotPassword,

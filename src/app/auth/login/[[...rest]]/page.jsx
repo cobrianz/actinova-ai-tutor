@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useGoogleLogin } from "@react-oauth/google";
+import GoogleIcon from "@/components/GoogleIcon";
 import {
   Sparkles,
   CheckCircle2,
@@ -23,13 +25,26 @@ import {
 } from "lucide-react";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const result = await loginWithGoogle(tokenResponse);
+      if (result.success) {
+        toast.success("Welcome back!");
+      } else {
+        toast.error(result.error || "Google login failed");
+      }
+    },
+    onError: () => toast.error("Google login failed"),
+    use_fedcm_for_prompt: true,
+  });
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -69,7 +84,7 @@ export default function LoginPage() {
         <div className="max-w-md w-full flex flex-col">
           <div className="text-center mb-10">
             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
               </div>
               <span className="font-bricolage">Actirova AI</span>
@@ -90,7 +105,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  className="pl-10 h-12 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 h-12 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -103,7 +118,7 @@ export default function LoginPage() {
                 <Label htmlFor="password">password</Label>
                 <Link
                   href="/auth/forgot-password"
-                  className="text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors"
+                  className="text-xs font-bold text-primary hover:opacity-80 transition-opacity"
                 >
                   forgot password?
                 </Link>
@@ -114,7 +129,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 h-12 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-purple-500/20 focus:border-purple-600 transition-all"
+                  className="pl-10 pr-10 h-12 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -122,7 +137,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -138,7 +153,7 @@ export default function LoginPage() {
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={setRememberMe}
-                className="border-gray-200 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                className="border-gray-200 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <label
                 htmlFor="remember"
@@ -150,7 +165,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-[0.98] group"
+              className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] group"
               disabled={loading}
             >
               {loading ? (
@@ -163,12 +178,34 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+          
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-200"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500 font-bold">or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center w-full">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => googleLogin()}
+              className="w-[240px] h-11 border-slate-200 hover:bg-slate-50 text-gray-700 font-bold rounded-full transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+            >
+              <GoogleIcon size={18} />
+              <span>sign in with google</span>
+            </Button>
+          </div>
 
           <p className="mt-10 text-center text-sm font-medium text-gray-500">
             don't have an account?{" "}
             <Link
               href="/auth/signup"
-              className="text-purple-600 font-bold hover:text-purple-700 underline decoration-2 underline-offset-4"
+              className="text-primary font-bold hover:opacity-80 underline decoration-2 underline-offset-4"
             >
               create account
             </Link>
