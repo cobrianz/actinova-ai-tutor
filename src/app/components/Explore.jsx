@@ -833,6 +833,7 @@ const getButtonColorStyles = () => {
 export default function Explore() {
   const router = useRouter();
   const { user, refreshToken } = useAuth();
+  const [usageData, setUsageData] = useState(null);
   const [trendingTopics, setTrendingTopics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generatingCourse, setGeneratingCourse] = useState(null);
@@ -861,10 +862,27 @@ export default function Explore() {
       user?.subscription?.status === "active"
     ) || !!user?.isPremium;
 
-  const atLimit = !!(
-    user?.usage?.isAtLimit ||
-    (!userIsPremium && user?.usage?.remaining === 0)
-  );
+  // Fetch live usage from server
+  const fetchUsage = async () => {
+    try {
+      const res = await apiClient.get("/api/user/usage");
+      if (res.ok) {
+        const data = await res.json();
+        setUsageData(data);
+      }
+    } catch {
+      // silently fail — limits enforced server-side
+    }
+  };
+
+  // Fetch usage on mount when user is available
+  useEffect(() => {
+    if (user) fetchUsage();
+  }, [user]);
+
+  const courseUsed = usageData?.details?.courses?.used ?? 0;
+  const courseLimit = usageData?.details?.courses?.limit ?? 2;
+  const atLimit = !!(usageData && !usageData.isEnterprise && courseUsed >= courseLimit);
 
   // Filtered categories based on search query
   const filteredCategories = useMemo(() => {
@@ -1030,8 +1048,8 @@ export default function Explore() {
     if (atLimit) {
       setShowLimitModal(true);
       setLimitModalData({
-        used: user?.usage?.used || 0,
-        limit: user?.usage?.limit || 5, // fallback
+        used: courseUsed,
+        limit: courseLimit,
         isPremium: userIsPremium,
         topic: topic.title,
       });
@@ -1073,13 +1091,16 @@ export default function Explore() {
         // Handle monthly limit reached error
         if (response.status === 429) {
           toast.dismiss("generating");
+          const freshUsed = errorData.used ?? courseUsed;
+          const freshLimit = errorData.limit ?? courseLimit;
           setShowLimitModal(true);
           setLimitModalData({
-            used: errorData.used || 0,
-            limit: errorData.limit || 5,
+            used: freshUsed,
+            limit: freshLimit,
             isPremium: errorData.isPremium || false,
             topic: topic.title,
           });
+          fetchUsage(); // refresh local count
           return;
         }
 
@@ -1123,8 +1144,8 @@ export default function Explore() {
     if (atLimit) {
       setShowLimitModal(true);
       setLimitModalData({
-        used: user?.usage?.used || 0,
-        limit: user?.usage?.limit || 5, // fallback
+        used: courseUsed,
+        limit: courseLimit,
         isPremium: userIsPremium,
         topic: category.name,
       });

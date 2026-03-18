@@ -114,18 +114,38 @@ const CareerGrowth = () => {
     };
 
     const atLimit = user?.usage?.isAtLimit || (!isPro && user?.usage?.remaining === 0);
+    const [usageData, setUsageData] = useState(null);
     const [generatingCourse, setGeneratingCourse] = useState(null);
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [limitModalData, setLimitModalData] = useState(null);
 
+    // Fetch live usage
+    useEffect(() => {
+        if (!user) return;
+        const fetchUsage = async () => {
+            try {
+                const res = await apiClient.get("/api/user/usage");
+                if (res.ok) {
+                    const data = await res.json();
+                    setUsageData(data);
+                }
+            } catch { /* silently fail */ }
+        };
+        fetchUsage();
+    }, [user]);
+
+    const courseUsed = usageData?.details?.courses?.used ?? 0;
+    const courseLimit = usageData?.details?.courses?.limit ?? 2;
+    const liveAtLimit = !!(usageData && !usageData.isEnterprise && courseUsed >= courseLimit);
+
     const handleGenerateCourse = async (topicTitle) => {
         if (generatingCourse) return;
 
-        if (atLimit) {
+        if (liveAtLimit) {
             setShowLimitModal(true);
             setLimitModalData({
-                used: user?.usage?.used || 0,
-                limit: user?.usage?.limit || 5, // fallback
+                used: courseUsed,
+                limit: courseLimit,
                 isPremium: isPro,
             });
             return;
@@ -147,8 +167,8 @@ const CareerGrowth = () => {
                     toast.dismiss("generating");
                     setShowLimitModal(true);
                     setLimitModalData({
-                        used: errorData.used || 0,
-                        limit: errorData.limit || 5,
+                        used: errorData.used ?? courseUsed,
+                        limit: errorData.limit ?? courseLimit,
                         isPremium: errorData.isPremium || false,
                     });
                     setGeneratingCourse(null);
