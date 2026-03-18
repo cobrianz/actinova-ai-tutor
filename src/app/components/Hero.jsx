@@ -83,7 +83,7 @@ export default function Hero({ handleGetStarted }) {
           >
             <button
               onClick={handleCTAClick}
-              className="group relative px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-base overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] hover:scale-[1.02] active:scale-[0.98]"
+              className="group relative px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-base overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="relative z-10 flex items-center gap-2">
                 {user ? "Continue Your Journey" : "Start Learning Free"}
@@ -116,7 +116,7 @@ export default function Hero({ handleGetStarted }) {
           {/* Floating Stats */}
           <motion.div
             variants={itemVariants}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 border-t border-border"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12"
           >
             {stats.map((stat, index) => {
               const Icon = [Users, BookOpen, Trophy, Star][index] || Star;

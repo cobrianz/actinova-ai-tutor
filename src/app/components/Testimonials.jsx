@@ -34,7 +34,7 @@ export default function Testimonials() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -5 }}
-              className="relative p-8 rounded-3xl border border-border-accent bg-card hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300"
+              className="relative p-8 rounded-3xl border border-border-accent bg-card hover:border-primary/30 transition-all duration-300"
             >
               <Quote className="absolute top-6 right-8 w-10 h-10 text-primary/10" />
 
@@ -49,7 +49,7 @@ export default function Testimonials() {
               </p>
 
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold border-2 border-background shadow-lg shadow-blue-500/10">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold border-2 border-background">
                   {testimonial.name[0]}
                 </div>
                 <div>

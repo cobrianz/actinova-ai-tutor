@@ -84,7 +84,7 @@ export default function Features() {
                   key={index}
                   variants={itemVariants}
                   whileHover={{ y: -5 }}
-                  className="group relative p-8 rounded-3xl border border-border-accent bg-card/50 hover:bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                  className="group relative p-8 rounded-3xl border border-border-accent bg-card/50 hover:bg-card hover:border-primary/30 transition-all duration-300"
                 >
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                   <Icon className="w-6 h-6" />

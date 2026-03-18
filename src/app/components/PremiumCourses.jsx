@@ -23,6 +23,7 @@ import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+import UpgradeModal from "./UpgradeModal";
 
 export default function PremiumCourses() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function PremiumCourses() {
   const [personalizedCourses, setPersonalizedCourses] = useState([]);
   const [generatingPersonalized, setGeneratingPersonalized] = useState(false);
   const [preparingCourse, setPreparingCourse] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const coursesPerPage = 6;
 
   // Calculate course expiry progress
@@ -238,16 +240,7 @@ export default function PremiumCourses() {
         // Handle monthly limit reached error
         if (response.status === 429) {
           toast.dismiss("generating");
-          toast.error(
-            `Free plan allows 2 premium course generations. Upgrade to Pro for up to 50 courses/month.`,
-            {
-              id: "generating",
-              action: {
-                label: "Upgrade",
-                onClick: () => router.push("/pricing"),
-              },
-            }
-          );
+          setShowUpgradeModal(true);
           return;
         }
 
@@ -895,6 +888,12 @@ export default function PremiumCourses() {
           </>
         )
       )}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName="Premium Courses"
+        description="Free plan users are limited to 2 premium course generations per month. Upgrade to Pro to unlock unlimited access."
+      />
     </div >
   );
 }
