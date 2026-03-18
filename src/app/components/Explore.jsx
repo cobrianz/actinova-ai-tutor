@@ -984,7 +984,7 @@ export default function Explore() {
       const trendingResponse = await apiClient.get("/api/explore/trending-topics");
       if (trendingResponse.ok) {
         const trendingData = await trendingResponse.json();
-        setTrendingTopics((trendingData.topics || []).slice(0, 9));
+        setTrendingTopics((trendingData.topics || []).slice(0, 12));
       }
     } catch (error) {
       console.error("Error fetching explore data:", error);

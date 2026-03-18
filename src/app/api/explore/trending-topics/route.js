@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import User from "@/models/User";
 import { connectToDatabase } from "@/lib/mongodb";
+import { verifyToken } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -11,39 +13,25 @@ const openai = new OpenAI({
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-export async function generateExploreTrending(user = null) {
+// Cache expires every Saturday at midnight
+function getLatestSaturdayMidnight() {
+  const now = new Date();
+  const day = now.getDay(); // 0 (Sun) to 6 (Sat)
+  const diff = (day + 1) % 7; // days since last Saturday
+  const lastSaturday = new Date(now);
+  lastSaturday.setDate(now.getDate() - diff);
+  lastSaturday.setHours(0, 0, 0, 0);
+  return lastSaturday;
+}
+
+export async function generateExploreTrending() {
   const { db } = await connectToDatabase();
-  const userId = user?._id?.toString() || "anonymous";
+  const userId = "global_trending";
 
   try {
-    // === 2. Personalization Context (from your profile) ===
-    let personalization = "";
-    if (user) {
-      const profile = await User.findById(user._id)
-        .select("interests interestCategories skillLevel goals firstName")
-        .lean();
+    // Shared trending - no personalization context needed to save API and ensures consistency
+    const personalization = `\n\nEnsure a balanced mix of 12 courses across multiple fields: Tech, Business, Health, Arts, Science, and Lifestyle. At least 2 courses from each major pillar.`;
 
-      if (profile) {
-        const lines = [];
-        if (profile.firstName) lines.push(`Student name: ${profile.firstName}`);
-        if (profile.interests?.length)
-          lines.push(`Interested in: ${profile.interests.join(", ")}`);
-        if (profile.interestCategories?.length)
-          lines.push(
-            `Loves categories: ${profile.interestCategories.join(", ")}`
-          );
-        if (profile.skillLevel)
-          lines.push(`Current level: ${profile.skillLevel}`);
-        if (profile.goals?.length)
-          lines.push(`Goals: ${profile.goals.join(", ")}`);
-
-        if (lines.length > 0) {
-          personalization = `\n\nPERSONALIZED FOR THIS LEARNER:\n${lines.join("\n")}\nGenerate topics that feel made just for them — exciting, relevant, and perfectly matched to their journey.`;
-        }
-      }
-    }
-
-    // === 3. Generate 6 PERFECT Trending Topics ===
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -51,7 +39,7 @@ export async function generateExploreTrending(user = null) {
           role: "system",
           content: `You are the world's best learning experience curator in ${CURRENT_YEAR}.
 
-Generate EXACTLY 6 irresistible, currently trending online course topics that learners are obsessed with right now.
+Generate EXACTLY 12 irresistible, currently trending online course topics that learners are obsessed with right now.
 
 IMPORTANT: Cover DIVERSE fields beyond just technology. Include:
 - Technology (AI, Programming, Web Development, etc.)
@@ -105,23 +93,31 @@ Make them feel fresh, actionable, and impossible to ignore.${personalization}`,
     }
 
     // === 4. Ultimate Fallback ===
-    if (topics.length < 6) {
-      topics = getFallbackTopics();
+    if (topics.length < 12) {
+      const fallbacks = getFallbackTopics();
+      // Combine AI topics with fallbacks to ensure exactly 12
+      const combined = [...topics];
+      fallbacks.forEach(f => {
+        if (combined.length < 12 && !combined.find(t => t.title === f.title)) {
+          combined.push(f);
+        }
+      });
+      topics = combined;
     }
 
-    // === 5. Cache Results (user-specific) ===
-    await db.collection("explore_trending").deleteMany({ userId });
+    // === 5. Cache Results (Shared global cache) ===
+    await db.collection("explore_trending").deleteMany({ userId: "global_trending" });
     await db.collection("explore_trending").insertOne({
-      userId,
-      topics: topics.slice(0, 6),
+      userId: "global_trending",
+      topics: topics.slice(0, 12),
       createdAt: new Date(),
-      generatedForUser: userId,
+      generatedForUser: "global",
       model: "gpt-4o-mini",
     });
 
     return {
       success: true,
-      topics: topics.slice(0, 6),
+      topics: topics.slice(0, 12),
       source: "ai-generated",
       refreshedAt: new Date().toISOString(),
     };
@@ -223,34 +219,27 @@ function getFallbackTopics() {
 
 export async function GET(request) {
   const { db } = await connectToDatabase();
-  const user = request.user || null;
 
   try {
-    // === 1. Check Cache (7-day freshness, user-specific) ===
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const userId = user?._id?.toString() || "anonymous";
-
-    // Strictly enforce weekly cleanup of user's exploration history
-    await db.collection("exploredCourses").deleteMany({
-      userId,
-      generatedAt: { $lt: weekAgo }
-    });
+    // === 1. Check Shared Cache (refreshes every Saturday midnight) ===
+    const lastSaturday = getLatestSaturdayMidnight();
+    const userId = "global_trending";
 
     const cached = await db.collection("explore_trending").findOne({
       userId,
-      createdAt: { $gte: weekAgo },
+      createdAt: { $gte: lastSaturday },
     });
 
-    if (cached?.topics?.length >= 6) {
+    if (cached?.topics?.length >= 12) {
       return NextResponse.json({
         success: true,
-        topics: cached.topics.slice(0, 6),
+        topics: cached.topics.slice(0, 12),
         source: "cache",
         refreshedAt: cached.createdAt,
       });
     }
 
-    const result = await generateExploreTrending(user);
+    const result = await generateExploreTrending();
     return NextResponse.json(result);
   } catch (error) {
     console.error("Trending topics critical failure:", error);
