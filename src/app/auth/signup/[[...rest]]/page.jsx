@@ -265,7 +265,7 @@ export default function SignupPage() {
                 htmlFor="acceptTerms"
                 className="text-xs font-medium text-gray-500 leading-normal cursor-pointer"
               >
-                i agree to the{" "}
+                I agree to the{" "}
                 <Link href="/terms" className="text-primary hover:underline">terms of service</Link>
                 {" "}and{" "}
                 <Link href="/privacy" className="text-primary hover:underline">privacy policy</Link>

@@ -16,6 +16,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -860,6 +861,11 @@ export default function Explore() {
       user?.subscription?.status === "active"
     ) || !!user?.isPremium;
 
+  const atLimit = !!(
+    user?.usage?.isAtLimit ||
+    (!userIsPremium && user?.usage?.remaining === 0)
+  );
+
   // Filtered categories based on search query
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return staticCategories;
@@ -1021,6 +1027,17 @@ export default function Explore() {
   const handleGenerateCourse = async (topic) => {
     if (generatingCourse) return;
 
+    if (atLimit) {
+      setShowLimitModal(true);
+      setLimitModalData({
+        used: user?.usage?.used || 0,
+        limit: user?.usage?.limit || 5, // fallback
+        isPremium: userIsPremium,
+        topic: topic.title,
+      });
+      return;
+    }
+
     // Plan enforcement for difficulty levels (Intermediate/Advanced require Pro)
     const topicDifficulty = (topic.difficulty || "beginner").toLowerCase();
     if (!userIsPremium && (topicDifficulty === "intermediate" || topicDifficulty === "advanced")) {
@@ -1100,6 +1117,17 @@ export default function Explore() {
     if (!userIsPremium) {
       setSelectedCategoryForModal(category);
       setShowPremiumModal(true);
+      return;
+    }
+
+    if (atLimit) {
+      setShowLimitModal(true);
+      setLimitModalData({
+        used: user?.usage?.used || 0,
+        limit: user?.usage?.limit || 5, // fallback
+        isPremium: userIsPremium,
+        topic: category.name,
+      });
       return;
     }
 
@@ -1228,31 +1256,35 @@ export default function Explore() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-4xl font-black text-slate-900 dark:text-white">Explore</h1>
-        <p className="text-slate-500 mt-2">Discover categories and trending AI-generated courses</p>
+        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-8 mb-8">
+          <h1 className="text-4xl font-black text-white mb-2">Explore Courses</h1>
+          <p className="text-violet-100 text-lg">Discover categories and trending AI-generated courses tailored to your learning goals</p>
+        </div>
       </div>
 
       {/* Search + Filters */}
       <div className="mb-10">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search courses, topics, categories..."
-              className="w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-400 transition-all text-sm" />
-          </div>
-          <div className="flex gap-2">
-            {[{ val: selectedCategory, set: setSelectedCategory, opts: [{ v: '', l: 'All Categories' }, ...staticCategories.map(c => ({ v: c.name, l: c.name }))] },
-            { val: selectedDifficulty, set: setSelectedDifficulty, opts: [{ v: '', l: 'All Levels' }, { v: 'beginner', l: 'Beginner' }, { v: 'intermediate', l: 'Intermediate' }, { v: 'advanced', l: 'Advanced' }] },
-            { val: isPremium, set: setIsPremium, opts: [{ v: '', l: 'All Courses' }, { v: 'true', l: 'Premium' }, { v: 'false', l: 'Free' }] }].map((s, i) => (
-              <select key={i} value={s.val} onChange={e => s.set(e.target.value)}
-                className="px-3 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-sm outline-none focus:ring-2 focus:ring-violet-400/20 focus:border-violet-400 transition-all">
-                {s.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-              </select>
-            ))}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search courses, topics, categories..."
+                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all text-base" />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {[{ val: selectedCategory, set: setSelectedCategory, opts: [{ v: '', l: 'All Categories' }, ...staticCategories.map(c => ({ v: c.name, l: c.name }))] },
+              { val: selectedDifficulty, set: setSelectedDifficulty, opts: [{ v: '', l: 'All Levels' }, { v: 'beginner', l: 'Beginner' }, { v: 'intermediate', l: 'Intermediate' }, { v: 'advanced', l: 'Advanced' }] },
+              { val: isPremium, set: setIsPremium, opts: [{ v: '', l: 'All Courses' }, { v: 'true', l: 'Premium' }, { v: 'false', l: 'Free' }] }].map((s, i) => (
+                <select key={i} value={s.val} onChange={e => s.set(e.target.value)}
+                  className="px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                  {s.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1260,45 +1292,53 @@ export default function Explore() {
       {/* Trending Topics */}
       <div className="mb-14">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-orange-500" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Trending This Week</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Trending This Week</h2>
+              <p className="text-sm text-slate-500">Hot topics gaining popularity</p>
+            </div>
           </div>
-          <button onClick={() => toggleSectionMinimized("trending-topics")} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-            {minimizedSections.has("trending-topics") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          <button onClick={() => toggleSectionMinimized("trending-topics")} className="p-2.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+            {minimizedSections.has("trending-topics") ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </button>
         </div>
 
         {!minimizedSections.has("trending-topics") && (
           <>
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[...Array(6)].map((_, i) => <div key={i} className="h-52 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />)}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => <div key={i} className="h-64 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />)}
               </div>
             ) : filteredTrendingTopics.length === 0 && searchQuery ? (
-              <div className="text-center py-12 text-slate-400">No trending topics match your search</div>
+              <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500 text-lg">No trending topics match your search</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTrendingTopics.map((topic, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:border-violet-300 shadow-none hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex-1 group-hover:text-violet-700 transition-colors">{topic.title}</h3>
-                      <span className={`ml-2 px-2.5 py-1 text-[10px] font-bold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-50 text-emerald-600' :
-                        topic.difficulty === 'intermediate' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-violet-600 transition-colors">{topic.title}</h3>
+                      <span className={`ml-2 px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                        topic.difficulty === 'intermediate' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         }`}>{topic.difficulty || 'Beginner'}</span>
                     </div>
                     <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-2">{topic.description}</p>
                     {topic.whyTrending && (
-                      <p className="text-xs text-orange-600 bg-orange-50 rounded-xl px-3 py-2 mb-4">🔥 {topic.whyTrending}</p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-xl px-3 py-2 mb-4 flex items-center gap-1.5"><span className="text-base">🔥</span> {topic.whyTrending}</p>
                     )}
-                    <div className="flex flex-wrap gap-1.5 mb-4">
+                    <div className="flex flex-wrap gap-2 mb-5">
                       {topic.tags?.slice(0, 3).map((tag, j) => (
-                        <span key={j} className="px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-500 text-[10px] font-bold rounded-lg">{tag}</span>
+                        <span key={j} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg">{tag}</span>
                       ))}
                     </div>
                     <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
                       disabled={generatingCourse === topic.title}
-                      className={`w-full ${getButtonColorStyles()} disabled:opacity-50 py-2.5 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border-none shadow-none`}>
+                      className={`w-full ${getButtonColorStyles()} disabled:opacity-50 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all border-none`}>
                       {generatingCourse === topic.title ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate course</>}
                     </button>
                   </div>
@@ -1312,48 +1352,59 @@ export default function Explore() {
       {/* Categories */}
       <div className="mb-14">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Browse by Category</h2>
-          <button onClick={() => toggleSectionMinimized("categories")} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-            {minimizedSections.has("categories") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Browse by Category</h2>
+              <p className="text-sm text-slate-500">Explore our diverse course categories</p>
+            </div>
+          </div>
+          <button onClick={() => toggleSectionMinimized("categories")} className="p-2.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+            {minimizedSections.has("categories") ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
           </button>
         </div>
 
         {!minimizedSections.has("categories") && (
           <>
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[...Array(9)].map((_, i) => <div key={i} className="h-52 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />)}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(9)].map((_, i) => <div key={i} className="h-56 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />)}
               </div>
             ) : filteredCategories.length === 0 && searchQuery ? (
-              <div className="text-center py-12 text-slate-400">No categories match your search</div>
+              <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500 text-lg">No categories match your search</p>
+              </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
-                    <div key={i} className="group bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 hover:border-violet-500 shadow-none hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 overflow-hidden relative">
                       {!userIsPremium && (
-                        <div className="absolute top-3 right-3 bg-amber-50 text-amber-600 text-[10px] font-bold px-2.5 py-1 rounded-full">⭐ Premium</div>
+                        <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span className="text-xs">⭐</span> Premium</div>
                       )}
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-11 h-11 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center group-hover:bg-violet-600 transition-colors">
-                          <BookOpen className="w-5 h-5 text-violet-600 group-hover:text-white transition-colors" />
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center group-hover:from-violet-500 group-hover:to-purple-600 group-hover:scale-110 transition-all duration-300">
+                          <BookOpen className="w-5 h-5 text-violet-600 dark:text-violet-400 group-hover:text-white transition-colors" />
                         </div>
                         <div>
-                          <h3 className="text-base font-black text-slate-900 dark:text-white">{category.name}</h3>
-                          <p className="text-[10px] text-slate-400 font-bold">{category.count || 0} specializations</p>
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{category.name}</h3>
+                          <p className="text-xs text-slate-500 font-medium">{category.count || 0} specializations</p>
                         </div>
                       </div>
                       <p className="text-sm text-slate-500 mb-4 leading-relaxed">{category.description}</p>
-                      <div className="flex flex-wrap gap-1.5 mb-5">
+                      <div className="flex flex-wrap gap-2 mb-5">
                         {category.topics.slice(0, 4).map((topic, j) => (
-                          <span key={j} className="px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-500 text-[10px] font-bold rounded-lg">{topic}</span>
+                          <span key={j} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg">{topic}</span>
                         ))}
                         {category.topics.length > 4 && (
-                          <span className="px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-400 text-[10px] rounded-lg">+{category.topics.length - 4}</span>
+                          <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 text-xs rounded-lg">+{category.topics.length - 4}</span>
                         )}
                       </div>
                       <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
-                        className={`w-full ${getButtonColorStyles()} py-3 px-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-none border-none disabled:opacity-50`}>
+                        className={`w-full ${getButtonColorStyles()} py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all border-none disabled:opacity-50`}>
                         {exploringCategory === category.name ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-4 h-4" /> Explore curriculum</>}
                       </button>
                     </div>
@@ -1363,20 +1414,20 @@ export default function Explore() {
                 {visibleCategoriesCount < filteredCategories.length && (
                   <div className="text-center mt-8">
                     <button onClick={handleSeeMoreCategories}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-6 py-3 rounded-2xl text-sm font-bold hover:border-violet-300 hover:text-violet-600 transition-all">
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-8 py-3 rounded-xl text-sm font-semibold hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400 transition-all inline-flex items-center gap-2">
                       Show More ({filteredCategories.length - visibleCategoriesCount} remaining)
                     </button>
                   </div>
                 )}
 
                 {visibleCategoriesCount >= filteredCategories.length && filteredCategories.length > 9 && (
-                  <div className="text-center mt-8">
-                    <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800 rounded-3xl p-6 inline-block">
-                      <Sparkles className="w-8 h-8 text-violet-500 mx-auto mb-3" />
-                      <p className="text-violet-700 dark:text-violet-300 font-bold mb-1">Can't find what you're looking for?</p>
-                      <p className="text-violet-500 text-sm mb-4">Generate a custom course with AI</p>
+                  <div className="text-center mt-10">
+                    <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800 rounded-2xl p-8 inline-block max-w-md">
+                      <Sparkles className="w-10 h-10 text-violet-500 mx-auto mb-4" />
+                      <p className="text-violet-700 dark:text-violet-300 font-bold text-lg mb-2">Can't find what you're looking for?</p>
+                      <p className="text-violet-500 text-sm mb-5">Generate a custom course with AI</p>
                       <button onClick={() => router.push("/dashboard?tab=generate")}
-                        className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mx-auto">
+                        className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all hover:shadow-lg hover:shadow-violet-500/25">
                         <Sparkles className="w-4 h-4" /> Generate Custom Course
                       </button>
                     </div>
@@ -1392,12 +1443,19 @@ export default function Explore() {
       <div id="generated-courses-section" className="mb-16">
         {exploringCategory && (
           <div className="mb-12">
-            <div className="flex items-center space-x-2 mb-6">
-              <BookOpen className="w-6 h-6 text-blue-500" />
-              <h2 className="text-2xl font-bold text-foreground">
-                {exploringCategory} Courses
-              </h2>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {exploringCategory} Courses
+                </h2>
+                <p className="text-sm text-slate-500">Generating curriculum...</p>
+              </div>
+              <div className="ml-auto">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-violet-500 border-t-transparent"></div>
+              </div>
             </div>
 
             {/* Fading Cards Loader */}
@@ -1405,33 +1463,23 @@ export default function Explore() {
               {[...Array(6)].map((_, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 animate-pulse"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 animate-pulse"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded flex-1 mr-4"></div>
-                    <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded flex-1 mr-4"></div>
+                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                   </div>
-                  <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
-                  <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
-                  <div className="flex items-center space-x-4 text-sm mb-4">
-                    <div className="flex items-center space-x-1">
-                      <div className="h-4 w-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <div className="h-4 w-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="h-3 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                    </div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded mb-3"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded mb-6 w-3/4"></div>
+                  <div className="flex items-center gap-4 text-sm mb-5">
+                    <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
                   </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex space-x-2">
-                      <div className="h-6 w-12 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                      <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                      <div className="h-6 w-14 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                    </div>
-                    <div className="h-4 w-12 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                    <div className="h-6 w-14 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                   </div>
-                  <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                  <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
                 </div>
               ))}
             </div>
@@ -1441,20 +1489,23 @@ export default function Explore() {
         {generatedCourses.map((generatedSet, setIndex) => (
           <div key={generatedSet.id} id={generatedSet.id} className="mb-12">
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-2">
-                <BookOpen className="w-6 h-6 text-blue-500" />
-                <h2 className="text-2xl font-bold text-foreground">
-                  {generatedSet.category} Courses
-                </h2>
-                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                  {generatedSet.cached ? "From Cache" : "Generated"}{" "}
-                  {new Date(generatedSet.generatedAt).toLocaleDateString()}
-                </span>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    {generatedSet.category} Courses
+                  </h2>
+                  <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full font-medium">
+                    {generatedSet.cached ? "📦 From Cache" : "✨ Generated"} • {new Date(generatedSet.generatedAt).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center">
                 <button
                   onClick={() => toggleSectionMinimized(generatedSet.id)}
-                  className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                   title={
                     minimizedSections.has(generatedSet.id)
                       ? "Expand section"
@@ -1475,19 +1526,19 @@ export default function Explore() {
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-none hover:border-violet-500 transition-all relative group"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 relative group"
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-foreground flex-1">
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-violet-600 transition-colors">
                         {course.title}
                       </h3>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center">
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${course.difficulty === "beginner"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          className={`px-3 py-1 text-xs font-semibold rounded-full ${course.difficulty === "beginner"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                             : course.difficulty === "intermediate"
-                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                             }`}
                         >
                           {course.difficulty || "Beginner"}
@@ -1495,42 +1546,40 @@ export default function Explore() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">
                       {course.description}
                     </p>
 
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-4 text-sm text-slate-500 mb-5">
+                      <div className="flex items-center gap-1.5">
                         <Clock className="w-4 h-4" />
-                        <span>{course.estimatedDuration || "6 weeks"}</span>
+                        <span className="font-medium">{course.estimatedDuration || "6 weeks"}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2 flex-wrap gap-2">
-                        {course.tags?.slice(0, 3).map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="flex items-center flex-wrap gap-2 mb-5">
+                      {course.tags?.slice(0, 3).map((tag, tagIndex) => (
+                        <span
+                          key={tagIndex}
+                          className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-border">
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleGenerateCourse(course);
                         }}
                         disabled={generatingCourse === course.title}
-                        className={`w-full ${getButtonColorStyles()} py-2 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-none border-none`}
+                        className={`w-full ${getButtonColorStyles()} py-3 px-4 rounded-xl transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none`}
                       >
                         {generatingCourse === course.title ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
                             <span>Generating...</span>
                           </>
                         ) : (
@@ -1551,13 +1600,13 @@ export default function Explore() {
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2 mt-8">
+        <div className="flex items-center justify-center gap-2 mt-10">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={!pagination.hasPrev}
-            className="p-2 rounded-lg border border-border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary"
+            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
 
           {Array.from(
@@ -1568,9 +1617,9 @@ export default function Explore() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium ${currentPage === page
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border hover:bg-secondary text-foreground"
+                  className={`min-w-[44px] h-11 px-4 rounded-xl text-sm font-semibold transition-all ${currentPage === page
+                    ? "bg-violet-600 text-white shadow-lg shadow-violet-500/25"
+                    : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400"
                     }`}
                 >
                   {page}
@@ -1586,39 +1635,37 @@ export default function Explore() {
               )
             }
             disabled={!pagination.hasNext}
-            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       )}
 
       {/* Premium Upgrade Modal */}
       {showPremiumModal && selectedCategoryForModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-xl max-w-md w-full p-6 shadow-2xl border border-border">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
             <div className="text-center">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">⭐</span>
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/25">
+                  <span className="text-3xl">⭐</span>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  {selectedCategoryForModal.name} Courses
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                  Unlock Premium {selectedCategoryForModal.name}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Unlock personalized course recommendations for the{" "}
-                  <strong>{selectedCategoryForModal.name}</strong> category. Get
-                  access to 10+ curated courses tailored to your learning goals.
+                <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Get access to personalized course recommendations and 10+ curated courses tailored to your learning goals in the <strong className="text-slate-700 dark:text-slate-300">{selectedCategoryForModal.name}</strong> category.
                 </p>
               </div>
 
-              <div className="flex space-x-3">
+              <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setShowPremiumModal(false);
                     setSelectedCategoryForModal(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-border rounded-lg text-foreground hover:bg-secondary"
+                  className="flex-1 px-5 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                 >
                   Maybe Later
                 </button>
@@ -1628,7 +1675,7 @@ export default function Explore() {
                     setSelectedCategoryForModal(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                  className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all"
                 >
                   Upgrade Now
                 </button>
@@ -1640,40 +1687,39 @@ export default function Explore() {
 
       {/* Monthly Limit Reached Modal */}
       {showLimitModal && limitModalData && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-card backdrop-blur-md rounded-lg max-w-md w-full p-6 shadow-2xl border border-border">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
             <div className="text-center">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">⏰</span>
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/25">
+                  <Clock className="text-white w-10 h-10" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                   Monthly Limit Reached
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  You've used {limitModalData.used} out of{" "}
-                  {limitModalData.limit} free course generations this month.
+                <p className="text-slate-500 dark:text-slate-400 mb-5">
+                  You've used <strong className="text-orange-600 dark:text-orange-400">{limitModalData.used}</strong> out of <strong className="text-slate-700 dark:text-slate-300">{limitModalData.limit}</strong> free course generations this month.
                 </p>
-                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-4">
-                  <p className="text-orange-700 dark:text-orange-300 font-medium mb-2">
-                    Upgrade to Pro for unlimited generations!
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-5 mb-5 text-left">
+                  <p className="text-orange-700 dark:text-orange-300 font-bold mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Upgrade to Pro for unlimited generations!
                   </p>
-                  <ul className="text-sm text-orange-600 dark:text-orange-400 text-left space-y-1">
-                    <li>• 15 course generations per month</li>
-                    <li>• Premium course content</li>
-                    <li>• Advanced AI features</li>
-                    <li>• Priority support</li>
+                  <ul className="text-sm text-orange-600 dark:text-orange-400 space-y-2">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> 15 course generations per month</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> Premium course content</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> Advanced AI features</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> Priority support</li>
                   </ul>
                 </div>
               </div>
 
-              <div className="flex space-x-3">
+              <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setShowLimitModal(false);
                     setLimitModalData(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-input rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+                  className="flex-1 px-5 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                 >
                   Maybe Later
                 </button>
@@ -1683,7 +1729,7 @@ export default function Explore() {
                     setLimitModalData(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                  className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all"
                 >
                   Upgrade to Pro
                 </button>

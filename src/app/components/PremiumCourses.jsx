@@ -412,45 +412,45 @@ export default function PremiumCourses() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
+    <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
       {/* Header */}
       <motion.div
-        className="text-center mb-16 lg:mb-24"
+        className="text-center mb-12 lg:mb-16"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="inline-flex items-center justify-center space-x-3 mb-6 px-4 py-2 bg-primary/5 rounded-2xl border border-primary/10">
-          <Sparkles className="w-6 h-6 text-primary animate-pulse" />
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Curated Excellence</span>
+        <div className="inline-flex items-center justify-center gap-3 mb-6 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl shadow-lg shadow-violet-500/20">
+          <Sparkles className="w-5 h-5 text-white animate-pulse" />
+          <span className="text-xs font-bold uppercase tracking-widest text-white">Curated Excellence</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black font-serif text-foreground mb-8 tracking-tight">
-          <span className="bg-gradient-to-r from-primary via-blue-600 to-accent bg-clip-text text-transparent">Premium Courses</span>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
+          <span className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">Premium Courses</span>
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
+        <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed font-medium">
           Professional-grade curricula designed for deep mastery. Experience advanced AI tutoring, expert instruction, and comprehensive materials tailored to your learning goals.
         </p>
       </motion.div>
 
       {/* Search and Filter */}
       <motion.div
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <div className="relative flex-1 max-w-xl">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search curricula, topics, or skills..."
-            className="w-full pl-12 pr-4 py-4 border border-border rounded-2xl bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+            className="w-full pl-12 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all text-base font-medium shadow-sm"
           />
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-foreground text-background rounded-2xl shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-xl shadow-lg shadow-orange-500/20">
             <Crown className="w-6 h-6" />
           </div>
         </div>
@@ -459,26 +459,26 @@ export default function PremiumCourses() {
       {/* Free Plan Info Banner */}
       {!isPro && (
         <motion.div
-          className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-8 mb-12 text-white"
+          className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-6 md:p-8 mb-10 text-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-3">
+              <div className="flex items-center gap-3 mb-3">
                 <Crown className="w-8 h-8 text-yellow-300" />
                 <h2 className="text-xl font-bold">
                   Free Plan — 2 Premium Courses
                 </h2>
               </div>
-              <p className="text-orange-100 text-sm leading-relaxed">
-                On the free plan you can generate up to <strong>2 premium courses</strong>. Each course has <strong>20 modules</strong> and <strong>5 lessons</strong> per module — but you can only read the first <strong>3 modules</strong>. Upgrade to Pro to unlock all 20 modules and generate up to 50 courses/month.
+              <p className="text-violet-100 text-sm leading-relaxed">
+                On the free plan you can generate up to <strong className="text-white">2 premium courses</strong>. Each course has <strong className="text-white">20 modules</strong> and <strong className="text-white">5 lessons</strong> per module — but you can only read the first <strong className="text-white">3 modules</strong>. Upgrade to Pro to unlock all 20 modules and generate up to 50 courses/month.
               </p>
             </div>
             <button
               onClick={() => handleUpgradePlan("pro")}
-              className="shrink-0 bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+              className="shrink-0 bg-white text-violet-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors cursor-pointer shadow-lg hover:shadow-xl"
             >
               Upgrade to Pro
             </button>
@@ -494,11 +494,16 @@ export default function PremiumCourses() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <div className="flex items-center space-x-2 mb-6">
-            <TrendingUp className="w-6 h-6 text-orange-500" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Latest Trending Courses
-            </h2>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Latest Trending Courses
+              </h2>
+              <p className="text-sm text-slate-500">Hot topics gaining popularity</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -593,7 +598,7 @@ export default function PremiumCourses() {
 
       {/* Featured Course */}
       {
-        featured && (
+        isPro && featured && (
           <motion.div
             className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/40 backdrop-blur-xl shadow-2xl shadow-primary/5 mb-16"
             initial={{ opacity: 0, y: 30 }}
@@ -734,6 +739,7 @@ export default function PremiumCourses() {
 
       {/* Premium Courses Grid */}
       {
+        isPro && (
         isDataLoading || generatingPersonalized ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -876,10 +882,43 @@ export default function PremiumCourses() {
               ))}
             </motion.div>
 
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-10">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`min-w-[44px] h-11 px-4 rounded-xl text-sm font-semibold transition-all ${currentPage === page
+                      ? "bg-violet-600 text-white shadow-lg shadow-violet-500/25"
+                      : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-violet-300 hover:text-violet-600"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
 
           </>
         )
-      }
+      )}
     </div >
   );
 }

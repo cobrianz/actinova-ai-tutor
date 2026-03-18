@@ -7,7 +7,7 @@ import { ObjectId } from "mongodb";
 import { getUserPlanLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
-import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
+import { withAPIRateLimit, trackAPIUsage, checkAPILimit } from "@/lib/planMiddleware";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -40,6 +40,24 @@ async function handlePost(request) {
     const { db } = await connectToDatabase();
     const planLimits = getUserPlanLimits(user);
     const isPremium = user?.subscription?.tier !== "free" && user?.subscription?.status === "active";
+
+    const apiFeatureName = format === "quiz" ? "quiz" : "generate-course";
+    const limitCheck = await checkAPILimit(user._id, apiFeatureName);
+
+    if (!limitCheck.withinLimit && limitCheck.limit !== -1) {
+        return NextResponse.json(
+            {
+                error: "API rate limit exceeded",
+                message: `You have reached your monthly limit of ${limitCheck.limit} calls for ${apiFeatureName}.`,
+                details: "Please upgrade your plan to continue using this feature.",
+                used: limitCheck.currentUsage,
+                limit: limitCheck.limit,
+                isPremium: limitCheck.tier !== "free",
+                resetsOn: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString(),
+            },
+            { status: 429 }
+        );
+    }
 
     if (format === "quiz") {
       const now = new Date();
@@ -347,8 +365,7 @@ async function handlePost(request) {
 export const POST = combineMiddleware(
   withErrorHandling,
   withCsrf,
-  withAuth,
-  (handler) => withAPIRateLimit(handler, "generate-course")
+  withAuth
 )(handlePost);
 
 

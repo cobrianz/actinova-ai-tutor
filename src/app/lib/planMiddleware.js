@@ -229,9 +229,12 @@ export async function checkAPILimit(userId, apiName) {
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+        // Map apiName to feature name in planLimits FIRST
+        const featureName = getFeatureName(apiName);
+
         const usageDoc = await db.collection("api_usage").findOne({
             userId: new ObjectId(userId),
-            apiName,
+            apiName: featureName,
             month: monthStart,
         });
 
@@ -240,9 +243,6 @@ export async function checkAPILimit(userId, apiName) {
         // Get limits from central planLimits.js for consistency
         const { getUserPlanLimits } = await import("./planLimits");
         const planLimits = getUserPlanLimits(user);
-
-        // Map apiName to feature name in planLimits
-        const featureName = getFeatureName(apiName);
 
         const tierLimit = planLimits[featureName] || planLimits[apiName] || 5;
 

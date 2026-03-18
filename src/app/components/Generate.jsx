@@ -98,6 +98,17 @@ export default function Generate({ setActiveContent }) {
   const handleGenerate = async (retryCount = 0) => {
     if (!topic.trim()) return;
     if (isSubmitting) return; // prevent double submissions
+    
+    // AutoRun Bypass Fix: check limits before generating
+    if (format === "course" && atLimit) {
+      toast.error(
+        !isPremium 
+          ? "You hit free limits — upgrade to get more generations" 
+          : "You have reached your course generation limit."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     const subject = topic.trim();
 
@@ -617,13 +628,13 @@ export default function Generate({ setActiveContent }) {
 
           <button
             onClick={handleGenerate}
-            disabled={!topic.trim() || (!!user && !isPremium && atLimit)}
+            disabled={!topic.trim() || (!!user && !isPremium && format === "course" && atLimit)}
             className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]"
           >
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>
-              {!isPremium && atLimit
-                ? "You hit free limits — upgrade to get more generations"
+              {!isPremium && format === "course" && atLimit
+                ? "You've hit your free course limit — upgrade!"
                 : "Generate"}
             </span>
           </button>

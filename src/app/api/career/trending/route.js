@@ -43,7 +43,8 @@ Please prioritize careers and skills that align with these interests, goals, and
     }
 
     const systemPrompt = `You are an expert career analyst.
-Analyze the current job market and provide trending careers and skills for ${currentYear}.
+Analyze the current job market and provide exactly 6 trending careers and exactly 6 trending skills for ${currentYear}.
+Make sure to strictly provide 6 items in the "trendingCareers" array and 6 items in the "trendingSkills" array.
 Provide a comprehensive analysis in JSON format.${personalizationContext}
 
 JSON Structure:

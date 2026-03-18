@@ -5,14 +5,22 @@ import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 
-function calculateUsage(user) {
-  const monthlyUsage = user.monthlyUsage || 0;
+async function calculateUsage(user, db) {
   const isPremium =
     user.isPremium ||
     (user.subscription?.plan === "pro" &&
       user.subscription?.status === "active");
 
   const limit = isPremium ? 15 : 2;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const usageDoc = await db.collection("api_usage").findOne({
+    userId: user._id,
+    month: monthStart,
+    apiName: "generateCourseLimit"
+  });
+  const monthlyUsage = usageDoc ? usageDoc.count : 0;
 
   return {
     used: monthlyUsage,
@@ -27,7 +35,8 @@ function calculateUsage(user) {
 
 async function handleGet(request) {
   const user = request.user;
-  const usage = calculateUsage(user);
+  const { db } = await connectToDatabase();
+  const usage = await calculateUsage(user, db);
 
   return NextResponse.json({
     success: true,
@@ -111,7 +120,7 @@ async function handlePut(request) {
       avatar: updatedUser.avatar,
       location: updatedUser.location,
       bio: updatedUser.profile?.bio || "",
-      usage: calculateUsage(updatedUser),
+      usage: await calculateUsage(updatedUser, db),
     },
   });
 }
@@ -227,7 +236,7 @@ async function handlePost(request) {
       onboardingCompleted: !!updatedUser.onboardingCompleted,
       emailVerified: !!updatedUser.emailVerified,
       status: updatedUser.status,
-      usage: calculateUsage(updatedUser),
+      usage: await calculateUsage(updatedUser, db),
     },
   });
 }

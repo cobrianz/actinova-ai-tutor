@@ -66,6 +66,10 @@ const SkillGapAnalysis = () => {
             setShowUpgradeModal(true);
             return;
         }
+        if (user?.usage?.isAtLimit) {
+            toast.error("You have reached your limit for career analysis.");
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
@@ -86,6 +90,9 @@ const SkillGapAnalysis = () => {
                 toast.success("Skill gap analysis complete!");
             } else {
                 const err = await response.json().catch(() => ({}));
+                if (response.status === 429) {
+                    throw new Error("You have reached your limit for career analysis.");
+                }
                 throw new Error(err.error || "Failed to perform analysis");
             }
         } catch (error) {

@@ -27,6 +27,7 @@ import {
     AlertCircle,
     BrainCircuit,
     Star,
+    Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "./AuthProvider";
@@ -62,6 +63,72 @@ const CareerGrowth = () => {
             });
         }
         router.push(`/dashboard?${params.toString()}`);
+    };
+
+    const atLimit = user?.usage?.isAtLimit || (!isPro && user?.usage?.remaining === 0);
+    const [generatingCourse, setGeneratingCourse] = useState(null);
+    const [showLimitModal, setShowLimitModal] = useState(false);
+    const [limitModalData, setLimitModalData] = useState(null);
+
+    const handleGenerateCourse = async (topicTitle) => {
+        if (generatingCourse) return;
+
+        if (atLimit) {
+            setShowLimitModal(true);
+            setLimitModalData({
+                used: user?.usage?.used || 0,
+                limit: user?.usage?.limit || 5, // fallback
+                isPremium: isPro,
+            });
+            return;
+        }
+
+        setGeneratingCourse(topicTitle);
+        toast.loading(`Generating course: ${topicTitle}...`, { id: "generating" });
+
+        try {
+            const response = await apiClient.post("/api/generate-course", {
+                topic: topicTitle,
+                format: "course",
+                difficulty: "beginner",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 429) {
+                    toast.dismiss("generating");
+                    setShowLimitModal(true);
+                    setLimitModalData({
+                        used: errorData.used || 0,
+                        limit: errorData.limit || 5,
+                        isPremium: errorData.isPremium || false,
+                    });
+                    setGeneratingCourse(null);
+                    return;
+                }
+                throw new Error(errorData.error || "Failed to generate course");
+            }
+
+            const responseData = await response.json();
+            toast.success(`Course "${topicTitle}" generated successfully!`, { id: "generating" });
+
+            if (responseData.courseId || responseData.success) {
+                const safeTopic = topicTitle
+                    .replace(/[^a-zA-Z0-9\s-]/g, "")
+                    .trim()
+                    .replace(/\s+/g, "-");
+                
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("usageUpdated"));
+                }
+                router.push(`/learn/${encodeURIComponent(safeTopic)}?format=course&difficulty=beginner`);
+            }
+        } catch (error) {
+            console.error("Error generating course:", error);
+            toast.error(error.message || "Failed to generate course", { id: "generating" });
+        } finally {
+            setGeneratingCourse(null);
+        }
     };
 
     const [trendingData, setTrendingData] = useState(null);
@@ -441,15 +508,11 @@ const CareerGrowth = () => {
                                                     <Button
                                                         variant="default"
                                                         className="flex-1 bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
-                                                        onClick={() => {
-                                                            toast.loading("Preparing your personalized curriculum...");
-                                                            setTimeout(() => {
-                                                                router.push(`/dashboard?tab=generate&topic=${encodeURIComponent(career.title)}&autoRun=true`);
-                                                            }, 1000);
-                                                        }}
+                                                        onClick={() => handleGenerateCourse(career.title)}
+                                                        disabled={generatingCourse === career.title}
                                                     >
-                                                        <BookOpen className="w-4 h-4 mr-2" />
-                                                        Course
+                                                        {generatingCourse === career.title ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
+                                                        {generatingCourse === career.title ? "Generating..." : "Course"}
                                                     </Button>
                                                     <Button
                                                         variant="secondary"
@@ -516,15 +579,14 @@ const CareerGrowth = () => {
                                                 <Button
                                                     variant="ghost"
                                                     className="w-full justify-between items-center bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-800/50"
-                                                    onClick={() => {
-                                                        toast.loading(`Generating course for ${skill.skill}...`);
-                                                        setTimeout(() => {
-                                                            router.push(`/dashboard?tab=generate&topic=${encodeURIComponent(skill.skill)}&autoRun=true`);
-                                                        }, 1000);
-                                                    }}
+                                                    onClick={() => handleGenerateCourse(skill.skill)}
+                                                    disabled={generatingCourse === skill.skill}
                                                 >
-                                                    Start Learning
-                                                    <ArrowRight className="w-4 h-4 ml-2" />
+                                                    <div className="flex items-center">
+                                                        {generatingCourse === skill.skill && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                                        {generatingCourse === skill.skill ? "Generating..." : "Start Learning"}
+                                                    </div>
+                                                    {!generatingCourse && <ArrowRight className="w-4 h-4 ml-2" />}
                                                 </Button>
                                             </motion.div>
                                         ))}
@@ -597,6 +659,60 @@ const CareerGrowth = () => {
                 featureName="Career Growth Suite"
                 description="Unlock the full power of our AI-driven Career Accelerator. Get unlimited resume optimizations, expert interview prep, and deep skill gap analysis."
             />
+
+            {/* Monthly Limit Reached Modal */}
+            {showLimitModal && limitModalData && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="text-center">
+                            <div className="mb-6">
+                                <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/25">
+                                    <Clock className="text-white w-10 h-10" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                                    Monthly Limit Reached
+                                </h3>
+                                <p className="text-slate-500 dark:text-slate-400 mb-5">
+                                    You've used <strong className="text-orange-600 dark:text-orange-400">{limitModalData.used}</strong> out of <strong className="text-slate-700 dark:text-slate-300">{limitModalData.limit}</strong> free course generations this month.
+                                </p>
+                                <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-5 mb-5 text-left">
+                                    <p className="text-orange-700 dark:text-orange-300 font-bold mb-3 flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4" /> Upgrade to Pro for unlimited generations!
+                                    </p>
+                                    <ul className="text-sm text-orange-600 dark:text-orange-400 space-y-2">
+                                        <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> 15 course generations per month</li>
+                                        <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> Premium course content</li>
+                                        <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> Advanced AI features</li>
+                                        <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> Priority support</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowLimitModal(false);
+                                        setLimitModalData(null);
+                                    }}
+                                    className="flex-1 px-5 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                >
+                                    Maybe Later
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowLimitModal(false);
+                                        setLimitModalData(null);
+                                        router.push("/pricing");
+                                    }}
+                                    className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+                                >
+                                    Upgrade to Pro
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -173,8 +173,17 @@ export async function POST(request) {
 
     // Calculate usage for UI
     const isPremium = user.isPremium || (user.subscription?.plan === "pro" && user.subscription?.status === "active");
+    const nowDate = new Date();
+    const monthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
+    const usageDoc = await db.collection("api_usage").findOne({
+      userId: user._id,
+      month: monthStart,
+      apiName: "generateCourseLimit"
+    });
+    const monthlyUsage = usageDoc ? usageDoc.count : 0;
+
     const usageData = {
-      used: user.monthlyUsage || 0,
+      used: monthlyUsage,
       limit: isPremium ? 15 : 2,
       isPremium,
     };

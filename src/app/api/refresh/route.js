@@ -135,18 +135,27 @@ export async function POST() {
     setCsrfCookie(cookieStore, csrfToken, isProd);
 
     // 6. Usage calculation
+    const nowDate = new Date();
+    const monthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
+    const usageDoc = await db.collection("api_usage").findOne({
+      userId: user._id,
+      month: monthStart,
+      apiName: "generateCourseLimit"
+    });
+    const monthlyUsage = usageDoc ? usageDoc.count : 0;
+
     const isPremium =
       user.isPremium ||
       (user.subscription?.plan === "pro" &&
         user.subscription?.status === "active");
 
     const usage = {
-      used: user.monthlyUsage || 0,
+      used: monthlyUsage,
       limit: isPremium ? 15 : 2,
-      remaining: Math.max(0, (isPremium ? 15 : 2) - (user.monthlyUsage || 0)),
+      remaining: Math.max(0, (isPremium ? 15 : 2) - monthlyUsage),
       percentage: Math.min(
         100,
-        Math.round(((user.monthlyUsage || 0) / (isPremium ? 15 : 2)) * 100)
+        Math.round((monthlyUsage / (isPremium ? 15 : 2)) * 100)
       ),
       isPremium,
     };

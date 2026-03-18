@@ -7,26 +7,16 @@ async function handleGet(request) {
   const { db } = await connectToDatabase();
   const usersCol = db.collection("users");
 
-  // Auto-reset monthly usage if new month
+  // Fetch actual API usage from the unified tracking collection
   const now = new Date();
-  const lastReset = user.usageResetDate ? new Date(user.usageResetDate) : null;
-  const isNewMonth = !lastReset ||
-    lastReset.getMonth() !== now.getMonth() ||
-    lastReset.getFullYear() !== now.getFullYear();
-
-  let monthlyUsage = user.monthlyUsage || 0;
-  if (isNewMonth) {
-    monthlyUsage = 0;
-    await usersCol.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          monthlyUsage: 0,
-          usageResetDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
-        },
-      }
-    );
-  }
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const usageDoc = await db.collection("api_usage").findOne({
+    userId: user._id,
+    month: monthStart,
+    apiName: "generateCourseLimit"
+  });
+  
+  let monthlyUsage = usageDoc ? usageDoc.count : 0;
 
   // USER REQUEST: Refresh content on login (or daily)
   const lastRefresh = user.lastContentRefresh ? new Date(user.lastContentRefresh) : null;

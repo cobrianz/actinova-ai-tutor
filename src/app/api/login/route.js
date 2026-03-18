@@ -218,33 +218,15 @@ export async function POST(request) {
       }
     );
 
-    // Calculate monthly usage
+    // Calculate monthly usage from api_usage
     const nowDate = new Date();
-    const lastReset = user.usageResetDate
-      ? new Date(user.usageResetDate)
-      : null;
-    const isNewMonth =
-      !lastReset ||
-      lastReset.getMonth() !== nowDate.getMonth() ||
-      lastReset.getFullYear() !== nowDate.getFullYear();
-
-    let monthlyUsage = user.monthlyUsage || 0;
-    if (isNewMonth) {
-      monthlyUsage = 0;
-      await usersCol.updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            monthlyUsage: 0,
-            usageResetDate: new Date(
-              nowDate.getFullYear(),
-              nowDate.getMonth() + 1,
-              1
-            ),
-          },
-        }
-      );
-    }
+    const monthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
+    const usageDoc = await db.collection("api_usage").findOne({
+      userId: user._id,
+      month: monthStart,
+      apiName: "generateCourseLimit"
+    });
+    let monthlyUsage = usageDoc ? usageDoc.count : 0;
 
     const isPremium =
       user.isPremium ||
