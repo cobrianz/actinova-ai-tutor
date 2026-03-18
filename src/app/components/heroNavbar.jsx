@@ -80,10 +80,10 @@ export default function HeroNavbar({ handleGetStarted }) {
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="relative flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-500 bg-secondary/80 shadow-xs border-border backdrop-blur-3xl">
+        <nav className="relative flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-500 bg-secondary/80 border-border backdrop-blur-3xl">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110 overflow-hidden p-1.5">
+            <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden p-1.5">
               <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-heading text-xl font-bold tracking-tight">

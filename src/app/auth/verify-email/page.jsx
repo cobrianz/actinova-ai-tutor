@@ -166,8 +166,8 @@ function VerifyEmailContent() {
         <div className="max-w-md w-full flex flex-col">
           <div className="text-center mb-10">
             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md overflow-hidden p-1.5">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain brightness-0 invert" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-bricolage">Actirova AI</span>
             </Link>
