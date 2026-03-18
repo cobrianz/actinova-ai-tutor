@@ -736,8 +736,13 @@ export default function LearnContent() {
     html = html.replace(
       /\\\[([\s\S]*?)\\\]/g,
       (match, equation) => {
+        const trimmed = equation.trim();
+        // Sanitization: If it's mostly text (many spaces, few symbols), don't render as raw math
+        if (trimmed.includes(' ') && !trimmed.includes('\\') && (trimmed.split(' ').length > 3 || trimmed.length > 40)) {
+          return `<div class="my-4 font-serif text-lg leading-relaxed">${trimmed}</div>`;
+        }
         try {
-          const rendered = katex.renderToString(equation.trim(), {
+          const rendered = katex.renderToString(trimmed, {
             displayMode: true,
             throwOnError: false,
             output: 'html'
@@ -753,8 +758,13 @@ export default function LearnContent() {
     html = html.replace(
       /\\\(([\s\S]*?)\\\)/g,
       (match, equation) => {
+        const trimmed = equation.trim();
+        // Sanitization: If it's mostly text, don't render as math
+        if (trimmed.includes(' ') && !trimmed.includes('\\') && (trimmed.split(' ').length > 3 || trimmed.length > 30)) {
+          return `<span>${trimmed}</span>`;
+        }
         try {
-          const rendered = katex.renderToString(equation.trim(), {
+          const rendered = katex.renderToString(trimmed, {
             displayMode: false,
             throwOnError: false,
             output: 'html',

@@ -256,7 +256,10 @@ async function handlePost(request) {
         4. Be academically rigorous and logically structured.
         5. Ensure lesson titles are specific and descriptive.
         6. Do not include lesson content; focus only on titles and structure.
-        7. Return ONLY the JSON object.`,
+        7. CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math.
+        8. IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+        9. NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
+        10. Return ONLY the JSON object.`,
         },
         {
           role: "user",
@@ -408,14 +411,10 @@ QUESTION REQUIREMENTS:
 - Focus on analysis, application, evaluation, and problem-solving
 - Each question must be clear, unambiguous, and professionally worded
 - Questions should test deep understanding, not just memorization
-
-ANSWER REQUIREMENTS:
-- Exactly one correct answer per question
-- All options must be plausible and professionally written
-- Incorrect options should be common misconceptions or partial understandings
-- Options should be similar in length and complexity
-
-Return ONLY valid JSON with this exact structure:
+- CRITICAL for Math Equations: Use \( ... \) for INLINE math and \[ ... \] for BLOCK math. 
+- IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+- NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
+- Return ONLY valid JSON with this exact structure:
 {
   "title": "Professional Quiz Title",
   "course": "${topic}",

@@ -144,22 +144,17 @@ Create ${depth} content including:
 - Engaging introduction with learning objectives
 - Step-by-step explanations
 - Real-world examples and analogies
-- Code snippets (if relevant) with syntax highlighting
-- Practice exercises or challenges
-- Common pitfalls and how to avoid them
-- Key takeaways summary
-
-Use beautiful Markdown:
-- ## Main sections
-- ### Subsections
-- **bold** for key terms
-- *italics* for emphasis
-- \`inline code\`
-- \`\`\`language blocks
-- > Blockquotes for tips
-- Numbered/bulleted lists
-
-Make it engaging, professional, and perfectly structured.`;
+- Detailed code examples (if relevant) with line-by-line explanations
+- Real-world analogies and visuals (describe in detail)
+- 3-5 Practice exercises with solutions
+- Comprehensive Key takeaways
+- A specific "Further Reading" section with suggested topics
+- CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math. 
+- IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+- NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
+Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
+CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.
+IMPORTANT: Avoid being concise. Dive deep into every sub-topic.`;
 
     // === Call OpenAI ===
     const completion = await openai.chat.completions.create({
