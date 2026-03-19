@@ -288,23 +288,62 @@ Difficulty: ${difficulty}
 Target length: ${wordCount} words
 Access tier: ${isPremium ? "Premium" : "Free"}
 
-Include:
 - Engaging and thorough introduction
 - Clear, specific learning objectives
 - In-depth step-by-step explanations with multiple examples
 - Industry best practices and common pitfalls
 - Detailed code examples (if relevant) with line-by-line explanations
-- Real-world analogies and visuals (describe in detail, but AVOID providing Python code for visuals)
-- 3-5 Practice exercises with solutions
+- **Process Flow Diagrams**: Use \`\`\`flow\`\`\` blocks ONLY for process flows, system architectures, or connected nodes. 
+  CRITICAL: Each node MUST have a specific "type": "start", "process", "decision", "end", or "custom". 
+  Example structure:
+  \`\`\`flow
+  {
+    "nodes": [
+      { "id": "1", "label": "Start Process", "type": "start", "description": "Initialization phase" },
+      { "id": "2", "label": "Analysis", "type": "process", "description": "Processing data" },
+      { "id": "3", "label": "Valid?", "type": "decision", "description": "Check requirements" },
+      { "id": "4", "label": "Finish", "type": "end", "description": "Final output" }
+    ],
+    "edges": [
+      { "source": "1", "target": "2", "label": "Initialize" },
+      { "source": "2", "target": "3", "label": "Analyze" },
+      { "source": "3", "target": "4", "label": "Yes" },
+      { "source": "3", "target": "2", "label": "No (Retry)" }
+    ]
+  }
+  \`\`\`
+  CRITICAL: If you use backslashes (\) in JSON fields, you MUST escape them as double backslashes (\\) to ensure valid JSON (e.g., "description": "Formula: a = \\Delta v / \\Delta t").
+- **Interactive Data Charts**: Use \`\`\`chart\`\`\` blocks ONLY for quantitative data (bar, line, pie, doughnut).
+  CRITICAL: Do not use for flow diagrams.
+  CRITICAL: DO NOT use Python (Matplotlib, etc.) for visualizations. All data visualizations MUST use the \`\`\`chart\`\`\` block format.
+  Example structure:
+  \`\`\`chart
+  {
+    "type": "bar",
+    "title": "Topic Distribution",
+    "data": {
+      "labels": ["Concept A", "Concept B", "Concept C"],
+      "datasets": [{ "label": "Engagement %", "data": [65, 85, 45], "backgroundColor": "rgba(99, 102, 241, 0.8)" }]
+    }
+  }
+  \`\`\`
+- 3-5 Practice exercises with solutions. Provide clear explanations for each solution.
 - Comprehensive Key takeaways
 - A specific "Further Reading" section with suggested topics
 - CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math. 
 - IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
 - NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
-- CRITICAL: DO NOT provide Python code (like matplotlib, seaborn, etc.) to generate visuals. Instead, describe the visuals or use simple Markdown formatting.
+- CRITICAL: DO NOT use Mermaid syntax or flowchart diagrams of any kind.
+- Use only the following visual block types:
+  - \`\`\`chart\`\`\` for data visualizations (bar, line, pie, doughnut)
+  - \`\`\`table\`\`\` for markdown tables
+- High-level data visualizations (graphs) are encouraged; flow-based diagrams are forbidden.
+- **Python Code**: If the lesson requires Python code for explanations (e.g., a data science lesson), you can provide code, but DO NOT use Python code to generate visualizations. Use the \`\`\`chart\`\`\` block instead.
+- **Quantity constraint**: Include at least 3-5 high-quality charts using the \`\`\`chart\`\`\` block per lesson. Generous use of charts for visualizing any quantitative data, trends, or comparisons is strongly encouraged to make the course visually rich.
 Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
 CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.
-IMPORTANT: Avoid being concise. Dive deep into every sub-topic.`;
+IMPORTANT: Avoid being concise. Dive deep into every sub-topic.
+SITUATIONAL VISUALS: Use \`\`\`chart\`\`\` blocks ONLY when strictly necessary for clarifying highly complex processes, comparing specific data points, or illustrating deep hierarchies. DO NOT use them for simple text or general concepts. Avoid generic titles like "Interactive Flow Diagram"; use short, formal descriptions (e.g., "Data Authentication Pipeline").`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",

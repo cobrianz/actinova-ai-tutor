@@ -194,10 +194,16 @@ const cleanLatex = (text) => {
         // Superscript/Subscript with braces
         .replace(/\^\{([^{}]+)\}/g, "^($1)")
         .replace(/_\{([^{}]+)\}/g, "_($1)")
+        // Superscript/Subscript without braces (single char or digits)
+        .replace(/\^([a-zA-Z0-9])/g, "^$1")
+        .replace(/_([a-zA-Z0-9])/g, "_$1")
+        // Clean up common leftovers
+        .replace(/\\text\{([^{}]+)\}/g, "$1")
+        .replace(/\\mathrm\{([^{}]+)\}/g, "$1")
+        // Remove any remaining backslashes from commands
+        .replace(/\\[a-zA-Z]+/g, "")
         // Sized delimiters
         .replace(/\\left[({[\\]|\\right[)}\]\\]/g, "")
-        // Generic commands leftovers
-        .replace(/\\[a-zA-Z]+\b/g, "")
         // Escaped characters
         .replace(/\\([%&$#_{}]) /g, "$1")
         .replace(/\\{/g, "{")
@@ -205,7 +211,137 @@ const cleanLatex = (text) => {
         .trim();
 };
 
-export const downloadCourseAsPDF = async (data, mode = "course") => {
+/**
+ * Shared parser to identify structural blocks (charts, tables, code, text)
+ */
+export const parseContentIntoBlocks = (content) => {
+    if (!content) return [];
+    const blocks = [];
+    const blockRegex = /```(\w+)?\s*\n([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+
+    const extractTablesFromText = (text) => {
+        const tableRegex = /((?:^|\n)\|.+(?:\|.+(?:(?:\n\|[\s\-|]+)+)(?:\n\|.+(?:\|.+)*)+))/g;
+        let tLastIndex = 0;
+        let tMatch;
+        while ((tMatch = tableRegex.exec(text)) !== null) {
+            const beforeTable = text.substring(tLastIndex, tMatch.index).trim();
+            if (beforeTable) blocks.push({ type: "text", content: beforeTable });
+            const tableContent = tMatch[0].trim();
+            const lines = tableContent.split('\n').filter(l => l.trim().startsWith('|'));
+            if (lines.length >= 3) {
+                const headers = lines[0].split('|').filter(s => s.trim()).map(s => s.trim());
+                const rows = lines.slice(2).map(line => line.split('|').filter(s => s.trim()).map(s => s.trim()));
+                if (headers.length > 0 && rows.length > 0) {
+                    blocks.push({ type: "table", headers, rows });
+                } else {
+                    blocks.push({ type: "text", content: tableContent });
+                }
+            } else {
+                blocks.push({ type: "text", content: tableContent });
+            }
+            tLastIndex = tableRegex.lastIndex;
+        }
+        const finalRemaining = text.substring(tLastIndex).trim();
+        if (finalRemaining) blocks.push({ type: "text", content: finalRemaining });
+    };
+
+    const processTikzBlock = (tikzContent, fullBlock) => {
+        try {
+            const xlabelMatch = /xlabel\s*=\s*\{([^}]*)\}/.exec(tikzContent);
+            const ylabelMatch = /ylabel\s*=\s*\{([^}]*)\}/.exec(tikzContent);
+            const coordRegex = /coordinates\s*\{\s*([\s\S]*?)\s*\}/g;
+            let cMatch;
+            const datasets = [];
+            while ((cMatch = coordRegex.exec(tikzContent)) !== null) {
+                const coordsStr = cMatch[1];
+                const pairs = coordsStr.match(/\((-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\)/g);
+                if (pairs) {
+                    const data = pairs.map(p => {
+                        const parts = p.match(/\((-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\)/);
+                        return { x: parseFloat(parts[1]), y: parseFloat(parts[2]) };
+                    });
+                    datasets.push({
+                        label: datasets.length === 0 ? (ylabelMatch ? ylabelMatch[1] : "Y-Axis") : `Plot ${datasets.length + 1}`,
+                        data: data.map(d => d.y),
+                        labels: data.map(d => d.x)
+                    });
+                }
+            }
+            if (datasets.length > 0) {
+                blocks.push({
+                    type: "chart",
+                    chartType: "line",
+                    data: {
+                        labels: datasets[0].labels,
+                        datasets: datasets.map(d => ({ label: d.label, data: d.data }))
+                    },
+                    title: xlabelMatch ? `${xlabelMatch[1]} vs ${ylabelMatch ? ylabelMatch[1] : ''}` : "Tactical Data Visualization"
+                });
+            } else {
+                blocks.push({ type: "code", lang: "latex", content: fullBlock });
+            }
+        } catch (e) {
+            blocks.push({ type: "code", lang: "latex", content: fullBlock });
+        }
+    };
+
+    const processTextAndTables = (text) => {
+        if (!text.trim()) return;
+        const tikzRegex = /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g;
+        const visualMatches = [];
+        let m;
+        while ((m = tikzRegex.exec(text)) !== null) {
+            visualMatches.push({ type: 'tikz', content: m[1], full: m[0], index: m.index });
+        }
+        visualMatches.sort((a, b) => a.index - b.index);
+        let lastIdx = 0;
+        visualMatches.forEach(vMatch => {
+            const beforeText = text.substring(lastIdx, vMatch.index);
+            if (beforeText.trim()) extractTablesFromText(beforeText);
+            processTikzBlock(vMatch.content, vMatch.full);
+            lastIdx = vMatch.index + vMatch.full.length;
+        });
+        const remainingText = text.substring(lastIdx);
+        if (remainingText.trim()) extractTablesFromText(remainingText);
+    };
+
+    while ((match = blockRegex.exec(content)) !== null) {
+        const textBefore = content.substring(lastIndex, match.index);
+        processTextAndTables(textBefore);
+        const lang = (match[1] || "").toLowerCase().trim();
+        const code = match[2].trim();
+        if (lang === "chart") {
+            try {
+                const sanitizedCode = code.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+                const chartData = JSON.parse(sanitizedCode);
+                blocks.push({ 
+                    type: "chart", 
+                    chartType: chartData.type || "bar",
+                    data: chartData.data,
+                    title: chartData.title || "Interactive Data Chart"
+                });
+            } catch (e) {
+                blocks.push({ type: "text", content: `\`\`\`${lang}\n${code}\n\`\`\`` });
+            }
+        } else if (lang === "table") {
+            try {
+                const tableData = JSON.parse(code);
+                blocks.push({ type: "table", headers: tableData.headers, rows: tableData.rows, title: tableData.title });
+            } catch (e) {
+                blocks.push({ type: "text", content: `\`\`\`${lang}\n${code}\n\`\`\`` });
+            }
+        } else {
+            blocks.push({ type: "code", lang, content: code });
+        }
+        lastIndex = blockRegex.lastIndex;
+    }
+    processTextAndTables(content.substring(lastIndex));
+    return blocks;
+};
+
+export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) => {
     if (!data) throw new Error("No data provided");
 
     const pdf = new jsPDF({
@@ -256,13 +392,13 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
     y = 40;
     try {
-        // Add logo to cover page - path relative to public folder in Next.js
-        pdf.addImage("/logo.png", "PNG", (pageWidth - 40) / 2, y, 40, 40);
+        // Add logo to cover page - letting jsPDF detect format from extension
+        pdf.addImage("/logo.png", (pageWidth - 40) / 2, y, 40, 40);
         y += 45;
     } catch (e) {
-        // Fallback if logo-white not found
+        // Fallback if logo not found or errors
         try {
-            pdf.addImage("/logo.png", "PNG", (pageWidth - 40) / 2, y, 40, 40);
+            pdf.addImage("/logo.png", (pageWidth - 40) / 2, y, 40, 40);
             y += 45;
         } catch (err) {
             y = 80; // Reset if no logo
@@ -333,12 +469,7 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
         lines.forEach((line) => {
             checkNewPage(7);
-
-            // Draw code background
-            pdf.setFillColor(245, 245, 245);
-            pdf.rect(margin + 2, y - 4, contentWidth - 4, 6, "F");
-
-            pdf.text(line, xPos + 2, y);
+    pdf.text(line, xPos + 2, y);
             y += 6;
         });
         pdf.setFont("times", "normal"); // Reset
@@ -346,130 +477,150 @@ export const downloadCourseAsPDF = async (data, mode = "course") => {
 
     const processContent = (content) => {
         if (!content) return;
-        const lines = content.split('\n');
-        let isInCodeBlock = false;
+        const blocks = parseContentIntoBlocks(content);
 
-        lines.forEach(line => {
-            let trimmedLine = line.trim();
+        let chartIdx = 0;
+        let tableIdx = 0;
 
-            // Handle code block toggle
-            if (trimmedLine.startsWith("```")) {
-                isInCodeBlock = !isInCodeBlock;
-                y += 2; // Small padding
-                return;
-            }
+        blocks.forEach(block => {
+            if (block.type === "chart" || block.type === "table") {
+                const targetType = block.type;
+                const targetIndex = targetType === "chart" ? chartIdx++ : tableIdx++;
 
-            if (isInCodeBlock) {
-                renderCodeLine(line, margin + 4);
-                return;
-            }
-
-            trimmedLine = typeof cleanLatex === "function" ? cleanLatex(trimmedLine) : trimmedLine;
-
-            // Handle horizontal rule (bypass rendering but keep spacing if needed)
-            if (trimmedLine.match(/^\s*[-*_]{3,}\s*$/)) {
-                y += 5;
-                return;
-            }
-
-            if (!trimmedLine) {
-                y += 3;
-                return;
-            }
-
-            const cleanLine = stripMarkdown(trimmedLine).toLowerCase().replace(/^(course|module|lesson|topic):\s*/, "").trim();
-            const isRedundant =
-                cleanLine === data.title?.toLowerCase() ||
-                (data.course && cleanLine === data.course.toLowerCase()) ||
-                (data.module && cleanLine === data.module.toLowerCase()) ||
-                (data.course && cleanLine.includes(data.course.toLowerCase())) ||
-                (data.module && cleanLine.includes(data.module.toLowerCase())) ||
-                (data.title && (cleanLine.includes(data.title.toLowerCase()) || data.title.toLowerCase().includes(cleanLine))) ||
-                trimmedLine.toLowerCase().startsWith("module:") ||
-                trimmedLine.toLowerCase().startsWith("lesson:") ||
-                trimmedLine.toLowerCase().startsWith("course:") ||
-                trimmedLine.toLowerCase().startsWith("topic:");
-
-            // Skip redundant titles, and skip early dividers/empty lines that often follow them
-            if (isRedundant || (trimmedLine.match(/^[-*_]{3,}$/) && y < 65)) {
-                return;
-            }
-
-            if (!trimmedLine && y < 65) {
-                return;
-            }
-
-            checkNewPage(12);
-
-            if (trimmedLine.startsWith("# ")) {
-                const headerText = stripMarkdown(trimmedLine.substring(2).trim());
+                const visualData = visuals.find(v => v.type === targetType && v.index === targetIndex);
+                if (visualData && visualData.image) {
+                    checkNewPage(80); // Ensure space for image
+                    try {
+                        const imgWidth = contentWidth;
+                        const imgHeight = (visualData.height * imgWidth) / visualData.width;
+                        pdf.addImage(visualData.image, margin, y, imgWidth, imgHeight);
+                        y += imgHeight + 10;
+                    } catch (imgErr) {
+                        console.error(`Failed to add ${targetType} image to PDF:`, imgErr);
+                        // Fallback fallback
+                        if (block.type === "chart") {
+                            renderCodeLine(JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2), margin + 4);
+                        } else {
+                            renderCodeLine(block.headers.join(" | "), margin + 4);
+                        }
+                    }
+                } else {
+                    // Fallback to text if image missing
+                    y += 2;
+                    if (block.type === "chart") {
+                        const fallbackContent = block.data ? JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2) : "Chart Data Missing";
+                        renderCodeLine(fallbackContent, margin + 4);
+                    } else if (block.type === "table") {
+                        const tableText = (block.headers?.join(" | ") || "") + "\n" + (block.rows?.map(r => r.join(" | ")).join("\n") || "");
+                        renderCodeLine(tableText || "Table Data Missing", margin + 4);
+                    }
+                }
+            } else if (block.type === "code") {
                 y += 2;
-                pdf.setFont("times", "bold");
-                pdf.setFontSize(26);
-                pdf.setTextColor(...COLORS.text);
-                pdf.text(headerText, pageWidth / 2, y, { align: "center" });
-                y += 10;
-            } else if (trimmedLine.startsWith("## ")) {
-                y += 2;
-                pdf.setFont("times", "bold");
-                pdf.setFontSize(20);
-                pdf.setTextColor(...COLORS.text);
-                const headerText = stripMarkdown(trimmedLine.substring(3).trim());
-                const lines = pdf.splitTextToSize(headerText, contentWidth);
-                pdf.text(lines, margin, y);
+                renderCodeLine(`\`\`\`${block.lang}\n${block.content}\n\`\`\``, margin + 4);
+            } else if (block.type === "text") {
+                const lines = block.content.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    let trimmedLine = line.trim();
 
-                const lastLineW = pdf.getTextWidth(lines[lines.length - 1]);
-                y += (lines.length * 7) + 3;
-            } else if (trimmedLine.startsWith("### ")) {
-                y += 2;
-                pdf.setFont("times", "bold");
-                pdf.setFontSize(15);
-                pdf.setTextColor(...COLORS.text);
-                const headerText = stripMarkdown(trimmedLine.substring(4));
-                const lines = pdf.splitTextToSize(headerText, contentWidth);
-                pdf.text(lines, margin, y);
-                y += (lines.length * 7) + 1;
-            } else if (trimmedLine.startsWith("#### ")) {
-                y += 2;
-                pdf.setFont("times", "bold");
-                pdf.setFontSize(13);
-                pdf.setTextColor(...COLORS.text);
-                const headerText = stripMarkdown(trimmedLine.substring(5));
-                const lines = pdf.splitTextToSize(headerText, contentWidth);
-                pdf.text(lines, margin, y);
-                y += (lines.length * 6) + 2;
-            } else if (trimmedLine.startsWith("> ")) {
-                const quoteText = trimmedLine.substring(2).trim();
-                pdf.setFont("times", "italic");
-                pdf.setTextColor(...COLORS.textLight);
-                const lines = pdf.splitTextToSize(quoteText, contentWidth - 10);
+                    trimmedLine = typeof cleanLatex === "function" ? cleanLatex(trimmedLine) : trimmedLine;
 
-                checkNewPage(lines.length * 6 + 4);
+                    // Handle horizontal rule
+                    if (trimmedLine.match(/^\s*[-*_]{3,}\s*$/)) {
+                        y += 5;
+                        continue;
+                    }
 
-                // Draw quote vertical bar
-                pdf.setDrawColor(...COLORS.divider);
-                pdf.setLineWidth(1);
-                pdf.line(margin + 2, y - 4, margin + 2, y + (lines.length * 6) - 4);
+                    if (!trimmedLine) {
+                        y += 3;
+                        continue;
+                    }
 
-                pdf.text(lines, margin + 8, y);
-                y += (lines.length * 6) + 4;
-                pdf.setFont("times", "normal"); // Reset
-            } else if (trimmedLine.match(/^[-*•]\s/)) {
-                pdf.setFont("times", "bold");
-                pdf.setTextColor(...COLORS.primary);
-                pdf.text("•", margin + 2, y);
-                const txt = trimmedLine.replace(/^[-*•]\s/, "");
-                y = renderTextWithMarkdown(pdf, txt, margin + 8, y, contentWidth, margin, checkNewPage, 11);
-            } else if (trimmedLine.match(/^\d+\.\s/)) {
-                const n = trimmedLine.match(/^\d+\./)[0];
-                pdf.setFont("times", "bold");
-                pdf.setTextColor(...COLORS.primary);
-                pdf.text(n, margin, y);
-                const txt = trimmedLine.replace(/^\d+\.\s/, "");
-                y = renderTextWithMarkdown(pdf, txt, margin + 10, y, contentWidth, margin, checkNewPage, 11);
-            } else {
-                pdf.setTextColor(...COLORS.text);
-                y = renderTextWithMarkdown(pdf, trimmedLine, margin, y, contentWidth, margin, checkNewPage, 11);
+                    const cleanLine = stripMarkdown(trimmedLine).toLowerCase().replace(/^(course|module|lesson|topic):\s*/, "").trim();
+                    const isRedundant =
+                        cleanLine === data.title?.toLowerCase() ||
+                        (data.course && cleanLine === data.course.toLowerCase()) ||
+                        (data.module && cleanLine === data.module.toLowerCase()) ||
+                        (data.course && cleanLine.includes(data.course.toLowerCase())) ||
+                        (data.module && cleanLine.includes(data.module.toLowerCase())) ||
+                        (data.title && (cleanLine.includes(data.title.toLowerCase()) || data.title.toLowerCase().includes(cleanLine))) ||
+                        trimmedLine.toLowerCase().startsWith("module:") ||
+                        trimmedLine.toLowerCase().startsWith("lesson:") ||
+                        trimmedLine.toLowerCase().startsWith("course:") ||
+                        trimmedLine.toLowerCase().startsWith("topic:");
+
+                    if (isRedundant || (trimmedLine.match(/^[-*_]{3,}$/) && y < 65)) {
+                        continue;
+                    }
+
+                    checkNewPage(12);
+
+                    if (trimmedLine.startsWith("# ")) {
+                        const headerText = stripMarkdown(trimmedLine.substring(2).trim());
+                        y += 2;
+                        pdf.setFont("times", "bold");
+                        pdf.setFontSize(26);
+                        pdf.setTextColor(...COLORS.text);
+                        pdf.text(headerText, pageWidth / 2, y, { align: "center" });
+                        y += 10;
+                    } else if (trimmedLine.startsWith("## ")) {
+                        y += 2;
+                        pdf.setFont("times", "bold");
+                        pdf.setFontSize(20);
+                        pdf.setTextColor(...COLORS.text);
+                        const headerText = stripMarkdown(trimmedLine.substring(3).trim());
+                        const lines = pdf.splitTextToSize(headerText, contentWidth);
+                        pdf.text(lines, margin, y);
+                        y += (lines.length * 7) + 3;
+                    } else if (trimmedLine.startsWith("### ")) {
+                        y += 2;
+                        pdf.setFont("times", "bold");
+                        pdf.setFontSize(15);
+                        pdf.setTextColor(...COLORS.text);
+                        const headerText = stripMarkdown(trimmedLine.substring(4));
+                        const lines = pdf.splitTextToSize(headerText, contentWidth);
+                        pdf.text(lines, margin, y);
+                        y += (lines.length * 7) + 1;
+                    } else if (trimmedLine.startsWith("#### ")) {
+                        y += 2;
+                        pdf.setFont("times", "bold");
+                        pdf.setFontSize(13);
+                        pdf.setTextColor(...COLORS.text);
+                        const headerText = stripMarkdown(trimmedLine.substring(5));
+                        const lines = pdf.splitTextToSize(headerText, contentWidth);
+                        pdf.text(lines, margin, y);
+                        y += (lines.length * 6) + 2;
+                    } else if (trimmedLine.startsWith("> ")) {
+                        const quoteText = trimmedLine.substring(2).trim();
+                        pdf.setFont("times", "italic");
+                        pdf.setTextColor(...COLORS.textLight);
+                        const lines = pdf.splitTextToSize(quoteText, contentWidth - 10);
+                        checkNewPage(lines.length * 6 + 4);
+                        pdf.setDrawColor(...COLORS.divider);
+                        pdf.setLineWidth(1);
+                        pdf.line(margin + 2, y - 4, margin + 2, y + (lines.length * 6) - 4);
+                        pdf.text(lines, margin + 8, y);
+                        y += (lines.length * 6) + 4;
+                        pdf.setFont("times", "normal");
+                    } else if (trimmedLine.match(/^[-*•]\s/)) {
+                        pdf.setFont("times", "bold");
+                        pdf.setTextColor(...COLORS.primary);
+                        pdf.text("•", margin + 2, y);
+                        const txt = trimmedLine.replace(/^[-*•]\s/, "");
+                        y = renderTextWithMarkdown(pdf, txt, margin + 8, y, contentWidth, margin, checkNewPage, 11);
+                    } else if (trimmedLine.match(/^\d+\.\s/)) {
+                        const n = trimmedLine.match(/^\d+\./)[0];
+                        pdf.setFont("times", "bold");
+                        pdf.setTextColor(...COLORS.primary);
+                        pdf.text(n, margin, y);
+                        const txt = trimmedLine.replace(/^\d+\.\s/, "");
+                        y = renderTextWithMarkdown(pdf, txt, margin + 10, y, contentWidth, margin, checkNewPage, 11);
+                    } else {
+                        pdf.setTextColor(...COLORS.text);
+                        y = renderTextWithMarkdown(pdf, trimmedLine, margin, y, contentWidth, margin, checkNewPage, 11);
+                    }
+                }
             }
         });
     };
@@ -704,7 +855,7 @@ export const downloadReceiptAsPDF = async (data) => {
        HEADER (LOGO + COMPANY INFO)
     ------------------------------------------------------------------ */
     try {
-        pdf.addImage("/logo.png", "PNG", MARGIN, y, 22, 22);
+        pdf.addImage("/logo.png", MARGIN, y, 22, 22);
     } catch { }
 
     pdf.setFont("times", "bold");

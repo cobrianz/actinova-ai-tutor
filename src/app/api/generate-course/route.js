@@ -154,7 +154,12 @@ async function handlePost(request) {
         4. Be academically rigorous and logically structured.
         5. Ensure lesson titles are specific and descriptive.
         6. Do not include lesson content; focus only on titles and structure.
-        7. Return ONLY the JSON object.`,
+        7. DO NOT use Python for data visualizations and charts.
+        8. Use only the following visual block types:
+          - \`\`\`chart for data visualizations (bar, line, pie, doughnut)
+          - \`\`\`table for markdown tables
+        9. Planning for 3-5 charts per lesson is required for a visually rich experience.
+        10. Return ONLY the JSON object.`,
             },
             {
               role: "user",
@@ -276,6 +281,13 @@ async function handlePost(request) {
         6. Do not include lesson content; focus only on titles and structure.
         7. CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math.
         8. IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+        - DO NOT use Mermaid syntax or flowchart diagrams of any kind.
+        - DO NOT use Python for data visualizations and charts.
+        - Use only the following visual block types:
+          - \`\`\`chart for data visualizations (bar, line, pie, doughnut)
+          - \`\`\`table for markdown tables
+        - High-level data visualizations (graphs) are encouraged; flow-based diagrams are forbidden.
+        - Plan for at least 3-5 charts per lesson to ensure maximum visual engagement.
         9. NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
         10. Return ONLY the JSON object.`,
         },

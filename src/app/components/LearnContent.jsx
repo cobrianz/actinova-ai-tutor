@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "sonner";
-import { downloadCourseAsPDF } from "@/lib/pdfUtils";
+import { downloadCourseAsPDF, parseContentIntoBlocks } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 // D3 visualizations removed per policy: no interactive D3 visuals
@@ -34,6 +34,9 @@ import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
+import LessonChart from "./LessonChart";
+import LessonTable from "./LessonTable";
+import html2canvas from "html2canvas";
 
 export default function LearnContent() {
   const params = useParams();
@@ -55,9 +58,22 @@ export default function LearnContent() {
   const [activeView, setActiveView] = useState("outline");
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const [expandedModules, setExpandedModules] = useState(new Set([1]));
-  const [activeLesson, setActiveLesson] = useState({
-    moduleId: 1,
-    lessonIndex: 0,
+  // Initialize lesson from URL or default
+  const [activeLesson, setActiveLesson] = useState(() => {
+    if (typeof window === "undefined") return { moduleId: 1, lessonIndex: 0 };
+    
+    // Check URL first
+    const urlModule = new URLSearchParams(window.location.search).get("module");
+    const urlLesson = new URLSearchParams(window.location.search).get("lesson");
+    
+    if (urlModule && urlLesson) {
+      return { 
+        moduleId: parseInt(urlModule), 
+        lessonIndex: parseInt(urlLesson) 
+      };
+    }
+    
+    return { moduleId: 1, lessonIndex: 0 };
   });
   const [notes, setNotes] = useState("");
   const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
@@ -96,16 +112,13 @@ export default function LearnContent() {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showQuestionResults, setShowQuestionResults] = useState(false);
 
-  // Persist and restore agent conversation
-  const conversationKey = () => {
-    const id = courseData?._id || `${actualTopic}-${format}-${difficulty}`;
-    return `conversation_${id}`;
-  };
+  // Use a stable ID for persistence keys to avoid changes when courseData._id loads
+  const stableId = `${actualTopic}-${format}-${difficulty}`;
 
-  const progressKey = () => {
-    const id = courseData?._id || `${actualTopic}-${format}-${difficulty}`;
-    return `progress_${id}`;
-  };
+  const conversationKey = () => `conversation_${stableId}`;
+  const progressKey = () => `progress_${stableId}`;
+  const lastLessonKey = () => `last_lesson_${stableId}`;
+  const expandedModulesKey = () => `expanded_modules_${stableId}`;
 
   const saveConversation = (messages) => {
     try {
@@ -127,6 +140,69 @@ export default function LearnContent() {
       // Silent fail for backend conversation persistence
     }
   };
+
+  // Persist active lesson and expanded modules
+  useEffect(() => {
+    if (activeLesson) {
+      try {
+        localStorage.setItem(lastLessonKey(), JSON.stringify(activeLesson));
+        
+        // Update URL query parameters without full page reload
+        const newParams = new URLSearchParams(window.location.search);
+        newParams.set("module", activeLesson.moduleId);
+        newParams.set("lesson", activeLesson.lessonIndex);
+        router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
+      } catch (e) {}
+    }
+  }, [activeLesson]);
+
+  useEffect(() => {
+    if (expandedModules && courseData) {
+      try {
+        localStorage.setItem(expandedModulesKey(), JSON.stringify(Array.from(expandedModules)));
+      } catch (e) {}
+    }
+  }, [expandedModules, courseData]);
+
+  // Restore lesson state on load (if not already in URL)
+  useEffect(() => {
+    const urlModule = searchParams.get("module");
+    const urlLesson = searchParams.get("lesson");
+    
+    // Only restore from localStorage if NOT in URL
+    if (!urlModule && !urlLesson) {
+      try {
+        const savedLesson = localStorage.getItem(lastLessonKey());
+        if (savedLesson) {
+          setActiveLesson(JSON.parse(savedLesson));
+        }
+      } catch (e) {}
+    }
+
+    // Restore expanded modules when courseData is available
+    if (courseData) {
+      try {
+        const savedExpanded = localStorage.getItem(expandedModulesKey());
+        if (savedExpanded) {
+          setExpandedModules(new Set(JSON.parse(savedExpanded)));
+        }
+      } catch (e) {}
+    }
+  }, [courseData]);
+
+  // Sidebar Auto-Scroll to Active Lesson
+  useEffect(() => {
+    if (activeLesson) {
+      // Small delay to ensure the element is rendered if a module just expanded
+      const timer = setTimeout(() => {
+        const activeEl = document.getElementById(`sidebar-lesson-${activeLesson.moduleId}-${activeLesson.lessonIndex}`);
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeLesson]);
 
   const restoreConversation = async () => {
     try {
@@ -214,6 +290,41 @@ export default function LearnContent() {
       newExpanded.add(moduleId);
     }
     setExpandedModules(newExpanded);
+  };
+
+  const goToNextLesson = () => {
+    if (!courseData || !activeLesson) return;
+
+    const { moduleId, lessonIndex } = activeLesson;
+    const currentModuleIndex = courseData.modules.findIndex(m => m.id === moduleId);
+    if (currentModuleIndex === -1) return;
+
+    const currentModule = courseData.modules[currentModuleIndex];
+    
+    // Check if there's another lesson in the current module
+    if (lessonIndex + 1 < currentModule.lessons.length) {
+      selectLesson(moduleId, lessonIndex + 1);
+    } 
+    // Otherwise, try to go to the first lesson of the next module
+    else if (currentModuleIndex + 1 < courseData.modules.length) {
+      const nextModule = courseData.modules[currentModuleIndex + 1];
+      
+      // Check if next module is locked for free users
+      if (!isPro && currentModuleIndex + 1 >= FREE_READABLE_MODULES) {
+        toast.error("Next modules are locked. Upgrade to Pro to continue.", {
+          action: {
+            label: "Upgrade",
+            onClick: () => router.push("/pricing"),
+          },
+        });
+        return;
+      }
+      
+      toggleModule(nextModule.id); // Ensure it's expanded
+      selectLesson(nextModule.id, 0);
+    } else {
+      toast.success("Congratulations! You've finished the course.");
+    }
   };
 
   const selectLesson = async (moduleId, lessonIndex) => {
@@ -338,15 +449,18 @@ export default function LearnContent() {
       }
 
       // Auto-mark lesson as completed now that content has been generated
-      const module = courseData?.modules?.find((m) => m.id === moduleId);
-      const lesson = module?.lessons?.[lessonIndex];
+      const moduleArr = courseData?.modules || [];
+      const currentModule = moduleArr[moduleId - 1]; // Use direct index for safety matching fetch
+      const lesson = currentModule?.lessons?.[lessonIndex];
       const lessonId = lesson?.id || `${moduleId}-${lessonIndex}`;
       const courseId = courseData?._id ? String(courseData._id) : null;
 
       // Update local completion state
+      let updatedCompletedSet;
       setCompletedLessons((prev) => {
         const next = new Set(prev);
         next.add(lessonId);
+        updatedCompletedSet = next;
         // Persist to localStorage
         try {
           localStorage.setItem(progressKey(), JSON.stringify(Array.from(next)));
@@ -366,10 +480,8 @@ export default function LearnContent() {
       // Persist completed flag to backend DB
       if (courseId) {
         try {
-          const currentCompleted = new Set(completedLessons);
-          currentCompleted.add(lessonId);
-          const totalLessons = courseData?.totalLessons || 100;
-          const progress = Math.round((currentCompleted.size / totalLessons) * 100);
+          const totalLessonsCnt = courseData?.totalLessons || 100;
+          const progress = Math.round((updatedCompletedSet.size / totalLessonsCnt) * 100);
 
           await apiClient.post("/api/course-progress", {
             courseId,
@@ -492,12 +604,78 @@ export default function LearnContent() {
     const toastId = toast.loading("Preparing lesson PDF...");
     try {
       const activeModule = courseData?.modules?.find(m => m.id === activeLesson.moduleId);
+      
+      // Prepare visuals
+      const visualBlocks = parseContentIntoBlocks(currentLesson.content);
+      const visuals = [];
+      let chartIndex = 0;
+      let tableIndex = 0;
+
+      // Ensure visuals are rendered and give some time for charts to animate/render
+      document.body.setAttribute('data-exporting', 'true');
+      toast.loading("Capturing visuals...", { id: toastId });
+
+      try {
+        // Increase timeout to ensure all charts are fully rendered
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        for (let i = 0; i < visualBlocks.length; i++) {
+          const block = visualBlocks[i];
+          if (block.type === "chart" || block.type === "table") {
+            const elementId = `visual-${block.type}-${i}`;
+            const element = document.getElementById(elementId);
+
+            if (element) {
+              try {
+                const canvas = await html2canvas(element, {
+                  scale: 2,
+                  useCORS: true,
+                  logging: false,
+                  backgroundColor: "#ffffff",
+                  onclone: (clonedDoc) => {
+                    const clonedEl = clonedDoc.getElementById(elementId);
+                    if (clonedEl) {
+                      clonedEl.style.visibility = 'visible';
+                      clonedEl.style.opacity = '1';
+                      clonedEl.style.display = 'block';
+                    }
+                  }
+                });
+
+                const imgData = canvas.toDataURL("image/png");
+                if (imgData && imgData.startsWith("data:image/png;base64,") && imgData.length > 30) {
+                  visuals.push({
+                    type: block.type,
+                    index: block.type === "chart" ? chartIndex : tableIndex,
+                    image: imgData,
+                    width: canvas.width,
+                    height: canvas.height
+                  });
+                } else {
+                  console.warn(`Failed to capture valid image for ${elementId}`);
+                }
+              } catch (err) {
+                console.error(`Error capturing ${elementId}:`, err);
+              }
+            } else {
+              console.warn(`Element not found for capture: ${elementId}`);
+            }
+            
+            // Always increment indices to stay in sync with PDF parser
+            if (block.type === "chart") chartIndex++;
+            else if (block.type === "table") tableIndex++;
+          }
+        }
+      } finally {
+        document.body.removeAttribute('data-exporting');
+      }
+
       const lessonData = {
         ...currentLesson,
         course: courseData?.title,
         module: activeModule?.title
       };
-      await downloadCourseAsPDF(lessonData, "notes");
+      await downloadCourseAsPDF(lessonData, "notes", visuals);
       toast.success("Download started!", { id: toastId });
     } catch (error) {
       console.error("Lesson download error:", error);
@@ -668,6 +846,7 @@ export default function LearnContent() {
 
   // Interactive D3 visualizations removed. If needed later, replace with static
   // images or links to externally hosted diagrams.
+
 
   const renderContent = (content) => {
     if (!content) return "";
@@ -1083,13 +1262,24 @@ export default function LearnContent() {
     const fetchCourseData = async () => {
       // Prevent multiple simultaneous calls (guards StrictMode double-effect)
       if (fetchInProgressRef.current) {
-
+        console.warn("Fetch already in progress, skipping...");
         return;
       }
 
       fetchInProgressRef.current = true;
-
       setIsLoading(true);
+
+      // Reset error state
+      setError(null);
+
+      // GLOBAL SAFETY TIMEOUT: Force-clear loading state if it takes too long
+      const globalSafetyTimeout = setTimeout(() => {
+        if (fetchInProgressRef.current) {
+          console.error("CRITICAL: fetchCourseData timed out after 45s. Forcing loader OFF.");
+          setIsLoading(false);
+          fetchInProgressRef.current = false;
+        }
+      }, 45000);
       setError(null);
 
       // Check if free user is trying to use non-beginner difficulty
@@ -1440,7 +1630,7 @@ export default function LearnContent() {
           }, 50);
           setTimeout(() => {
             const leftovers = document.querySelectorAll(
-              "[data-Actirova-loader-overlay], [data-Actirova-loader]"
+              "[data-actirova-loader-overlay], [data-actirova-loader]"
             );
             if (leftovers.length) {
               console.warn("Detected leftover loaders after generation, removing...", leftovers.length);
@@ -1501,7 +1691,7 @@ export default function LearnContent() {
             window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
             setTimeout(() => {
               const leftovers = document.querySelectorAll(
-                "[data-Actirova-loader-overlay], [data-Actirova-loader]"
+                "[data-actirova-loader-overlay], [data-actirova-loader]"
               );
               if (leftovers.length) {
                 console.warn("Detected leftover loaders in finally block, removing...", leftovers.length);
@@ -1511,6 +1701,7 @@ export default function LearnContent() {
           }
         }
         fetchInProgressRef.current = false;
+        if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
       }
 
       // Safety timeout to ensure loading state is cleared
@@ -1668,14 +1859,14 @@ export default function LearnContent() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Link
               href="/dashboard"
-              className="flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl bg-foreground text-background hover:opacity-90 transition-all font-bold shadow-lg"
+              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-foreground text-background hover:opacity-90 transition-all font-bold shadow-lg"
             >
               <Home className="w-4 h-4" />
               <span className="hidden md:inline">Dashboard</span>
             </Link>
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm rounded-xl border transition-all font-bold ${isSidebarOpen
+              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isSidebarOpen
                 ? "bg-primary/10 text-primary border-primary/20"
                 : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
                 }`}
@@ -1689,13 +1880,12 @@ export default function LearnContent() {
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={handleDownloadLesson}
-              className="p-2 sm:p-2.5 rounded-xl border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
+              className="p-1.5 sm:p-2 rounded-lg border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
               title="Download Lesson PDF"
               disabled={!currentLesson?.content || lessonContentLoading}
             >
               <Download className="w-4 h-4" />
             </button>
-
             <button
               onClick={async () => {
                 if (!activeLesson || lessonContentLoading) return;
@@ -1711,7 +1901,7 @@ export default function LearnContent() {
                   toast.error(`Error: ${error.message}`, { id: "mark-complete" });
                 }
               }}
-              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-xl transition-all font-bold border ${completedLessons.has(currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+              className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-bold border ${completedLessons.has(currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
                 ? "bg-green-500/10 text-green-500 border-green-500/20"
                 : "bg-primary/10 text-primary border-primary/20"
                 }`}
@@ -1724,10 +1914,9 @@ export default function LearnContent() {
                   : "Complete"}
               </span>
             </button>
-
             <button
               onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-xl border transition-all font-bold ${isRightPanelOpen
+              className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isRightPanelOpen
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-secondary/50 text-muted-foreground border-border"
                 }`}
@@ -1898,7 +2087,9 @@ export default function LearnContent() {
                       {module.lessons.map((lesson, lessonIndex) => {
                         const lessonTitle =
                           typeof lesson === "string" ? lesson : lesson.title;
-                        const lessonId = `${module.id}-${lessonIndex}`;
+                        const lessonId =
+                          (typeof lesson !== "string" && lesson.id) ||
+                          `${module.id}-${lessonIndex}`;
                         const isCompleted = completedLessons.has(lessonId);
                         const isActive =
                           activeLesson.moduleId === module.id &&
@@ -1906,6 +2097,7 @@ export default function LearnContent() {
                         return (
                           <button
                             key={lessonIndex}
+                            id={`sidebar-lesson-${module.id}-${lessonIndex}`}
                             onClick={() => selectLesson(module.id, lessonIndex)}
                             className={`w-full p-3 pl-12 flex items-center justify-between hover:bg-secondary/20 transition-colors ${isActive
                               ? "bg-primary/5 border-r-2 border-primary"
@@ -1988,11 +2180,59 @@ export default function LearnContent() {
                 <div>
                   <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
                     {/* Visualizations removed: use images or links in content */}
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: renderContent(currentLesson.content),
-                      }}
-                    />
+                    <div className="space-y-6" id="lesson-content-container">
+                      {parseContentIntoBlocks(currentLesson.content).map((block, idx) => {
+                        if (block.type === "chart") {
+                          return (
+                            <div key={idx} id={`visual-chart-${idx}`} className="visual-block-wrapper">
+                              <LessonChart type={block.chartType} data={block.data} title={block.title} />
+                            </div>
+                          );
+                        }
+                        if (block.type === "table") {
+                          return (
+                            <div key={idx} id={`visual-table-${idx}`} className="visual-block-wrapper">
+                              <LessonTable headers={block.headers} rows={block.rows} title={block.title} />
+                            </div>
+                          );
+                        }
+                        return (
+                          <div
+                            key={idx}
+                            dangerouslySetInnerHTML={{
+                              __html: renderContent(
+                                block.type === "code" 
+                                  ? `\`\`\`${block.lang}\n${block.content}\n\`\`\``
+                                  : block.content
+                              ),
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Next Lesson Navigation Button */}
+                    <div className="mt-12 pt-8 border-t border-border flex justify-between items-center">
+                      <div className="text-sm text-muted-foreground">
+                        Lesson {activeLesson.lessonIndex + 1} of {
+                          courseData.modules.find(m => m.id === activeLesson.moduleId)?.lessons.length || 0
+                        }
+                      </div>
+                      <button
+                        onClick={() => {
+                          // Mark current as complete if not already
+                          const lessonId = currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+                          if (!completedLessons.has(lessonId)) {
+                             toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
+                          }
+                          goToNextLesson();
+                        }}
+                        className="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+                      >
+                        <span>Next Lesson</span>
+                        <Play className="w-4 h-4 fill-current" />
+                      </button>
+                    </div>
                   </div>
 
 

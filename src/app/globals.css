@@ -50,63 +50,63 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.15 0.02 264);
+  --background: #ffffff;
+  --foreground: #020617;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.02 264);
+  --card: #ffffff;
+  --card-foreground: #020617;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 264);
+  --popover: #ffffff;
+  --popover-foreground: #020617;
 
-  --primary: oklch(0.6 0.2 277);
-  --primary-foreground: oklch(0.98 0.01 247);
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
 
-  --secondary: oklch(0.96 0.01 264);
-  --secondary-foreground: oklch(0.15 0.02 264);
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
 
-  --muted: oklch(0.96 0.01 264);
-  --muted-foreground: oklch(0.45 0.02 264);
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
 
-  --accent: oklch(0.92 0.04 277);
-  --accent-foreground: oklch(0.35 0.15 277);
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
 
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: oklch(0.98 0.01 247);
+  --destructive: #dc2626;
+  --destructive-foreground: #f8fafc;
 
-  --border: oklch(0.92 0.01 255);
-  --input: oklch(0.92 0.01 255);
-  --ring: oklch(0.6 0.2 277);
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
 }
 
 .dark {
-  --background: oklch(0.12 0.02 264);
-  --foreground: oklch(0.98 0.01 247);
+  --background: #020617;
+  --foreground: #f8fafc;
 
-  --card: oklch(0.15 0.02 264);
-  --card-foreground: oklch(0.98 0.01 247);
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
 
-  --popover: oklch(0.12 0.02 264);
-  --popover-foreground: oklch(0.98 0.01 247);
+  --popover: #020617;
+  --popover-foreground: #f8fafc;
 
-  --primary: oklch(0.65 0.22 277);
-  --primary-foreground: oklch(0.12 0.02 264);
+  --primary: #3b82f6;
+  --primary-foreground: #020617;
 
-  --secondary: oklch(0.2 0.03 264);
-  --secondary-foreground: oklch(0.98 0.01 247);
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
 
-  --muted: oklch(0.2 0.03 264);
-  --muted-foreground: oklch(0.65 0.02 264);
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
 
-  --accent: oklch(0.25 0.05 277);
-  --accent-foreground: oklch(0.98 0.01 247);
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
 
-  --destructive: oklch(0.4 0.15 25);
-  --destructive-foreground: oklch(0.98 0.01 247);
+  --destructive: #7f1d1d;
+  --destructive-foreground: #f8fafc;
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.65 0.22 277);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #3b82f6;
 }
 
 @layer base {
@@ -129,20 +129,20 @@
 
 @layer utilities {
   .glass {
-    background: oklch(1 0 0 / 40%);
+    background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(16px);
-    border: 1px solid oklch(1 0 0 / 10%);
-    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 5%), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
   .dark .glass {
-    background: oklch(0.15 0.02 264 / 40%);
-    border: 1px solid oklch(1 0 0 / 5%);
-    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 5%), 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   }
 
   .text-gradient {
-    background: linear-gradient(to right, oklch(0.6 0.2 277), oklch(0.65 0.22 277));
+    background: linear-gradient(to right, #2563eb, #3b82f6);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -173,23 +173,74 @@
   }
 }
 
-/* ─── PDF Export Fix for html2canvas (No oklch support) ────────── */
+/* ─── PDF Export Fix for html2canvas ────────── */
+body[data-exporting="true"] .text-gradient {
+  background: none !important;
+  color: #4f46e5 !important;
+  -webkit-text-fill-color: #4f46e5 !important;
+}
+
+/* Hide overlays like toasts in their default themes */
+body[data-exporting="true"] [class*="sonner"],
+body[data-exporting="true"] [role="status"],
+body[data-exporting="true"] .fixed {
+    display: none !important;
+}
+
+/* Ensure visual contents are definitely visible */
+body[data-exporting="true"] .visual-block-wrapper,
+body[data-exporting="true"] .visual-block-wrapper * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+body[data-exporting="true"] .visual-block-wrapper canvas {
+    display: block !important; /* Chart.js needs its canvas to have a display */
+}
+
+body[data-exporting="true"],
+body[data-exporting="true"] *,
 #resume-preview[data-exporting="true"],
 #resume-preview[data-exporting="true"] * {
   --background: #ffffff !important;
   --foreground: #1e293b !important;
+  --card: #ffffff !important;
+  --card-foreground: #1e293b !important;
+  --popover: #ffffff !important;
+  --popover-foreground: #1e293b !important;
   --primary: #4f46e5 !important;
-  --secondary: #64748b !important;
-  --muted: #f8fafc !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #f1f5f9 !important;
+  --secondary-foreground: #1e293b !important;
+  --muted: #f1f5f9 !important;
   --muted-foreground: #64748b !important;
   --accent: #f1f5f9 !important;
-  --accent-foreground: #4338ca !important;
+  --accent-foreground: #4f46e5 !important;
   --destructive: #ef4444 !important;
-  --destructive-foreground: #f8fafc !important;
+  --destructive-foreground: #ffffff !important;
   --border: #e2e8f0 !important;
   --input: #e2e8f0 !important;
   --ring: #4f46e5 !important;
+  box-shadow: none !important;
 }
+
+body[data-exporting="true"] [class*="text-slate-"],
+body[data-exporting="true"] [class*="text-gray-"] { color: #1e293b !important; }
+body[data-exporting="true"] [class*="bg-slate-"],
+body[data-exporting="true"] [class*="bg-gray-"] { background-color: #f8fafc !important; }
+body[data-exporting="true"] [class*="border-slate-"],
+body[data-exporting="true"] [class*="border-gray-"] { border-color: #e2e8f0 !important; }
+
+body[data-exporting="true"] [class*="text-blue-"] { color: #2563eb !important; }
+body[data-exporting="true"] [class*="bg-blue-"] { background-color: #eff6ff !important; }
+body[data-exporting="true"] [class*="border-blue-"] { border-color: #3b82f6 !important; }
+
+body[data-exporting="true"] [class*="text-emerald-"],
+body[data-exporting="true"] [class*="text-green-"] { color: #059669 !important; }
+body[data-exporting="true"] [class*="bg-emerald-"],
+body[data-exporting="true"] [class*="bg-green-"] { background-color: #ecfdf5 !important; }
+body[data-exporting="true"] [class*="border-emerald-"],
+body[data-exporting="true"] [class*="border-green-"] { border-color: #10b981 !important; }
 
 /* Redefine essential slate colors as RGB for html2canvas */
 #resume-preview[data-exporting="true"] [class*="text-slate-950"] {
@@ -238,4 +289,18 @@
 
 #resume-preview[data-exporting="true"] [class*="bg-slate-100"] {
   background-color: rgb(241, 245, 249) !important;
+}
+
+/* ─── Visual Block Wrapper ─────────────────────────────────────── */
+.visual-block-wrapper {
+  margin: 3rem 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.dark .visual-block-wrapper {
+  background: transparent !important;
+  border-color: transparent !important;
 }
