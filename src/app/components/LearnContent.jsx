@@ -27,6 +27,7 @@ import {
 
 import { toast } from "sonner";
 import { downloadCourseAsPDF, parseContentIntoBlocks } from "@/lib/pdfUtils";
+import { highlightToHtml } from "@/lib/syntaxHighlighter";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 // D3 visualizations removed per policy: no interactive D3 visuals
@@ -884,8 +885,9 @@ export default function LearnContent() {
       }
       
       const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
+      const highlightedCode = highlightToHtml(code.trim(), lang || "javascript");
       codeBlocks.push(
-        `<pre class="bg-slate-100 p-4 rounded-lg overflow-x-auto my-4 border border-border"><code class="text-sm text-slate-800 language-${lang || "plaintext"}">${code.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`
+        `<pre class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg overflow-x-auto my-4 border border-border font-mono"><code class="text-sm font-mono language-${lang || "plaintext"}">${highlightedCode}</code></pre>`
       );
       return placeholder;
     });

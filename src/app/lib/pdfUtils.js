@@ -1,4 +1,6 @@
 import jsPDF from "jspdf";
+import { JETBRAINS_MONO_BASE64 } from "./jetbrains-mono-base64";
+import { tokenizeCode } from "./syntaxHighlighter";
 
 /**
  * Enhanced PDF Generation Utility for Actirova AI Tutor
@@ -350,6 +352,14 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
         format: "a4",
     });
 
+    // Register JetBrains Mono font
+    try {
+        pdf.addFileToVFS("JetBrainsMono.ttf", JETBRAINS_MONO_BASE64);
+        pdf.addFont("JetBrainsMono.ttf", "JetBrainsMono", "normal");
+    } catch (fontErr) {
+        console.error("Failed to add JetBrains Mono font:", fontErr);
+    }
+
     const pageWidth = 210;
     const pageHeight = 297;
     const margin = 20;
@@ -460,19 +470,57 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
     y = 30;
 
 
-    const renderCodeLine = (text, xPos) => {
-        pdf.setFont("courier", "normal");
+    const renderCodeBlock = (text, xPos, lang = "javascript") => {
+        if (!text) return;
+        
+        try {
+            pdf.setFont("JetBrainsMono", "normal");
+        } catch (e) {
+            pdf.setFont("courier", "normal");
+        }
         pdf.setFontSize(10);
-        pdf.setTextColor(50, 50, 50);
 
-        const lines = pdf.splitTextToSize(text, contentWidth - (xPos - margin + 4));
+        const lines = text.split("\n");
 
         lines.forEach((line) => {
+            if (typeof y !== 'number' || !isFinite(y)) y = 25;
             checkNewPage(7);
-    pdf.text(line, xPos + 2, y);
+            
+            const tokens = tokenizeCode(line, lang);
+            let currentX = Number(xPos) + 2;
+
+            if (!tokens || tokens.length === 0) {
+                if (line && line.trim().length > 0) {
+                    pdf.setTextColor(50, 50, 50);
+                    pdf.text(String(line), isFinite(currentX) ? currentX : 22, isFinite(y) ? y : 25);
+                }
+            } else {
+                tokens.forEach(token => {
+                    if (!token || !token.text || typeof token.text !== 'string') return;
+                    
+                    pdf.setTextColor(...(token.color || [50, 50, 50]));
+                    const textPart = token.text;
+                    const partWidth = Number(pdf.getTextWidth(textPart)) || 0;
+                    
+                    const drawX = isFinite(currentX) ? currentX : 22;
+                    const drawY = isFinite(y) ? y : 25;
+
+                    if (textPart.length > 0) {
+                        try {
+                            pdf.text(textPart, drawX, drawY);
+                        } catch (e) {
+                            pdf.setFont("courier", "normal");
+                            pdf.text(textPart, drawX, drawY);
+                        }
+                    }
+                    currentX = drawX + partWidth;
+                });
+            }
+            
             y += 6;
         });
-        pdf.setFont("times", "normal"); // Reset
+        pdf.setFont("times", "normal");
+        pdf.setTextColor(...COLORS.text);
     };
 
     const processContent = (content) => {
@@ -489,19 +537,19 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
 
                 const visualData = visuals.find(v => v.type === targetType && v.index === targetIndex);
                 if (visualData && visualData.image) {
-                    checkNewPage(80); // Ensure space for image
+                    const imgWidth = contentWidth;
+                    const imgHeight = (visualData.height * imgWidth) / visualData.width;
+                    checkNewPage(imgHeight + 10); // Ensure space for image
                     try {
-                        const imgWidth = contentWidth;
-                        const imgHeight = (visualData.height * imgWidth) / visualData.width;
                         pdf.addImage(visualData.image, margin, y, imgWidth, imgHeight);
                         y += imgHeight + 10;
                     } catch (imgErr) {
                         console.error(`Failed to add ${targetType} image to PDF:`, imgErr);
                         // Fallback fallback
                         if (block.type === "chart") {
-                            renderCodeLine(JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2), margin + 4);
+                            renderCodeBlock(JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2), margin + 4);
                         } else {
-                            renderCodeLine(block.headers.join(" | "), margin + 4);
+                            renderCodeBlock(block.headers.join(" | "), margin + 4);
                         }
                     }
                 } else {
@@ -509,15 +557,15 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                     y += 2;
                     if (block.type === "chart") {
                         const fallbackContent = block.data ? JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2) : "Chart Data Missing";
-                        renderCodeLine(fallbackContent, margin + 4);
+                        renderCodeBlock(fallbackContent, margin + 4);
                     } else if (block.type === "table") {
                         const tableText = (block.headers?.join(" | ") || "") + "\n" + (block.rows?.map(r => r.join(" | ")).join("\n") || "");
-                        renderCodeLine(tableText || "Table Data Missing", margin + 4);
+                        renderCodeBlock(tableText || "Table Data Missing", margin + 4);
                     }
                 }
             } else if (block.type === "code") {
                 y += 2;
-                renderCodeLine(`\`\`\`${block.lang}\n${block.content}\n\`\`\``, margin + 4);
+                renderCodeBlock(block.content, block.lang, margin + 4);
             } else if (block.type === "text") {
                 const lines = block.content.split('\n');
                 for (let i = 0; i < lines.length; i++) {
