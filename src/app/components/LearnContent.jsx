@@ -142,6 +142,44 @@ export default function LearnContent() {
     }
   };
 
+  // Handle Copy to Clipboard for code blocks
+  useEffect(() => {
+    const handleCopy = async (e) => {
+      const btn = e.target.closest('.copy-code-btn');
+      if (!btn) return;
+      
+      const encodedCode = btn.getAttribute('data-code');
+      if (!encodedCode) return;
+      
+      try {
+        // Decode from UTF-8 safe base64
+        const code = decodeURIComponent(atob(encodedCode).split('').map(c => 
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        
+        await navigator.clipboard.writeText(code);
+        
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-green-500"><path d="M20 6 9 17l-5-5"/></svg>`;
+        
+        const parent = btn.parentElement;
+        if (parent) parent.classList.add('copy-success');
+        
+        setTimeout(() => {
+          btn.innerHTML = originalIcon;
+          if (parent) parent.classList.remove('copy-success');
+        }, 2000);
+        
+        toast.success("Code copied!");
+      } catch (err) {
+        console.error("Copy failed", err);
+        toast.error("Failed to copy code");
+      }
+    };
+    
+    document.addEventListener('click', handleCopy);
+    return () => document.removeEventListener('click', handleCopy);
+  }, []);
+
   // Persist active lesson and expanded modules
   useEffect(() => {
     if (activeLesson) {
@@ -885,9 +923,21 @@ export default function LearnContent() {
       }
       
       const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
-      const highlightedCode = highlightToHtml(code.trim(), lang || "javascript");
+      const pureCode = code.trim();
+      // UTF-8 safe base64 encoding
+      const encodedCode = btoa(encodeURIComponent(pureCode).replace(/%([0-9A-F]{2})/g, 
+        (match, p1) => String.fromCharCode('0x' + p1)));
+        
+      const highlightedCode = highlightToHtml(pureCode, lang || "javascript");
       codeBlocks.push(
-        `<pre class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg overflow-x-auto my-4 border border-border font-mono"><code class="text-sm font-mono language-${lang || "plaintext"}">${highlightedCode}</code></pre>`
+        `<div class="relative group my-6">
+           <div class="absolute right-3 top-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+             <button class="copy-code-btn p-1.5 rounded-md bg-white/80 dark:bg-slate-800/80 border border-border shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-colors" data-code="${encodedCode}" title="Copy code">
+               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+             </button>
+           </div>
+           <pre class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg overflow-x-auto border border-border font-mono m-0"><code class="text-sm font-mono language-${lang || "plaintext"}">${highlightedCode}</code></pre>
+         </div>`
       );
       return placeholder;
     });
