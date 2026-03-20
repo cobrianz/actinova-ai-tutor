@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import katex from "katex";
 import "katex/dist/katex.min.css";
@@ -1488,56 +1488,26 @@ export default function LearnContent() {
     try {
       let existingCourse = null;
 
-      if (shareId && user) {
-        // AUTO-ENROLLMENT: If user is logged in and using a share link, ensure it's in their library
-        console.log("Checking shared course participation:", shareId);
+      // 1. ALWAYS check library as primary source (even if shareId is present)
+      const libraryResponse = await apiClient.get("/api/library", {
+        headers: {
+          "x-user-id": user?._id || user?.id || user?.idString || "",
+        },
+      });
 
-        // Enroll (backend handles if already enrolled)
-        const enrollRes = await apiClient.post("/api/library/share", { action: "enroll", shareId });
-        if (!enrollRes.ok) {
-          const errorData = await enrollRes.json().catch(() => ({}));
-          if (enrollRes.status === 403 && errorData.isDisabled) {
-            setError({ message: errorData.error, type: "disabled" });
-            setIsLoading(false);
-            fetchInProgressRef.current = false;
-            return;
-          }
-          throw new Error(errorData.error || "Failed to fetch shared course");
-        }
-        const enrollData = await enrollRes.json();
-        console.log("Enrollment status:", enrollData.message);
-
-        // Now that we've enrolled (or confirmed enrollment), fetch from library
-        const libraryResponse = await apiClient.get("/api/library", {
-          headers: {
-            "x-user-id": user?._id || user?.id || user?.idString || "",
-          },
-        });
-
-        if (libraryResponse.ok) {
-          const libraryData = await libraryResponse.json();
+      if (libraryResponse.ok) {
+        const libraryData = await libraryResponse.json();
+        
+        // Search by shareId first if provided
+        if (shareId) {
           existingCourse = libraryData.items?.find((c) => {
-            const id = c.id?.replace(/^(course|guide|cards)_/, "");
-            return id === String(enrollData.courseId) || c.shareId === shareId || c.originalShareId === shareId;
+            const id = (c.id || "").replace(/^(course|guide|cards)_/, "");
+            return id === shareId || c.shareId === shareId || c.originalShareId === shareId;
           });
-          // Attach sharerName from enroll response if we found it
-          if (existingCourse && enrollData.sharerName) {
-            existingCourse.sharerName = enrollData.sharerName;
-          }
         }
-      }
 
-      if (!existingCourse) {
-        const libraryResponse = await apiClient.get("/api/library", {
-          headers: {
-            "x-user-id": user?._id || user?.id || user?.idString || "",
-          },
-        });
-
-        if (libraryResponse.ok) {
-          const libraryData = await libraryResponse.json();
-
-          // Find course matching this topic, format, and difficulty
+        // Fallback to searching by topic/format/difficulty if not found by shareId
+        if (!existingCourse && actualTopic) {
           existingCourse = libraryData.items?.find((c) => {
             if (c.type !== "course") return false;
             const matchesTopic =
@@ -1553,6 +1523,47 @@ export default function LearnContent() {
 
             return matchesTopic && matchesDifficulty;
           });
+        }
+      }
+
+      // 2. If not in library and we have a shareId, try to enroll
+      if (!existingCourse && shareId && user) {
+        console.log("Course not in library, attempting shared enrollment:", shareId);
+
+        // Enroll (backend handles if already enrolled)
+        const enrollRes = await apiClient.post("/api/library/share", { action: "enroll", shareId });
+        
+        if (!enrollRes.ok) {
+          const errorData = await enrollRes.json().catch(() => ({}));
+          if (enrollRes.status === 403 && errorData.isDisabled) {
+            setError({ message: errorData.error, type: "disabled" });
+            setIsLoading(false);
+            fetchInProgressRef.current = false;
+            return;
+          }
+          throw new Error(errorData.error || "Failed to fetch shared course");
+        }
+        
+        const enrollData = await enrollRes.json();
+        console.log("Enrollment success, courseId:", enrollData.courseId);
+
+        // Refresh library to get the newly enrolled course data
+        const refreshResponse = await apiClient.get("/api/library", {
+          headers: {
+            "x-user-id": user?._id || user?.id || user?.idString || "",
+          },
+        });
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          existingCourse = refreshData.items?.find((c) => {
+            const id = (c.id || "").replace(/^(course|guide|cards)_/, "");
+            return id === String(enrollData.courseId) || c.shareId === shareId || c.originalShareId === shareId;
+          });
+          
+          if (existingCourse && enrollData.sharerName) {
+            existingCourse.sharerName = enrollData.sharerName;
+          }
         }
       }
 
@@ -1766,6 +1777,14 @@ export default function LearnContent() {
     }
 
     // Course not in library - generate new one
+    if (!actualTopic) {
+      console.error("Course not found in library and no topic provided for generation.");
+      setError({ message: "Course not found. Please check your link or try searching for the topic.", type: "general" });
+      setIsLoading(false);
+      fetchInProgressRef.current = false;
+      return;
+    }
+
     let apiEndpoint;
     let requestBody;
 
