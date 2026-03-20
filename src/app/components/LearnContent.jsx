@@ -23,6 +23,9 @@ import {
   Home,
   Pin,
   Lock,
+  BarChart3,
+  TrendingUp,
+  Share2,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -45,8 +48,7 @@ export default function LearnContent() {
   const router = useRouter();
   const { user, refreshToken, fetchUser, loading } = useAuth();
 
-  if (loading) return <ActirovaLoader />;
-  if (!user) return null;
+  const shareId = searchParams.get("shareId") || params.shareId;
   // Retrieve topic from either path params or query params
   const topicParam = params.topic || searchParams.get("topic") || "";
   const topic = decodeURIComponent(topicParam);
@@ -67,20 +69,16 @@ export default function LearnContent() {
     const urlModule = new URLSearchParams(window.location.search).get("module");
     const urlLesson = new URLSearchParams(window.location.search).get("lesson");
     
-    if (urlModule && urlLesson) {
-      return { 
-        moduleId: parseInt(urlModule), 
-        lessonIndex: parseInt(urlLesson) 
-      };
+    const m = parseInt(urlModule);
+    const l = parseInt(urlLesson);
+    
+    if (!isNaN(m) && !isNaN(l)) {
+      return { moduleId: m, lessonIndex: l };
     }
     
     return { moduleId: 1, lessonIndex: 0 };
   });
   const [notes, setNotes] = useState("");
-  const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
-  // Free users can read modules 1-3; modules 4+ are padlocked
-  const FREE_READABLE_MODULES = 3;
-  const freeReadableModules = isPro ? Infinity : FREE_READABLE_MODULES;
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [chatMessages, setChatMessages] = useState([
@@ -112,6 +110,61 @@ export default function LearnContent() {
   const [lessonQuestions, setLessonQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showQuestionResults, setShowQuestionResults] = useState(false);
+
+  const isPro = (() => {
+    // 1. Direct Pro/Enterprise/Premium
+    const hasOwnPremium = user && (
+      (user.subscription?.plan === "pro" || user.subscription?.plan === "enterprise" || user.subscription?.tier === "pro" || user.subscription?.tier === "enterprise") || 
+      user.isPremium
+    );
+    if (hasOwnPremium) return true;
+    
+    // 2. Owner check
+    if (user && courseData?.userId && String(user._id || user.id) === String(courseData.userId)) return true;
+
+    // 3. Chain of Inheritance (Enrolled users)
+    if (user && Array.isArray(courseData?.enrolled)) {
+      const myEnrollment = courseData.enrolled.find(e => String(e.userId || e) === String(user._id || user.id));
+      if (myEnrollment) {
+        // A. Hierarchical Config (New)
+        if (myEnrollment.invitedByShareId && Array.isArray(courseData.shareConfigs)) {
+          const config = courseData.shareConfigs.find(c => c.shareId === myEnrollment.invitedByShareId);
+          if (config && config.isActive && config.tier !== "free") return true;
+        }
+        
+        // B. Legacy/Owner Fallback
+        // If the root owner has sharing enabled and is/was a premium user
+        if (courseData.isShared && (courseData.sharerTier !== "free" && courseData.sharePlan !== "free")) {
+           // We assume legacy sharerTier/sharePlan being anything other than null/free means Pro/Enterprise inherited
+           if (courseData.sharerTier || courseData.sharePlan) return true;
+        }
+      }
+    }
+
+    // 4. Public Viewing (Via Share Link)
+    if (shareId) {
+      // Check the specific link config first
+      if (Array.isArray(courseData?.shareConfigs)) {
+        const config = courseData.shareConfigs.find(c => c.shareId === shareId);
+        if (config && config.isActive && config.tier !== "free") return true;
+      }
+      // Fallback for legacy shareId or direct sharerTier presence
+      if (courseData?.isShared && (courseData?.sharerTier !== "free" || courseData?.sharePlan !== "free")) {
+         if (courseData.sharerTier || courseData.sharePlan) return true;
+      }
+    }
+
+    return false;
+  })();
+  // Free users can read modules 1-3; modules 4+ are padlocked
+  const FREE_READABLE_MODULES = 3;
+  const freeReadableModules = isPro ? Infinity : FREE_READABLE_MODULES;
+
+  const myShareConfig = Array.isArray(courseData?.shareConfigs)
+    ? courseData.shareConfigs.find(c => String(c.sharerId) === String(user?._id || user?.id))
+    : null;
+  const isMyShareActive = !!(myShareConfig?.isActive);
+  const myShareId = myShareConfig?.shareId;
 
   // Use a stable ID for persistence keys to avoid changes when courseData._id loads
   const stableId = `${actualTopic}-${format}-${difficulty}`;
@@ -242,6 +295,17 @@ export default function LearnContent() {
       return () => clearTimeout(timer);
     }
   }, [activeLesson]);
+
+  // Initial lesson fetch trigger
+  useEffect(() => {
+    if (courseData && !isLoading && activeLesson) {
+      // Small delay to ensure state consistency
+      const timer = setTimeout(() => {
+        selectLesson(activeLesson.moduleId, activeLesson.lessonIndex);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [courseData, isLoading]);
 
   const restoreConversation = async () => {
     try {
@@ -449,6 +513,7 @@ export default function LearnContent() {
       const response = await apiClient.post("/api/course-agent", {
         action: "generateLesson",
         courseId: courseData?._id || null,
+        shareId: searchParams.get("shareId"),
         moduleId,
         lessonIndex,
         lessonTitle,
@@ -719,6 +784,63 @@ export default function LearnContent() {
     } catch (error) {
       console.error("Lesson download error:", error);
       toast.error("Failed to download lesson PDF", { id: toastId });
+    }
+  };
+
+  const handleShare = async () => {
+    if (!courseData?._id) return;
+    
+    try {
+      const res = await apiClient.post("/api/library/share", { 
+        courseId: courseData._id,
+        action: isMyShareActive ? "disable" : "enable"
+      });
+      
+      if (!res.ok) throw new Error("Failed to toggle sharing");
+      
+      const data = await res.json();
+      
+      // Update local shareConfigs array
+      setCourseData(prev => {
+        const newConfigs = [...(prev.shareConfigs || [])];
+        const index = newConfigs.findIndex(c => String(c.sharerId) === String(user?._id || user?.id));
+        const updatedConfig = {
+          shareId: data.shareId,
+          sharerId: user?._id || user?.id,
+          tier: user?.subscription?.plan || "free",
+          isActive: data.isShared,
+          createdAt: new Date()
+        };
+
+        if (index >= 0) {
+          newConfigs[index] = updatedConfig;
+        } else {
+          newConfigs.push(updatedConfig);
+        }
+
+        return { 
+          ...prev, 
+          shareConfigs: newConfigs,
+          // Legacy fields for backward compatibility
+          isShared: data.isShared, 
+          shareId: data.shareId 
+        };
+      });
+      
+      if (data.isShared) {
+        const shareId = data.shareId;
+        const shareUrl = `${window.location.origin}/share/${shareId}`;
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Sharing enabled! Link copied to clipboard.", {
+          description: `Anyone with this link can now view this course (${isPro ? "Full Access" : "3-Module Preview"}).`,
+          duration: 5000,
+        });
+      } else {
+        toast.success("Sharing disabled.");
+      }
+    } catch (err) {
+      console.error("Share error:", err);
+      toast.error("Failed to update sharing status");
     }
   };
 
@@ -1310,8 +1432,19 @@ export default function LearnContent() {
     initializedCoursesRef.current.clear();
 
     let isMounted = true; // Prevent state updates if component unmounts
+    let globalSafetyTimeout = null;
 
     const fetchCourseData = async () => {
+      const shareId = searchParams.get("shareId") || params.shareId;
+
+      // Guard against empty topic ONLY if NOT using a shareId
+      if (!actualTopic && !shareId) {
+        console.warn("No topic or shareId provided, skipping fetch.");
+        setIsLoading(false);
+        fetchInProgressRef.current = false;
+        return;
+      }
+
       // Prevent multiple simultaneous calls (guards StrictMode double-effect)
       if (fetchInProgressRef.current) {
         console.warn("Fetch already in progress, skipping...");
@@ -1324,157 +1457,176 @@ export default function LearnContent() {
       // Reset error state
       setError(null);
 
-      // GLOBAL SAFETY TIMEOUT: Force-clear loading state if it takes too long
-      const globalSafetyTimeout = setTimeout(() => {
-        if (fetchInProgressRef.current) {
-          console.error("CRITICAL: fetchCourseData timed out after 45s. Forcing loader OFF.");
-          setIsLoading(false);
+      if (!loading && !user && shareId) {
+        if (typeof window !== "undefined") {
+          const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
           fetchInProgressRef.current = false;
+          setIsLoading(false);
+          router.push(`/auth/login?callbackUrl=${callbackUrl}`);
         }
-      }, 45000);
-      setError(null);
-
-      // Check if free user is trying to use non-beginner difficulty
-      const isPro =
-        !!(
-          user?.subscription &&
-          (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
-          user.subscription.status === "active"
-        ) || !!user?.isPremium;
-
-      // Clean up local storage on component mount
-      cleanupLocalStorage();
-
-      // Validate topic existence before proceeding
-      if (!actualTopic || actualTopic.trim() === "") {
-        console.error("No topic provided for learning content");
-        setError("A topic is required to generate or load content. Please go back to the dashboard and try again.");
-        setIsLoading(false);
-        fetchInProgressRef.current = false;
         return;
       }
 
-      // First, try to get from library (saves tokens!)
+      // First, try to get from library (saves tokens!) or shared link
       try {
-        const libraryResponse = await apiClient.get("/api/library", {
-          headers: {
-            "x-user-id": user?._id || user?.id || user?.idString || "",
-          },
-        });
+        let existingCourse = null;
+        
+        if (shareId && user) {
+          // AUTO-ENROLLMENT: If user is logged in and using a share link, ensure it's in their library
+          console.log("Checking shared course participation:", shareId);
+          
+          // Enroll (backend handles if already enrolled)
+          const enrollRes = await apiClient.post("/api/library/share", { action: "enroll", shareId });
+          if (enrollRes.ok) {
+            const enrollData = await enrollRes.json();
+            console.log("Enrollment status:", enrollData.message);
+            
+            // Now that we've enrolled (or confirmed enrollment), fetch from library
+            const libraryResponse = await apiClient.get("/api/library", {
+              headers: {
+                "x-user-id": user?._id || user?.id || user?.idString || "",
+              },
+            });
 
-        if (libraryResponse.ok) {
-          const libraryData = await libraryResponse.json();
-
-          // Find course matching this topic, format, and difficulty
-          const existingCourse = libraryData.items?.find((c) => {
-            if (c.type !== "course") return false;
-            const matchesTopic =
-              c.topic?.toLowerCase() === actualTopic.toLowerCase() ||
-              c.originalTopic?.toLowerCase() === actualTopic.toLowerCase() ||
-              c.courseData?.topic?.toLowerCase() === actualTopic.toLowerCase();
-            const matchesDifficulty =
-              c.difficulty?.toLowerCase() === difficulty.toLowerCase() ||
-              c.level?.toLowerCase() === difficulty.toLowerCase() ||
-              c.courseData?.difficulty?.toLowerCase() ===
-              difficulty.toLowerCase() ||
-              c.courseData?.level?.toLowerCase() === difficulty.toLowerCase();
-
-            return matchesTopic && matchesDifficulty;
-          });
-
-          if (
-            existingCourse &&
-            ((existingCourse.modules && existingCourse.modules.length > 0) ||
-              (existingCourse.courseData?.modules &&
-                existingCourse.courseData.modules.length > 0))
-          ) {
-            // Course exists in library - use it!
-            console.log(
-              "✅ Found existing course in library:",
-              existingCourse.title || existingCourse.courseData?.title
-            );
-
-            if (!isMounted) return;
-
-            // Extract course data from the correct location
-            const courseData = existingCourse.courseData || existingCourse;
-            const courseDataWithProgress = {
-              ...courseData,
-              // Add any additional progress data if needed
-            };
-
-            setCourseData(courseDataWithProgress);
-
-            // Restore completed lessons from database/library first
-            const completedLessonsFromDB = new Set();
-            if (courseData.modules) {
-              courseData.modules.forEach((module) => {
-                if (module.lessons) {
-                  module.lessons.forEach((lesson, lessonIndex) => {
-                    if (lesson.completed) {
-                      const lessonId = lesson.id || `${module.id}-${lessonIndex}`;
-                      completedLessonsFromDB.add(lessonId);
-                    }
-                  });
-                }
+            if (libraryResponse.ok) {
+              const libraryData = await libraryResponse.json();
+              existingCourse = libraryData.items?.find((c) => {
+                const id = c.id?.replace(/^(course|guide|cards)_/, "");
+                return id === String(enrollData.courseId) || c.shareId === shareId || c.originalShareId === shareId;
               });
-            }
-
-            // Then check localStorage for any additional progress
-            const courseId =
-              courseData._id || `${actualTopic}-${format}-${difficulty}`;
-            const progressStorageKey = `progress_${courseId}`;
-            const savedProgress = localStorage.getItem(progressStorageKey);
-            if (savedProgress) {
-              try {
-                const parsed = JSON.parse(savedProgress);
-                // Merge DB and localStorage progress
-                parsed.forEach((lessonId) => completedLessonsFromDB.add(lessonId));
-                console.log(
-                  "Restored completed lessons from DB and localStorage:",
-                  Array.from(completedLessonsFromDB)
-                );
-              } catch (e) {
-                console.warn("Failed to parse saved progress:", e);
+              // Attach sharerName from enroll response if we found it
+              if (existingCourse && enrollData.sharerName) {
+                existingCourse.sharerName = enrollData.sharerName;
               }
-            } else {
-              console.log(
-                "Restored completed lessons from DB:",
-                Array.from(completedLessonsFromDB)
-              );
             }
-
-            setCompletedLessons(completedLessonsFromDB);
-
-            console.log(
-              "Found course in library, setting isLoading to false"
-            );
-            console.log("Setting isLoading to false (library)");
-            setIsLoading(false);
-
-            // Notify other components that loading finished and perform a dev-time cleanup
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new CustomEvent("actirova:loading-done"));
-              setTimeout(() => {
-                const leftovers = document.querySelectorAll(
-                  "[data-actirova-loader-overlay], [data-actirova-loader]"
-                );
-                if (leftovers.length) {
-                  console.warn("Detected leftover loaders after library load, removing...", leftovers.length);
-                  leftovers.forEach((n) => n.remove());
-                }
-              }, 1000);
-            }
-
-            fetchInProgressRef.current = false;
-            initializedCoursesRef.current.add(courseKey);
-            return;
-          } else {
-            console.log("generating course...");
           }
         }
-      } catch (libraryError) {
-        console.log("Library check error:", libraryError);
+
+        if (!existingCourse) {
+          const libraryResponse = await apiClient.get("/api/library", {
+            headers: {
+              "x-user-id": user?._id || user?.id || user?.idString || "",
+            },
+          });
+
+          if (libraryResponse.ok) {
+            const libraryData = await libraryResponse.json();
+
+            // Find course matching this topic, format, and difficulty
+            existingCourse = libraryData.items?.find((c) => {
+              if (c.type !== "course") return false;
+              const matchesTopic =
+                c.topic?.toLowerCase() === actualTopic.toLowerCase() ||
+                c.originalTopic?.toLowerCase() === actualTopic.toLowerCase() ||
+                c.courseData?.topic?.toLowerCase() === actualTopic.toLowerCase();
+              const matchesDifficulty =
+                c.difficulty?.toLowerCase() === difficulty.toLowerCase() ||
+                c.level?.toLowerCase() === difficulty.toLowerCase() ||
+                c.courseData?.difficulty?.toLowerCase() ===
+                difficulty.toLowerCase() ||
+                c.courseData?.level?.toLowerCase() === difficulty.toLowerCase();
+
+              return matchesTopic && matchesDifficulty;
+            });
+          }
+        }
+
+        // If we found a summary item in the library list, fetch the FULL course data
+        if (existingCourse && 
+           !(existingCourse.modules && existingCourse.modules.length > 0) && 
+           !(existingCourse.courseData?.modules && existingCourse.courseData.modules.length > 0)
+        ) {
+          console.log("Fetching full course details for:", existingCourse.id);
+          const fullId = (existingCourse.id || "").replace(/^(course|guide|cards)_/, "");
+          if (fullId) {
+            const fullResponse = await apiClient.get(`/api/library?id=${fullId}`);
+            if (fullResponse.ok) {
+              const fullData = await fullResponse.json();
+              if (fullData.success && fullData.item) {
+                existingCourse = fullData.item;
+              }
+            }
+          }
+        }
+
+        if (
+          existingCourse &&
+          ((existingCourse.modules && existingCourse.modules.length > 0) ||
+            (existingCourse.courseData?.modules &&
+              existingCourse.courseData.modules.length > 0))
+        ) {
+          // Course exists - use it!
+          console.log(
+            "✅ Found course:",
+            existingCourse.title || existingCourse.courseData?.title
+          );
+
+          if (!isMounted) return;
+
+          // Extract course data from the correct location
+          const courseData = existingCourse.courseData || existingCourse;
+          const courseDataWithProgress = {
+            ...courseData,
+            // Preserve sharing metadata if present
+            isShared: existingCourse.isShared || courseData.isShared,
+            shareId: existingCourse.shareId || courseData.shareId,
+            sharerTier: existingCourse.sharerTier || courseData.sharerTier,
+            sharerName: existingCourse.sharerName || courseData.sharerName,
+          };
+
+          setCourseData(courseDataWithProgress);
+
+          // Restore completed lessons from database/library first
+          const completedLessonsFromDB = new Set();
+          if (courseData.modules) {
+            courseData.modules.forEach((module) => {
+              if (module.lessons) {
+                module.lessons.forEach((lesson, lessonIndex) => {
+                  if (lesson.completed) {
+                    const lessonId = lesson.id || `${module.id}-${lessonIndex}`;
+                    completedLessonsFromDB.add(lessonId);
+                  }
+                });
+              }
+            });
+          }
+
+          // Then check user profile for matching course progress (Per-user progress storage)
+          const userCourseItem = user?.courses?.find(c => String(c.courseId) === String(courseData._id));
+          if (userCourseItem?.completedLessons) {
+            userCourseItem.completedLessons.forEach(lId => completedLessonsFromDB.add(lId));
+          }
+
+          // Then check localStorage for any additional progress
+          const courseId =
+            courseData._id || (shareId ? `shared_${shareId}` : `${actualTopic}-${format}-${difficulty}`);
+          const progressStorageKey = `progress_${courseId}`;
+          const savedProgress = localStorage.getItem(progressStorageKey);
+          if (savedProgress) {
+            try {
+              const parsed = JSON.parse(savedProgress);
+              // Merge DB and localStorage progress
+              parsed.forEach((lessonId) => completedLessonsFromDB.add(lessonId));
+            } catch (e) {
+              console.warn("Failed to parse saved progress:", e);
+            }
+          }
+
+          setCompletedLessons(completedLessonsFromDB);
+          
+          setIsLoading(false);
+          // Notify other components that loading finished
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("actirova:loading-done"));
+          }
+
+          fetchInProgressRef.current = false;
+          initializedCoursesRef.current.add(courseKey);
+          clearTimeout(globalSafetyTimeout);
+          return;
+        }
+      } catch (e) {
+        console.error("Error checking course source:", e);
       }
 
       // For flashcards, check the flashcards collection
@@ -1757,7 +1909,7 @@ export default function LearnContent() {
       }
 
       // Safety timeout to ensure loading state is cleared
-      setTimeout(() => {
+      globalSafetyTimeout = setTimeout(() => {
         if (isMounted && fetchInProgressRef.current) {
           console.log("Safety timeout: forcing isLoading to false");
           setIsLoading(false);
@@ -1784,9 +1936,11 @@ export default function LearnContent() {
     // Cleanup function
     return () => {
       isMounted = false;
+      fetchInProgressRef.current = false;
+      if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
       // Don't clear initializedCoursesRef here as we want to persist across re-mounts
     };
-  }, [actualTopic, format, difficulty]);
+  }, [actualTopic, format, difficulty, user, loading, shareId]);
 
   useEffect(() => {
     if (!courseData) return;
@@ -1816,6 +1970,10 @@ export default function LearnContent() {
       setIsLoading(false);
     }
   }, [courseData, isLoading]);
+
+  // MANDATORY: Conditional returns for Auth/Loading MUST come after ALL hooks
+  if (loading) return <ActirovaLoader />;
+  if (!user && !shareId) return null;
 
   // No knowledge-check parsing: nothing to do when content changes
 
@@ -1931,6 +2089,18 @@ export default function LearnContent() {
           {/* Right Group - Controls (Always visible for easy access) */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button
+              onClick={handleShare}
+              className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
+                (isMyShareActive || courseData?.isShared) 
+                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+                  : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
+              }`}
+              title={isMyShareActive ? "Shared by me (Click to disable)" : (courseData?.isShared ? "Reshare course" : "Share course")}
+              disabled={!courseData?._id}
+            >
+              <Share2 className={`w-4 h-4 ${(isMyShareActive || courseData?.isShared) ? "fill-blue-500/10" : ""}`} />
+            </button>
+            <button
               onClick={handleDownloadLesson}
               className="p-1.5 sm:p-2 rounded-lg border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
               title="Download Lesson PDF"
@@ -2004,9 +2174,14 @@ export default function LearnContent() {
 
           <div className="p-4 lg:p-6 border-b border-border">
             <div className="flex justify-between flex-wrap flex-col">
-              <h2 className="font-bold text-lg text-foreground mb-2">
+              <h2 className="font-bold text-lg text-foreground mb-1">
                 {courseData.title}
               </h2>
+              {courseData.sharerName && (
+                <p className="text-[11px] text-primary font-medium italic mb-2">
+                  Shared by {courseData.sharerName.split(' ')[0]}
+                </p>
+              )}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               {courseData.totalModules} modules • {courseData.totalLessons}{" "}

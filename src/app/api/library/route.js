@@ -65,7 +65,7 @@ export async function GET(request) {
 
       const item = await db.collection(collection).findOne({
         _id: new ObjectId(cleanId),
-        userId: userObjId
+        $or: [{ userId: userObjId }, { enrolled: userObjId }]
       });
 
       if (!item) {
@@ -90,7 +90,9 @@ export async function GET(request) {
 
     const [courses, questions, cardSets, library, userProgress] =
       await Promise.all([
-        db.collection("library").find({ userId: userObjId }).toArray(),
+        db.collection("library").find({ 
+          $or: [{ userId: userObjId }, { enrolled: userObjId }] 
+        }).toArray(),
         db.collection("guides").find({ userId: userObjId }).toArray(),
         db.collection("cardSets").find({ userId: userObjId }).toArray(),
         db.collection("user_library").findOne({ userId: userObjId }) ||
@@ -99,6 +101,38 @@ export async function GET(request) {
           .collection("users")
           .findOne({ _id: userObjId }, { projection: { courses: 1 } }),
       ]);
+
+    // Fetch sharer names based on the hierarchical share chain
+    const sharerIdsSet = new Set();
+    courses.forEach(c => {
+      if (String(c.userId) !== String(userObjId)) {
+        // Find who shared it with THIS user
+        const enrollment = Array.isArray(c.enrolled) ? c.enrolled.find(e => String(e.userId || e) === String(userObjId)) : null;
+        if (enrollment && enrollment.invitedByShareId && Array.isArray(c.shareConfigs)) {
+          const config = c.shareConfigs.find(sc => sc.shareId === enrollment.invitedByShareId);
+          if (config) {
+            sharerIdsSet.add(String(config.sharerId));
+          } else {
+            sharerIdsSet.add(String(c.userId)); // Fallback to owner
+          }
+        } else {
+          sharerIdsSet.add(String(c.userId)); // Legacy fallback
+        }
+      }
+    });
+    
+    const sharerIds = Array.from(sharerIdsSet).map(id => new ObjectId(id));
+    
+    let sharerNamesMap = new Map();
+    if (sharerIds.length > 0) {
+      const sharers = await db.collection("users").find(
+        { _id: { $in: sharerIds } },
+        { projection: { name: 1, fullName: 1 } }
+      ).toArray();
+      sharers.forEach(s => {
+        sharerNamesMap.set(String(s._id), s.name || s.fullName || "Another User");
+      });
+    }
 
     const progressMap = new Map();
     if (userProgress?.courses) {
@@ -130,7 +164,20 @@ export async function GET(request) {
         pinned: (library?.pinned || []).includes(`course_${c._id}`),
         createdAt: c.createdAt,
         lastAccessed: c.lastAccessed,
+        isShared: c.isShared || false,
+        shareId: c.shareId || null,
         thumbnail: null,
+        isEnrolled: String(c.userId) !== String(userObjId),
+        shareConfigs: c.shareConfigs || [],
+        sharerName: (() => {
+          if (String(c.userId) === String(userObjId)) return null;
+          const enrollment = Array.isArray(c.enrolled) ? c.enrolled.find(e => String(e.userId || e) === String(userObjId)) : null;
+          if (enrollment && enrollment.invitedByShareId && Array.isArray(c.shareConfigs)) {
+            const config = c.shareConfigs.find(sc => sc.shareId === enrollment.invitedByShareId);
+            if (config) return sharerNamesMap.get(String(config.sharerId));
+          }
+          return sharerNamesMap.get(String(c.userId)); // Fallback
+        })()
       });
     });
 
@@ -390,10 +437,28 @@ export async function POST(request) {
           );
         }
 
-        await db.collection(collection).deleteOne({
-          _id: new ObjectId(id),
-          userId: userObjId,
-        });
+        // If it's a course and user is NOT the owner, just remove enrollment
+        if (prefix === "course") {
+          const course = await db.collection("library").findOne({ _id: new ObjectId(id) });
+          if (course && String(course.userId) !== String(userObjId)) {
+            // Un-enroll
+            await db.collection("library").updateOne(
+              { _id: new ObjectId(id) },
+              { $pull: { enrolled: userObjId } }
+            );
+          } else {
+            // Delete as owner
+            await db.collection("library").deleteOne({
+              _id: new ObjectId(id),
+              userId: userObjId,
+            });
+          }
+        } else {
+          await db.collection(collection).deleteOne({
+            _id: new ObjectId(id),
+            userId: userObjId,
+          });
+        }
 
         await db.collection("user_library").updateOne(
           { userId: userObjId },
@@ -424,7 +489,10 @@ export async function POST(request) {
 
         if (courseId) {
           await db.collection("library").updateOne(
-            { _id: new ObjectId(courseId), userId: userObjId },
+            { 
+              _id: new ObjectId(courseId), 
+              $or: [{ userId: userObjId }, { enrolled: userObjId }] 
+            },
             {
               $set: {
                 conversation: messages,
@@ -459,7 +527,10 @@ export async function POST(request) {
         if (courseId) {
           const course = await db
             .collection("library")
-            .findOne({ _id: new ObjectId(courseId), userId: userObjId });
+            .findOne({ 
+              _id: new ObjectId(courseId), 
+              $or: [{ userId: userObjId }, { enrolled: userObjId }] 
+            });
           messages = course?.conversation || [];
         } else {
           const conversationKey = `conversation_${topic}_${difficulty}_${format}`;

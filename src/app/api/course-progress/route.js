@@ -81,78 +81,87 @@ async function handlePost(request) {
       );
     }
 
-    // If client provided a lessonId, also persist per-lesson completion into the library document
+    // If client provided a lessonId, also persist per-lesson completion
     if (lessonId && typeof lessonId === "string") {
       try {
         const courseObjId = new ObjectId(courseId);
-        const [modNum, lessonNum] = String(lessonId).split("-");
-        const moduleId = parseInt(modNum, 10);
+        const isLessonDone = typeof body.isLessonCompleted === "boolean" ? body.isLessonCompleted : true;
 
-        const isLessonDone =
-          typeof body.isLessonCompleted === "boolean"
-            ? body.isLessonCompleted
-            : true;
+        if (access.isOwner) {
+          // 1. Update the lesson in library (if owner)
+          const [modNum] = String(lessonId).split("-");
+          const moduleId = parseInt(modNum, 10);
+          
+          if (!Number.isNaN(moduleId)) {
+            await db.collection("library").updateOne(
+              { _id: courseObjId, userId: user._id },
+              {
+                $set: {
+                  "modules.$[m].lessons.$[l].completed": isLessonDone,
+                  lastAccessed: new Date(),
+                },
+              },
+              {
+                arrayFilters: [{ "m.id": moduleId }, { "l.id": lessonId }],
+              }
+            );
+          }
+        }
 
-        if (!Number.isNaN(moduleId)) {
-          // 1. Update the lesson in library
-          await db.collection("library").updateOne(
-            { _id: courseObjId, userId: user._id },
+        // 2. ALWAYS update user's specific progress (enrollee or owner)
+        // We add/remove the lessonId from a 'completedLessons' array in the user's course list
+        if (isLessonDone) {
+          await db.collection("users").updateOne(
+            { _id: user._id, "courses.courseId": courseId },
+            { 
+              $addToSet: { "courses.$.completedLessons": lessonId },
+              $set: { "courses.$.lastUpdated": new Date() }
+            }
+          );
+        } else {
+          await db.collection("users").updateOne(
+            { _id: user._id, "courses.courseId": courseId },
+            { 
+              $pull: { "courses.$.completedLessons": lessonId },
+              $set: { "courses.$.lastUpdated": new Date() }
+            }
+          );
+        }
+
+        // 3. Recalculate total progress for the user's view
+        const userDoc = await db.collection("users").findOne(
+          { _id: user._id, "courses.courseId": courseId },
+          { projection: { "courses.$": 1 } }
+        );
+        
+        const userCourse = userDoc?.courses?.[0];
+        if (userCourse) {
+          const course = await db.collection("library").findOne({ _id: courseObjId });
+          const totalLessons = course?.totalLessons || 0;
+          const completedCount = userCourse.completedLessons?.length || 0;
+          const newProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+          const isFinished = newProgress >= 100;
+
+          await db.collection("users").updateOne(
+            { _id: user._id, "courses.courseId": courseId },
             {
               $set: {
-                "modules.$[m].lessons.$[l].completed": isLessonDone,
-                lastAccessed: new Date(),
-              },
-            },
-            {
-              arrayFilters: [{ "m.id": moduleId }, { "l.id": lessonId }],
+                "courses.$.progress": newProgress,
+                "courses.$.completed": isFinished,
+              }
             }
           );
 
-          // 2. Fetch the updated course to calculate real progress
-          const updatedCourse = await db.collection("library").findOne({ _id: courseObjId, userId: user._id });
-
-          if (updatedCourse) {
-            const totalLessons = updatedCourse.totalLessons || 0;
-            let completedCount = 0;
-
-            updatedCourse.modules.forEach(m => {
-              m.lessons.forEach(l => {
-                if (l.completed) completedCount++;
-              });
-            });
-
-            const newProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-            const isFinished = newProgress >= 100 && completedCount >= totalLessons;
-
-            // 3. Update course-level completion in library
-            await db.collection("library").updateOne(
-              { _id: courseObjId },
-              { $set: { progress: newProgress, completed: isFinished } }
-            );
-
-            // 4. Update user's course list
-            await db.collection("users").updateOne(
-              { _id: user._id, "courses.courseId": courseId },
-              {
-                $set: {
-                  "courses.$.progress": newProgress,
-                  "courses.$.completed": isFinished,
-                  "courses.$.lastUpdated": new Date(),
-                },
-              }
-            );
-
-            return NextResponse.json({
-              success: true,
-              message: "Progress updated",
-              data: {
-                courseId,
-                progress: newProgress,
-                completed: isFinished,
-                updatedAt: new Date().toISOString(),
-              },
-            });
-          }
+          return NextResponse.json({
+            success: true,
+            message: "Progress updated",
+            data: {
+              courseId,
+              progress: newProgress,
+              completed: isFinished,
+              updatedAt: new Date().toISOString(),
+            },
+          });
         }
       } catch (e) {
         console.error("Lesson progress update error:", e);

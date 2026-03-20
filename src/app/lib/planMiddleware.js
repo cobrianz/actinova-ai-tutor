@@ -101,32 +101,95 @@ export async function validateSubscriptionStatus(userId) {
 /**
  * Check if user can access a specific course
  */
-export async function checkCourseAccess(userId, courseId) {
+export async function checkCourseAccess(userId, courseId, shareId = null) {
     try {
         const { db } = await connectToDatabase();
 
+        // 1. Check if it's a shared course (Public Access via Share Link)
+        if (shareId) {
+            const sharedCourse = await db.collection("library").findOne({ 
+                $or: [
+                    { shareId: shareId, isShared: true },
+                    { "shareConfigs": { $elemMatch: { shareId: shareId, isActive: true } } }
+                ]
+            });
+
+            if (sharedCourse) {
+                // Determine depth based on the SPECIFIC share config used
+                let sharerTier = sharedCourse.sharePlan || (sharedCourse.isPremium ? TIERS.PRO : TIERS.FREE);
+                
+                if (Array.isArray(sharedCourse.shareConfigs)) {
+                    const config = sharedCourse.shareConfigs.find(c => c.shareId === shareId);
+                    if (config && config.isActive) sharerTier = config.tier;
+                }
+
+                // If course was shared by a Pro/Enterprise user, they get full access
+                if (hasPaidPlan(sharerTier)) {
+                    return { hasAccess: true, isShared: true, fullAccess: true };
+                }
+                
+                return { hasAccess: true, isShared: true, fullAccess: false };
+            }
+        }
+
         // Always validate subscription first (handles auto-downgrade)
+        // If no userId, and not a sharedId case above, no access
+        if (!userId) return { hasAccess: false, reason: "Unauthorized" };
+
         const user = await validateSubscriptionStatus(userId);
         if (!user) return { hasAccess: false, reason: "User not found" };
+        const userObjId = new ObjectId(userId);
+
+        // Check library for personalized or shared courses first
+        const libCourse = await db.collection("library").findOne({
+            _id: new ObjectId(courseId),
+            $or: [
+                { userId: userObjId },
+                { "enrolled.userId": userObjId }, // New format
+                { enrolled: userObjId } // Legacy format
+            ]
+        });
+
+        if (libCourse) {
+            const isOwner = libCourse.userId.toString() === userId.toString();
+            
+            // Owners and Pro/Enterprise users always get full access
+            if (isOwner || hasPaidPlan(user.subscription?.tier || user.subscription?.plan)) {
+                return { hasAccess: true, isShared: false, fullAccess: true };
+            }
+
+            // For enrollees, determine access level via the share chain
+            let fullAccess = false;
+            if (libCourse.isShared) {
+                // Find the enrollment record to see who invited them
+                const enrollment = Array.isArray(libCourse.enrolled) 
+                    ? libCourse.enrolled.find(e => (e.userId || e).toString() === userId.toString())
+                    : null;
+                
+                let sharerTier = libCourse.sharePlan || TIERS.FREE; // Default to owner tier
+                
+                if (enrollment && enrollment.invitedByShareId && Array.isArray(libCourse.shareConfigs)) {
+                    const config = libCourse.shareConfigs.find(c => c.shareId === enrollment.invitedByShareId);
+                    if (config && config.isActive) sharerTier = config.tier;
+                }
+
+                if (hasPaidPlan(sharerTier)) {
+                    fullAccess = true;
+                }
+            }
+
+            return { 
+                hasAccess: true, 
+                isEnrolled: !isOwner,
+                sharerTier: libCourse.sharerTier || libCourse.sharePlan || TIERS.FREE,
+                isShared: !!libCourse.isShared,
+                fullAccess: fullAccess
+            };
+        }
 
         const course = await db
             .collection("courses")
             .findOne({ _id: new ObjectId(courseId) });
-
-        if (!course) {
-            // Check library for personalized courses
-            const libCourse = await db.collection("library").findOne({
-                _id: new ObjectId(courseId),
-                userId: new ObjectId(userId)
-            });
-
-            if (libCourse) {
-                // If it's in their library, they definitely have access (it was generated for them)
-                return { hasAccess: true };
-            }
-
-            return { hasAccess: false, reason: "Course not found" };
-        }
 
         // Free courses are accessible to everyone
         if (!course.isPremium) {
@@ -142,7 +205,6 @@ export async function checkCourseAccess(userId, courseId) {
         );
 
         if (isEnrolled) {
-            console.log(`[Access Control] Allowing access to course ${courseId} because user ${userId} is previously enrolled.`);
             return { hasAccess: true };
         }
 

@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+import { checkCourseAccess } from "@/lib/planMiddleware";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -233,22 +234,36 @@ async function handleGenerateLesson(body, userId, db) {
     );
   }
 
+  // === 3. Access Validation ===
+  const { shareId } = body;
+  const access = await checkCourseAccess(userId, courseId, shareId);
+  if (!access.hasAccess) {
+    return NextResponse.json(
+      { error: "Access denied", message: access.reason },
+      { status: 403 }
+    );
+  }
+
   // === Determine Premium Status ===
   let isPremium = false;
   
-  // 1. Check Course Document First
-  if (courseId && ObjectId.isValid(courseId)) {
+  // 1. Check Shared/Enrolled Access First
+  if (access.isShared || access.isEnrolled) {
+    isPremium = access.fullAccess || (access.sharerTier && access.sharerTier !== "free");
+    console.log(`[AI Tutor] Shared/Enrolled access: isPremium=${isPremium} (via ${access.isShared ? 'shareId' : 'enrollment'})`);
+  } 
+  // 2. Check Course Document
+  else if (courseId && ObjectId.isValid(courseId)) {
     const courseDoc = await db.collection("library").findOne({ _id: new ObjectId(courseId) }) || 
                      await db.collection("courses").findOne({ _id: new ObjectId(courseId) });
     
     if (courseDoc?.isPremium) {
       isPremium = true;
-      console.log(`[AI Tutor] Using PREMIUM depth for course ${courseId}.`);
     }
   }
 
-  // 2. Fallback to User Status
-  if (!isPremium && userId) {
+  // 3. Fallback to User Status (if not already determined by share)
+  if (!isPremium && !access.isShared && userId) {
     isPremium = await getPremiumStatus(db, userId);
   }
   const wordCount = isPremium ? "2500–3000" : "1500–2000";

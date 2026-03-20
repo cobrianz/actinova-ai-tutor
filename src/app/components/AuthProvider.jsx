@@ -178,6 +178,15 @@ export function AuthProvider({ children }) {
         return;
       }
 
+      // Check for callbackUrl in search params
+      const searchParams = new URLSearchParams(window.location.search);
+      const callbackUrl = searchParams.get("callbackUrl");
+
+      if (callbackUrl) {
+        router.replace(callbackUrl);
+        return;
+      }
+
       // Check if onboarding is completed
       if (user.onboardingCompleted === false) {
         router.replace("/onboarding");
