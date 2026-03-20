@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiClient } from "@/lib/csrfClient";
 
 export default function Navbar({ toggleSidebar }) {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -96,8 +96,10 @@ export default function Navbar({ toggleSidebar }) {
               )}
             </button>
 
-            {/* Auth Buttons */}
-            {!user ? (
+            {/* Auth Buttons - Hide while loading to prevent flicker */}
+            {loading ? (
+              <div className="w-8 h-8 rounded-full bg-secondary animate-pulse" />
+            ) : !user ? (
               <div className="flex items-center space-x-2">
                 <Link
                   href="/auth/login"

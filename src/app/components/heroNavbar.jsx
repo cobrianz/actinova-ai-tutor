@@ -12,7 +12,7 @@ import { cn } from "../lib/utils";
 export default function HeroNavbar({ handleGetStarted }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -108,7 +108,9 @@ export default function HeroNavbar({ handleGetStarted }) {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            {user ? (
+            {loading ? (
+              <div className="w-24 h-10 rounded-lg bg-secondary animate-pulse" />
+            ) : user ? (
               <button
                 onClick={() => router.push("/dashboard")}
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -165,7 +167,9 @@ export default function HeroNavbar({ handleGetStarted }) {
                 </Link>
               ))}
               <div className="pt-4 border-t border-border-accent flex flex-col gap-4">
-                {user ? (
+                {loading ? (
+                  <div className="w-full h-12 rounded-xl bg-secondary animate-pulse" />
+                ) : user ? (
                   <button
                     onClick={() => router.push("/dashboard")}
                     className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold"

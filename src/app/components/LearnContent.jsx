@@ -97,6 +97,7 @@ export default function LearnContent() {
   const [generatingLessons, setGeneratingLessons] = useState(new Set()); // Track lessons being generated in background
   const [typingContent, setTypingContent] = useState("");
   const fetchInProgressRef = useRef(false); // Prevent duplicate API calls
+  const lastShareUpdateRef = useRef(0); // Timestamp of last personal share toggle
   const initializedCoursesRef = useRef(new Set()); // Track initialized courses
   const contentRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -787,10 +788,14 @@ export default function LearnContent() {
     }
   };
 
+  const [isSharingToggle, setIsSharingToggle] = useState(false);
+
   const handleShare = async () => {
-    if (!courseData?._id) return;
+    if (!courseData?._id || isSharingToggle) return;
     
+    const toastId = toast.loading(isMyShareActive ? "Disabling share..." : "Enabling share...");
     try {
+      setIsSharingToggle(true);
       const res = await apiClient.post("/api/library/share", { 
         courseId: courseData._id,
         action: isMyShareActive ? "disable" : "enable"
@@ -801,14 +806,21 @@ export default function LearnContent() {
       const data = await res.json();
       
       // Update local shareConfigs array
+      lastShareUpdateRef.current = Date.now();
       setCourseData(prev => {
         const newConfigs = [...(prev.shareConfigs || [])];
-        const index = newConfigs.findIndex(c => String(c.sharerId) === String(user?._id || user?.id));
+        const userIdentifier = String(user?._id || user?.id || "");
+        const index = newConfigs.findIndex(c => String(c.sharerId) === userIdentifier);
+        
+        // Match the API's behavior: data.isShared is false on disable
+        // However, for personal isActive state, we should use the inverse of the previous action
+        const nowActive = !isMyShareActive;
+
         const updatedConfig = {
           shareId: data.shareId,
           sharerId: user?._id || user?.id,
           tier: user?.subscription?.plan || "free",
-          isActive: data.isShared,
+          isActive: nowActive,
           createdAt: new Date()
         };
 
@@ -822,25 +834,28 @@ export default function LearnContent() {
           ...prev, 
           shareConfigs: newConfigs,
           // Legacy fields for backward compatibility
-          isShared: data.isShared, 
+          isShared: nowActive, 
           shareId: data.shareId 
         };
       });
       
-      if (data.isShared) {
+      if (!isMyShareActive) { // Was not active, now is active
         const shareId = data.shareId;
         const shareUrl = `${window.location.origin}/share/${shareId}`;
         await navigator.clipboard.writeText(shareUrl);
         toast.success("Sharing enabled! Link copied to clipboard.", {
+          id: toastId,
           description: `Anyone with this link can now view this course (${isPro ? "Full Access" : "3-Module Preview"}).`,
           duration: 5000,
         });
       } else {
-        toast.success("Sharing disabled.");
+        toast.success("Sharing disabled.", { id: toastId });
       }
     } catch (err) {
       console.error("Share error:", err);
-      toast.error("Failed to update sharing status");
+      toast.error("Failed to update sharing status", { id: toastId });
+    } finally {
+      setIsSharingToggle(false);
     }
   };
 
@@ -1425,527 +1440,591 @@ export default function LearnContent() {
   };
 
   // Fetch course data on component mount
+  const courseKey = `${actualTopic}/${format}/${difficulty}`;
+
+  // Clear initialized set when topic/format/difficulty changes
   useEffect(() => {
-    const courseKey = `${actualTopic}/${format}/${difficulty}`;
-
-    // Clear initialized set when topic/format/difficulty changes
     initializedCoursesRef.current.clear();
+  }, [courseKey]);
 
-    let isMounted = true; // Prevent state updates if component unmounts
-    let globalSafetyTimeout = null;
+  let globalSafetyTimeout = null;
 
-    const fetchCourseData = async () => {
-      const shareId = searchParams.get("shareId") || params.shareId;
+  const fetchCourseData = useCallback(async (silent = false) => {
+    const shareId = searchParams.get("shareId") || params.shareId;
 
-      // Guard against empty topic ONLY if NOT using a shareId
-      if (!actualTopic && !shareId) {
-        console.warn("No topic or shareId provided, skipping fetch.");
-        setIsLoading(false);
-        fetchInProgressRef.current = false;
-        return;
-      }
+    // Guard against empty topic ONLY if NOT using a shareId
+    if (!actualTopic && !shareId) {
+      console.warn("No topic or shareId provided, skipping fetch.");
+      setIsLoading(false);
+      fetchInProgressRef.current = false;
+      return;
+    }
 
-      // Prevent multiple simultaneous calls (guards StrictMode double-effect)
-      if (fetchInProgressRef.current) {
-        console.warn("Fetch already in progress, skipping...");
-        return;
-      }
+    // Prevent multiple simultaneous calls (guards StrictMode double-effect)
+    if (fetchInProgressRef.current) {
+      console.warn("Fetch already in progress, skipping...");
+      return;
+    }
 
-      fetchInProgressRef.current = true;
+    fetchInProgressRef.current = true;
+    if (!silent || !courseData) {
       setIsLoading(true);
+    }
 
-      // Reset error state
-      setError(null);
+    // Reset error state
+    setError(null);
 
-      if (!loading && !user && shareId) {
-        if (typeof window !== "undefined") {
-          const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
-          fetchInProgressRef.current = false;
-          setIsLoading(false);
-          router.push(`/auth/login?callbackUrl=${callbackUrl}`);
+    if (!loading && !user && shareId) {
+      if (typeof window !== "undefined") {
+        const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        fetchInProgressRef.current = false;
+        setIsLoading(false);
+        router.push(`/auth/login?callbackUrl=${callbackUrl}`);
+      }
+      return;
+    }
+
+    // First, try to get from library (saves tokens!) or shared link
+    try {
+      let existingCourse = null;
+
+      if (shareId && user) {
+        // AUTO-ENROLLMENT: If user is logged in and using a share link, ensure it's in their library
+        console.log("Checking shared course participation:", shareId);
+
+        // Enroll (backend handles if already enrolled)
+        const enrollRes = await apiClient.post("/api/library/share", { action: "enroll", shareId });
+        if (!enrollRes.ok) {
+          const errorData = await enrollRes.json().catch(() => ({}));
+          if (enrollRes.status === 403 && errorData.isDisabled) {
+            setError({ message: errorData.error, type: "disabled" });
+            setIsLoading(false);
+            fetchInProgressRef.current = false;
+            return;
+          }
+          throw new Error(errorData.error || "Failed to fetch shared course");
         }
-        return;
+        const enrollData = await enrollRes.json();
+        console.log("Enrollment status:", enrollData.message);
+
+        // Now that we've enrolled (or confirmed enrollment), fetch from library
+        const libraryResponse = await apiClient.get("/api/library", {
+          headers: {
+            "x-user-id": user?._id || user?.id || user?.idString || "",
+          },
+        });
+
+        if (libraryResponse.ok) {
+          const libraryData = await libraryResponse.json();
+          existingCourse = libraryData.items?.find((c) => {
+            const id = c.id?.replace(/^(course|guide|cards)_/, "");
+            return id === String(enrollData.courseId) || c.shareId === shareId || c.originalShareId === shareId;
+          });
+          // Attach sharerName from enroll response if we found it
+          if (existingCourse && enrollData.sharerName) {
+            existingCourse.sharerName = enrollData.sharerName;
+          }
+        }
       }
 
-      // First, try to get from library (saves tokens!) or shared link
-      try {
-        let existingCourse = null;
-        
-        if (shareId && user) {
-          // AUTO-ENROLLMENT: If user is logged in and using a share link, ensure it's in their library
-          console.log("Checking shared course participation:", shareId);
-          
-          // Enroll (backend handles if already enrolled)
-          const enrollRes = await apiClient.post("/api/library/share", { action: "enroll", shareId });
-          if (enrollRes.ok) {
-            const enrollData = await enrollRes.json();
-            console.log("Enrollment status:", enrollData.message);
-            
-            // Now that we've enrolled (or confirmed enrollment), fetch from library
-            const libraryResponse = await apiClient.get("/api/library", {
-              headers: {
-                "x-user-id": user?._id || user?.id || user?.idString || "",
-              },
-            });
+      if (!existingCourse) {
+        const libraryResponse = await apiClient.get("/api/library", {
+          headers: {
+            "x-user-id": user?._id || user?.id || user?.idString || "",
+          },
+        });
 
-            if (libraryResponse.ok) {
-              const libraryData = await libraryResponse.json();
-              existingCourse = libraryData.items?.find((c) => {
-                const id = c.id?.replace(/^(course|guide|cards)_/, "");
-                return id === String(enrollData.courseId) || c.shareId === shareId || c.originalShareId === shareId;
-              });
-              // Attach sharerName from enroll response if we found it
-              if (existingCourse && enrollData.sharerName) {
-                existingCourse.sharerName = enrollData.sharerName;
-              }
-            }
-          }
-        }
+        if (libraryResponse.ok) {
+          const libraryData = await libraryResponse.json();
 
-        if (!existingCourse) {
-          const libraryResponse = await apiClient.get("/api/library", {
-            headers: {
-              "x-user-id": user?._id || user?.id || user?.idString || "",
-            },
+          // Find course matching this topic, format, and difficulty
+          existingCourse = libraryData.items?.find((c) => {
+            if (c.type !== "course") return false;
+            const matchesTopic =
+              c.topic?.toLowerCase() === actualTopic.toLowerCase() ||
+              c.originalTopic?.toLowerCase() === actualTopic.toLowerCase() ||
+              c.courseData?.topic?.toLowerCase() === actualTopic.toLowerCase();
+            const matchesDifficulty =
+              c.difficulty?.toLowerCase() === difficulty.toLowerCase() ||
+              c.level?.toLowerCase() === difficulty.toLowerCase() ||
+              c.courseData?.difficulty?.toLowerCase() ===
+              difficulty.toLowerCase() ||
+              c.courseData?.level?.toLowerCase() === difficulty.toLowerCase();
+
+            return matchesTopic && matchesDifficulty;
           });
-
-          if (libraryResponse.ok) {
-            const libraryData = await libraryResponse.json();
-
-            // Find course matching this topic, format, and difficulty
-            existingCourse = libraryData.items?.find((c) => {
-              if (c.type !== "course") return false;
-              const matchesTopic =
-                c.topic?.toLowerCase() === actualTopic.toLowerCase() ||
-                c.originalTopic?.toLowerCase() === actualTopic.toLowerCase() ||
-                c.courseData?.topic?.toLowerCase() === actualTopic.toLowerCase();
-              const matchesDifficulty =
-                c.difficulty?.toLowerCase() === difficulty.toLowerCase() ||
-                c.level?.toLowerCase() === difficulty.toLowerCase() ||
-                c.courseData?.difficulty?.toLowerCase() ===
-                difficulty.toLowerCase() ||
-                c.courseData?.level?.toLowerCase() === difficulty.toLowerCase();
-
-              return matchesTopic && matchesDifficulty;
-            });
-          }
         }
+      }
 
-        // If we found a summary item in the library list, fetch the FULL course data
-        if (existingCourse && 
-           !(existingCourse.modules && existingCourse.modules.length > 0) && 
-           !(existingCourse.courseData?.modules && existingCourse.courseData.modules.length > 0)
-        ) {
-          console.log("Fetching full course details for:", existingCourse.id);
-          const fullId = (existingCourse.id || "").replace(/^(course|guide|cards)_/, "");
-          if (fullId) {
-            const fullResponse = await apiClient.get(`/api/library?id=${fullId}`);
-            if (fullResponse.ok) {
-              const fullData = await fullResponse.json();
-              if (fullData.success && fullData.item) {
-                existingCourse = fullData.item;
-              }
+      // If we found a summary item in the library list, fetch the FULL course data
+      if (existingCourse &&
+        !(existingCourse.modules && existingCourse.modules.length > 0) &&
+        !(existingCourse.courseData?.modules && existingCourse.courseData.modules.length > 0)
+      ) {
+        console.log("Fetching full course details for:", existingCourse.id);
+        const fullId = (existingCourse.id || "").replace(/^(course|guide|cards)_/, "");
+        if (fullId) {
+          const fullResponse = await apiClient.get(`/api/library?id=${fullId}`);
+          if (fullResponse.ok) {
+            const fullData = await fullResponse.json();
+            if (fullData.success && fullData.item) {
+              existingCourse = fullData.item;
             }
           }
         }
+      }
 
-        if (
-          existingCourse &&
-          ((existingCourse.modules && existingCourse.modules.length > 0) ||
-            (existingCourse.courseData?.modules &&
-              existingCourse.courseData.modules.length > 0))
-        ) {
-          // Course exists - use it!
-          console.log(
-            "✅ Found course:",
-            existingCourse.title || existingCourse.courseData?.title
-          );
+      if (
+        existingCourse &&
+        ((existingCourse.modules && existingCourse.modules.length > 0) ||
+          (existingCourse.courseData?.modules &&
+            existingCourse.courseData.modules.length > 0))
+      ) {
+        // Course exists - use it!
+        console.log(
+          "✅ Found course:",
+          existingCourse.title || existingCourse.courseData?.title
+        );
 
-          if (!isMounted) return;
+        // Extract course data from the correct location
+        const courseData = existingCourse.courseData || existingCourse;
 
-          // Extract course data from the correct location
-          const courseData = existingCourse.courseData || existingCourse;
+        // SYNC LOCK: If we recently toggled share locally, don't let stale server
+        // shareConfigs overwrite our optimistic state (MongoDB eventual consistency)
+        const isRecentlyUpdated = (Date.now() - lastShareUpdateRef.current) < 5000;
+
+        setCourseData(prev => {
           const courseDataWithProgress = {
             ...courseData,
             // Preserve sharing metadata if present
-            isShared: existingCourse.isShared || courseData.isShared,
+            isShared: isRecentlyUpdated ? prev?.isShared : (existingCourse.isShared || courseData.isShared),
             shareId: existingCourse.shareId || courseData.shareId,
             sharerTier: existingCourse.sharerTier || courseData.sharerTier,
             sharerName: existingCourse.sharerName || courseData.sharerName,
+            // Merge shareConfigs carefully if recently updated
+            shareConfigs: isRecentlyUpdated ? prev?.shareConfigs : (courseData.shareConfigs || [])
           };
 
-          setCourseData(courseDataWithProgress);
-
-          // Restore completed lessons from database/library first
-          const completedLessonsFromDB = new Set();
-          if (courseData.modules) {
-            courseData.modules.forEach((module) => {
-              if (module.lessons) {
-                module.lessons.forEach((lesson, lessonIndex) => {
-                  if (lesson.completed) {
-                    const lessonId = lesson.id || `${module.id}-${lessonIndex}`;
-                    completedLessonsFromDB.add(lessonId);
-                  }
-                });
-              }
-            });
+          if (isRecentlyUpdated && prev) {
+            return {
+              ...courseDataWithProgress,
+              shareConfigs: prev.shareConfigs,
+              isShared: prev.isShared,
+              shareId: prev.shareId
+            };
           }
+          return courseDataWithProgress;
+        });
 
-          // Then check user profile for matching course progress (Per-user progress storage)
-          const userCourseItem = user?.courses?.find(c => String(c.courseId) === String(courseData._id));
-          if (userCourseItem?.completedLessons) {
-            userCourseItem.completedLessons.forEach(lId => completedLessonsFromDB.add(lId));
-          }
-
-          // Then check localStorage for any additional progress
-          const courseId =
-            courseData._id || (shareId ? `shared_${shareId}` : `${actualTopic}-${format}-${difficulty}`);
-          const progressStorageKey = `progress_${courseId}`;
-          const savedProgress = localStorage.getItem(progressStorageKey);
-          if (savedProgress) {
-            try {
-              const parsed = JSON.parse(savedProgress);
-              // Merge DB and localStorage progress
-              parsed.forEach((lessonId) => completedLessonsFromDB.add(lessonId));
-            } catch (e) {
-              console.warn("Failed to parse saved progress:", e);
+        // Restore completed lessons from database/library first
+        const completedLessonsFromDB = new Set();
+        if (courseData.modules) {
+          courseData.modules.forEach((module) => {
+            if (module.lessons) {
+              module.lessons.forEach((lesson, lessonIndex) => {
+                if (lesson.completed) {
+                  const lessonId = lesson.id || `${module.id}-${lessonIndex}`;
+                  completedLessonsFromDB.add(lessonId);
+                }
+              });
             }
-          }
-
-          setCompletedLessons(completedLessonsFromDB);
-          
-          setIsLoading(false);
-          // Notify other components that loading finished
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("actirova:loading-done"));
-          }
-
-          fetchInProgressRef.current = false;
-          initializedCoursesRef.current.add(courseKey);
-          clearTimeout(globalSafetyTimeout);
-          return;
+          });
         }
-      } catch (e) {
-        console.error("Error checking course source:", e);
-      }
 
-      // For flashcards, check the flashcards collection
-      if (format === "flashcards") {
-        try {
-          const cardsResponse = await apiClient.get("/api/flashcards", {
-            cache: "no-store",
+        // Then check user profile for matching course progress (Per-user progress storage)
+        const userCourseItem = user?.courses?.find(c => String(c.courseId) === String(courseData._id));
+        if (userCourseItem?.completedLessons) {
+          userCourseItem.completedLessons.forEach(lId => completedLessonsFromDB.add(lId));
+        }
+
+        // Then check localStorage for any additional progress
+        const courseId =
+          courseData._id || (shareId ? `shared_${shareId}` : `${actualTopic}-${format}-${difficulty}`);
+        const progressStorageKey = `progress_${courseId}`;
+        const savedProgress = localStorage.getItem(progressStorageKey);
+        if (savedProgress) {
+          try {
+            const parsed = JSON.parse(savedProgress);
+            // Merge DB and localStorage progress
+            parsed.forEach((lessonId) => completedLessonsFromDB.add(lessonId));
+          } catch (e) {
+            console.warn("Failed to parse saved progress:", e);
+          }
+        }
+
+        setCompletedLessons(completedLessonsFromDB);
+
+        setIsLoading(false);
+        // Notify other components that loading finished
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("actirova:loading-done"));
+        }
+
+        fetchInProgressRef.current = false;
+        initializedCoursesRef.current.add(courseKey);
+        clearTimeout(globalSafetyTimeout);
+        return;
+      }
+    } catch (e) {
+      console.error("Error checking course source:", e);
+      // If the error is already structured with type, use it. Otherwise, default.
+      setError(e.type ? e : { message: e.message, type: "general" });
+      toast.error(`Failed to load course: ${e.message}`);
+      setIsLoading(false);
+      fetchInProgressRef.current = false;
+      clearTimeout(globalSafetyTimeout);
+      return;
+    }
+
+    // For flashcards, check the flashcards collection
+    if (format === "flashcards") {
+      try {
+        const cardsResponse = await apiClient.get("/api/flashcards", {
+          cache: "no-store",
+        });
+
+        if (cardsResponse.ok) {
+          const cardsData = await cardsResponse.json();
+          console.log("Flashcards data received:", cardsData);
+
+          // Find existing flashcard set matching this topic and difficulty
+          const existingCardSet = cardsData.find((cardSet) => {
+            const matchesTopic =
+              cardSet.topic?.toLowerCase() === actualTopic.toLowerCase() ||
+              cardSet.originalTopic?.toLowerCase() ===
+              actualTopic.toLowerCase();
+            const matchesDifficulty =
+              cardSet.difficulty?.toLowerCase() ===
+              difficulty.toLowerCase() ||
+              cardSet.level?.toLowerCase() === difficulty.toLowerCase();
+
+            console.log("Checking card set:", cardSet.title, {
+              matchesTopic,
+              matchesDifficulty,
+              cardTopic: cardSet.topic || cardSet.originalTopic,
+              cardDifficulty: cardSet.difficulty || cardSet.level,
+            });
+
+            return matchesTopic && matchesDifficulty;
           });
 
-          if (cardsResponse.ok) {
-            const cardsData = await cardsResponse.json();
-            console.log("Flashcards data received:", cardsData);
-
-            // Find existing flashcard set matching this topic and difficulty
-            const existingCardSet = cardsData.find((cardSet) => {
-              const matchesTopic =
-                cardSet.topic?.toLowerCase() === actualTopic.toLowerCase() ||
-                cardSet.originalTopic?.toLowerCase() ===
-                actualTopic.toLowerCase();
-              const matchesDifficulty =
-                cardSet.difficulty?.toLowerCase() ===
-                difficulty.toLowerCase() ||
-                cardSet.level?.toLowerCase() === difficulty.toLowerCase();
-
-              console.log("Checking card set:", cardSet.title, {
-                matchesTopic,
-                matchesDifficulty,
-                cardTopic: cardSet.topic || cardSet.originalTopic,
-                cardDifficulty: cardSet.difficulty || cardSet.level,
-              });
-
-              return matchesTopic && matchesDifficulty;
-            });
-
-            if (existingCardSet) {
-              console.log(
-                "✅ Loading existing questions:",
-                existingCardSet.title,
-                "Cards:",
-                existingCardSet.totalCards
-              );
-              setCourseData(existingCardSet);
-              console.log(
-                "✅ Found questions in library, setting isLoading to false"
-              );
-              setIsLoading(false);
-              fetchInProgressRef.current = false;
-              initializedCoursesRef.current.add(courseKey);
-              return;
-            } else {
-              console.log("❌ Question set not found in cards collection");
-            }
-          }
-        } catch (cardsError) {
-          console.log("Cards check error:", cardsError);
-        }
-      }
-
-      // Handle existing quiz loading
-      if (format === "quiz" && existingQuizId) {
-        try {
-          const quizResponse = await apiClient.get(`/api/quizzes/${existingQuizId}`);
-          if (quizResponse.ok) {
-            const quizData = await quizResponse.json();
-            setCourseData(quizData);
-            console.log("✅ Loaded existing quiz:", quizData.title);
+          if (existingCardSet) {
+            console.log(
+              "✅ Loading existing questions:",
+              existingCardSet.title,
+              "Cards:",
+              existingCardSet.totalCards
+            );
+            setCourseData(existingCardSet);
+            console.log(
+              "✅ Found questions in library, setting isLoading to false"
+            );
             setIsLoading(false);
             fetchInProgressRef.current = false;
             initializedCoursesRef.current.add(courseKey);
             return;
+          } else {
+            console.log("❌ Question set not found in cards collection");
           }
-        } catch (quizError) {
-          console.log("Error loading existing quiz:", quizError);
+        }
+      } catch (cardsError) {
+        console.log("Cards check error:", cardsError);
+      }
+    }
+
+    // Handle existing quiz loading
+    if (format === "quiz" && existingQuizId) {
+      try {
+        const quizResponse = await apiClient.get(`/api/quizzes/${existingQuizId}`);
+        if (quizResponse.ok) {
+          const quizData = await quizResponse.json();
+          setCourseData(quizData);
+          console.log("✅ Loaded existing quiz:", quizData.title);
+          setIsLoading(false);
+          fetchInProgressRef.current = false;
+          initializedCoursesRef.current.add(courseKey);
+          return;
+        }
+      } catch (quizError) {
+        console.log("Error loading existing quiz:", quizError);
+      }
+    }
+
+    if (!isPro && difficulty !== "beginner") {
+      toast.error(
+        "Intermediate and Advanced levels require Pro subscription. Redirecting to upgrade..."
+      );
+      router.push("/pricing");
+      console.log(
+        "✅ Free user trying non-beginner difficulty, setting isLoading to false and redirecting"
+      );
+      console.log("Setting isLoading to false (free user redirect)");
+      setIsLoading(false);
+      fetchInProgressRef.current = false;
+      initializedCoursesRef.current.add(courseKey);
+      return;
+    }
+
+    // Course not in library - generate new one
+    let apiEndpoint;
+    let requestBody;
+
+    if (format === "quiz") {
+      // Quiz generation uses the same endpoint but with different logic
+      apiEndpoint = "/api/generate-course";
+      requestBody = {
+        topic: actualTopic,
+        format: "quiz",
+        difficulty: isPro ? difficulty : "beginner",
+        questions: parseInt(searchParams.get("questions")) || 10,
+      };
+    } else if (format === "flashcards") {
+      apiEndpoint = "/api/generate-flashcards";
+      requestBody = {
+        topic: actualTopic,
+        format,
+        difficulty: isPro ? difficulty : "beginner",
+      };
+    } else {
+      // Course generation
+      apiEndpoint = "/api/generate-course";
+      requestBody =
+        format === "guide"
+          ? {
+            topic: actualTopic,
+            difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+          }
+          : {
+            topic: actualTopic,
+            format,
+            difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+          };
+    }
+
+    try {
+      const response = await apiClient.post(apiEndpoint, requestBody);
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          const errorData = await response.json();
+          setLimitModalData({
+            used: errorData.used || 0,
+            limit: errorData.limit || 2,
+            isPremium: errorData.isPremium || false,
+          });
+          setShowLimitModal(true);
+          setIsLoading(false);
+          fetchInProgressRef.current = false;
+          // Notify global listeners that loading is officially "done" (even if it's a limit error)
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("actirova:loading-done"));
+          }
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate course");
+      }
+
+      const data = await response.json();
+
+      // Extract course data - API can return in different formats
+      let courseDataToSet;
+      if (data.content) {
+        courseDataToSet = data.content;
+      } else if (data.modules) {
+        // Data is at root level
+        courseDataToSet = data;
+      } else {
+        // Fallback - use the whole data object
+        courseDataToSet = data;
+      }
+
+      // Only validate modules for course format, not quiz
+      if (format === "course") {
+        const hasModules =
+          (Array.isArray(courseDataToSet.modules) && courseDataToSet.modules.length > 0) ||
+          (Array.isArray(courseDataToSet.topics) && courseDataToSet.topics.length > 0);
+
+        if (!hasModules) {
+          // Log for debugging but don't expose full data
+          console.error("Course generation failed: Invalid structure");
+          throw new Error(
+            "Generated course structure is invalid. Please try again."
+          );
+        }
+      } else if (format === "quiz") {
+        // For quiz format, validate questions exist
+        const hasQuestions =
+          Array.isArray(courseDataToSet.questions) &&
+          courseDataToSet.questions.length > 0;
+        if (!hasQuestions) {
+          throw new Error(
+            "Generated quiz has no questions. Please try again."
+          );
         }
       }
 
-      if (!isPro && difficulty !== "beginner") {
-        toast.error(
-          "Intermediate and Advanced levels require Pro subscription. Redirecting to upgrade..."
-        );
-        router.push("/pricing");
-        console.log(
-          "✅ Free user trying non-beginner difficulty, setting isLoading to false and redirecting"
-        );
-        console.log("Setting isLoading to false (free user redirect)");
+      // Add the courseId to the course data for lesson content saving
+      if (data.courseId) {
+        courseDataToSet._id = data.courseId;
+      }
+      setCourseData(courseDataToSet);
+      setIsLoading(false); // Ensure loader disappears immediately when course data is set
+
+      // Notify other components and check for lingering loaders (dev safeguard)
+      if (typeof window !== "undefined") {
+        // Dispatch event immediately and with a small delay to ensure listeners catch it
+        window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
+        }, 50);
+        setTimeout(() => {
+          const leftovers = document.querySelectorAll(
+            "[data-actirova-loader-overlay], [data-actirova-loader]"
+          );
+          if (leftovers.length) {
+            console.warn("Detected leftover loaders after generation, removing...", leftovers.length);
+            leftovers.forEach((n) => n.remove());
+          }
+        }, 1000);
+      }
+
+      // Persist generated course to library (no-op on server if already saved)
+      try {
+        const libRes = await apiClient.post("/api/library", {
+          action: "add",
+          course: {
+            isGenerated: true,
+            courseData: courseDataToSet,
+            title: courseDataToSet.title,
+            topic: courseDataToSet.topic || actualTopic,
+            level: courseDataToSet.level || difficulty,
+            format,
+          },
+        }, {
+          headers: {
+            "x-user-id": user?._id || user?.id || user?.idString || "",
+          }
+        });
+        if (!libRes.ok) {
+          console.warn("Failed to store course in library");
+        }
+      } catch (libErr) {
+        console.warn("Error storing course in library:", libErr);
+      }
+
+      // Refresh user profile/usage so sidebar & upgrade reflect new quotas
+      try {
+        await fetchUser();
+        // Also emit a lightweight event for any listeners
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("usageUpdated"));
+        }
+      } catch (e) {
+        console.warn("Failed to refresh user usage after generation", e);
+      }
+      initializedCoursesRef.current.add(courseKey);
+      console.log("Course data set successfully");
+    } catch (err) {
+      console.error("Error fetching course data:", err);
+      setError({ message: err.message, type: "general" });
+      toast.error(`Failed to load course: ${err.message}`);
+    } finally {
+      console.log("Finally block executed, setting isLoading to false");
+      setIsLoading(false);
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
+        setTimeout(() => {
+          const leftovers = document.querySelectorAll(
+            "[data-actirova-loader-overlay], [data-actirova-loader]"
+          );
+          if (leftovers.length) {
+            console.warn("Detected leftover loaders in finally block, removing...", leftovers.length);
+            leftovers.forEach((n) => n.remove());
+          }
+        }, 1000);
+      }
+      fetchInProgressRef.current = false;
+      if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
+    }
+
+    // Safety timeout to ensure loading state is cleared
+    globalSafetyTimeout = setTimeout(() => {
+      if (fetchInProgressRef.current) {
+        console.log("Safety timeout: forcing isLoading to false");
         setIsLoading(false);
         fetchInProgressRef.current = false;
-        initializedCoursesRef.current.add(courseKey);
-        return;
-      }
 
-      // Course not in library - generate new one
-      let apiEndpoint;
-      let requestBody;
-
-      if (format === "quiz") {
-        // Quiz generation uses the same endpoint but with different logic
-        apiEndpoint = "/api/generate-course";
-        requestBody = {
-          topic: actualTopic,
-          format: "quiz",
-          difficulty: isPro ? difficulty : "beginner",
-          questions: parseInt(searchParams.get("questions")) || 10,
-        };
-      } else if (format === "flashcards") {
-        apiEndpoint = "/api/generate-flashcards";
-        requestBody = {
-          topic: actualTopic,
-          format,
-          difficulty: isPro ? difficulty : "beginner",
-        };
-      } else {
-        // Course generation
-        apiEndpoint = "/api/generate-course";
-        requestBody =
-          format === "guide"
-            ? {
-              topic: actualTopic,
-              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
-            }
-            : {
-              topic: actualTopic,
-              format,
-              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
-            };
-      }
-
-      try {
-        const response = await apiClient.post(apiEndpoint, requestBody);
-
-        if (!response.ok) {
-          if (response.status === 429) {
-            const errorData = await response.json();
-            if (!isMounted) return;
-            setLimitModalData({
-              used: errorData.used || 0,
-              limit: errorData.limit || 2,
-              isPremium: errorData.isPremium || false,
-            });
-            setShowLimitModal(true);
-            setIsLoading(false);
-            fetchInProgressRef.current = false;
-            // Notify global listeners that loading is officially "done" (even if it's a limit error)
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new CustomEvent("actirova:loading-done"));
-            }
-            return;
-          }
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to generate course");
-        }
-
-        const data = await response.json();
-
-        // Extract course data - API can return in different formats
-        let courseDataToSet;
-        if (data.content) {
-          courseDataToSet = data.content;
-        } else if (data.modules) {
-          // Data is at root level
-          courseDataToSet = data;
-        } else {
-          // Fallback - use the whole data object
-          courseDataToSet = data;
-        }
-
-        // Only validate modules for course format, not quiz
-        if (format === "course") {
-          const hasModules =
-            (Array.isArray(courseDataToSet.modules) && courseDataToSet.modules.length > 0) ||
-            (Array.isArray(courseDataToSet.topics) && courseDataToSet.topics.length > 0);
-
-          if (!hasModules) {
-            // Log for debugging but don't expose full data
-            console.error("Course generation failed: Invalid structure");
-            throw new Error(
-              "Generated course structure is invalid. Please try again."
-            );
-          }
-        } else if (format === "quiz") {
-          // For quiz format, validate questions exist
-          const hasQuestions =
-            Array.isArray(courseDataToSet.questions) &&
-            courseDataToSet.questions.length > 0;
-          if (!hasQuestions) {
-            throw new Error(
-              "Generated quiz has no questions. Please try again."
-            );
-          }
-        }
-
-        // Add the courseId to the course data for lesson content saving
-        if (data.courseId) {
-          courseDataToSet._id = data.courseId;
-        }
-        setCourseData(courseDataToSet);
-        setIsLoading(false); // Ensure loader disappears immediately when course data is set
-
-        // Notify other components and check for lingering loaders (dev safeguard)
         if (typeof window !== "undefined") {
-          // Dispatch event immediately and with a small delay to ensure listeners catch it
           window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
-          }, 50);
-          setTimeout(() => {
             const leftovers = document.querySelectorAll(
-              "[data-actirova-loader-overlay], [data-actirova-loader]"
+              "[data-Actirova-loader-overlay], [data-Actirova-loader]"
             );
             if (leftovers.length) {
-              console.warn("Detected leftover loaders after generation, removing...", leftovers.length);
+              console.warn("Detected leftover loaders from safety timeout, removing...", leftovers.length);
               leftovers.forEach((n) => n.remove());
             }
           }, 1000);
         }
-
-        // Persist generated course to library (no-op on server if already saved)
-        try {
-          const libRes = await apiClient.post("/api/library", {
-            action: "add",
-            course: {
-              isGenerated: true,
-              courseData: courseDataToSet,
-              title: courseDataToSet.title,
-              topic: courseDataToSet.topic || actualTopic,
-              level: courseDataToSet.level || difficulty,
-              format,
-            },
-          }, {
-            headers: {
-              "x-user-id": user?._id || user?.id || user?.idString || "",
-            }
-          });
-          if (!libRes.ok) {
-            console.warn("Failed to store course in library");
-          }
-        } catch (libErr) {
-          console.warn("Error storing course in library:", libErr);
-        }
-
-        // Refresh user profile/usage so sidebar & upgrade reflect new quotas
-        try {
-          await fetchUser();
-          // Also emit a lightweight event for any listeners
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("usageUpdated"));
-          }
-        } catch (e) {
-          console.warn("Failed to refresh user usage after generation", e);
-        }
-        initializedCoursesRef.current.add(courseKey);
-        console.log("Course data set successfully");
-      } catch (err) {
-        console.error("Error fetching course data:", err);
-        if (isMounted) {
-          setError(err.message);
-          toast.error(`Failed to load course: ${err.message}`);
-        }
-      } finally {
-        console.log("Finally block executed, setting isLoading to false");
-        if (isMounted) {
-          console.log("Setting isLoading to false (finally)");
-          setIsLoading(false);
-
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
-            setTimeout(() => {
-              const leftovers = document.querySelectorAll(
-                "[data-actirova-loader-overlay], [data-actirova-loader]"
-              );
-              if (leftovers.length) {
-                console.warn("Detected leftover loaders in finally block, removing...", leftovers.length);
-                leftovers.forEach((n) => n.remove());
-              }
-            }, 1000);
-          }
-        }
-        fetchInProgressRef.current = false;
-        if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
       }
+    }, 30000); // 30 seconds timeout
+  }, [actualTopic, format, difficulty, user?._id, user?.id, loading, searchParams, params.shareId, isPro, existingQuizId, router, courseData, fetchUser, courseKey]);
 
-      // Safety timeout to ensure loading state is cleared
-      globalSafetyTimeout = setTimeout(() => {
-        if (isMounted && fetchInProgressRef.current) {
-          console.log("Safety timeout: forcing isLoading to false");
-          setIsLoading(false);
-          fetchInProgressRef.current = false;
+  const prevParamsRef = useRef({ actualTopic, format, difficulty, shareId: searchParams.get("shareId") || params.shareId });
 
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("Actirova:loading-done"));
-            setTimeout(() => {
-              const leftovers = document.querySelectorAll(
-                "[data-Actirova-loader-overlay], [data-Actirova-loader]"
-              );
-              if (leftovers.length) {
-                console.warn("Detected leftover loaders from safety timeout, removing...", leftovers.length);
-                leftovers.forEach((n) => n.remove());
-              }
-            }, 1000);
-          }
-        }
-      }, 30000); // 30 seconds timeout
-    };
+  // Fetch course data on component mount
+  useEffect(() => {
+    const isTopicValid = actualTopic && actualTopic.trim().length > 0;
+    const currentShareId = searchParams.get("shareId") || params.shareId;
+    const isShareValid = currentShareId && currentShareId.trim().length > 0;
 
-    fetchCourseData();
+    if (!isTopicValid && !isShareValid) {
+      if (!isShareValid) {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Determine if we should show the loader
+    const paramsChanged =
+      prevParamsRef.current.actualTopic !== actualTopic ||
+      prevParamsRef.current.format !== format ||
+      prevParamsRef.current.difficulty !== difficulty ||
+      prevParamsRef.current.shareId !== currentShareId;
+
+    fetchCourseData(!paramsChanged);
+
+    prevParamsRef.current = { actualTopic, format, difficulty, shareId: currentShareId };
 
     // Cleanup function
     return () => {
-      isMounted = false;
       fetchInProgressRef.current = false;
       if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
-      // Don't clear initializedCoursesRef here as we want to persist across re-mounts
     };
-  }, [actualTopic, format, difficulty, user, loading, shareId]);
+  }, [actualTopic, format, difficulty, user?._id || user?.id, loading, searchParams, params.shareId, fetchCourseData]);
 
   useEffect(() => {
     if (!courseData) return;
 
-    const progressPercentage = (completedCount / totalLessons) * 100;
+    const modules = courseData.modules || courseData.courseData?.modules || [];
+    let totalLessons = 0;
+    let completedCount = 0;
+
+    modules.forEach((module) => {
+      if (module.lessons) {
+        totalLessons += module.lessons.length;
+        module.lessons.forEach((lesson, index) => {
+          const lessonId = lesson.id || `${module.id}-${index}`;
+          if (completedLessons.has(lessonId)) {
+            completedCount++;
+          }
+        });
+      }
+    });
+
+    const progressPercentage = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
 
     if (progressPercentage === 100 && completedCount > 0) {
       const achievement = {
@@ -1962,7 +2041,7 @@ export default function LearnContent() {
 
       toast.success("🎉 Congratulations! You've completed the course!");
     }
-  }, [completedCount, totalLessons, courseData]);
+  }, [completedLessons, courseData]);
 
   // Ensure loader disappears when course data is available
   useLayoutEffect(() => {
@@ -1995,35 +2074,39 @@ export default function LearnContent() {
   // Show error state
   if (error) {
     return (
-      <div className="h-[calc(100vh-6rem)] flex flex-col bg-background overflow-hidden">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto p-6">
-            <div className="text-red-500 mb-4">
-              <svg
-                className="w-16 h-16 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+        {error?.type === "disabled" ? (
+          <>
+            <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">
+              <Lock className="w-10 h-10 text-amber-600 dark:text-amber-400" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              Failed to generate course
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
+            <h2 className="text-2xl font-bold mb-2">Share Link Inactive</h2>
+            <p className="text-muted-foreground max-w-md mb-8">
+              {error.message || "This sharing link has been disabled by the owner. You can no longer access this course via this link."}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <X className="w-8 h-8 text-red-500" />
+            </div>
+            <h2 className="text-xl font-bold mb-2 text-foreground">Error Loading Course</h2>
+            <p className="text-muted-foreground mb-6">{error?.message || String(error)}</p>
+          </>
+        )}
+        <div className="flex gap-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            Retry
+          </button>
+          <Link
+            href="/dashboard"
+            className="px-6 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80"
+          >
+            Go to Library
+          </Link>
         </div>
       </div>
     );
@@ -2090,15 +2173,19 @@ export default function LearnContent() {
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={handleShare}
-              className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
-                (isMyShareActive || courseData?.isShared) 
-                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+              disabled={!courseData?._id || isSharingToggle}
+              className={`p-1.5 sm:p-2 rounded-lg border transition-all ${isSharingToggle ? "opacity-50 cursor-not-allowed" : ""} ${
+                isMyShareActive 
+                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-sm" 
                   : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
               }`}
-              title={isMyShareActive ? "Shared by me (Click to disable)" : (courseData?.isShared ? "Reshare course" : "Share course")}
-              disabled={!courseData?._id}
+              title={isSharingToggle ? "Updating share status..." : (isMyShareActive ? "Shared by me (Click to disable)" : (courseData?.isShared ? "Reshare course" : "Share course"))}
             >
-              <Share2 className={`w-4 h-4 ${(isMyShareActive || courseData?.isShared) ? "fill-blue-500/10" : ""}`} />
+              {isSharingToggle ? (
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-blue-500/10" : ""}`} />
+              )}
             </button>
             <button
               onClick={handleDownloadLesson}

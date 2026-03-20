@@ -36,15 +36,34 @@ export async function GET(request) {
     // DECISION: Let's use an ARRAY for shareConfigs instead of a Map to make search by shareId efficient.
     // [{ userId, shareId, tier, isActive, createdAt }]
     
+    // First, find the course to see if it even exists
     const item = await db.collection("library").findOne({ 
       $or: [
-        { shareId: shareId, isShared: true },
-        { "shareConfigs": { $elemMatch: { shareId: shareId, isActive: true } } }
+        { shareId: shareId },
+        { "shareConfigs.shareId": shareId }
       ]
     });
-
+    
     if (!item) {
-      return NextResponse.json({ error: "Shared course not found or sharing disabled" }, { status: 404 });
+      return NextResponse.json({ error: "Shared course not found" }, { status: 404 });
+    }
+
+    // Now check if the specific share is active
+    let isActive = false;
+    let config = null;
+
+    if (item.shareId === shareId && item.isShared) {
+      isActive = true;
+    } else if (item.shareConfigs) {
+      config = item.shareConfigs.find(c => c.shareId === shareId);
+      if (config?.isActive) isActive = true;
+    }
+
+    if (!isActive) {
+      return NextResponse.json({ 
+        error: "This share link has been disabled by the sharer.",
+        isDisabled: true 
+      }, { status: 403 });
     }
 
     // Determine access tier from the SPECIFIC share config used
@@ -108,16 +127,28 @@ export async function POST(request) {
         return NextResponse.json({ error: "shareId is required for enrollment" }, { status: 400 });
       }
 
-      // Find the source course
+      // Find the source course regardless of isActive initially to give a clear error
       const sourceCourse = await db.collection("library").findOne({ 
         $or: [
-          { shareId: shareId, isShared: true }, // Legacy support
-          { "shareConfigs": { $elemMatch: { shareId: shareId, isActive: true } } }
+          { shareId: shareId },
+          { "shareConfigs.shareId": shareId }
         ]
       });
 
       if (!sourceCourse) {
         return NextResponse.json({ error: "Shared course not found" }, { status: 404 });
+      }
+
+      // Check if active
+      let isActive = false;
+      if (sourceCourse.shareId === shareId && sourceCourse.isShared) isActive = true;
+      else if (sourceCourse.shareConfigs) {
+        const config = sourceCourse.shareConfigs.find(c => c.shareId === shareId);
+        if (config?.isActive) isActive = true;
+      }
+
+      if (!isActive) {
+        return NextResponse.json({ error: "This share link has been disabled by the sharer.", isDisabled: true }, { status: 403 });
       }
 
       // Add user to enrolled array with invitedBy metadata
