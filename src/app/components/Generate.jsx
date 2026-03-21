@@ -55,21 +55,25 @@ export default function Generate({ setActiveContent }) {
 
   // Fetch live usage data from the server
   const fetchUsage = React.useCallback(async () => {
+    if (!user || loading) return;
     try {
       const res = await apiClient.get("/api/user/usage");
       if (res.ok) {
         const data = await res.json();
         setUsageData(data);
       }
-    } catch {
-      // silently fail — limits will be enforced server-side
+    } catch (err) {
+      // Silent error for usage fetch to avoid log noise on stale sessions
+      console.debug("Usage fetch skipped or failed due to session state");
     }
-  }, []);
+  }, [user, loading]);
 
   // Fetch usage on mount and when user changes
   React.useEffect(() => {
-    if (user) fetchUsage();
-  }, [user, fetchUsage]);
+    if (user && !loading) {
+      fetchUsage();
+    }
+  }, [user, loading, fetchUsage]);
 
   // Refresh usage after usageUpdated event
   React.useEffect(() => {

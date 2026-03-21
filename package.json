@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed:plans": "node scripts/seed-plans.js",
+    "cron": "node scripts/run-crons.js",
     "postbuild": "next-sitemap"
   },
   "dependencies": {

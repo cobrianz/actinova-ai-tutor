@@ -15,8 +15,11 @@ const CRON_SECRET = process.env.CRON_SECRET || "your-secret-key";
 
 async function handleCron(request) {
   try {
-    // Verify cron secret
-    const secret = request.headers.get("x-cron-secret");
+    // Verify cron secret (Support both standard Authorization header and custom x-cron-secret)
+    const authHeader = request.headers.get("authorization");
+    const customSecret = request.headers.get("x-cron-secret");
+    const secret = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : customSecret;
+
     if (secret !== CRON_SECRET) {
       return NextResponse.json(
         { error: "Unauthorized" },
