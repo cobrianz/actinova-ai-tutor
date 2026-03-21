@@ -73,7 +73,8 @@ export default function LearnContent() {
     const l = parseInt(urlLesson);
     
     if (!isNaN(m) && !isNaN(l)) {
-      return { moduleId: m, lessonIndex: l };
+      // Internal lessonIndex is 0-based, URL parameter is 1-based
+      return { moduleId: m, lessonIndex: Math.max(0, l - 1) };
     }
     
     return { moduleId: 1, lessonIndex: 0 };
@@ -244,7 +245,8 @@ export default function LearnContent() {
         // Update URL query parameters without full page reload
         const newParams = new URLSearchParams(window.location.search);
         newParams.set("module", activeLesson.moduleId);
-        newParams.set("lesson", activeLesson.lessonIndex);
+        // Save as 1-based index in the URL
+        newParams.set("lesson", activeLesson.lessonIndex + 1);
         router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
       } catch (e) {}
     }
@@ -1995,7 +1997,7 @@ export default function LearnContent() {
         }
       }
     }, 30000); // 30 seconds timeout
-  }, [actualTopic, format, difficulty, user?._id, user?.id, loading, searchParams, params.shareId, isPro, existingQuizId, router, courseData, fetchUser, courseKey]);
+  }, [actualTopic, format, difficulty, user?._id, user?.id, loading, searchParams.get("shareId"), searchParams.get("questions"), params.shareId, isPro, existingQuizId, router, courseData, fetchUser, courseKey]);
 
   const prevParamsRef = useRef({ actualTopic, format, difficulty, shareId: searchParams.get("shareId") || params.shareId });
 
@@ -2028,7 +2030,7 @@ export default function LearnContent() {
       fetchInProgressRef.current = false;
       if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
     };
-  }, [actualTopic, format, difficulty, user?._id || user?.id, loading, searchParams, params.shareId]);
+  }, [actualTopic, format, difficulty, user?._id || user?.id, loading, searchParams.get("shareId"), params.shareId]);
 
   useEffect(() => {
     if (!courseData) return;
@@ -2501,12 +2503,6 @@ export default function LearnContent() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div
             ref={contentRef}
-            onClick={() => {
-              // Close sidebar on mobile when content is touched/clicked
-              if (window.innerWidth < 1024 && isSidebarOpen) {
-                setIsSidebarOpen(false);
-              }
-            }}
             className="flex-1 overflow-y-auto hide-scrollbar bg-background cursor-pointer lg:cursor-default"
           >
             <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
