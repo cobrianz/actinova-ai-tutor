@@ -15,6 +15,7 @@ import {
   Star,
   ChevronRight,
   AlertCircle,
+  GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -23,23 +24,23 @@ import { apiClient } from "@/lib/csrfClient";
 const PLAN_UI_METADATA = {
   premium: {
     icon: Zap,
-    gradient: "from-violet-600 via-purple-600 to-indigo-600",
-    shadowColor: "shadow-purple-500/25",
-    defaultOriginalPrice: 59.99, // Was 14.99
+    gradient: "from-green-600 via-emerald-600 to-teal-600",
+    shadowColor: "shadow-green-500/25",
+    defaultOriginalPrice: 59.99,
     currentPrice: 45.00,
   },
   enterprise: {
     icon: Crown,
-    gradient: "from-amber-500 via-orange-500 to-red-500",
-    shadowColor: "shadow-orange-500/25",
-    defaultOriginalPrice: 249.99, // Was 49.99
+    gradient: "from-emerald-500 via-green-500 to-green-700",
+    shadowColor: "shadow-green-500/25",
+    defaultOriginalPrice: 249.99,
     currentPrice: 200.00,
   },
   pro: {
     icon: Zap,
-    gradient: "from-violet-600 via-purple-600 to-indigo-600",
-    shadowColor: "shadow-purple-500/25",
-    defaultOriginalPrice: 59.99, // Was 14.99
+    gradient: "from-green-600 via-emerald-600 to-teal-600",
+    shadowColor: "shadow-green-500/25",
+    defaultOriginalPrice: 59.99,
     currentPrice: 45.00,
   }
 };
@@ -175,7 +176,7 @@ function CheckoutContent() {
   if (isLoadingUser || isLoadingPlans) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -185,18 +186,29 @@ function CheckoutContent() {
       <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
         <div className="text-center">
           <p className="text-xl mb-4 text-muted-foreground">No plans available at the moment.</p>
-          <Link href="/pricing" className="text-primary hover:underline">Return to Pricing</Link>
+          <Link href="/pricing" className="text-green-600 hover:underline">Return to Pricing</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50 dark:opacity-100">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-600/5 rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-transparent relative overflow-hidden">
+      {/* Hero-style Background Image */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <img 
+          src="/hero.png" 
+          alt="Background" 
+          className="w-full h-full object-cover opacity-40 brightness-75"
+        />
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]" />
+      </div>
+
+      {/* Decorative Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50 dark:opacity-100 z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-green-600/5 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-10">
@@ -212,9 +224,9 @@ function CheckoutContent() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-semibold mb-4 sm:mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50/60 border border-white/60 text-[#1a1a1a] text-[13px] font-medium mb-8 backdrop-blur-md"
           >
-            <Sparkles className="w-3 h-3" />
+            <GraduationCap className="w-4 h-4 text-green-500" />
             <span>{currentPlan?.discountDescription || "Special Launch Offer"}</span>
           </motion.div>
 
@@ -222,7 +234,7 @@ function CheckoutContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-3 sm:mb-4"
+            className="text-3xl sm:text-5xl md:text-6xl font-bold text-[#1a1a1a] mb-4 tracking-tight"
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
             Upgrade Your Learning
@@ -232,7 +244,7 @@ function CheckoutContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto"
+            className="text-[#1a1a1a]/60 text-base md:text-lg max-w-2xl mx-auto leading-relaxed"
           >
             Unlock unlimited AI-powered courses and premium features
           </motion.p>
@@ -244,10 +256,10 @@ function CheckoutContent() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-4 sm:p-6"
+              className="bg-white/70 backdrop-blur-2xl rounded-3xl border-2 border-white p-6 sm:p-8"
             >
-              <h2 className="text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-400" />
+              <h2 className="text-xl font-bold text-[#1a1a1a] mb-6 flex items-center gap-2">
+                <Star className="w-5 h-5 text-emerald-400" />
                 Select Your Plan
               </h2>
 
@@ -269,7 +281,7 @@ function CheckoutContent() {
                         }`}
                     >
                       {plan.popular && (
-                        <span className="absolute -top-3 right-4 px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-slate-900 text-xs font-bold rounded-full">
+                        <span className="absolute -top-3 right-4 px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-500 text-slate-900 text-xs font-bold rounded-full">
                           MOST POPULAR
                         </span>
                       )}
@@ -338,10 +350,10 @@ function CheckoutContent() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border p-4 sm:p-6"
+              className="bg-white/70 backdrop-blur-2xl rounded-3xl border-2 border-white p-6 sm:p-8"
             >
-              <h2 className="text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-xl font-bold text-[#1a1a1a] mb-6 flex items-center gap-2">
+                <Check className="w-5 h-5 text-emerald-400" />
                 What's Included
               </h2>
 
@@ -377,13 +389,13 @@ function CheckoutContent() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="sticky top-8 bg-card/50 backdrop-blur-xl rounded-2xl border border-border overflow-hidden"
+              className="sticky top-8 bg-white/70 backdrop-blur-2xl rounded-3xl border-2 border-white overflow-hidden"
             >
-              <div className="p-4 sm:p-6 border-b border-border">
-                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">
+              <div className="p-6 sm:p-8 border-b border-gray-100">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-1">
                   Order Summary
                 </h2>
-                <p className="text-muted-foreground text-[10px] sm:text-xs">
+                <p className="text-[#1a1a1a]/50 text-xs">
                   Secure checkout powered by Paystack
                 </p>
               </div>
@@ -512,9 +524,9 @@ function CheckoutContent() {
                 </div>
 
                 {(isCurrentPlan || isLowerPlan) && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <Sparkles className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-blue-200">
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <Sparkles className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-green-800 dark:text-green-200">
                       {isCurrentPlan
                         ? "You are currently subscribed to this plan. You can only upgrade to a higher tier."
                         : "You already have a higher-tier subscription. This plan is currently locked."
@@ -524,20 +536,20 @@ function CheckoutContent() {
                 )}
 
                 {!user && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-200">
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <AlertCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-green-800 dark:text-green-200">
                       You'll need to{" "}
                       <Link
                         href="/auth/login?redirect=/checkout"
-                        className="underline hover:text-amber-100"
+                        className="underline hover:text-green-100"
                       >
                         log in
                       </Link>{" "}
                       or{" "}
                       <Link
                         href="/auth/signup?redirect=/checkout"
-                        className="underline hover:text-amber-100"
+                        className="underline hover:text-green-100"
                       >
                         create an account
                       </Link>{" "}
@@ -570,18 +582,18 @@ function CheckoutContent() {
           transition={{ delay: 0.6 }}
           className="mt-12 text-center"
         >
-          <div className="inline-flex flex-wrap items-center justify-center gap-4 sm:gap-6 p-4 rounded-xl bg-card/50 border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <div className="inline-flex flex-wrap items-center justify-center gap-4 sm:gap-6 p-6 rounded-2xl bg-white/70 backdrop-blur-lg border-2 border-white">
+            <div className="flex items-center gap-2 text-[#1a1a1a]/60 text-sm font-medium">
               <Lock className="w-4 h-4" />
               <span>256-bit SSL</span>
             </div>
-            <div className="hidden sm:block h-4 w-px bg-border"></div>
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="hidden sm:block h-6 w-px bg-white/40"></div>
+            <div className="flex items-center gap-2 text-[#1a1a1a]/60 text-sm font-medium">
               <Shield className="w-4 h-4" />
               <span>PCI Compliant</span>
             </div>
-            <div className="hidden sm:block h-4 w-px bg-border"></div>
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <div className="hidden sm:block h-6 w-px bg-white/40"></div>
+            <div className="flex items-center gap-2 text-[#1a1a1a]/60 text-sm font-medium">
               <CreditCard className="w-4 h-4" />
               <span>Powered by Paystack</span>
             </div>
@@ -597,7 +609,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
         </div>
       }
     >

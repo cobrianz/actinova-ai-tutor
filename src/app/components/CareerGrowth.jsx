@@ -334,19 +334,19 @@ const CareerGrowth = () => {
                     {/* Primary Tool: Resume Optimizer */}
                     <motion.div
                         variants={itemVariants}
-                        className="md:col-span-8 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 md:p-10 transition-all hover:scale-[1.01] hover:shadow-2xl hover:shadow-blue-500/20 hover:border-blue-500/50"
+                        className="md:col-span-8 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 md:p-10 transition-all hover:scale-[1.01] hover:shadow-2xl hover:shadow-green-500/20 hover:border-green-500/50"
                     >
                         {!isPro && (
                             <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-950" />
+                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-lime-950" />
                                     PRO
                                 </div>
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-violet-500/10 opacity-50" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-500/10 opacity-50" />
                         <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[length:20px_20px]" />
-                        <div className="absolute -bottom-12 -right-12 w-32 sm:w-48 h-32 sm:h-48 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/30 transition-colors" />
+                        <div className="absolute -bottom-12 -right-12 w-32 sm:w-48 h-32 sm:h-48 bg-green-500/20 rounded-full blur-3xl group-hover:bg-green-500/30 transition-colors" />
 
                         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between h-full gap-5 sm:gap-6 md:gap-8">
                             <div className="flex-1 max-w-md w-full">
@@ -373,8 +373,8 @@ const CareerGrowth = () => {
 
                             <div className="shrink-0 bg-white/5 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 hidden md:block w-48 lg:w-56 shadow-xl">
                                 <div className="flex items-center gap-2 sm:gap-2.5 mb-2 sm:mb-3">
-                                    <Zap className="text-amber-400 fill-amber-400 sm:w-3.5 sm:h-3.5" size={12} />
-                                    <span className="font-black text-[8px] sm:text-[9px] text-amber-400">AI Powered</span>
+                                    <Zap className="text-lime-400 fill-lime-400 sm:w-3.5 sm:h-3.5" size={12} />
+                                    <span className="font-black text-[8px] sm:text-[9px] text-lime-400">AI Powered</span>
                                 </div>
                                 <p className="font-semibold text-[10px] sm:text-xs text-slate-200 italic leading-relaxed">
                                     "Your resume is your first impression. Let AI guarantee it's a perfect one."
@@ -386,19 +386,19 @@ const CareerGrowth = () => {
                     {/* Secondary Tool: Skill Gap */}
                     <motion.div
                         variants={itemVariants}
-                        className="md:col-span-4 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 dark:from-indigo-950/50 dark:via-blue-950/50 dark:to-cyan-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-500/20"
+                        className="md:col-span-4 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-50 dark:from-emerald-950/50 dark:via-green-950/50 dark:to-emerald-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-xl hover:shadow-emerald-500/20"
                     >
                         {!isPro && (
                             <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-950" />
+                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-lime-950" />
                                     PRO
                                 </div>
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 via-blue-400/5 to-cyan-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-emerald-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
                         <div className="relative z-10">
-                            <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                 <Target size={24} className="sm:w-7 sm:h-7" />
                             </div>
                             <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Skill Gap Analysis</h2>
@@ -407,7 +407,7 @@ const CareerGrowth = () => {
                             </p>
                             <Button
                                 onClick={() => setSubTab("skillgap")}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 shadow-lg shadow-indigo-500/20"
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl h-10 shadow-lg shadow-emerald-500/20"
                             >
                                 Analyze Skills
                                 <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -418,19 +418,19 @@ const CareerGrowth = () => {
                     {/* Secondary Tool: Mock Interview */}
                     <motion.div
                         variants={itemVariants}
-                        className="md:col-span-4 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-950/50 dark:via-pink-950/50 dark:to-rose-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl hover:shadow-purple-500/20"
+                        className="md:col-span-4 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50 via-teal-50 to-rose-50 dark:from-teal-950/50 dark:via-teal-950/50 dark:to-rose-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xl hover:shadow-teal-500/20"
                     >
                         {!isPro && (
                             <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-950" />
+                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-lime-950" />
                                     PRO
                                 </div>
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 via-pink-400/5 to-rose-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 via-teal-400/5 to-rose-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
                         <div className="relative z-10">
-                            <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                            <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                                 <MessageSquare size={24} className="sm:w-7 sm:h-7" />
                             </div>
                             <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Mock Interview</h2>
@@ -439,7 +439,7 @@ const CareerGrowth = () => {
                             </p>
                             <Button
                                 onClick={() => setSubTab("interview")}
-                                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl h-10 shadow-lg shadow-purple-500/20"
+                                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl h-10 shadow-lg shadow-teal-500/20"
                             >
                                 Practice Now
                                 <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -454,8 +454,8 @@ const CareerGrowth = () => {
                     >
                         {!isPro && (
                             <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-amber-950" />
+                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-lime-950" />
                                     PRO
                                 </div>
                             </div>
@@ -487,8 +487,8 @@ const CareerGrowth = () => {
 
                             <div className="shrink-0 bg-white/5 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 hidden md:block w-48 lg:w-56 shadow-xl">
                                 <div className="flex items-center gap-2 sm:gap-2.5 mb-2 sm:mb-3">
-                                    <Zap className="text-amber-400 fill-amber-400 sm:w-3.5 sm:h-3.5" size={12} />
-                                    <span className="font-black text-[8px] sm:text-[9px] text-amber-400">Active Networking</span>
+                                    <Zap className="text-lime-400 fill-lime-400 sm:w-3.5 sm:h-3.5" size={12} />
+                                    <span className="font-black text-[8px] sm:text-[9px] text-lime-400">Active Networking</span>
                                 </div>
                                 <p className="font-semibold text-[10px] sm:text-xs text-slate-200 italic leading-relaxed">
                                     "Your network is your net worth. Let AI craft the connections that matter."
@@ -538,7 +538,7 @@ const CareerGrowth = () => {
                                 {trendingData.trendingCareers && trendingData.trendingCareers.length > 0 && (
                                     <div>
                                         <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-                                            <Briefcase className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                            <Briefcase className="w-6 h-6 text-green-600 dark:text-green-400" />
                                             Trending Careers
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -548,7 +548,7 @@ const CareerGrowth = () => {
                                                     initial={{ opacity: 0, y: 20 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: 0.1 * idx }}
-                                                    className="bg-gradient-to-br from-violet-50 via-indigo-50 to-purple-50 dark:from-violet-950/30 dark:via-indigo-950/30 dark:to-purple-950/30 border-2 border-violet-200 dark:border-violet-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
+                                                    className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/30 dark:via-emerald-950/30 dark:to-teal-950/30 border-2 border-green-200 dark:border-green-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
                                                         <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
@@ -570,24 +570,24 @@ const CareerGrowth = () => {
                                                         )}
                                                         {career.industry && (
                                                             <div className="flex items-center gap-2 text-sm">
-                                                                <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                                <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                                                 <span className="text-slate-600 dark:text-slate-400">{career.industry}</span>
                                                             </div>
                                                         )}
                                                         {career.skills && career.skills.length > 0 && (
                                                             <div className="flex flex-wrap gap-2 pt-2">
                                                                 {career.skills.slice(0, 3).map((skill, i) => (
-                                                                    <span key={i} className="px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-bold">
+                                                                    <span key={i} className="px-2.5 py-1 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-bold">
                                                                         {skill}
                                                                     </span>
                                                                 ))}
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="mt-5 pt-5 border-t border-violet-100 dark:border-violet-800/50 flex gap-3">
+                                                    <div className="mt-5 pt-5 border-t border-green-100 dark:border-green-800/50 flex gap-3">
                                                         <Button
                                                             variant="default"
-                                                            className="flex-1 bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
+                                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-sm"
                                                             onClick={() => handleGenerateCourse(career.title)}
                                                             disabled={generatingCourse === career.title}
                                                         >
@@ -596,7 +596,7 @@ const CareerGrowth = () => {
                                                         </Button>
                                                         <Button
                                                             variant="secondary"
-                                                            className="flex-1 bg-violet-100 hover:bg-violet-200 text-violet-700 dark:bg-violet-900/50 dark:hover:bg-violet-900 dark:text-violet-300 shadow-sm"
+                                                            className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/50 dark:hover:bg-green-900 dark:text-green-300 shadow-sm"
                                                             onClick={() => {
                                                                 toast.loading(`Generating professional resume for ${career.title}...`);
                                                                 setTimeout(() => {
@@ -618,7 +618,7 @@ const CareerGrowth = () => {
                                 {trendingData.trendingSkills && trendingData.trendingSkills.length > 0 && (
                                     <div>
                                         <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-                                            <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                                            <BookOpen className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                                             Trending Skills to Learn
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -628,14 +628,14 @@ const CareerGrowth = () => {
                                                     initial={{ opacity: 0, y: 20 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: 0.1 * idx }}
-                                                    className="bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 dark:from-indigo-950/30 dark:via-blue-950/30 dark:to-cyan-950/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
+                                                    className="bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-50 dark:from-emerald-950/30 dark:via-green-950/30 dark:to-emerald-950/30 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
                                                         <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
                                                             {skill.skill}
                                                         </h4>
                                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${skill.demand === 'critical' ? 'bg-red-500 text-white' :
-                                                            skill.demand === 'high' ? 'bg-orange-500 text-white' :
+                                                            skill.demand === 'high' ? 'bg-lime-500 text-white' :
                                                                 'bg-yellow-500 text-white'
                                                             }`}>
                                                             {skill.demand || 'Medium'}
@@ -645,11 +645,11 @@ const CareerGrowth = () => {
                                                         {skill.description}
                                                     </p>
                                                     {skill.relatedCareers && skill.relatedCareers.length > 0 && (
-                                                        <div className="pt-3 border-t border-indigo-200 dark:border-indigo-800 mb-4">
+                                                        <div className="pt-3 border-t border-emerald-200 dark:border-emerald-800 mb-4">
                                                             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Related Careers</p>
                                                             <div className="flex flex-wrap gap-2">
                                                                 {skill.relatedCareers.slice(0, 2).map((career, i) => (
-                                                                    <span key={i} className="px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                                                                    <span key={i} className="px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
                                                                         {career}
                                                                     </span>
                                                                 ))}
@@ -658,7 +658,7 @@ const CareerGrowth = () => {
                                                     )}
                                                     <Button
                                                         variant="ghost"
-                                                        className="w-full justify-between items-center bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-800/50"
+                                                        className="w-full justify-between items-center bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-100 dark:border-emerald-800/50"
                                                         onClick={() => handleGenerateCourse(skill.skill)}
                                                         disabled={generatingCourse === skill.skill}
                                                     >
@@ -682,7 +682,7 @@ const CareerGrowth = () => {
                                         className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl sm:rounded-2xl p-6 sm:p-8"
                                     >
                                         <div className="flex items-center gap-3 mb-4">
-                                            <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                                            <Sparkles className="w-6 h-6 text-green-600 dark:text-green-400" />
                                             <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Market Insights</h3>
                                         </div>
                                         <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">

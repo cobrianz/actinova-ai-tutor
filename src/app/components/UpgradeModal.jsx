@@ -45,7 +45,7 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                 <div className="relative h-48 bg-slate-900 overflow-hidden">
                     {/* Abstract Background Shapes */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-600/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3" />
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-600/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3" />
                     
                     {/* Animated Particles/Gradient Mesh */}
                     <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_50%_120%,rgba(99,102,241,0.5),transparent)]" />
@@ -55,17 +55,17 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", duration: 0.8 }}
-                            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 p-[2px] shadow-[0_0_40px_rgba(245,158,11,0.3)] mb-4"
+                            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-lime-400 via-lime-500 to-lime-600 p-[2px] shadow-[0_0_40px_rgba(245,158,11,0.3)] mb-4"
                         >
                             <div className="w-full h-full rounded-[1.4rem] bg-slate-900 flex items-center justify-center">
-                                <Crown className="w-10 h-10 text-amber-500 fill-amber-500/20" />
+                                <Crown className="w-10 h-10 text-lime-500 fill-lime-500/20" />
                             </div>
                         </motion.div>
                         
                         <h2 className="text-xl font-black text-white uppercase tracking-[0.2em] mb-1">
                             {limitData ? "Limit Reached" : "Upgrade to Pro"}
                         </h2>
-                        <div className="h-1 w-12 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" />
+                        <div className="h-1 w-12 bg-gradient-to-r from-lime-400 to-lime-500 rounded-full" />
                     </div>
                 </div>
 
@@ -110,7 +110,7 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                             {/* Inner Shine Effect */}
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                             
-                            <Crown size={20} className="fill-current text-amber-500" />
+                            <Crown size={20} className="fill-current text-lime-500" />
                             <span className="uppercase tracking-widest text-xs">Unlock Pro Now</span>
                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                         </button>

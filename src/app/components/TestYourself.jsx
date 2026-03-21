@@ -154,7 +154,7 @@ const TestYourself = () => {
     <div className="p-4 sm:p-8 bg-background text-foreground min-h-full">
       <header className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight flex items-center">
-          <BrainCircuit className="w-8 h-8 mr-3 text-blue-500" />
+          <BrainCircuit className="w-8 h-8 mr-3 text-green-500" />
           Test Your Knowledge
         </h1>
         <p className="text-lg text-muted-foreground mt-2">
@@ -188,7 +188,7 @@ const TestYourself = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Pending
             </CardTitle>
-            <Clock className="w-6 h-6 text-amber-500/60" />
+            <Clock className="w-6 h-6 text-lime-500/60" />
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-between">
             <div className="text-2xl font-bold text-foreground">
@@ -224,7 +224,7 @@ const TestYourself = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Score
             </CardTitle>
-            <Award className="w-6 h-6 text-purple-500/60" />
+            <Award className="w-6 h-6 text-teal-500/60" />
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-between">
             <div className="text-2xl font-bold text-foreground">
@@ -354,18 +354,18 @@ const TestYourself = () => {
                           </p>
                           <div className="flex items-center space-x-6 mt-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5">
-                              <FileText className="w-3.5 h-3.5 text-blue-500" />
+                              <FileText className="w-3.5 h-3.5 text-green-500" />
                               {quiz.questions.length} questions
                             </span>
                             {quiz.createdAt && (
                               <span className="flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-orange-500" />
+                                <Clock className="w-3.5 h-3.5 text-lime-500" />
                                 {new Date(quiz.createdAt).toLocaleDateString()}
                               </span>
                             )}
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${quiz.difficulty === 'easy' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
-                              quiz.difficulty === 'medium' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-                                'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${quiz.difficulty === 'easy' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
+                              quiz.difficulty === 'medium' ? 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300' :
+                                'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
                               }`}>
                               {quiz.difficulty}
                             </span>

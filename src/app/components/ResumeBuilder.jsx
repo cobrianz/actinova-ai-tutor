@@ -47,15 +47,15 @@ function SectionHeader({ icon: Icon, title, count, description }) {
     return (
         <div className="pb-3 mb-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30">
-                    <Icon className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <Icon className="w-4 h-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                     <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">{title}</h2>
                     {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>}
                 </div>
                 {count !== undefined && count > 0 && (
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">{count}</span>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">{count}</span>
                 )}
             </div>
         </div>
@@ -63,14 +63,14 @@ function SectionHeader({ icon: Icon, title, count, description }) {
 }
 
 function InputField({ label, value, onChange, placeholder, icon: Icon, type = "text", rows, required }) {
-    const baseClass = "w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 transition-all";
+    const baseClass = "w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400 transition-all";
     return (
         <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                 {label}{required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             <div className="relative group">
-                {Icon && <Icon className="absolute w-4 h-4 text-slate-400 left-3 top-1/2 -translate-y-1/2 group-focus-within:text-violet-500 transition-colors" />}
+                {Icon && <Icon className="absolute w-4 h-4 text-slate-400 left-3 top-1/2 -translate-y-1/2 group-focus-within:text-green-500 transition-colors" />}
                 {rows ? (
                     <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} className={`${baseClass} resize-none ${Icon ? "pl-10" : ""}`} />
                 ) : (
@@ -84,7 +84,7 @@ function InputField({ label, value, onChange, placeholder, icon: Icon, type = "t
 function CollapsibleCard({ title, subtitle, onRemove, defaultOpen = true, children, index }) {
     const [open, setOpen] = React.useState(defaultOpen);
     return (
-        <div className={`border rounded-xl overflow-hidden transition-all duration-200 ${open ? "border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-900 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-violet-200 dark:hover:border-violet-800"}`}>
+        <div className={`border rounded-xl overflow-hidden transition-all duration-200 ${open ? "border-green-200 dark:border-green-800 bg-white dark:bg-slate-900 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-green-200 dark:hover:border-green-800"}`}>
             <div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none" onClick={() => setOpen(!open)}>
                 <span className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">{(index ?? 0) + 1}</span>
                 <div className="flex-1 min-w-0">
@@ -105,7 +105,7 @@ function CollapsibleCard({ title, subtitle, onRemove, defaultOpen = true, childr
 
 function AddButton({ onClick, label }) {
     return (
-        <button onClick={onClick} className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all duration-200 active:scale-[0.98]">
+        <button onClick={onClick} className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl hover:border-green-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all duration-200 active:scale-[0.98]">
             <Plus className="w-4 h-4" />{label}
         </button>
     );
@@ -164,7 +164,7 @@ function FormResumePreview({ data, onUpdate }) {
             <div className="h-[1px] flex-1 bg-slate-200"></div>
             <div className="flex items-center gap-2">
                 <h3 className="text-base font-black tracking-[0.1em] text-slate-500 px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full">{children}</h3>
-                <button onClick={() => handleRefineText('refine', children.toString().toLowerCase())} className="p-1 px-2 rounded-full bg-violet-50 text-violet-500 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-violet-100" title="Refine this section with AI">
+                <button onClick={() => handleRefineText('refine', children.toString().toLowerCase())} className="p-1 px-2 rounded-full bg-green-50 text-green-500 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-green-100" title="Refine this section with AI">
                     <Sparkles size={10} />
                 </button>
                 {onRemove && (
@@ -236,7 +236,7 @@ function FormResumePreview({ data, onUpdate }) {
                     className="z-[999] flex items-center gap-1 p-1 bg-slate-900 text-white rounded-xl shadow-2xl border border-white/10"
                 >
                     <button onClick={() => handleRefineText('refine')} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">
-                        <Sparkles size={12} className="text-violet-400" /> Refine
+                        <Sparkles size={12} className="text-green-400" /> Refine
                     </button>
                     <div className="w-[1px] h-4 bg-white/20" />
                     <button onClick={() => handleRefineText('elaborate')} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">
@@ -309,7 +309,7 @@ function FormResumePreview({ data, onUpdate }) {
                                 </button>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <div className="flex items-baseline gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 group-hover:scale-125 transition-transform" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 group-hover:scale-125 transition-transform" />
                                         <h4
                                             contentEditable
                                             suppressContentEditableWarning
@@ -507,7 +507,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('skills', null, e.target.innerText, i)}
-                                    className="text-slate-700 font-medium group-hover:text-violet-600 transition-colors outline-none"
+                                    className="text-slate-700 font-medium group-hover:text-green-600 transition-colors outline-none"
                                 >
                                     {skill}
                                 </span>
@@ -529,7 +529,7 @@ function FormResumePreview({ data, onUpdate }) {
                     { id: 'awards', label: 'Awards' },
                     { id: 'languages', label: 'Languages' },
                 ].map(({ id, label }) => (
-                    <Button key={id} variant="outline" onClick={() => addSectionType(id)} className="rounded-full border-dashed border-2 px-5 text-slate-400 hover:text-violet-600 hover:border-violet-300 text-xs bg-white">
+                    <Button key={id} variant="outline" onClick={() => addSectionType(id)} className="rounded-full border-dashed border-2 px-5 text-slate-400 hover:text-green-600 hover:border-green-300 text-xs bg-white">
                         <Plus size={12} className="mr-1.5" /> {label}
                     </Button>
                 ))}
@@ -1397,7 +1397,7 @@ const ResumeBuilder = () => {
                         { id: 'portfolio', label: 'Portfolio Ideas', icon: FolderOpen }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setEditorTab(tab.id)}
-                            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-violet-600" : "text-slate-500 hover:text-slate-900"}`}>
+                            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-green-600" : "text-slate-500 hover:text-slate-900"}`}>
                             <tab.icon size={16} />
                             {tab.label}
                         </button>
@@ -1432,8 +1432,8 @@ const ResumeBuilder = () => {
                         <div className="h-full">
                             {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle || (formData.projects || []).length > 0 || (formData.experience || []).length > 0 || (formData.education || []).length > 0 || (formData.skills || []).length > 0) ? (
                                 <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
-                                    <div className="w-20 h-20 rounded-3xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6">
-                                        <FileText className="w-10 h-10 text-violet-500" />
+                                    <div className="w-20 h-20 rounded-3xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6">
+                                        <FileText className="w-10 h-10 text-green-500" />
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Your resume preview</h3>
                                     <p className="text-slate-500 max-w-sm mb-8">Start filling in your information and watch your professional resume come to life in real time.</p>
@@ -1446,7 +1446,7 @@ const ResumeBuilder = () => {
                                             icon={Target}
                                         />
                                         <div className="flex gap-3">
-                                            <Button onClick={handleGenerate} disabled={isGenerating || !jobDescription} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl">
+                                            <Button onClick={handleGenerate} disabled={isGenerating || !jobDescription} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl">
                                                 {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                                                 Generate with AI
                                             </Button>
@@ -1461,7 +1461,7 @@ const ResumeBuilder = () => {
                                                         }).catch(() => { }).finally(() => setLibraryLoading(false));
                                                     }
                                                 }} className="w-full border-slate-200 py-6 rounded-2xl hover:bg-slate-50">
-                                                    <FolderOpen className="mr-2 text-violet-500" /> From Library
+                                                    <FolderOpen className="mr-2 text-green-500" /> From Library
                                                 </Button>
                                                 {showLibraryPicker && (
                                                     <div className="absolute top-full left-0 w-80 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden">
@@ -1496,8 +1496,8 @@ const ResumeBuilder = () => {
                                                                         setShowLibraryPicker(false);
                                                                         handleGenerateFromLibrary(course.title, course);
                                                                     }}
-                                                                    className="w-full text-left px-3 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl transition-colors group">
-                                                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-violet-700 truncate">{course.title}</p>
+                                                                    className="w-full text-left px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors group">
+                                                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-green-700 truncate">{course.title}</p>
                                                                     <div className="flex items-center gap-2 mt-0.5">
                                                                         <span className="text-[10px] text-slate-400 capitalize">{course.category}</span>
                                                                         <span className="text-slate-200 dark:text-slate-700">·</span>
@@ -1592,8 +1592,8 @@ const ResumeBuilder = () => {
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
                                     <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
-                                        <div className="w-16 h-16 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center mb-6 mx-auto">
-                                            <FileText className="w-8 h-8 text-violet-500" />
+                                        <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6 mx-auto">
+                                            <FileText className="w-8 h-8 text-green-500" />
                                         </div>
                                         <h3 className="text-xl font-bold mb-2">Cover Letter Designer</h3>
                                         <p className="text-sm text-slate-500 mb-8">Craft a compelling narrative for your next role.</p>
@@ -1602,11 +1602,11 @@ const ResumeBuilder = () => {
                                             <InputField label="Company Name (Optional)" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
                                         </div>
                                         <div className="flex flex-col gap-3 mt-8">
-                                            <Button onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL || !jobDescription} className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold">
+                                            <Button onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL || !jobDescription} className="w-full bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl font-bold">
                                                 {isGeneratingCL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                                                 Draft using AI
                                             </Button>
-                                            <Button variant="outline" onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL} className="w-full border-2 border-violet-100 text-violet-600 py-6 rounded-2xl font-bold bg-violet-50/50">
+                                            <Button variant="outline" onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL} className="w-full border-2 border-green-100 text-green-600 py-6 rounded-2xl font-bold bg-green-50/50">
                                                 Generate from Resume
                                             </Button>
                                         </div>
@@ -1634,8 +1634,8 @@ const ResumeBuilder = () => {
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
                                     <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
-                                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6 mx-auto">
-                                            <Target className="w-8 h-8 text-indigo-500" />
+                                        <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6 mx-auto">
+                                            <Target className="w-8 h-8 text-emerald-500" />
                                         </div>
                                         <h3 className="text-xl font-bold mb-2">Application Letter Designer</h3>
                                         <p className="text-sm text-slate-500 mb-8">Formalize your intent with a professional application letter.</p>
@@ -1644,11 +1644,11 @@ const ResumeBuilder = () => {
                                             <InputField label="Company Name" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
                                         </div>
                                         <div className="flex flex-col gap-3 mt-8">
-                                            <Button onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL || !jobDescription || !coverLetterCompany} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 rounded-2xl font-bold">
+                                            <Button onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL || !jobDescription || !coverLetterCompany} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-bold">
                                                 {isGeneratingAL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                                                 Draft using AI
                                             </Button>
-                                            <Button variant="outline" onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL} className="w-full border-2 border-indigo-100 text-indigo-600 py-6 rounded-2xl font-bold bg-indigo-50/50">
+                                            <Button variant="outline" onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL} className="w-full border-2 border-emerald-100 text-emerald-600 py-6 rounded-2xl font-bold bg-emerald-50/50">
                                                 Generate from Resume
                                             </Button>
                                         </div>
@@ -1785,11 +1785,11 @@ const ResumeBuilder = () => {
                                         </div>
                                         <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                                             <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Recommendations</h4>
-                                            <ul className="space-y-2">{(jobMatchResult.recommendations || []).map((r, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-violet-500 mt-0.5">•</span>{r}</li>)}</ul>
+                                            <ul className="space-y-2">{(jobMatchResult.recommendations || []).map((r, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-green-500 mt-0.5">•</span>{r}</li>)}</ul>
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-3">
-                                        <Button onClick={handleRefineResume} disabled={isRefining} className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold">
+                                        <Button onClick={handleRefineResume} disabled={isRefining} className="w-full bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl font-bold">
                                             {isRefining ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                                             Refine Resume with AI
                                         </Button>
@@ -1808,8 +1808,8 @@ const ResumeBuilder = () => {
                 <div className="w-full mt-16 max-w-6xl">
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-                            <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
-                                <Clock size={20} className="text-violet-600 dark:text-violet-400" />
+                            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                                <Clock size={20} className="text-green-600 dark:text-green-400" />
                             </div>
                             Recent Work
                         </h3>
@@ -1817,17 +1817,17 @@ const ResumeBuilder = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {history.map(item => (
                             <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-violet-500/10 transition-colors" />
+                                className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-green-400 dark:hover:border-green-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-green-500/10 transition-colors" />
                                 <div className="flex justify-between items-start mb-4 relative z-10">
                                     <div className="flex items-center gap-2">
-                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' ? 'bg-indigo-50 dark:bg-indigo-900/20' :
+                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
                                             item.type === 'portfolio' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
-                                                'bg-violet-50 dark:bg-violet-900/20'
+                                                'bg-green-50 dark:bg-green-900/20'
                                             }`}>
-                                            {item.type === 'cover-letter' ? <FileText size={18} className="text-indigo-600 dark:text-indigo-400" /> :
+                                            {item.type === 'cover-letter' ? <FileText size={18} className="text-emerald-600 dark:text-emerald-400" /> :
                                                 item.type === 'portfolio' ? <FolderOpen size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                                                    <Target size={18} className="text-violet-600 dark:text-violet-400" />}
+                                                    <Target size={18} className="text-green-600 dark:text-green-400" />}
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] font-black text-slate-400 capitalize">{item.type || "Document"}</span>
@@ -1853,7 +1853,7 @@ const ResumeBuilder = () => {
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                         Saved
                                     </div>
-                                    <span className="text-violet-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    <span className="text-green-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                                         Open document <ArrowRight size={12} />
                                     </span>
                                 </div>
@@ -1925,7 +1925,7 @@ const ResumeBuilder = () => {
                                         key={tab.id}
                                         onClick={() => { setEditorTab(tab.id); setShowMobileActions(false); }}
                                         className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${editorTab === tab.id
-                                            ? "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-600"
+                                            ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600"
                                             : "bg-slate-50 dark:bg-slate-800/50 border-transparent text-slate-500"
                                             }`}
                                     >

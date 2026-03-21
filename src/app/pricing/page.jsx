@@ -210,10 +210,21 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <HeroNavbar />
+    <div className="min-h-screen bg-transparent relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 fixed">
+        <img 
+          src="/hero.png" 
+          alt="Pricing Background" 
+          className="w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-white/10" />
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
+      <div className="relative z-10">
+        <HeroNavbar />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
@@ -254,16 +265,16 @@ export default function PricingPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative bg-card dark:bg-secondary/20 backdrop-blur-sm rounded-2xl border-2 transition-all duration-300 ${isPopular
-                  ? "border-primary scale-105 ring-2 ring-primary/20 z-10"
+                className={`relative backdrop-blur-xl rounded-[32px] border-2 border-white transition-all duration-300 ${isPopular
+                  ? "bg-[#D2D7F8]/80 scale-105 shadow-sm z-10"
                   : isCurrentPlan
-                    ? "border-green-500 ring-2 ring-green-500/20"
-                    : "border-border hover:border-primary/50"
+                    ? "bg-green-100/80 shadow-sm"
+                    : "bg-green-50/40 hover:bg-green-50/60"
                   }`}
               >
                 {isCurrentPlan && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
-                    <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
+                    <span className="bg-white border border-white text-green-600 px-4 py-1.5 rounded-full text-[13px] font-bold shadow-sm">
                       Current Plan
                     </span>
                   </div>
@@ -271,7 +282,7 @@ export default function PricingPage() {
 
                 {isPopular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
+                    <span className="bg-[#1a1a1a] border border-[#1a1a1a] text-white px-4 py-1.5 rounded-full text-[13px] font-bold shadow-sm">
                       Most Popular
                     </span>
                   </div>
@@ -280,20 +291,20 @@ export default function PricingPage() {
                 <div className="p-8">
                   <div className="flex items-center space-x-3 mb-4">
                     <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${isPopular
-                        ? "bg-primary"
-                        : "bg-secondary"
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 border-white ${isPopular
+                        ? "bg-white"
+                        : "bg-white/60"
                         }`}
                     >
                       <Icon
-                        className={`w-5 h-5 ${isPopular
-                          ? "text-primary-foreground"
-                          : "text-muted-foreground"
+                        className={`w-6 h-6 ${isPopular
+                          ? "text-[#1a1a1a]"
+                          : "text-green-600"
                           }`}
                       />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-foreground">
+                      <h3 className="text-xl font-bold text-[#1a1a1a]">
                         {plan.name}
                       </h3>
                     </div>
@@ -334,11 +345,11 @@ export default function PricingPage() {
                     disabled={
                       processingPlanId === plan.id || isCurrentPlan
                     }
-                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-all group ${isCurrentPlan
-                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg cursor-default opacity-80"
+                    className={`w-full py-4 px-4 rounded-full font-bold transition-all group border-2 border-white ${isCurrentPlan
+                      ? "bg-white/40 text-[#1a1a1a]/50 cursor-default"
                       : isPopular
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg"
-                        : "bg-secondary text-foreground hover:bg-secondary/80 border border-border"
+                        ? "bg-green-300 text-green-900 hover:bg-green-400 shadow-sm"
+                        : "bg-white/60 text-[#1a1a1a] hover:bg-white"
                       }`}
                   >
                     {getCtaText(plan, processingPlanId === plan.id)}
@@ -349,42 +360,7 @@ export default function PricingPage() {
           })}
         </div>
 
-        {/* FAQ */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-8">
-            Frequently Asked Questions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className="bg-secondary rounded-lg p-6 border border-border"
-              >
-                <h3 className="font-semibold text-foreground mb-2">
-                  {faq.question}
-                </h3>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
         </div>
-
-        {/* CTA */}
-        <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Learning?</h2>
-          <p className="text-xl text-blue-100 mb-6">
-            Join thousands of learners who are already transforming their
-            careers
-          </p>
-          <Link
-            href="/auth/signup"
-            className="inline-flex items-center space-x-2 bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all"
-          >
-            <Sparkles className="w-5 h-5" />
-            <span>Start Learning</span>
-          </Link>
-        </div>
-      </div>
 
       <Dialog open={!!selectedPlanForModal} onOpenChange={() => setSelectedPlanForModal(null)}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden bg-card border border-border shadow-2xl rounded-2xl">
@@ -507,6 +483,7 @@ export default function PricingPage() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

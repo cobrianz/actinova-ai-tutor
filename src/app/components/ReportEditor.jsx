@@ -742,10 +742,10 @@ export default function ReportEditor({ reportId }) {
                 <div className="flex flex-col items-center text-center max-w-xs w-full px-6">
 
                     <div className="mb-6 relative">
-                        <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center">
-                            <FileText className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                        <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center">
+                            <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <div className="absolute -inset-2 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin" />
+                        <div className="absolute -inset-2 border-2 border-emerald-600/20 border-t-emerald-600 rounded-full animate-spin" />
                     </div>
 
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Actinova AI Tutor</h2>
@@ -757,7 +757,7 @@ export default function ReportEditor({ reportId }) {
                     </div>
 
                     <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-600 rounded-full animate-progress-loading" />
+                        <div className="h-full bg-emerald-600 rounded-full animate-progress-loading" />
                     </div>
                 </div>
             </div>
@@ -791,7 +791,7 @@ export default function ReportEditor({ reportId }) {
     }
 
     return (
-        <div className="flex w-full h-[calc(100vh-68px)] bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden font-inter">
+        <div className="flex w-full h-[calc(100vh-68px)] bg-gradient-to-br from-slate-50 via-green-50 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden font-inter">
 
             {/* Professional Metadata Sidebar */}
             <div className="hidden xl:flex flex-col w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
@@ -824,7 +824,7 @@ export default function ReportEditor({ reportId }) {
                                 value={report?.title || ''}
                                 onChange={(e) => setReport({ ...report, title: e.target.value })}
                                 placeholder="Report title"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             />
                         </div>
 
@@ -835,7 +835,7 @@ export default function ReportEditor({ reportId }) {
                                 value={studentName}
                                 onChange={(e) => setStudentName(e.target.value)}
                                 placeholder="Student name"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             />
                         </div>
 
@@ -846,7 +846,7 @@ export default function ReportEditor({ reportId }) {
                                 value={institution}
                                 onChange={(e) => setInstitution(e.target.value)}
                                 placeholder="Institution"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             />
                         </div>
 
@@ -857,7 +857,7 @@ export default function ReportEditor({ reportId }) {
                                 value={courseName}
                                 onChange={(e) => setCourseName(e.target.value)}
                                 placeholder="Course name"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             />
                         </div>
 
@@ -868,7 +868,7 @@ export default function ReportEditor({ reportId }) {
                                 value={authorName}
                                 onChange={(e) => setAuthorName(e.target.value)}
                                 placeholder="Author name"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             />
                         </div>
 
@@ -879,7 +879,7 @@ export default function ReportEditor({ reportId }) {
                                 value={submissionDate}
                                 onChange={(e) => setSubmissionDate(e.target.value)}
                                 placeholder="Submission date"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             />
                         </div>
 
@@ -888,7 +888,7 @@ export default function ReportEditor({ reportId }) {
                             <select
                                 value={citationStyle}
                                 onChange={(e) => setCitationStyle(e.target.value)}
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                             >
                                 <option value="APA 7">APA 7th Edition</option>
                                 <option value="MLA 9">MLA 9th Edition</option>
@@ -913,7 +913,7 @@ export default function ReportEditor({ reportId }) {
                     </div>
                     <div className="mt-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500"
                             style={{ width: `${report?.outline ? (Object.values(report?.sections || {}).filter(Boolean).length / report.outline.length) * 100 : 0}%` }}
                         />
                     </div>
@@ -927,13 +927,13 @@ export default function ReportEditor({ reportId }) {
                 <div className="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-[60] flex items-center gap-2 no-print xl:hidden">
                     <button
                         onClick={() => setShowOutline(v => !v)}
-                        className={`p-3 rounded-full transition-all shadow-lg hover:shadow-xl ${showOutline ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}
+                        className={`p-3 rounded-full transition-all shadow-lg hover:shadow-xl ${showOutline ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}
                         title={showOutline ? 'Hide Outline' : 'Show Outline'}
                     >
                         <PanelRight className="w-5 h-5" />
                     </button>
 
-                    <button onClick={() => saveReport()} disabled={saving} className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50" title="Save Changes">
+                    <button onClick={() => saveReport()} disabled={saving} className="p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50" title="Save Changes">
                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     </button>
 
@@ -1075,16 +1075,16 @@ export default function ReportEditor({ reportId }) {
                 showOutline && (
                     <div className="hidden xl:flex flex-col w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
                         {/* Header */}
-                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-800 dark:to-slate-800/50">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-green-50/50 dark:from-slate-800 dark:to-slate-800/50">
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">Outline & Content</h3>
                                 </div>
                                 <button
                                     onClick={runStructuralValidation}
                                     disabled={isValidating}
-                                    className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400 transition-colors"
+                                    className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400 transition-colors"
                                     title="Run Structural Validation"
                                 >
                                     {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
@@ -1097,13 +1097,13 @@ export default function ReportEditor({ reportId }) {
 
                         {/* Validation Results Panel */}
                         {validationResults && (
-                            <div className="mx-4 mt-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-900/10">
+                            <div className="mx-4 mt-4 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-emerald-900/10">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-indigo-600" />
-                                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Structure Score</span>
+                                        <Activity className="w-4 h-4 text-emerald-600" />
+                                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Structure Score</span>
                                     </div>
-                                    <span className={`text-sm font-black ${validationResults.structureScore > 80 ? 'text-emerald-500' : validationResults.structureScore > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                    <span className={`text-sm font-black ${validationResults.structureScore > 80 ? 'text-emerald-500' : validationResults.structureScore > 50 ? 'text-lime-500' : 'text-rose-500'}`}>
                                         {validationResults.structureScore}%
                                     </span>
                                 </div>
@@ -1117,20 +1117,20 @@ export default function ReportEditor({ reportId }) {
                                     )}
                                     {validationResults.emptySections.length > 0 && (
                                         <div className="flex items-start gap-2">
-                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-amber-600 leading-tight">Empty: {validationResults.emptySections.join(', ')}</p>
+                                            <AlertTriangle className="w-3.5 h-3.5 text-lime-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-lime-600 leading-tight">Empty: {validationResults.emptySections.join(', ')}</p>
                                         </div>
                                     )}
                                     {validationResults.distributionWarnings.map((warn, i) => (
                                         <div key={i} className="flex items-start gap-2">
-                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-amber-600 leading-tight">{warn}</p>
+                                            <AlertTriangle className="w-3.5 h-3.5 text-lime-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-lime-600 leading-tight">{warn}</p>
                                         </div>
                                     ))}
                                     {validationResults.structuralDrift.length > 0 && (
                                         <div className="flex items-start gap-2">
-                                            <RefreshCcw className="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-indigo-600 leading-tight">Structure drift detected in {validationResults.structuralDrift.length} sections.</p>
+                                            <RefreshCcw className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-[10px] text-emerald-600 leading-tight">Structure drift detected in {validationResults.structuralDrift.length} sections.</p>
                                         </div>
                                     )}
                                     {validationResults.structureScore === 100 && (
@@ -1154,9 +1154,9 @@ export default function ReportEditor({ reportId }) {
                         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
                             <div className="p-4 space-y-3">
                                 {/* Abstract Card */}
-                                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-slate-800/50 dark:to-slate-800/30 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group">
+                                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-slate-800/50 dark:to-slate-800/30 hover:border-emerald-300 dark:hover:border-emerald-600 transition-all group">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Abstract</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Abstract</span>
                                         {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                                     </div>
                                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
@@ -1166,7 +1166,7 @@ export default function ReportEditor({ reportId }) {
                                         disabled={generatingAbstract}
                                         className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
                                             report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
-                                                'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                                                'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
                                             }`}
                                     >
                                         {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -1185,11 +1185,11 @@ export default function ReportEditor({ reportId }) {
                                             key={section.id}
                                             className={`p-4 rounded-xl border transition-all group ${isDone
                                                 ? 'bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
-                                                : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                                                : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-600'
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between mb-2">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Section {idx + 1}</span>
+                                                <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Section {idx + 1}</span>
                                                 {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
                                             </div>
                                             <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2">{section.title}</h4>
@@ -1202,7 +1202,7 @@ export default function ReportEditor({ reportId }) {
                                                             key={pages}
                                                             onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
                                                             className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
-                                                                ? 'bg-indigo-600 text-white shadow-sm'
+                                                                ? 'bg-emerald-600 text-white shadow-sm'
                                                                 : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                                 }`}
                                                         >{pages}p</button>
@@ -1217,7 +1217,7 @@ export default function ReportEditor({ reportId }) {
                                                     ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
                                                     isDone
                                                         ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                                                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
                                                     }`}
                                             >
                                                 {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -1243,7 +1243,7 @@ export default function ReportEditor({ reportId }) {
                         <div className="relative bg-white dark:bg-slate-900 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto shadow-2xl border-t border-slate-200 dark:border-slate-700">
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
                                 <div className="flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                    <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                                     <h3 className="font-bold text-slate-900 dark:text-white">Document Settings</h3>
                                 </div>
                                 <button onClick={() => setShowOutline(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
@@ -1261,7 +1261,7 @@ export default function ReportEditor({ reportId }) {
                                             type="text"
                                             value={report?.title || ''}
                                             onChange={(e) => setReport({ ...report, title: e.target.value })}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         />
                                     </div>
                                     <div>
@@ -1270,7 +1270,7 @@ export default function ReportEditor({ reportId }) {
                                             type="text"
                                             value={studentName}
                                             onChange={(e) => setStudentName(e.target.value)}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         />
                                     </div>
                                     <div>
@@ -1279,7 +1279,7 @@ export default function ReportEditor({ reportId }) {
                                             type="text"
                                             value={institution}
                                             onChange={(e) => setInstitution(e.target.value)}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         />
                                     </div>
                                     <div>
@@ -1288,21 +1288,21 @@ export default function ReportEditor({ reportId }) {
                                             type="text"
                                             value={courseName}
                                             onChange={(e) => setCourseName(e.target.value)}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2 mb-4">
-                                <Sparkles className="w-4 h-4 text-indigo-600" />
+                                <Sparkles className="w-4 h-4 text-emerald-600" />
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">AI Outline</h4>
                             </div>
 
                             {/* Abstract card */}
-                            <div className="mb-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-slate-800/50 dark:to-slate-800/30">
+                            <div className="mb-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-slate-800/50 dark:to-slate-800/30">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Abstract</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Abstract</span>
                                     {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                                 </div>
                                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
@@ -1311,7 +1311,7 @@ export default function ReportEditor({ reportId }) {
                                     disabled={generatingAbstract}
                                     className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all mt-3 ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
                                         report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
-                                            'bg-indigo-600 text-white hover:bg-indigo-700'
+                                            'bg-emerald-600 text-white hover:bg-emerald-700'
                                         }`}
                                 >
                                     {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -1335,7 +1335,7 @@ export default function ReportEditor({ reportId }) {
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between mb-2">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Section {idx + 1}</span>
+                                                <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Section {idx + 1}</span>
                                                 {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                                             </div>
                                             <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{section.title}</h4>
@@ -1348,7 +1348,7 @@ export default function ReportEditor({ reportId }) {
                                                             key={pages}
                                                             onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
                                                             className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
-                                                                ? 'bg-indigo-600 text-white'
+                                                                ? 'bg-emerald-600 text-white'
                                                                 : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                                 }`}
                                                         >{pages}p</button>
@@ -1363,7 +1363,7 @@ export default function ReportEditor({ reportId }) {
                                                     ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
                                                     isDone
                                                         ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
                                                     }`}
                                             >
                                                 {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -1391,7 +1391,7 @@ export default function ReportEditor({ reportId }) {
                                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
                                 title="Regenerate"
                             >
-                                <RefreshCcw className="w-3.5 h-3.5 group-hover:text-indigo-600" />
+                                <RefreshCcw className="w-3.5 h-3.5 group-hover:text-emerald-600" />
                                 <span className="text-[10px] font-medium">Regen</span>
                             </button>
                             <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
@@ -1408,7 +1408,7 @@ export default function ReportEditor({ reportId }) {
                                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
                                 title="Expand"
                             >
-                                <Maximize2 className="w-3.5 h-3.5 group-hover:text-amber-600" />
+                                <Maximize2 className="w-3.5 h-3.5 group-hover:text-lime-600" />
                                 <span className="text-[10px] font-medium">Expand</span>
                             </button>
                             <button
@@ -1423,7 +1423,7 @@ export default function ReportEditor({ reportId }) {
 
                         {isRewriting && (
                             <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
                             </div>
                         )}
                     </div>

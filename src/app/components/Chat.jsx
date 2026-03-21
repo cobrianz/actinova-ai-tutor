@@ -21,7 +21,7 @@ const renderFormattedContent = (content) => {
   html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong class="font-semibold text-slate-900 dark:text-slate-100">$1</strong>');
   html = html.replace(/__([^_]+?)__/g, '<strong class="font-semibold text-slate-900 dark:text-slate-100">$1</strong>');
   html = html.replace(/\*([^*\n]+?)\*/g, '<em class="italic">$1</em>');
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[13px] font-mono text-violet-600 dark:text-violet-400">$1</code>');
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[13px] font-mono text-green-600 dark:text-green-400">$1</code>');
   html = html.replace(/\n/g, "<br />");
   return html;
 };
@@ -200,13 +200,13 @@ export default function Chat({ topic: propTopic }) {
       <div className={`${sidebarOpen ? "w-[268px]" : "w-0"} transition-all duration-300 flex-shrink-0 overflow-hidden bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col absolute md:relative z-30 h-full`}>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-green-600 flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
             <span className="font-bold text-sm text-slate-800 dark:text-slate-200">AI Tutor</span>
             <button onClick={() => setSidebarOpen(false)} className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 md:hidden"><X size={14} /></button>
           </div>
-          <button onClick={handleNewChat} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 text-sm font-semibold hover:bg-violet-100 transition-colors">
+          <button onClick={handleNewChat} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-semibold hover:bg-green-100 transition-colors">
             <Plus size={15} /> New Chat
           </button>
         </div>
@@ -226,7 +226,7 @@ export default function Chat({ topic: propTopic }) {
             <p className="text-xs text-slate-400 text-center py-8 italic">No chat history yet</p>
           ) : filteredTopics.map(chat => (
             <div key={chat.id || chat.topic} onClick={() => { handleLoadTopic(chat.topic); if (window.innerWidth < 768) setSidebarOpen(false); }}
-              className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${topic === chat.topic ? "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
+              className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${topic === chat.topic ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
               <MessageSquare size={14} className="shrink-0" />
               <span className="truncate flex-1 text-sm">{chat.topic}</span>
               <button onClick={e => handleDeleteTopic(chat.topic, e)} className="opacity-100 p-1 text-slate-300 hover:text-rose-500 rounded-lg transition-all"><Trash2 size={12} /></button>
@@ -245,7 +245,7 @@ export default function Chat({ topic: propTopic }) {
         <div className="h-14 flex items-center justify-between px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-              <MessageSquare size={18} className={sidebarOpen ? "text-violet-600" : ""} />
+              <MessageSquare size={18} className={sidebarOpen ? "text-green-600" : ""} />
             </button>
             <div>
               <p className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate max-w-[200px] md:max-w-md">{topic || "New Chat"}</p>
@@ -263,7 +263,7 @@ export default function Chat({ topic: propTopic }) {
         <div className="flex-1 overflow-y-auto">
           {showTopicInput ? (
             <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center max-w-2xl mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-violet-600 flex items-center justify-center mb-6 shadow-lg shadow-violet-600/20">
+              <div className="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center mb-6 shadow-lg shadow-green-600/20">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">How can I help you learn?</h2>
@@ -272,7 +272,7 @@ export default function Chat({ topic: propTopic }) {
               {/* Suggested topics */}
               <div className="flex flex-wrap gap-2 justify-center mb-8">
                 {SUGGESTED_TOPICS.map(t => (
-                  <button key={t} onClick={() => handleSetTopic(t)} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-600 dark:text-slate-400 hover:border-violet-400 hover:text-violet-600 transition-all">
+                  <button key={t} onClick={() => handleSetTopic(t)} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-600 dark:text-slate-400 hover:border-green-400 hover:text-green-600 transition-all">
                     <Hash size={10} className="inline mr-1" />{t}
                   </button>
                 ))}
@@ -280,8 +280,8 @@ export default function Chat({ topic: propTopic }) {
 
               <div className="w-full max-w-md relative">
                 <input type="text" value={topicInput} onChange={e => setTopicInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSetTopic()} placeholder="Or type your own topic..." autoFocus
-                  className="w-full px-5 py-4 pr-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm shadow-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20 outline-none transition-all" />
-                <button onClick={() => handleSetTopic()} className="absolute right-2 top-2 bottom-2 px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold transition-colors">Start</button>
+                  className="w-full px-5 py-4 pr-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm shadow-sm focus:border-green-400 focus:ring-2 focus:ring-green-400/20 outline-none transition-all" />
+                <button onClick={() => handleSetTopic()} className="absolute right-2 top-2 bottom-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-colors">Start</button>
               </div>
             </div>
           ) : (
@@ -294,7 +294,7 @@ export default function Chat({ topic: propTopic }) {
                   const isUser = message.role === "user";
                   return (
                     <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 md:gap-5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${isUser ? "bg-slate-200 dark:bg-slate-700" : "bg-violet-600"}`}>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${isUser ? "bg-slate-200 dark:bg-slate-700" : "bg-green-600"}`}>
                         {isUser ? <User size={16} className="text-slate-600 dark:text-slate-300" /> : <Bot size={16} className="text-white" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -311,11 +311,11 @@ export default function Chat({ topic: propTopic }) {
               </AnimatePresence>
               {isSending && (
                 <div className="flex gap-5">
-                  <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center shrink-0"><Bot size={16} className="text-white" /></div>
+                  <div className="w-8 h-8 rounded-xl bg-green-600 flex items-center justify-center shrink-0"><Bot size={16} className="text-white" /></div>
                   <div className="flex items-center gap-1.5 mt-3">
-                    <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
-                    <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
                   </div>
                 </div>
               )}
@@ -328,7 +328,7 @@ export default function Chat({ topic: propTopic }) {
         {!showTopicInput && (
           <div className="sticky bottom-0 left-0 w-full p-3 md:p-5 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent">
             <div className="max-w-3xl mx-auto">
-              <div className="flex items-end gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-lg ring-1 ring-transparent focus-within:ring-violet-400/20 focus-within:border-violet-300 transition-all">
+              <div className="flex items-end gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-lg ring-1 ring-transparent focus-within:ring-green-400/20 focus-within:border-green-300 transition-all">
                 <textarea value={input} onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder={isPro ? "Message Actinova AI..." : "Upgrade to Pro to start chatting"}
@@ -337,7 +337,7 @@ export default function Chat({ topic: propTopic }) {
                   onInput={e => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
                 />
                 <button onClick={handleSend} disabled={!input.trim() || !isPro || isSending}
-                  className={`p-2.5 rounded-xl transition-all shrink-0 ${input.trim() && isPro && !isSending ? "bg-violet-600 hover:bg-violet-700 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
+                  className={`p-2.5 rounded-xl transition-all shrink-0 ${input.trim() && isPro && !isSending ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
                   <Send size={16} />
                 </button>
               </div>

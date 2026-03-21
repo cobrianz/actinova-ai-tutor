@@ -70,25 +70,6 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var saved = localStorage.getItem('theme');
-                  var theme = saved || 'light';
-                  if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                    // Force a consistent state if null
-                    if (!saved) localStorage.setItem('theme', 'light');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
       </head>
       <body
         className="font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground"
@@ -96,11 +77,9 @@ export default function RootLayout({ children }) {
       >
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
           <AuthProvider>
-            <ThemeProvider>
-              {children}
-              <ToasterClient />
-              <SpeedInsights />
-            </ThemeProvider>
+            {children}
+            <ToasterClient />
+            <SpeedInsights />
           </AuthProvider>
         </GoogleOAuthProvider>
       </body>

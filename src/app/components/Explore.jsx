@@ -828,7 +828,7 @@ const staticCategories = [
 ];
 
 const getButtonColorStyles = () => {
-  return "bg-violet-600 hover:bg-violet-700 text-white border-violet-600";
+  return "bg-green-600 hover:bg-green-700 text-white border-green-600";
 };
 
 export default function Explore() {
@@ -1281,9 +1281,9 @@ export default function Explore() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-10">
-        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-8 mb-8">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 mb-8">
           <h1 className="text-4xl font-black text-white mb-2">Explore Courses</h1>
-          <p className="text-violet-100 text-lg">Discover categories and trending AI-generated courses tailored to your learning goals</p>
+          <p className="text-green-100 text-lg">Discover categories and trending AI-generated courses tailored to your learning goals</p>
         </div>
       </div>
 
@@ -1295,14 +1295,14 @@ export default function Explore() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search courses, topics, categories..."
-                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all text-base" />
+                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all text-base" />
             </div>
             <div className="flex gap-2 flex-wrap">
               {[{ val: selectedCategory, set: setSelectedCategory, opts: [{ v: '', l: 'All Categories' }, ...staticCategories.map(c => ({ v: c.name, l: c.name }))] },
               { val: selectedDifficulty, set: setSelectedDifficulty, opts: [{ v: '', l: 'All Levels' }, { v: 'beginner', l: 'Beginner' }, { v: 'intermediate', l: 'Intermediate' }, { v: 'advanced', l: 'Advanced' }] },
               { val: isPremium, set: setIsPremium, opts: [{ v: '', l: 'All Courses' }, { v: 'true', l: 'Premium' }, { v: 'false', l: 'Free' }] }].map((s, i) => (
                 <select key={i} value={s.val} onChange={e => s.set(e.target.value)}
-                  className="px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                  className="px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
                   {s.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                 </select>
               ))}
@@ -1315,7 +1315,7 @@ export default function Explore() {
       <div className="mb-14">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-lime-400 to-lime-500 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -1342,16 +1342,16 @@ export default function Explore() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTrendingTopics.map((topic, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-violet-600 transition-colors">{topic.title}</h3>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">{topic.title}</h3>
                       <span className={`ml-2 px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                        topic.difficulty === 'intermediate' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                        topic.difficulty === 'intermediate' ? 'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         }`}>{topic.difficulty || 'Beginner'}</span>
                     </div>
                     <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-2">{topic.description}</p>
                     {topic.whyTrending && (
-                      <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-xl px-3 py-2 mb-4 flex items-center gap-1.5"><span className="text-base">🔥</span> {topic.whyTrending}</p>
+                      <p className="text-xs text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20 rounded-xl px-3 py-2 mb-4 flex items-center gap-1.5"><span className="text-base">🔥</span> {topic.whyTrending}</p>
                     )}
                     <div className="flex flex-wrap gap-2 mb-5">
                       {topic.tags?.slice(0, 3).map((tag, j) => (
@@ -1375,7 +1375,7 @@ export default function Explore() {
       <div className="mb-14">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -1403,13 +1403,13 @@ export default function Explore() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
-                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 transition-all duration-300 overflow-hidden relative">
+                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 overflow-hidden relative">
                       {!userIsPremium && (
-                        <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span className="text-xs">⭐</span> Premium</div>
+                        <div className="absolute top-4 right-4 bg-lime-100 text-lime-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span className="text-xs">⭐</span> Premium</div>
                       )}
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center group-hover:from-violet-500 group-hover:to-purple-600 group-hover:scale-110 transition-all duration-300">
-                          <BookOpen className="w-5 h-5 text-violet-600 dark:text-violet-400 group-hover:text-white transition-colors" />
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 flex items-center justify-center group-hover:from-green-500 group-hover:to-teal-600 group-hover:scale-110 transition-all duration-300">
+                          <BookOpen className="w-5 h-5 text-green-600 dark:text-green-400 group-hover:text-white transition-colors" />
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-slate-900 dark:text-white">{category.name}</h3>
@@ -1436,7 +1436,7 @@ export default function Explore() {
                 {visibleCategoriesCount < filteredCategories.length && (
                   <div className="text-center mt-8">
                     <button onClick={handleSeeMoreCategories}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-8 py-3 rounded-xl text-sm font-semibold hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400 transition-all inline-flex items-center gap-2">
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-8 py-3 rounded-xl text-sm font-semibold hover:border-green-300 hover:text-green-600 dark:hover:text-green-400 transition-all inline-flex items-center gap-2">
                       Show More ({filteredCategories.length - visibleCategoriesCount} remaining)
                     </button>
                   </div>
@@ -1444,12 +1444,12 @@ export default function Explore() {
 
                 {visibleCategoriesCount >= filteredCategories.length && filteredCategories.length > 9 && (
                   <div className="text-center mt-10">
-                    <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-100 dark:border-violet-800 rounded-2xl p-8 inline-block max-w-md">
-                      <Sparkles className="w-10 h-10 text-violet-500 mx-auto mb-4" />
-                      <p className="text-violet-700 dark:text-violet-300 font-bold text-lg mb-2">Can't find what you're looking for?</p>
-                      <p className="text-violet-500 text-sm mb-5">Generate a custom course with AI</p>
+                    <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border border-green-100 dark:border-green-800 rounded-2xl p-8 inline-block max-w-md">
+                      <Sparkles className="w-10 h-10 text-green-500 mx-auto mb-4" />
+                      <p className="text-green-700 dark:text-green-300 font-bold text-lg mb-2">Can't find what you're looking for?</p>
+                      <p className="text-green-500 text-sm mb-5">Generate a custom course with AI</p>
                       <button onClick={() => router.push("/dashboard?tab=generate")}
-                        className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all">
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all">
                         <Sparkles className="w-4 h-4" /> Generate Custom Course
                       </button>
                     </div>
@@ -1466,7 +1466,7 @@ export default function Explore() {
         {exploringCategory && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -1476,7 +1476,7 @@ export default function Explore() {
                 <p className="text-sm text-slate-500">Generating curriculum...</p>
               </div>
               <div className="ml-auto">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-violet-500 border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-500 border-t-transparent"></div>
               </div>
             </div>
 
@@ -1512,7 +1512,7 @@ export default function Explore() {
           <div key={generatedSet.id} id={generatedSet.id} className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -1548,10 +1548,10 @@ export default function Explore() {
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-violet-400 transition-all duration-300 relative group"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 relative group"
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-violet-600 transition-colors">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">
                         {course.title}
                       </h3>
                       <div className="flex items-center">
@@ -1559,7 +1559,7 @@ export default function Explore() {
                           className={`px-3 py-1 text-xs font-semibold rounded-full ${course.difficulty === "beginner"
                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                             : course.difficulty === "intermediate"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              ? "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400"
                               : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                             }`}
                         >
@@ -1626,7 +1626,7 @@ export default function Explore() {
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={!pagination.hasPrev}
-            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
+            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -1640,8 +1640,8 @@ export default function Explore() {
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`min-w-[44px] h-11 px-4 rounded-xl text-sm font-semibold transition-all ${currentPage === page
-                    ? "bg-violet-600 text-white border border-violet-600"
-                    : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400"
+                    ? "bg-green-600 text-white border border-green-600"
+                    : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-green-300 hover:text-green-600 dark:hover:text-green-400"
                     }`}
                 >
                   {page}
@@ -1657,7 +1657,7 @@ export default function Explore() {
               )
             }
             disabled={!pagination.hasNext}
-            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
+            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

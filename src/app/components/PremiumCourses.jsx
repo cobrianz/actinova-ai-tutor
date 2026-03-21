@@ -388,13 +388,13 @@ export default function PremiumCourses() {
   const getBadgeColor = (badge) => {
     switch (badge) {
       case "Trending":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
+        return "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200";
       case "Expert Level":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+        return "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200";
       case "Industry Favorite":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
       case "Creative Choice":
-        return "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200";
+        return "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200";
       case "High Demand":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       case "Visual Excellence":
@@ -413,12 +413,12 @@ export default function PremiumCourses() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="inline-flex items-center justify-center gap-3 mb-6 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl">
+        <div className="inline-flex items-center justify-center gap-3 mb-6 px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl">
           <Sparkles className="w-5 h-5 text-white animate-pulse" />
           <span className="text-xs font-bold uppercase tracking-widest text-white">Curated Excellence</span>
         </div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
-          <span className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">Premium Courses</span>
+          <span className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 bg-clip-text text-transparent">Premium Courses</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
           Professional-grade curricula designed for deep mastery. Experience advanced AI tutoring, expert instruction, and comprehensive materials tailored to your learning goals.
@@ -443,7 +443,7 @@ export default function PremiumCourses() {
           />
         </div>
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-xl">
+          <div className="p-3 bg-gradient-to-r from-lime-400 to-lime-500 text-white rounded-xl">
             <Crown className="w-6 h-6" />
           </div>
         </div>
@@ -452,7 +452,7 @@ export default function PremiumCourses() {
       {/* Free Plan Info Banner */}
       {!isPro && (
         <motion.div
-          className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-6 md:p-8 mb-10 text-white"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 md:p-8 mb-10 text-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -465,7 +465,7 @@ export default function PremiumCourses() {
                   Free Plan — 2 Premium Courses
                 </h2>
               </div>
-              <p className="text-violet-100 text-sm leading-relaxed">
+              <p className="text-green-100 text-sm leading-relaxed">
                 On the free plan you can generate up to <strong className="text-white">2 premium courses</strong>. Each course has <strong className="text-white">20 modules</strong> and <strong className="text-white">5 lessons</strong> per module — but you can only read the first <strong className="text-white">3 modules</strong>. Upgrade to Pro to unlock all 20 modules and generate up to 50 courses/month.
               </p>
             </div>
@@ -488,7 +488,7 @@ export default function PremiumCourses() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-lime-400 to-lime-500 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -504,12 +504,12 @@ export default function PremiumCourses() {
               <motion.div
                 key={course.id || index}
                 whileHover={{ y: -4 }}
-                className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-orange-500/50 transition-all duration-300 flex flex-col h-full"
+                className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-lime-500/50 transition-all duration-300 flex flex-col h-full"
               >
                 <div className="p-8 flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="px-3 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-orange-500/20">
-                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                    <div className="px-3 py-1 bg-lime-500/10 text-lime-600 dark:text-lime-400 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-lime-500/20">
+                      <div className="w-1.5 h-1.5 bg-lime-500 rounded-full animate-pulse" />
                       Trending
                     </div>
                     <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{course.category || "General"}</span>
@@ -523,10 +523,10 @@ export default function PremiumCourses() {
 
                   <div className="mt-auto space-y-6">
                     {course.whyTrending && (
-                      <div className="p-4 bg-orange-500/5 rounded-[1.5rem] border border-orange-500/10 group-hover:bg-orange-500/10 transition-colors">
+                      <div className="p-4 bg-lime-500/5 rounded-[1.5rem] border border-lime-500/10 group-hover:bg-lime-500/10 transition-colors">
                         <div className="flex items-center space-x-2 mb-1">
-                          <Sparkles className="w-3 h-3 text-orange-500" />
-                          <span className="text-[10px] text-orange-600 dark:text-orange-400 font-black uppercase tracking-widest">Why it's hot</span>
+                          <Sparkles className="w-3 h-3 text-lime-500" />
+                          <span className="text-[10px] text-lime-600 dark:text-lime-400 font-black uppercase tracking-widest">Why it's hot</span>
                         </div>
                         <p className="text-xs text-foreground/80 font-medium leading-relaxed italic">
                           "{course.whyTrending}"
@@ -537,7 +537,7 @@ export default function PremiumCourses() {
                     <div className="flex items-center justify-between pt-5 border-t border-border">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2 px-3 py-1 bg-secondary/50 rounded-lg">
-                          <Clock className="w-3.5 h-3.5 text-orange-500" />
+                          <Clock className="w-3.5 h-3.5 text-lime-500" />
                           <span className="text-[11px] font-black text-foreground">{course.estimatedDuration || "6 weeks"}</span>
                         </div>
                         <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{course.category || "General"}</span>
@@ -550,7 +550,7 @@ export default function PremiumCourses() {
                         generatingCourse === course.id ||
                         preparingCourse === course.id
                       }
-                      className="group/btn relative w-full h-14 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black rounded-[1.25rem] overflow-hidden transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-3 text-[11px] uppercase tracking-[0.2em] cursor-pointer"
+                      className="group/btn relative w-full h-14 bg-gradient-to-r from-lime-600 to-red-600 text-white font-black rounded-[1.25rem] overflow-hidden transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-3 text-[11px] uppercase tracking-[0.2em] cursor-pointer"
                     >
                       <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                       <div className="relative flex items-center space-x-3">
@@ -590,10 +590,10 @@ export default function PremiumCourses() {
             transition={{ duration: 0.8 }}
           >
             {/* Professional vibrant background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-indigo-600/5 dark:from-violet-900/10 dark:to-indigo-900/10" />
+            <div className="absolute inset-0 bg-gradient-to-br from-green-600/5 via-transparent to-emerald-600/5 dark:from-green-900/10 dark:to-emerald-900/10" />
             <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-primary/10 to-transparent opacity-50" />
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]" />
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px]" />
 
             <div className="relative z-10 p-8 md:p-12 lg:p-16">
               <div className="flex flex-col lg:flex-row gap-12 items-center">
@@ -637,7 +637,7 @@ export default function PremiumCourses() {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className="w-3 h-3 text-amber-500 fill-amber-500"
+                            className="w-3 h-3 text-lime-500 fill-lime-500"
                           />
                         ))}
                         <span className="ml-2 font-black text-sm text-foreground">
@@ -726,7 +726,7 @@ export default function PremiumCourses() {
         isPro && (
         isDataLoading || generatingPersonalized ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">
               {generatingPersonalized
                 ? "Creating your personalized premium courses..."
@@ -772,14 +772,14 @@ export default function PremiumCourses() {
                     <div className="grid grid-cols-3 gap-2 mb-6 border-y border-border py-4">
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                          <Users size={14} className="text-blue-500" />
+                          <Users size={14} className="text-green-500" />
                           <span className="text-[10px] font-medium">Students</span>
                         </div>
                         <span className="text-sm font-bold">{course.students?.toLocaleString() || "1.2k"}</span>
                       </div>
                       <div className="text-center border-x border-border">
                         <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                          <Clock size={14} className="text-orange-500" />
+                          <Clock size={14} className="text-lime-500" />
                           <span className="text-[10px] font-medium">Duration</span>
                         </div>
                         <span className="text-sm font-bold">{course.duration || "6w"}</span>
@@ -857,7 +857,7 @@ export default function PremiumCourses() {
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -878,7 +878,7 @@ export default function PremiumCourses() {
                 <button
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-violet-300 transition-all"
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>

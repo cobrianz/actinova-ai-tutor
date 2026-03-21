@@ -29,7 +29,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-background pt-24 pb-12 border-t border-border-accent relative overflow-hidden">
+    <footer className="bg-[#D2D7F8]/80 pt-24 pb-12 border-t-2 border-white backdrop-blur-xl relative overflow-hidden mt-12">
       {/* Decorative Blur */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
@@ -38,14 +38,14 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">A</span>
+              <div className="w-10 h-10 bg-white border-2 border-white flex items-center justify-center rounded-xl p-1 overflow-hidden pointer-events-none shadow-sm">
+                <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="font-heading text-2xl font-bold tracking-tight">
-                Actirova<span className="text-primary">AI</span>
+              <span className="font-heading text-2xl font-bold tracking-tight text-[#1a1a1a]">
+                Actirova
               </span>
             </Link>
-            <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
+            <p className="text-[#1a1a1a]/60 text-lg leading-relaxed max-w-sm">
               Empowering the next generation of learners with advanced AI-driven
               personalized education. Master any skill at your own pace.
             </p>
@@ -56,7 +56,7 @@ export default function Footer() {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                    className="w-10 h-10 rounded-xl bg-white/60 border-2 border-white flex items-center justify-center text-[#1a1a1a] hover:bg-white transition-all duration-300 shadow-sm"
                   >
                     <Icon className="w-5 h-5" />
                   </Link>
@@ -68,7 +68,7 @@ export default function Footer() {
           {/* Link Columns */}
           {Object.entries(footerLinks).slice(0, 2).map(([title, links]) => (
             <div key={title} className="space-y-6">
-              <h4 className="font-bold text-lg uppercase tracking-wider text-primary text-sm">
+              <h4 className="font-bold text-sm uppercase tracking-wider text-[#1a1a1a]">
                 {title}
               </h4>
               <ul className="space-y-4">
@@ -76,9 +76,9 @@ export default function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-primary transition-colors flex items-center group"
+                      className="text-[#1a1a1a]/60 hover:text-green-500 transition-colors flex items-center group"
                     >
-                      <span className="w-0 group-hover:w-2 h-0.5 bg-primary mr-0 group-hover:mr-2 transition-all" />
+                      <span className="w-0 group-hover:w-2 h-0.5 bg-green-500 mr-0 group-hover:mr-2 transition-all" />
                       {link.label}
                     </Link>
                   </li>
@@ -90,10 +90,10 @@ export default function Footer() {
 
           {/* Newsletter Column */}
           <div className="space-y-6">
-            <h4 className="font-bold text-lg uppercase tracking-wider text-primary text-sm">
+            <h4 className="font-bold text-sm uppercase tracking-wider text-[#1a1a1a]">
               Newsletter
             </h4>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-[#1a1a1a]/60 text-sm">
               Subscribe to get the latest updates and learning resources.
             </p>
             <NewsletterForm />
@@ -101,14 +101,14 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-12 border-t border-border-accent flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-muted-foreground text-sm font-medium">
+        <div className="pt-12 border-t-2 border-white/50 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-[#1a1a1a]/60 text-sm font-medium">
             © {new Date().getFullYear()} Actirova AI Tutor. All rights reserved.
           </p>
-          <div className="flex gap-8 text-sm font-medium text-muted-foreground">
-            <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
-            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-            <Link href="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
+          <div className="flex gap-8 text-sm font-medium text-[#1a1a1a]/60">
+            <Link href="/terms" className="hover:text-green-500 transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-green-500 transition-colors">Privacy</Link>
+            <Link href="/cookies" className="hover:text-green-500 transition-colors">Cookies</Link>
           </div>
         </div>
       </div>
@@ -155,13 +155,13 @@ function NewsletterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-4 py-3 rounded-xl bg-secondary border border-border-accent focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+              className="w-full px-4 py-3 rounded-[16px] bg-white/60 border-2 border-white focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all text-sm text-[#1a1a1a] placeholder-[#1a1a1a]/40 backdrop-blur-md"
               disabled={status === "loading"}
             />
           </div>
           <button
             disabled={status === "loading"}
-            className="w-full px-4 py-3 bg-foreground text-background rounded-xl font-bold text-sm hover:bg-foreground/90 transition-all disabled:opacity-50"
+            className="w-full px-4 py-3 bg-white border-2 border-white text-[#1a1a1a] rounded-[16px] font-bold text-sm hover:bg-green-50 transition-all disabled:opacity-50 shadow-sm"
           >
             {status === "loading" ? "Subscribing..." : "Subscribe"}
           </button>

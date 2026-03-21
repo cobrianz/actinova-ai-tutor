@@ -45,7 +45,7 @@ export default function ActirovaLoader({ text = "course" }) {
             opacity: [0.1, 0.2, 0.1]
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[20%] -left-[10%] w-[80%] h-[80%] rounded-full bg-gradient-to-br from-blue-600/30 to-indigo-600/10 blur-[150px]"
+          className="absolute -top-[20%] -left-[10%] w-[80%] h-[80%] rounded-full bg-gradient-to-br from-green-600/30 to-emerald-600/10 blur-[150px]"
         />
         <motion.div
           animate={{
@@ -54,7 +54,7 @@ export default function ActirovaLoader({ text = "course" }) {
             opacity: [0.1, 0.25, 0.1]
           }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-[10%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-tr from-purple-600/20 to-pink-600/10 blur-[130px]"
+          className="absolute -bottom-[10%] -right-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-tr from-teal-600/20 to-teal-600/10 blur-[130px]"
         />
 
         {/* Animated Particles/Grid Effect */}
@@ -65,7 +65,7 @@ export default function ActirovaLoader({ text = "course" }) {
         {/* Central Neural Core - Enhanced */}
         <div className="relative w-56 h-56 flex items-center justify-center">
           {/* Static Ambient Glow */}
-          <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-[80px] animate-pulse" />
+          <div className="absolute inset-0 bg-green-500/10 rounded-full blur-[80px] animate-pulse" />
 
           {/* Expanded Wave Rings */}
           {[1, 2, 3, 4].map((i) => (
@@ -82,7 +82,7 @@ export default function ActirovaLoader({ text = "course" }) {
                 delay: i * 1,
                 ease: "easeOut"
               }}
-              className="absolute inset-0 border-[0.5px] border-blue-400/40 rounded-full"
+              className="absolute inset-0 border-[0.5px] border-green-400/40 rounded-full"
             />
           ))}
 
@@ -96,9 +96,9 @@ export default function ActirovaLoader({ text = "course" }) {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="relative z-10 w-32 h-32 flex items-center justify-center bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_20px_50px_rgba(59,130,246,0.15)] border border-blue-500/20 ring-1 ring-white/50 dark:ring-white/5"
+            className="relative z-10 w-32 h-32 flex items-center justify-center bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_20px_50px_rgba(59,130,246,0.15)] border border-green-500/20 ring-1 ring-white/50 dark:ring-white/5"
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent rounded-[2.5rem]" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-green-600/10 to-transparent rounded-[2.5rem]" />
             <img
               src="/logo.png"
               alt="Actirova Logo"
@@ -109,19 +109,19 @@ export default function ActirovaLoader({ text = "course" }) {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-6 border border-dashed border-blue-400/30 rounded-full"
+              className="absolute -inset-6 border border-dashed border-green-400/30 rounded-full"
             />
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-12 border border-dotted border-purple-400/20 rounded-full"
+              className="absolute -inset-12 border border-dotted border-teal-400/20 rounded-full"
             />
 
             {/* Pulse Points */}
             {[0, 90, 180, 270].map((angle) => (
               <motion.div
                 key={angle}
-                className="absolute w-1.5 h-1.5 bg-blue-400 rounded-full shadow-[0_0_8px_#60a5fa]"
+                className="absolute w-1.5 h-1.5 bg-green-400 rounded-full shadow-[0_0_8px_#60a5fa]"
                 style={{
                   top: '50%',
                   left: '50%',
@@ -148,10 +148,10 @@ export default function ActirovaLoader({ text = "course" }) {
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center"
           >
-            <h2 className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-white dark:to-blue-400 mb-2">
+            <h2 className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-white dark:to-green-400 mb-2">
               Actirova
             </h2>
-            <div className="h-1 w-12 bg-blue-600/20 rounded-full mb-6" />
+            <div className="h-1 w-12 bg-green-600/20 rounded-full mb-6" />
 
             <AnimatePresence mode="wait">
               <motion.p
@@ -180,7 +180,7 @@ export default function ActirovaLoader({ text = "course" }) {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+                className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-green-500 to-transparent"
               />
             </div>
           </motion.div>

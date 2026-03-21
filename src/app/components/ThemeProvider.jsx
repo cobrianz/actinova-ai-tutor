@@ -25,54 +25,25 @@ export function ThemeProvider({ children, initialTheme }) {
 
     const savedTheme = getInitialTheme();
     setTheme(savedTheme);
-    // document class is already handled by head script for initial load, 
-    // but we update it here for subsequent state changes or hydration cleanup.
     document.documentElement.classList.toggle("dark", savedTheme === "dark");
 
-    // Listen for system theme changes if system theme is selected
-    if (
-      initialTheme === "system" ||
-      (!initialTheme && localStorage.getItem("theme") === "system")
-    ) {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleChange = (e) => {
-        const newTheme = e.matches ? "dark" : "light";
-        setTheme(newTheme);
-        document.documentElement.classList.toggle("dark", newTheme === "dark");
-      };
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    }
+    return () => {
+      // Cleanup: always revert to light mode when this provider unmounts (leaving dashboard)
+      document.documentElement.classList.remove("dark");
+    };
   }, [initialTheme]);
 
   const toggleTheme = () => {
-    const currentTheme =
-      theme === "system"
-        ? document.documentElement.classList.contains("dark")
-          ? "dark"
-          : "light"
-        : theme;
-    const newTheme = currentTheme === "light" ? "dark" : "light";
+    const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
   const setThemePreference = (newTheme) => {
-    if (newTheme === "system") {
-      const systemTheme =
-        typeof window !== "undefined" &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      setTheme("system");
-      localStorage.setItem("theme", "system");
-      document.documentElement.classList.toggle("dark", systemTheme === "dark");
-    } else {
-      setTheme(newTheme);
-      localStorage.setItem("theme", newTheme);
-      document.documentElement.classList.toggle("dark", newTheme === "dark");
-    }
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
   return (

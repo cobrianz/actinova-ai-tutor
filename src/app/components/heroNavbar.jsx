@@ -12,6 +12,7 @@ import { cn } from "../lib/utils";
 export default function HeroNavbar({ handleGetStarted }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeItem, setActiveItem] = useState("");
   const { user, logout, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -44,6 +45,9 @@ export default function HeroNavbar({ handleGetStarted }) {
   ];
 
   const handleNavClick = (e, href, isAnchor) => {
+    const specificLabel = navLinks.find(link => link.href === href)?.label;
+    if (specificLabel) setActiveItem(specificLabel);
+
     if (isAnchor && href.startsWith("#")) {
       e.preventDefault();
       setIsMenuOpen(false);
@@ -75,62 +79,76 @@ export default function HeroNavbar({ handleGetStarted }) {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className={cn(
-        "fixed top-0 left-0 right-0 z-[100] transition-all duration-500",
-        scrolled ? "py-4" : "py-6"
+        "fixed top-6 left-0 right-0 z-[100] transition-all duration-500 px-4",
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="relative flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-500 bg-secondary/80 border-border backdrop-blur-3xl">
+      <div className="max-w-5xl mx-auto">
+        <nav className="relative flex items-center justify-between pl-4 pr-1.5 py-1.5 rounded-2xl border-2 border-white bg-[#D2D7F8]/80 backdrop-blur-xl transition-all duration-500 group/nav">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden p-1.5">
+          <Link href="/" onClick={() => setActiveItem("")} className="flex items-center gap-2 group/logo flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-white border border-teal-100 flex items-center justify-center transition-transform group-hover/logo:scale-105 overflow-hidden p-1">
               <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-heading text-xl font-bold tracking-tight">
-              Actirova<span className="text-primary">AI</span>
+            <span className="font-heading text-lg font-bold tracking-tight text-[#1a1a1a]">
+              Actirova
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={(e) => link.isAnchor && handleNavClick(e, link.href, true)}
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors relative group"
-              >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
-              </Link>
-            ))}
+          {/* Desktop Navigation - Centered Pill */}
+          <div className="hidden md:flex items-center bg-[#f5f5f7]/50 rounded-full px-1 py-1 border border-black/5">
+            {navLinks.map((link) => {
+              const isActive = activeItem === link.label || (!link.isAnchor && pathname === link.href);
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={(e) => link.isAnchor && handleNavClick(e, link.href, true)}
+                  className={cn(
+                    "text-[13px] font-medium px-5 py-2 rounded-full transition-all relative",
+                    isActive 
+                      ? "bg-green-300 text-green-900 font-semibold" 
+                      : "text-muted-foreground hover:text-[#1a1a1a]"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
             {loading ? (
-              <div className="w-24 h-10 rounded-lg bg-secondary animate-pulse" />
+              <div className="w-24 h-9 rounded-full bg-secondary animate-pulse" />
             ) : user ? (
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
-                Dashboard
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleLogout}
+                  className="text-[13px] font-semibold px-2 text-red-500 hover:text-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="px-6 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-semibold hover:bg-black transition-all shadow-sm"
+                >
+                  Dashboard
+                </button>
+              </div>
             ) : (
               <>
                 <Link
                   href="/auth/login"
-                  className="text-sm font-semibold hover:text-primary transition-colors"
+                  className="text-[13px] font-semibold px-4 text-[#1a1a1a] hover:opacity-70 transition-opacity"
                 >
                   Sign In
                 </Link>
                 <button
                   onClick={() => router.push("/auth/signup")}
-                  className="px-5 py-2 rounded-lg bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-all flex items-center gap-2"
+                  className="px-6 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-semibold hover:bg-black transition-all shadow-sm flex items-center gap-2"
                 >
-                  Join Now
-                  <ArrowRight className="w-4 h-4" />
+                  Try Demo
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </>
             )}
@@ -139,7 +157,7 @@ export default function HeroNavbar({ handleGetStarted }) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-xl bg-secondary/50 border border-border-accent transition-colors"
+            className="md:hidden p-2 transition-colors"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -170,12 +188,20 @@ export default function HeroNavbar({ handleGetStarted }) {
                 {loading ? (
                   <div className="w-full h-12 rounded-xl bg-secondary animate-pulse" />
                 ) : user ? (
-                  <button
-                    onClick={() => router.push("/dashboard")}
-                    className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold"
-                  >
-                    Go to Dashboard
-                  </button>
+                  <>
+                    <button
+                      onClick={() => router.push("/dashboard")}
+                      className="w-full py-4 rounded-xl bg-[#1a1a1a] text-white font-semibold"
+                    >
+                      Go to Dashboard
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full py-4 rounded-xl bg-red-50 text-red-600 border border-red-100 text-center font-semibold hover:bg-red-100 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link
@@ -186,7 +212,7 @@ export default function HeroNavbar({ handleGetStarted }) {
                     </Link>
                     <button
                       onClick={() => router.push("/auth/signup")}
-                      className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold"
+                      className="w-full py-4 rounded-xl bg-[#1a1a1a] text-white font-semibold"
                     >
                       Get Started Free
                     </button>

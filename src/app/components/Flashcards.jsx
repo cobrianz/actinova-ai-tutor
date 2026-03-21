@@ -45,23 +45,23 @@ export default function Flashcards({ cardData }) {
   }, [cardData]);
 
   const categoryIcons = {
-    concept: <BookOpen size={20} className="text-blue-400" />,
-    tip: <Lightbulb size={20} className="text-cyan-400" />,
-    warning: <AlertCircle size={20} className="text-amber-400" />,
+    concept: <BookOpen size={20} className="text-green-400" />,
+    tip: <Lightbulb size={20} className="text-emerald-400" />,
+    warning: <AlertCircle size={20} className="text-lime-400" />,
     practice: <CheckCircle size={20} className="text-emerald-400" />,
   };
 
   const categoryColors = {
-    concept: "from-blue-900/40 to-blue-900/20 border-blue-700/50",
-    tip: "from-cyan-900/40 to-cyan-900/20 border-cyan-700/50",
-    warning: "from-amber-900/40 to-amber-900/20 border-amber-700/50",
+    concept: "from-green-900/40 to-green-900/20 border-green-700/50",
+    tip: "from-emerald-900/40 to-emerald-900/20 border-emerald-700/50",
+    warning: "from-lime-900/40 to-lime-900/20 border-lime-700/50",
     practice: "from-emerald-900/40 to-emerald-900/20 border-emerald-700/50",
   };
 
   const categoryBadge = {
     concept: "bg-primary/20 text-primary border border-primary/30",
-    tip: "bg-cyan-600/20 text-cyan-600 dark:text-cyan-400 border border-cyan-600/30",
-    warning: "bg-amber-600/20 text-amber-600 dark:text-amber-400 border border-amber-600/30",
+    tip: "bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-600/30",
+    warning: "bg-lime-600/20 text-lime-600 dark:text-lime-400 border border-lime-600/30",
     practice: "bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-600/30",
   };
 
@@ -69,17 +69,17 @@ export default function Flashcards({ cardData }) {
     beginner: {
       label: "Beginner",
       icon: <BookOpen size={14} />,
-      color: "text-blue-300",
+      color: "text-green-300",
     },
     intermediate: {
       label: "Intermediate",
       icon: <Zap size={14} />,
-      color: "text-cyan-300",
+      color: "text-emerald-300",
     },
     advanced: {
       label: "Advanced",
       icon: <Flame size={14} />,
-      color: "text-purple-300",
+      color: "text-teal-300",
     },
   };
 
@@ -305,7 +305,7 @@ export default function Flashcards({ cardData }) {
               Reset All Progress
             </button>
             <div className="text-sm text-muted-foreground flex items-center gap-2 px-6 py-2.5 rounded-xl bg-secondary border border-border">
-              <span className="font-bold text-blue-600 dark:text-blue-400">
+              <span className="font-bold text-green-600 dark:text-green-400">
                 {totalCards}
               </span>{" "}
               Concepts Found
@@ -336,7 +336,7 @@ export default function Flashcards({ cardData }) {
                     {/* Header Section */}
                     <div className="space-y-3 flex-shrink-0">
                       <div className="flex items-start justify-between">
-                        <div className="text-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 bg-clip-text text-transparent opacity-80">
+                        <div className="text-2xl bg-gradient-to-tr from-green-500 to-emerald-600 bg-clip-text text-transparent opacity-80">
                           ✦
                         </div>
                         <div
@@ -402,7 +402,7 @@ export default function Flashcards({ cardData }) {
                       <div className="flex items-center gap-2 pb-3 border-b border-border flex-shrink-0">
                         <Brain
                           size={18}
-                          className="text-cyan-500 dark:text-cyan-400 flex-shrink-0"
+                          className="text-emerald-500 dark:text-emerald-400 flex-shrink-0"
                         />
                         <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
                           Main Answer
@@ -435,7 +435,7 @@ export default function Flashcards({ cardData }) {
                                 key={idx}
                                 className="text-xs text-foreground/80 flex gap-2"
                               >
-                                <span className="text-blue-500 dark:text-blue-400 flex-shrink-0">
+                                <span className="text-green-500 dark:text-green-400 flex-shrink-0">
                                   •
                                 </span>
                                 <span>{point}</span>
@@ -494,7 +494,7 @@ export default function Flashcards({ cardData }) {
           <div className="flex gap-4">
             <Lightbulb
               size={24}
-              className="text-cyan-600 dark:text-cyan-400 flex-shrink-0 mt-1"
+              className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-1"
             />
             <div className="flex-1">
               <h3 className="font-bold text-lg text-foreground mb-3">
@@ -502,7 +502,7 @@ export default function Flashcards({ cardData }) {
               </h3>
               <ul className="text-sm text-muted-foreground space-y-2">
                 <li className="flex gap-3">
-                  <span className="text-cyan-600 dark:text-cyan-400 font-bold flex-shrink-0">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0">
                     1.
                   </span>
                   <span>
@@ -512,7 +512,7 @@ export default function Flashcards({ cardData }) {
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-cyan-600 dark:text-cyan-400 font-bold flex-shrink-0">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0">
                     2.
                   </span>
                   <span>
@@ -521,7 +521,7 @@ export default function Flashcards({ cardData }) {
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-cyan-600 dark:text-cyan-400 font-bold flex-shrink-0">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0">
                     3.
                   </span>
                   <span>
@@ -530,7 +530,7 @@ export default function Flashcards({ cardData }) {
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-cyan-600 dark:text-cyan-400 font-bold flex-shrink-0">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0">
                     4.
                   </span>
                   <span>
@@ -546,7 +546,7 @@ export default function Flashcards({ cardData }) {
         {/* Upgrade Modal */}
         {showUpgradeModal && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl w-full max-w-2xl h-1/2 flex flex-col shadow-2xl">
+            <div className="bg-gradient-to-br from-green-600 to-teal-600 rounded-2xl w-full max-w-2xl h-1/2 flex flex-col shadow-2xl">
               <div className="flex justify-between items-center p-6 border-b border-white/20">
                 <h3 className="text-2xl font-bold text-white">
                   Upgrade to Pro
@@ -579,7 +579,7 @@ export default function Flashcards({ cardData }) {
                       setShowUpgradeModal(false);
                       router.push("/pricing");
                     }}
-                    className="flex-1 px-6 py-3 bg-white text-blue-600 rounded-xl hover:bg-gray-50 font-semibold shadow-lg transition-colors"
+                    className="flex-1 px-6 py-3 bg-white text-green-600 rounded-xl hover:bg-gray-50 font-semibold shadow-lg transition-colors"
                   >
                     Upgrade Now
                   </button>

@@ -59,16 +59,14 @@ export default function Navbar({ toggleSidebar }) {
             >
               <Menu className="w-5 h-5" />
             </button>
+            
+            <Link href="/" className="flex items-center group/logo hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 rounded-lg bg-white border border-[#D2D7F8]/30 flex items-center justify-center overflow-hidden p-1 shadow-none">
+                <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
+              </div>
+            </Link>
+
             <nav className="hidden sm:flex items-center space-x-3 md:space-x-4">
-              {pathname !== "/" && (
-                <Link
-                  href="/"
-                  className="flex items-center space-x-1 text-sm font-medium text-foreground hover:text-primary transition-colors"
-                  aria-label="Home"
-                >
-                  <Home className="w-4 h-4" />
-                </Link>
-              )}
               <Link
                 href="/dashboard"
                 className={`text-sm font-medium hover:text-primary transition-colors ${pathname === "/dashboard"

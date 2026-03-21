@@ -7,14 +7,19 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Mail,
-  Send,
-  CheckCircle,
   Lock,
   Eye,
   EyeOff,
+  User,
+  Zap,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -33,23 +38,18 @@ export default function ForgotPasswordPage() {
 
     try {
       if (step === 1) {
-        // Send reset code
         if (!email) {
           toast.error("Please enter your email address");
           return;
         }
-
         const res = await apiClient.post("/api/forgot-password", { email });
-
         const data = await res.json();
-
         if (!res.ok) {
           toast.error(data.error || "Something went wrong");
         } else {
           setStep(2);
           toast.success(data.message);
           if (data.code) {
-            // In development mode, show the code
             setTimeout(() => {
               toast.info(`Development mode: Your reset code is ${data.code}`, {
                 duration: 10000,
@@ -58,16 +58,12 @@ export default function ForgotPasswordPage() {
           }
         }
       } else if (step === 2) {
-        // Verify code
         if (!code || code.length !== 6) {
           toast.error("Please enter a valid 6-digit code");
           return;
         }
-
         const res = await apiClient.post("/api/verify-reset-code", { email, code });
-
         const data = await res.json();
-
         if (!res.ok) {
           toast.error(data.error || "Invalid code");
         } else {
@@ -75,32 +71,24 @@ export default function ForgotPasswordPage() {
           toast.success("Code verified successfully");
         }
       } else if (step === 3) {
-        // Reset password
         if (!password) {
           toast.error("Please enter a new password");
           return;
         }
-
         if (password !== confirmPassword) {
           toast.error("Passwords don't match");
           return;
         }
-
-        // Basic password validation
         if (password.length < 8) {
           toast.error("Password must be at least 8 characters long");
           return;
         }
-
         const res = await apiClient.post("/api/reset-password", { email, code, password });
-
         const data = await res.json();
-
         if (!res.ok) {
           toast.error(data.error || "Something went wrong");
         } else {
           toast.success("Password reset successfully! Please sign in.");
-          // Redirect to login immediately (no auto-login)
           router.push("/auth/login");
         }
       }
@@ -111,244 +99,265 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // Step indicators
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center space-x-2 mb-10 overflow-hidden">
-      {[1, 2, 3].map((stepNum) => (
-        <div key={stepNum} className="flex items-center flex-1 max-w-[80px]">
-          <div
-            className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${step >= stepNum
-              ? "bg-primary shadow-sm"
-              : "bg-gray-100"
-              }`}
-          />
-        </div>
-      ))}
-    </div>
-  );
+  const steps = [
+    { id: 1, title: 'Identity', desc: 'Enter your account email', icon: Mail },
+    { id: 2, title: 'Verification', desc: 'Enter the reset code', icon: ShieldCheck },
+    { id: 3, title: 'New Password', desc: 'Secure your account', icon: Lock },
+  ];
 
   return (
-    <div className="min-h-screen bg-white flex overflow-hidden font-sans">
-      {/* Centered Form */}
-      <div className="w-full flex items-center justify-center p-8 sm:p-12 lg:p-20 overflow-y-auto bg-white">
-        <div className="max-w-md w-full flex flex-col">
-          <div className="text-center mb-10">
-            <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
+    <div className="min-h-screen flex bg-white font-sans overflow-hidden">
+      {/* Left Column - Desktop Only - Glassy like Navbar */}
+      <div className="hidden lg:flex lg:w-1/3 bg-[#D2D7F8]/80 backdrop-blur-xl flex-col p-12 border-r-2 border-white relative overflow-hidden">
+        {/* Subtle Wavy Pattern Overlay - Sharper */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M0 20 Q 25 10 50 20 T 100 20 V 100 H 0 Z" fill="currentColor" />
+          </svg>
+        </div>
+        
+        <div className="relative z-10 mb-auto text-left">
+          <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 group">
+            <div className="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-105">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="font-bricolage transition-colors">Actirova AI</span>
+          </Link>
+          
+          <div className="mt-20 space-y-8">
+            {steps.map((s, index) => (
+              <div key={s.id} className="flex gap-4 group">
+                <div className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${step >= s.id ? "border-green-600 bg-green-50 text-green-600" : "border-slate-200 bg-white text-slate-400 group-hover:border-slate-300"}`}>
+                    {s.id < step ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      <span className="text-xs font-black">{s.id}</span>
+                    )}
+                  </div>
+                  {index !== steps.length - 1 && (
+                    <div className={`w-0.5 h-12 my-1 transition-colors duration-300 ${step > s.id ? "bg-green-600" : "bg-slate-200"}`} />
+                  )}
+                </div>
+                 <div className="pt-0.5">
+                  <h4 className={`text-sm font-bold transition-colors ${step >= s.id ? "text-gray-900" : "text-gray-500"}`}>{s.title}</h4>
+                  <p className="text-xs font-medium text-gray-400 mt-0.5">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-auto">
+          <Link 
+            href="/auth/login" 
+            className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-green-600 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to login
+          </Link>
+        </div>
+      </div>
+
+      {/* Right Column - Main Form */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 lg:bg-white overflow-y-auto">
+        <div className="w-full max-w-sm space-y-10 py-12">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 group">
+              <div className="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-105">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="font-bricolage">Actirova AI</span>
             </Link>
           </div>
 
-          <div className="text-left mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-6">
-              <Lock className="w-6 h-6 text-primary" />
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 mb-6">
+               <Lock className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2">
-              {step === 1 && "Forgot Password?"}
-              {step === 2 && "Verify Identity"}
-              {step === 3 && "Reset Password"}
+            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2 tracking-tight">
+              {step === 1 && "Forgot password?"}
+              {step === 2 && "Verify identity"}
+              {step === 3 && "Reset password"}
             </h2>
-            <p className="text-gray-500 font-medium">
-              {step === 1 && "Enter your email for a reset code"}
-              {step === 2 && `Code sent to ${email}`}
-              {step === 3 && "Create a secure new password"}
+            <p className="text-gray-600 font-medium">
+              {step === 1 && "No worries, we'll send you reset instructions."}
+              {step === 2 && `We've sent a 6-digit code to your email.`}
+              {step === 3 && "Please enter your new secure password."}
             </p>
           </div>
 
-          {renderStepIndicator()}
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="bg-transparent">
-              <div className="space-y-6">
-                {step === 1 && (
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                    >
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-3 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
-                        placeholder="name@example.com"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div>
-                    <label
-                      htmlFor="code"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                    >
-                      Reset Code
-                    </label>
-                    <input
-                      id="code"
-                      name="code"
-                      type="text"
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              {step === 1 && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1">Email address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      className="pl-10 h-11 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
-                      value={code}
-                      onChange={(e) =>
-                        setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                      }
-                      className="block w-full text-center text-2xl tracking-widest bg-gray-50/50 border border-slate-200 rounded-xl focus:ring-primary/20 focus:border-primary transition-all font-mono"
-                      placeholder="000000"
-                      maxLength={6}
                     />
-                    <p className="text-[11px] font-bold text-gray-400 mt-2 ml-1 uppercase tracking-wider text-center">
-                      Enter the 6-digit code from your email
-                    </p>
                   </div>
-                )}
-
-                {step === 3 && (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="password"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        New Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Lock className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          id="password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="block w-full pl-10 pr-10 py-3 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
-                          placeholder="Create a new password"
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 pr-3.5 flex items-center"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-gray-400 hover:text-primary transition-colors" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-gray-400 hover:text-primary transition-colors" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="confirmPassword"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Confirm New Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Lock className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          required
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="block w-full pl-10 pr-10 py-3 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
-                          placeholder="Confirm your new password"
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 pr-3.5 flex items-center"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-5 w-5 text-gray-400 hover:text-primary transition-colors" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-gray-400 hover:text-primary transition-colors" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="bg-primary/5 border border-primary/10 rounded-xl p-4">
-                      <h4 className="text-[11px] font-black text-primary uppercase tracking-wider mb-2">
-                        Password Requirements:
-                      </h4>
-                      <ul className="text-[11px] text-primary/80 font-bold space-y-1">
-                        <li>• MINIMUM 8 CHARACTERS</li>
-                        <li>• CASE SENSITIVE LETTERS</li>
-                        <li>• AT LEAST ONE NUMBER</li>
-                        <li>• ONE SPECIAL CHARACTER (@$!%*?&)</li>
-                      </ul>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {step > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setStep(step - 1)}
-                      className="flex-1 py-3 px-4 border border-gray-100 text-sm font-bold rounded-xl text-gray-600 bg-white hover:bg-gray-50 transition-all active:scale-[0.98]"
-                    >
-                      Go Back
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`flex-1 py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-primary-foreground transition-all active:scale-[0.98] shadow-lg shadow-primary/20 ${loading ? "opacity-50 pointer-events-none" : "bg-primary hover:opacity-90"}`}
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-                      </div>
-                    ) : (
-                      <>
-                        {step === 1 && "Request Code"}
-                        {step === 2 && "Confirm Code"}
-                        {step === 3 && "Update Password"}
-                      </>
-                    )}
-                  </button>
                 </div>
-              </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-1.5 text-center">
+                  <Label htmlFor="code" className="text-sm font-bold text-gray-700 mb-2 block">Reset code</Label>
+                  <input
+                    id="code"
+                    type="text"
+                    required
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="block w-full text-center text-3xl tracking-[0.5em] h-14 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-mono border-2 text-gray-900 shadow-none"
+                    placeholder="000000"
+                    maxLength={6}
+                  />
+                  <p className="text-[10px] font-black text-gray-400 mt-4 uppercase tracking-widest">Enter the 6-digit verification code</p>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-sm font-bold text-gray-700 ml-1">New password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10 h-11 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className="text-sm font-bold text-gray-700 ml-1">Confirm password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10 h-11 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                  step === 1 ? "Request link" : step === 2 ? "Verify code" : "Update password"
+                )}
+              </Button>
+              
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                  className="w-full text-center text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors mt-2"
+                >
+                  Go back
+                </button>
+              )}
             </div>
 
-            <div className="pt-4 text-center">
+            <p className="text-center text-sm font-medium text-gray-500 pt-4">
+              Remember your password?{" "}
               <Link
                 href="/auth/login"
-                className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-primary transition-colors"
+                className="text-green-600 font-bold hover:text-green-700 hover:underline underline-offset-4"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Return to sign in
+                Sign in
               </Link>
-            </div>
+            </p>
           </form>
+        </div>
+        
+        {/* Footer Link for Mobile */}
+        <div className="lg:hidden mt-auto pb-8">
+           <Link 
+            href="/auth/login" 
+            className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-green-600 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to login
+          </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+// Helper icons
+function ShieldCheck(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
+function CheckCircle(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <path d="m9 11 3 3L22 4" />
+    </svg>
   );
 }

@@ -345,7 +345,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     {/* Tile: Total Sets */}
                     <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
                       <div className="relative p-5 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">
+                        <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 flex items-center justify-center font-bold">
                           {totalSets}
                         </div>
                         <div>
@@ -362,7 +362,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     {/* Tile: Total Cards */}
                     <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
                       <div className="relative p-5 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300 flex items-center justify-center font-bold">
+                        <div className="w-12 h-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-300 flex items-center justify-center font-bold">
                           {totalCards}
                         </div>
                         <div>
@@ -455,7 +455,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 flex items-center justify-center shrink-0">
                             <Sparkles size={20} />
                           </div>
                           <div className="min-w-0">

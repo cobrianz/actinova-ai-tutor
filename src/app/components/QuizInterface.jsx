@@ -237,7 +237,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
         {onBack ? (
           <button
             onClick={onBack}
-            className="flex items-center text-sm text-blue-500 hover:underline mb-4"
+            className="flex items-center text-sm text-green-500 hover:underline mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Tests
@@ -328,7 +328,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                     className={`sm:p-4 bg-card/50 rounded-xl border border-border transition-opacity duration-500 ${questionsVisible ? "opacity-100" : "opacity-0"}`}
                   >
                     <div className="flex items-start space-x-4 mb-6">
-                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                         {globalIndex + 1}
                       </div>
                       <div className="flex-1">
@@ -410,7 +410,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                         {q.options.map((option, optIndex) => (
                           <div
                             key={option}
-                            className="flex items-center space-x-4 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200 group cursor-pointer"
+                            className="flex items-center space-x-4 p-4 rounded-xl border-2 border-slate-200 dark:border-slate-600 hover:border-teal-300 dark:hover:border-teal-500 transition-all duration-200 group cursor-pointer"
                           >
                             <Checkbox
                               id={`${q._id}-${option}`}
@@ -422,7 +422,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                                 handleAnswerChange(q._id, newAnswers);
                               }}
                               disabled={submitted}
-                              className="w-5 h-5 text-purple-600"
+                              className="w-5 h-5 text-teal-600"
                             />
                             <Label
                               htmlFor={`${q._id}-${option}`}
@@ -468,7 +468,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                 <h2 className="text-2xl font-bold">Test Complete!</h2>
                 <p className="text-xl mt-2">
                   Your score:{" "}
-                  <span className="font-bold text-blue-500">{score}</span> /{" "}
+                  <span className="font-bold text-green-500">{score}</span> /{" "}
                   {totalMarks}
                 </p>
                 <div className="flex gap-4 justify-center mt-6">
@@ -489,7 +489,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                       }
                     }} 
                     variant="secondary" 
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white border-none transition-all shadow-md hover:shadow-lg"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white border-none transition-all shadow-md hover:shadow-lg"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download Exam

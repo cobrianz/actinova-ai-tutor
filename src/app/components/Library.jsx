@@ -396,7 +396,7 @@ export default function Library({ setActiveContent }) {
   if (authLoading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+        <div className="animate-spin w-8 h-8 border-4 border-green-500 rounded-full border-t-transparent"></div>
       </div>
     );
   }
@@ -411,7 +411,7 @@ export default function Library({ setActiveContent }) {
         </p>
         <Link
           href="/auth/login"
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          className="px-6 py-3 bg-[#1a1a1a] text-white rounded-lg hover:bg-black"
         >
           Log In
         </Link>
@@ -498,8 +498,8 @@ export default function Library({ setActiveContent }) {
               className="bg-card rounded-lg p-3 border border-border flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="bg-orange-100 dark:bg-orange-900 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              <div className="bg-lime-100 dark:bg-lime-900 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-lime-600 dark:text-lime-400" />
               </div>
               <div className="flex-1 flex items-center justify-around">
                 <div className="text-xl sm:text-2xl font-bold text-foreground">
@@ -643,7 +643,7 @@ export default function Library({ setActiveContent }) {
                 >
                   <div className="h-2 bg-secondary">
                     <div
-                      className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-1000"
+                      className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-1000"
                       style={{ width: `${course.progress}%` }}
                     />
                   </div>
@@ -684,13 +684,13 @@ export default function Library({ setActiveContent }) {
                               <button
                                 onClick={() => handleShare(course)}
                                 disabled={isToggling}
-                                className={`p-2 rounded-lg transition-all ${isToggling ? "opacity-50 cursor-not-allowed" : ""} ${isMyShareActive ? "bg-blue-500/10 text-blue-500 border border-blue-500/20 shadow-sm" : "hover:bg-secondary text-muted-foreground"}`}
+                                className={`p-2 rounded-lg transition-all ${isToggling ? "opacity-50 cursor-not-allowed" : ""} ${isMyShareActive ? "bg-green-500/10 text-green-500 border border-green-500/20 shadow-sm" : "hover:bg-secondary text-muted-foreground"}`}
                                 title={isToggling ? "Updating share status..." : (isMyShareActive ? "Shared by me (Click to disable)" : (course.isShared ? "Reshare course" : "Share course"))}
                               >
                                 {isToggling ? (
-                                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                  <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
                                 ) : (
-                                  <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-blue-500/10" : ""}`} />
+                                  <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-green-500/10" : ""}`} />
                                 )}
                               </button>
                             );
@@ -730,7 +730,7 @@ export default function Library({ setActiveContent }) {
                         </div>
                         <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary rounded-full transition-all duration-1000"
+                            className="h-full bg-green-500 rounded-full transition-all duration-1000"
                             style={{ width: `${course.progress}%` }}
                           />
                         </div>
@@ -742,7 +742,7 @@ export default function Library({ setActiveContent }) {
                             ? `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`
                             : `/learn/${course.id}`
                         }
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium whitespace-nowrap shadow-md shadow-primary/10"
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-black text-sm font-medium whitespace-nowrap shadow-md"
                       >
                         <Play className="w-4 h-4" />
                         {course.progress === 100 ? "Review" : "Continue"}
@@ -751,7 +751,7 @@ export default function Library({ setActiveContent }) {
 
                     <div className="flex items-center justify-between mt-3 text-[10px] sm:text-xs font-medium">
                       {course.sharerName && (
-                        <span className="italic text-blue-500/90 dark:text-blue-400/90">
+                        <span className="italic text-green-500/90 dark:text-green-400/90">
                           Shared by {course.sharerName.split(' ')[0]}
                         </span>
                       )}
@@ -781,7 +781,7 @@ export default function Library({ setActiveContent }) {
             <button
               key={i + 1}
               onClick={() => handlePageChange(i + 1)}
-              className={`px-3 py-1 rounded border transition-colors ${currentPage === i + 1 ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground hover:bg-secondary border-border"}`}
+              className={`px-3 py-1 rounded border transition-colors ${currentPage === i + 1 ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "bg-card text-foreground hover:bg-secondary border-border"}`}
             >
               {i + 1}
             </button>

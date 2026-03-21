@@ -31,8 +31,8 @@ const steps = [
     description:
       "Set up your personalized learning profile with your goals, interests, and current skill level.",
     icon: User,
-    color: "from-violet-500 to-purple-600",
-    lightColor: "from-violet-100 to-purple-100",
+    color: "from-green-500 to-teal-600",
+    lightColor: "from-green-100 to-teal-100",
     accentColor: "violet",
   },
   {
@@ -41,8 +41,8 @@ const steps = [
     description:
       "Our AI analyzes your profile and creates a customized curriculum tailored to your needs.",
     icon: Sparkles,
-    color: "from-blue-500 to-cyan-500",
-    lightColor: "from-blue-100 to-cyan-100",
+    color: "from-green-500 to-emerald-500",
+    lightColor: "from-green-100 to-emerald-100",
     accentColor: "blue",
   },
   {
@@ -51,8 +51,8 @@ const steps = [
     description:
       "Engage with bite-sized lessons featuring videos, quizzes, and hands-on exercises.",
     icon: BookOpen,
-    color: "from-indigo-500 to-violet-500",
-    lightColor: "from-indigo-100 to-violet-100",
+    color: "from-emerald-500 to-green-500",
+    lightColor: "from-emerald-100 to-green-100",
     accentColor: "indigo",
   },
   {
@@ -61,8 +61,8 @@ const steps = [
     description:
       "Reinforce your learning with real-world projects and AI-powered coding challenges.",
     icon: Brain,
-    color: "from-purple-500 to-pink-500",
-    lightColor: "from-purple-100 to-pink-100",
+    color: "from-teal-500 to-teal-500",
+    lightColor: "from-teal-100 to-teal-100",
     accentColor: "purple",
   },
   {
@@ -71,8 +71,8 @@ const steps = [
     description:
       "Monitor your growth with detailed analytics, streaks, and milestone achievements.",
     icon: TrendingUp,
-    color: "from-cyan-500 to-blue-500",
-    lightColor: "from-cyan-100 to-blue-100",
+    color: "from-emerald-500 to-green-500",
+    lightColor: "from-emerald-100 to-green-100",
     accentColor: "cyan",
   },
   {
@@ -81,8 +81,8 @@ const steps = [
     description:
       "Generate comprehensive reports and essays based on your learning journey to document insights.",
     icon: Trophy,
-    color: "from-amber-500 to-orange-500",
-    lightColor: "from-amber-100 to-orange-100",
+    color: "from-lime-500 to-lime-500",
+    lightColor: "from-lime-100 to-lime-100",
     accentColor: "amber",
   },
 ];
@@ -100,9 +100,9 @@ function BrowserWindow({ children, url, tiltDirection = "left", delay = 0 }) {
       whileHover={{ scale: 1.02, rotate: 0 }}
       className={`perspective-1000 ${tiltClass} transition-transform duration-500`}
     >
-      <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/50 dark:border-primary/10">
+      <div className="bg-white/60 backdrop-blur-xl rounded-[24px] overflow-hidden border-2 border-[#D2D7F8]/80">
         {/* Browser Chrome */}
-        <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 px-4 py-3 flex items-center gap-3 border-b border-slate-200/50 dark:border-slate-700/50">
+        <div className="bg-white/40 px-4 py-3 flex items-center gap-3 border-b-2 border-[#D2D7F8]/80">
           <div className="flex gap-2">
             <motion.div
               whileHover={{ scale: 1.2 }}
@@ -126,7 +126,7 @@ function BrowserWindow({ children, url, tiltDirection = "left", delay = 0 }) {
           <div className="w-16" />
         </div>
         {/* Content */}
-        <div className="bg-white dark:bg-slate-900/50 p-6">
+        <div className="bg-white/20 p-6">
           {children}
         </div>
       </div>
@@ -154,7 +154,7 @@ function ProfileMockup() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", delay: 0.3 }}
-            className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center"
+            className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center"
           >
             <User className="w-10 h-10 text-white" />
           </motion.div>
@@ -190,8 +190,8 @@ function ProfileMockup() {
                     )
                   }
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border-2 ${isSelected
-                    ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white border-transparent"
-                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-800"
+                    ? "bg-gradient-to-r from-green-500 to-teal-600 text-white border-transparent"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800"
                     }`}
                 >
                   {isSelected && <Check className="w-3.5 h-3.5 inline mr-1" />}
@@ -216,8 +216,8 @@ function ProfileMockup() {
                 transition={{ delay: 0.2 + i * 0.1 }}
                 whileHover={{ y: -2 }}
                 className={`p-3 rounded-xl text-center cursor-pointer transition-all duration-300 border-2 ${i === 1
-                  ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white border-transparent"
-                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-800 text-slate-600 dark:text-slate-400"
+                  ? "bg-gradient-to-br from-green-500 to-teal-600 text-white border-transparent"
+                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-green-200 dark:hover:border-green-800 text-slate-600 dark:text-slate-400"
                   }`}
               >
                 <span className="text-sm font-medium">{level}</span>
@@ -228,7 +228,7 @@ function ProfileMockup() {
 
         {/* Continue Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white">
+          <Button className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white">
             Continue
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
@@ -263,28 +263,28 @@ function LearningPathMockup() {
               Your personalized curriculum
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full text-white text-sm font-medium">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full text-white text-sm font-medium">
             <Sparkles className="w-4 h-4" />
             AI Generated
           </div>
         </div>
 
         {/* Progress Overview */}
-        <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+        <div className="p-4 rounded-xl bg-green-50 border border-green-100">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Overall Progress
             </span>
-            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+            <span className="text-sm font-bold text-green-600 dark:text-green-400">
               45%
             </span>
           </div>
-          <div className="h-2.5 bg-blue-100 dark:bg-blue-900/50 rounded-full overflow-hidden">
+          <div className="h-2.5 bg-green-100 dark:bg-green-900/50 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               whileInView={{ width: "45%" }}
               transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
-              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full relative"
+              className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full relative"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
             </motion.div>
@@ -301,7 +301,7 @@ function LearningPathMockup() {
               transition={{ delay: 0.3 + i * 0.1 }}
               whileHover={{ x: 4 }}
               className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${module.status === "current"
-                ? "bg-blue-50/50 dark:bg-blue-500/20 border-2 border-blue-500/30"
+                ? "bg-green-50/50 dark:bg-green-500/20 border-2 border-green-500/30"
                 : module.status === "locked"
                   ? "bg-slate-50 dark:bg-slate-800/50 opacity-60"
                   : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700"
@@ -311,7 +311,7 @@ function LearningPathMockup() {
                 className={`w-10 h-10 rounded-xl flex items-center justify-center ${module.status === "complete"
                   ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white"
                   : module.status === "current"
-                    ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white"
+                    ? "bg-gradient-to-br from-green-500 to-emerald-500 text-white"
                     : "bg-muted text-muted-foreground"
                   }`}
               >
@@ -336,7 +336,7 @@ function LearningPathMockup() {
                         transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
                         className={`h-full rounded-full ${module.status === "complete"
                           ? "bg-emerald-500"
-                          : "bg-gradient-to-r from-blue-500 to-cyan-500"
+                          : "bg-gradient-to-r from-green-500 to-emerald-500"
                           }`}
                       />
                     </div>
@@ -366,10 +366,10 @@ function LessonMockup() {
       <div className="space-y-5">
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="relative aspect-video rounded-xl bg-slate-100 dark:bg-indigo-950 overflow-hidden border border-slate-200 dark:border-indigo-900"
+          className="relative aspect-video rounded-xl bg-slate-100 dark:bg-emerald-950 overflow-hidden border border-slate-200 dark:border-emerald-900"
         >
           {/* Mock visual for video */}
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-900/50 dark:to-purple-900/50" />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-900/50 dark:to-teal-900/50" />
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -393,7 +393,7 @@ function LessonMockup() {
                 initial={{ width: "30%" }}
                 animate={isPlaying ? { width: "60%" } : { width: "30%" }}
                 transition={{ duration: 3 }}
-                className="h-full bg-gradient-to-r from-indigo-400 to-violet-400 rounded-full"
+                className="h-full bg-gradient-to-r from-emerald-400 to-green-400 rounded-full"
               />
             </div>
           </div>
@@ -422,7 +422,7 @@ function LessonMockup() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-xl font-bold"
           >
             <BookOpen className="w-4 h-4" />
             Take Notes
@@ -430,7 +430,7 @@ function LessonMockup() {
           <motion.button
             whileHover={{ scale: 1.02, border: '1px solid currentColor' }}
             whileTap={{ scale: 0.98 }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900 rounded-xl font-bold transition-all"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 rounded-xl font-bold transition-all"
           >
             <Brain className="w-4 h-4" />
             Ask AI
@@ -453,7 +453,7 @@ function PracticeMockup() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-500 flex items-center justify-center text-white">
               <Brain className="w-4 h-4" />
             </div>
             <span className="font-medium text-foreground">Coding Challenge</span>
@@ -465,7 +465,7 @@ function PracticeMockup() {
         </div>
 
         {/* Question */}
-        <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-800/40">
+        <div className="p-4 rounded-xl bg-teal-50 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-800/40">
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
             What is the correct way to update state based on the previous state
             in React?
@@ -486,13 +486,13 @@ function PracticeMockup() {
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedAnswer(i)}
               className={`w-full p-4 rounded-xl text-left flex items-center gap-3 transition-all duration-300 ${selectedAnswer === i
-                ? "bg-purple-100/50 dark:bg-purple-500/20 border-2 border-purple-500/50"
+                ? "bg-teal-100/50 dark:bg-teal-500/20 border-2 border-teal-500/50"
                 : "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-2 border-slate-100 dark:border-slate-700"
                 }`}
             >
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${selectedAnswer === i
-                  ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
+                  ? "bg-gradient-to-br from-teal-500 to-teal-500 text-white"
                   : "bg-muted text-muted-foreground"
                   }`}
               >
@@ -513,7 +513,7 @@ function PracticeMockup() {
         </div>
 
         {/* Submit Button */}
-        <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
+        <Button className="w-full bg-gradient-to-r from-teal-500 to-teal-500 hover:from-teal-600 hover:to-teal-600 text-white">
           Submit Answer
         </Button>
       </div>
@@ -523,9 +523,9 @@ function PracticeMockup() {
 
 function ProgressMockup() {
   const stats = [
-    { label: "Day Streak", value: "12", icon: Zap, color: "text-amber-500" },
-    { label: "XP Earned", value: "2,450", icon: Star, color: "text-purple-500" },
-    { label: "Lessons", value: "28", icon: BookOpen, color: "text-blue-500" },
+    { label: "Day Streak", value: "12", icon: Zap, color: "text-lime-500" },
+    { label: "XP Earned", value: "2,450", icon: Star, color: "text-teal-500" },
+    { label: "Lessons", value: "28", icon: BookOpen, color: "text-green-500" },
     { label: "Rank", value: "#42", icon: Trophy, color: "text-emerald-500" },
   ];
 
@@ -552,7 +552,7 @@ function ProgressMockup() {
                 transition={{ delay: 0.5 + i * 0.1 }}
               >
                 <Star
-                  className={`w-5 h-5 ${i < 4 ? "text-amber-400 fill-amber-400" : "text-slate-300"}`}
+                  className={`w-5 h-5 ${i < 4 ? "text-lime-400 fill-lime-400" : "text-slate-300"}`}
                 />
               </motion.div>
             ))}
@@ -578,7 +578,7 @@ function ProgressMockup() {
         </div>
 
         {/* Weekly Activity */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-200/50 dark:border-cyan-800/50">
+        <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border border-emerald-200/50 dark:border-emerald-800/50">
           <p className="text-sm font-medium text-foreground mb-3">This Week</p>
           <div className="flex items-end justify-between gap-2 h-20">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
@@ -591,7 +591,7 @@ function ProgressMockup() {
                     transition={{ delay: 0.5 + i * 0.05, duration: 0.5 }}
                     className={`w-full rounded-t-md ${i === 6
                       ? "bg-slate-200 dark:bg-slate-700"
-                      : "bg-gradient-to-t from-cyan-500 to-blue-500"
+                      : "bg-gradient-to-t from-emerald-500 to-green-500"
                       }`}
                   />
                   <span className="text-[10px] text-muted-foreground">{day}</span>
@@ -616,7 +616,7 @@ function ReportsMockup() {
         {/* Certificate Card */}
         <motion.div
           whileHover={{ scale: 1.02, rotateY: 5 }}
-          className="relative p-6 rounded-2xl bg-gradient-to-br from-amber-50/50 via-white to-orange-50/50 dark:from-amber-950/20 dark:via-slate-900 dark:to-orange-950/20 border-2 border-amber-200/50 dark:border-amber-800/40 overflow-hidden"
+          className="relative p-6 rounded-2xl bg-gradient-to-br from-lime-50/50 via-white to-lime-50/50 dark:from-lime-950/20 dark:via-slate-900 dark:to-lime-950/20 border-2 border-lime-200/50 dark:border-lime-800/40 overflow-hidden"
         >
           {/* Decorative Pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -630,19 +630,19 @@ function ReportsMockup() {
             <motion.div
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
-              className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center"
+              className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-lime-400 to-lime-500 flex items-center justify-center"
             >
               <Award className="w-8 h-8 text-white" />
             </motion.div>
             <div>
-              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wider">
+              <p className="text-xs text-lime-600 dark:text-lime-400 font-medium uppercase tracking-wider">
                 Comprehensive Analysis
               </p>
               <h3 className="font-heading text-xl font-bold text-foreground mt-1">
                 Learning Report
               </h3>
             </div>
-            <div className="pt-2 border-t border-amber-200 dark:border-amber-800">
+            <div className="pt-2 border-t border-lime-200 dark:border-lime-800">
               <p className="text-sm text-muted-foreground">Generated by</p>
               <p className="font-semibold text-foreground">Actirova AI</p>
             </div>
@@ -656,9 +656,9 @@ function ReportsMockup() {
           </p>
           <div className="flex gap-3 flex-wrap">
             {[
-              { icon: Zap, color: "from-amber-400 to-orange-500", label: "Fast Learner" },
+              { icon: Zap, color: "from-lime-400 to-lime-500", label: "Fast Learner" },
               { icon: Target, color: "from-emerald-400 to-teal-500", label: "Sharpshooter" },
-              { icon: Rocket, color: "from-purple-400 to-pink-500", label: "Trailblazer" },
+              { icon: Rocket, color: "from-teal-400 to-teal-500", label: "Trailblazer" },
             ].map((badge, i) => (
               <motion.div
                 key={badge.label}
@@ -680,7 +680,7 @@ function ReportsMockup() {
         </div>
 
         {/* Export Button */}
-        <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold">
+        <Button className="w-full bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-600 hover:to-lime-700 text-white font-bold">
           <Rocket className="w-4 h-4 mr-2" />
           Export Report
         </Button>
@@ -706,13 +706,12 @@ export default function HowItWorks() {
     <section
       id="how-it-works"
       ref={containerRef}
-      className="relative py-24 md:py-32 overflow-hidden bg-white dark:bg-transparent"
+      className="relative py-24 md:py-32 overflow-hidden bg-[#E8EBFD]"
     >
       {/* Background Elements */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-violet-500/5 to-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-100/40 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-green-100/40 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -727,17 +726,17 @@ export default function HowItWorks() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50/60 border border-white/60 text-[#1a1a1a] text-[13px] font-medium mb-6 backdrop-blur-md"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-green-500" />
             Simple 6-Step Process
           </motion.div>
-          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-[#1a1a1a]">
             How{" "}
-            <span className="text-gradient">Actirova</span>{" "}
+            <span className="text-green-500">Actirova</span>{" "}
             Works
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-[#1a1a1a]/60 max-w-2xl mx-auto leading-relaxed">
             Your journey from beginner to expert, powered by AI and designed for
             real results.
           </p>
@@ -771,25 +770,25 @@ export default function HowItWorks() {
                     <div className="flex items-center gap-4 mb-6">
                       <motion.div
                         whileHover={{ scale: 1.1, rotate: 5 }}
-                        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white`}
+                        className={`w-14 h-14 rounded-2xl border-2 border-[#D2D7F8]/80 bg-white/80 flex items-center justify-center text-[#1a1a1a] shadow-sm`}
                       >
                         <step.icon className="w-7 h-7" />
                       </motion.div>
-                      <span className="text-5xl font-bold text-muted-foreground/20">
+                      <span className="text-5xl font-bold text-[#1a1a1a]/10">
                         {step.number}
                       </span>
                     </div>
 
-                    <h3 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-4">
+                    <h3 className="font-heading text-2xl md:text-3xl font-bold text-[#1a1a1a] mb-4">
                       {step.title}
                     </h3>
-                    <p className="text-lg text-muted-foreground leading-relaxed mb-6">
+                    <p className="text-lg text-[#1a1a1a]/60 leading-relaxed mb-6">
                       {step.description}
                     </p>
 
                     <motion.div
                       whileHover={{ x: 4 }}
-                      className="inline-flex items-center gap-2 text-primary font-medium cursor-pointer group"
+                      className="inline-flex items-center gap-2 text-green-600 font-medium cursor-pointer group"
                     >
                       Learn more
                       <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -806,41 +805,6 @@ export default function HowItWorks() {
           })}
         </div>
 
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mt-24 md:mt-32 text-center"
-        >
-          <div className="glass rounded-3xl p-8 md:p-12 max-w-3xl mx-auto">
-            <h3 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Ready to Start Learning?
-            </h3>
-            <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-              Join thousands of learners who have transformed their careers with
-              Actirova.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white px-8"
-                >
-                  <Rocket className="w-5 h-5 mr-2" />
-                  Get Started Free
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button size="lg" variant="outline" className="bg-transparent px-8">
-                  Watch Demo
-                  <Play className="w-5 h-5 ml-2" />
-                </Button>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

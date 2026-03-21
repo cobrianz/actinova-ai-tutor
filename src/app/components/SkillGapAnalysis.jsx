@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 
 function InputField({ label, value, onChange, placeholder, rows, required }) {
-    const baseClass = "w-full px-4 py-3 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 transition-all";
+    const baseClass = "w-full px-4 py-3 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400 transition-all";
     return (
         <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -168,20 +168,20 @@ const SkillGapAnalysis = () => {
                                 <InputField label="Target Role" required value={targetRole} onChange={e => setTargetRole(e.target.value)} placeholder="e.g. Senior Data Scientist" />
                                 <InputField label="Career Goals (Optional)" value={careerGoals} onChange={e => setCareerGoals(e.target.value)} placeholder="e.g. Lead a team, Move to AI" />
                             </div>
-                            <div className="bg-violet-50 dark:bg-violet-900/20 rounded-2xl p-5 border border-violet-100 dark:border-violet-800">
-                                <h4 className="text-sm font-bold text-violet-700 dark:text-violet-300 mb-3 flex items-center gap-2">
+                            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-5 border border-green-100 dark:border-green-800">
+                                <h4 className="text-sm font-bold text-green-700 dark:text-green-300 mb-3 flex items-center gap-2">
                                     <Sparkles size={16} /> Why use this?
                                 </h4>
                                 <ul className="space-y-2">
                                     {["Discover exactly what recruiters look for in your target field.", "Prioritize learning on high-impact skills.", "Get an AI-generated learning path tailored to your background."].map((tip, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-violet-600 dark:text-violet-400">
+                                        <li key={i} className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400">
                                             <CheckCircle size={14} className="mt-0.5 shrink-0" />{tip}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                             <Button onClick={handleAnalyze} disabled={loading || !currentSkills.trim() || !targetRole.trim()}
-                                className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 rounded-2xl font-bold text-base">
+                                className="w-full bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl font-bold text-base">
                                 {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-3" /> Analyzing Gaps...</> : <><TrendingUp className="w-5 h-5 mr-3" /> Perform Analysis</>}
                             </Button>
                         </div>
@@ -190,10 +190,10 @@ const SkillGapAnalysis = () => {
                     /* Results */
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-full md:max-w-4xl space-y-6 pb-20">
                         {/* Score Card */}
-                        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-8 text-white">
+                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 text-white">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <div className="text-sm font-bold text-violet-200 mb-1">Skill Match Score</div>
+                                    <div className="text-sm font-bold text-green-200 mb-1">Skill Match Score</div>
                                     <div className="text-6xl font-black">{result.matchPercentage || 0}%</div>
                                 </div>
                                 <div className="w-24 h-24 rounded-2xl bg-white/10 flex items-center justify-center">
@@ -203,7 +203,7 @@ const SkillGapAnalysis = () => {
                             <div className="h-3 bg-white/20 rounded-full overflow-hidden mb-4">
                                 <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${Math.min(result.matchPercentage || 0, 100)}%` }} />
                             </div>
-                            <p className="text-violet-100 text-sm font-medium">{result.analysis}</p>
+                            <p className="text-green-100 text-sm font-medium">{result.analysis}</p>
                         </div>
 
                         {/* Skill Gaps & Learning Path */}
@@ -211,8 +211,8 @@ const SkillGapAnalysis = () => {
                             {/* Skill Gaps */}
                             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                        <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400" />
+                                    <div className="w-9 h-9 rounded-xl bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
+                                        <AlertTriangle size={18} className="text-lime-600 dark:text-lime-400" />
                                     </div>
                                     <h3 className="font-bold text-slate-800 dark:text-slate-200">Critical Skill Gaps</h3>
                                 </div>
@@ -222,7 +222,7 @@ const SkillGapAnalysis = () => {
                                             <div className="flex items-start justify-between mb-2">
                                                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{gap.skill}</span>
                                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${gap.priority === 'critical' ? 'bg-red-100 text-red-600' :
-                                                    gap.priority === 'high' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                                                    gap.priority === 'high' ? 'bg-lime-100 text-lime-600' : 'bg-green-100 text-green-600'
                                                     }`}>{gap.priority}</span>
                                             </div>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{gap.description}</p>
@@ -237,8 +237,8 @@ const SkillGapAnalysis = () => {
                             {/* Learning Path */}
                             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                                        <Map size={18} className="text-violet-600 dark:text-violet-400" />
+                                    <div className="w-9 h-9 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                        <Map size={18} className="text-green-600 dark:text-green-400" />
                                     </div>
                                     <h3 className="font-bold text-slate-800 dark:text-slate-200">Learning Path</h3>
                                 </div>
@@ -246,11 +246,11 @@ const SkillGapAnalysis = () => {
                                     {(result.learningPath || []).map((step, i) => (
                                         <div key={i} className="flex gap-4">
                                             <div className="flex flex-col items-center">
-                                                <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-xs font-black text-violet-600 dark:text-violet-400 shrink-0">{i + 1}</div>
+                                                <div className="w-8 h-8 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-xs font-black text-green-600 dark:text-green-400 shrink-0">{i + 1}</div>
                                                 {i < (result.learningPath?.length || 0) - 1 && <div className="w-0.5 h-full bg-slate-100 dark:bg-slate-800 mt-2" />}
                                             </div>
                                             <div className="pb-4">
-                                                <div className="text-[10px] font-black text-violet-500 mb-0.5">{step.topic}</div>
+                                                <div className="text-[10px] font-black text-green-500 mb-0.5">{step.topic}</div>
                                                 <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">{step.step}</div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{step.rationale}</p>
                                             </div>
@@ -284,7 +284,7 @@ const SkillGapAnalysis = () => {
                         {result.marketInsights && (
                             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-700">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Sparkles size={14} className="text-violet-500" />
+                                    <Sparkles size={14} className="text-green-500" />
                                     <span className="text-xs font-bold text-slate-500">Market Insights</span>
                                 </div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{result.marketInsights}</p>
@@ -309,16 +309,16 @@ const SkillGapAnalysis = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {persistentHistory.map(item => (
                                 <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-4 md:p-5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg transition-all cursor-pointer group relative">
+                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-4 md:p-5 hover:border-green-300 dark:hover:border-green-700 hover:shadow-lg transition-all cursor-pointer group relative">
                                     <button onClick={e => deleteHistoryItem(item._id, e)}
                                         className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 opacity-100 transition-all z-10">
                                         <X size={14} />
                                     </button>
                                     <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
-                                            <Target size={16} className="text-violet-600" />
+                                        <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+                                            <Target size={16} className="text-green-600" />
                                         </div>
-                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
                                             {item.data.matchPercentage}% Match
                                         </span>
                                     </div>

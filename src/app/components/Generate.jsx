@@ -12,12 +12,16 @@ import {
   ScrollText,
   HelpCircle,
   Lock,
+  GraduationCap,
+  ArrowRight,
+  Trophy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
 import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
+import { motion } from "framer-motion";
 
 export default function Generate({ setActiveContent }) {
   const searchParams = useSearchParams();
@@ -25,7 +29,7 @@ export default function Generate({ setActiveContent }) {
 
   const [topic, setTopic] = useState(initialTopic);
   const [localTopic, setLocalTopic] = useState(initialTopic);
-  const [format, setFormat] = useState("course");
+  const [format, setFormat] = useState(searchParams.get("format") || "course");
   const [difficulty, setDifficulty] = useState("beginner");
   const [questionsCount, setQuestionsCount] = useState(10);
   const [reportType, setReportType] = useState("report");
@@ -37,6 +41,17 @@ export default function Generate({ setActiveContent }) {
   const [usageData, setUsageData] = useState(null);
   const router = useRouter();
   const { user, loading, refreshToken, isPro } = useAuth();
+
+  // Sync state with URL params for reactivity
+  React.useEffect(() => {
+    const t = searchParams.get("topic");
+    const f = searchParams.get("format");
+    if (t) {
+      setTopic(t);
+      setLocalTopic(t);
+    }
+    if (f) setFormat(f);
+  }, [searchParams]);
 
   // Fetch live usage data from the server
   const fetchUsage = React.useCallback(async () => {
@@ -139,10 +154,16 @@ export default function Generate({ setActiveContent }) {
     !loading && user ? user.firstName || user.name || "" : "";
 
   // Auto-run generation if requested via URL
+  const hasAutoRunRef = React.useRef(false);
   React.useEffect(() => {
     const autoRun = searchParams.get("autoRun") === "true";
-    if (autoRun && topic && !isSubmitting && user && !loading) {
-      handleGenerate();
+    if (autoRun && topic && !isSubmitting && user && !loading && !hasAutoRunRef.current) {
+      hasAutoRunRef.current = true;
+      // Small delay to ensure all state is settled
+      const timer = setTimeout(() => {
+         handleGenerate();
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [searchParams, topic, user, loading]);
 
@@ -379,340 +400,254 @@ export default function Generate({ setActiveContent }) {
   }
 
   return (
-    <div>
+    <div className="relative min-h-screen">
       {showLoader && (
-        <div data-actirova-loader-overlay="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+        <div data-actirova-loader-overlay="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <ActirovaLoader text={format} />
         </div>
       )}
-      <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-3">
-          {friendlyName
-            ? `Welcome back, ${friendlyName}`
-            : "Welcome to Actirova AI Tutor"}
-        </h1>
-      </div>
+      <div className="max-w-4xl mx-auto px-4 py-10 relative z-10">
+        <div className="text-center mb-12">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 dark:bg-white/10 border border-[#D2D7F8]/30 text-foreground text-[13px] font-medium mb-6 backdrop-blur-md"
+          >
+            <GraduationCap className="w-4 h-4 text-green-500" />
+            <span>AI Learning Assistant</span>
+          </motion.div>
 
-      <div className="bg-card p-8 mb-10 border border-border rounded-xl">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-2">
-            What can I help you learn today?
-          </h2>
-          <p className="text-muted-foreground">
-            Enter a topic below to generate a personalized course or flashcards
-          </p>
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl md:text-5xl font-bold text-foreground mb-4 tracking-tight"
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
+            {friendlyName
+              ? `Welcome back, ${friendlyName}`
+              : "What can I help you learn?"}
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed"
+          >
+            Enter a topic below to generate a personalized course, flashcards, or quiz
+          </motion.p>
+          
           {/* Limit warning for non-premium users on current format */}
           {!isPremium && atLimit && (
-            <div className="mt-4 mx-auto max-w-md p-3 rounded-lg border border-destructive bg-destructive/10 text-destructive text-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-6 mx-auto max-w-md p-3 rounded-xl border border-destructive/20 bg-destructive/5 text-destructive text-sm font-medium backdrop-blur-sm shadow-none"
+            >
               {format === "course" && `Course limit reached (${courseLimitInfo.used}/${courseLimitInfo.limit}).`}
               {format === "flashcards" && `Flashcard limit reached (${flashcardsLimitInfo.used}/${flashcardsLimitInfo.limit}).`}
               {format === "quiz" && `Quiz limit reached (${quizzesLimitInfo.used}/${quizzesLimitInfo.limit}).`}
-              {" "}<button onClick={() => router.push("/pricing")} className="underline font-semibold">Upgrade to Pro</button> for more.
-            </div>
+              {" "}<button onClick={() => router.push("/pricing")} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
+            </motion.div>
           )}
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-              What can I help you learn?
-            </label>
-            <textarea
-              value={localTopic}
-              onChange={(e) => {
-                const value = e.target.value;
-                setLocalTopic(value);
-                setTopic(value);
-                // Auto-resize textarea
-                e.target.style.height = "auto";
-                e.target.style.height =
-                  Math.min(e.target.scrollHeight, format === "report" ? 500 : 200) + "px";
-              }}
-              placeholder={format === "report" ? "Paste your assignment prompt, specific exam questions, or research topic here..." : "Describe what you want to learn in detail... (e.g., I want to learn Python programming from scratch)"}
-              className={`w-full px-3 sm:px-4 py-3 sm:py-4 text-base sm:text-lg border border-input rounded-lg sm:rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none min-h-[100px] sm:min-h-[120px] shadow-sm hover:shadow-md ${format === "report" ? "max-h-[500px]" : "max-h-[200px]"}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.ctrlKey) {
-                  e.preventDefault();
-                  handleGenerate();
-                }
-              }}
-              autoFocus
-              rows={format === "report" ? 8 : 4}
-              maxLength={format === "report" ? 5000 : 500}
-              dir="ltr"
-              style={{ direction: "ltr", unicodeBidi: "plaintext" }}
-            />
-            <div className="mt-2 flex justify-between items-center text-xs text-muted-foreground px-1">
-              <span className="flex items-center">
-                <Lightbulb className="w-4 h-4 mr-1" />
-                Tip: Press Ctrl + Enter to generate your {format === "report" ? "report" : "course"}
-              </span>
-              <span
-                className={localTopic.length > (format === "report" ? 4800 : 450) ? "text-orange-500" : ""}
-              >
-                {localTopic.length}/{format === "report" ? 5000 : 500}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2 sm:mb-3 text-left px-1">
-              Choose the format
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              <button
-                onClick={() => setFormat("course")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "course"
-                  ? "border-primary bg-accent"
-                  : "border-border hover:border-foreground/30"
-                  }`}
-              >
-                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
-                <span className="font-medium text-xs sm:text-sm">Course</span>
-              </button>
-              <button
-                onClick={() => setFormat("flashcards")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "flashcards"
-                  ? "border-primary bg-accent"
-                  : "border-border hover:border-foreground/30"
-                  }`}
-              >
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
-                <span className="font-medium text-xs sm:text-sm">
-                  Flashcards
-                </span>
-              </button>
-              <button
-                onClick={() => setFormat("quiz")}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center ${format === "quiz"
-                  ? "border-primary bg-accent"
-                  : "border-border hover:border-foreground/30"
-                  }`}
-              >
-                <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
-                <span className="font-medium text-xs sm:text-sm">
-                  Test Yourself
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  if (!isPremium) {
-                    toast.error("Pro subscription required for Reports & Essays.");
-                    router.push("/pricing");
-                    return;
-                  }
-                  setFormat("report");
+        {/* Hero-style Main Prompt Box */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="relative max-w-2xl mx-auto mb-12 p-[2px] rounded-[32px] overflow-hidden"
+        >
+          {/* Animated Border Gradient - Smooth & Continuous Glowing Edge */}
+          <div 
+            className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[conic-gradient(from_0deg,#86efac,#6DDF97,#22c55e,#4ade80,#86efac)] animate-spin-slow opacity-90" 
+            style={{ filter: 'blur(3px)' }}
+          />
+          
+          <div className="relative bg-green-50/95 dark:bg-[#020617] backdrop-blur-2xl rounded-[30.5px] p-2 h-full w-full flex flex-col border-2 border-[#D2D7F8]/70">
+            <div className="relative p-4 flex-grow">
+              <textarea
+                value={localTopic}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setLocalTopic(value);
+                  setTopic(value);
+                  // Auto-resize
+                  e.target.style.height = "auto";
+                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
                 }}
-                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors flex flex-col items-center justify-center relative ${format === "report"
-                  ? "border-primary bg-accent"
-                  : "border-border hover:border-foreground/30"
-                  } ${!isPremium ? "opacity-80" : ""}`}
-              >
-                {!isPremium && (
-                  <div className="absolute top-2 right-2">
-                    <Lock className="w-3 h-3 text-orange-500" />
-                  </div>
-                )}
-                <ScrollText className="w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2 text-foreground" />
-                <span className="font-medium text-xs sm:text-sm">
-                  Report & Essay
-                </span>
-                {!isPremium && <span className="text-[10px] text-orange-600 font-bold uppercase mt-1">Pro</span>}
-              </button>
-            </div>
-          </div>
-
-          {format === "quiz" && (
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2 text-left">
-                Number of questions (up to 50)
-              </label>
-              <input
-                type="number"
-                value={questionsCount}
-                onChange={(e) =>
-                  setQuestionsCount(
-                    Math.min(50, parseInt(e.target.value, 10) || 10)
-                  )
-                }
-                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary h-12"
-                max="50"
+                placeholder={format === "report" ? "Paste your assignment prompt or research topic here..." : "What do you want to learn today?"}
+                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-lg text-foreground placeholder-foreground/30 resize-none h-20 hide-scrollbar"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleGenerate();
+                  }
+                }}
+                autoFocus
+                maxLength={format === "report" ? 5000 : 500}
               />
+              
+              {/* Character Count/Limit indicator */}
+              <div className="absolute top-4 right-4 text-[10px] sm:text-xs font-bold text-foreground/20">
+                {localTopic.length}/{format === "report" ? 5000 : 500}
+              </div>
+
+              {/* Subject specific indicator if any */}
+              <div className="mt-2 flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground font-medium">
+                <Sparkles className="w-3 h-3 text-green-500" />
+                <span>AI will prioritize detail for better {format === "report" ? "reports" : "courses"}.</span>
+              </div>
             </div>
-          )}
 
-          {format === "report" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-                  Content Type
-                </label>
-                <div className="relative">
-                  <select
-                    value={reportType}
-                    onChange={(e) => setReportType(e.target.value)}
-                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
-                  >
-                    <option value="report">Formal Report</option>
-                    <option value="essay">Academic Essay</option>
-                    <option value="article">Technical Article</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-                  Target Length
-                </label>
-                <div className="relative">
-                  <select
-                    value={reportLength}
-                    onChange={(e) => setReportLength(e.target.value)}
-                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
-                  >
-                    <option value="short">Short (3-5 Sections)</option>
-                    <option value="medium">Medium (6-10 Sections)</option>
-                    <option value="long">Long (11-15 Sections)</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-                  Citation Style
-                </label>
-                <div className="relative">
-                  <select
-                    value={citationStyle}
-                    onChange={(e) => setCitationStyle(e.target.value)}
-                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
-                  >
-                    <option value="APA">APA Style</option>
-                    <option value="MLA">MLA Style</option>
-                    <option value="Chicago">Chicago Style</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-                  Academic Level
-                </label>
+            {/* Bottom Row: Controls & Action */}
+            <div className="flex items-center justify-between p-2 mt-auto border-t border-[#D2D7F8]/30">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                {/* Level Dropdown */}
                 <div className="relative">
                   <select
                     value={difficulty}
-                    onChange={(e) => setDifficulty(e.target.value)}
-                    className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                    onChange={(e) => {
+                      const selectedDifficulty = e.target.value;
+                      if (!isPremium && selectedDifficulty !== "beginner") {
+                        toast.error("Pro subscription required for higher levels.");
+                        router.push("/pricing");
+                        return;
+                      }
+                      setDifficulty(selectedDifficulty);
+                    }}
+                    className="appearance-none flex items-center gap-2 px-4 py-2 pr-10 rounded-full border border-white/60 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-white/60 transition-colors text-[13px] font-medium text-foreground outline-none cursor-pointer"
                   >
-                    <option value="beginner">University Undergraduate</option>
-                    <option value="intermediate">Post-Graduate / Masters</option>
-                    <option value="advanced">PhD / Academic Professional</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate {isPremium ? "" : " (Pro)"}</option>
+                    <option value="advanced">Advanced {isPremium ? "" : " (Pro)"}</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none opacity-50" />
                 </div>
-              </div>
-            </div>
-          )}
 
-          {format !== "report" && (
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2 text-left px-1">
-                Choose difficulty level
-                {!isPremium && (
-                  <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
-                    (Free users: Beginner only)
-                  </span>
-                )}
-              </label>
-              <div className="relative">
-                <select
-                  value={difficulty}
-                  onChange={(e) => {
-                    const selectedDifficulty = e.target.value;
-
-                    if (!isPremium && selectedDifficulty !== "beginner") {
-                      toast.error(
-                        "Intermediate and Advanced levels require Pro subscription. Please upgrade to continue."
-                      );
-                      router.push("/pricing");
-                      return;
-                    }
-
-                    setDifficulty(selectedDifficulty);
-                  }}
-                  className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
-                  disabled={!isPremium && atLimit} // Optionally block interaction if at limit, but better to allow selecting beginner if it's the only option. 
-                >
-                  <option value="beginner">
-                    Beginner{" "}
-                    {!isPremium
-                      ? "(Free)"
-                      : ""}
-                  </option>
-                  <option
-                    value="intermediate"
-                    disabled={!isPremium}
-                  >
-                    Intermediate{" "}
-                    {isPremium
-                      ? "(Pro)"
-                      : "(Pro Only)"}
-                  </option>
-                  <option
-                    value="advanced"
-                    disabled={!isPremium}
-                  >
-                    Advanced{" "}
-                    {isPremium
-                      ? "(Pro)"
-                      : "(Pro Only)"}
-                  </option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              </div>
-              {!isPremium &&
-                difficulty !== "beginner" && (
-                  <div className="mt-2 p-3 bg-accent/30 border border-accent rounded-lg">
-                    <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start">
-                      <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                      Intermediate and Advanced levels require a Pro subscription.
-                      <button
-                        onClick={() => router.push("/pricing")}
-                        className="ml-1 font-semibold underline hover:text-orange-900 dark:hover:text-orange-100"
-                      >
-                        Upgrade to Pro
-                      </button>
-                    </p>
+                {/* Extra Settings (Format Specific) */}
+                {format === "quiz" && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-white/40 dark:bg-white/5 rounded-full border border-white/60 dark:border-white/10">
+                    <HelpCircle className="w-3.5 h-3.5 text-foreground/40" />
+                    <input
+                      type="number"
+                      value={questionsCount}
+                      onChange={(e) => setQuestionsCount(Math.min(50, parseInt(e.target.value) || 10))}
+                      className="w-8 bg-transparent text-[13px] font-bold text-foreground focus:outline-none"
+                    />
                   </div>
                 )}
-            </div>
-          )}
+              </div>
 
-          <button
-            onClick={handleGenerate}
-            disabled={!topic.trim() || (!!user && atLimit)}
-            className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]"
-          >
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>
-              {atLimit
-                ? `${format === "course" ? "Course" : format === "flashcards" ? "Flashcard" : format === "quiz" ? "Quiz" : "Report"} limit reached — upgrade!`
-                : "Generate"}
-            </span>
-          </button>
+              {/* Circular Generate Button */}
+              <div className="flex items-center gap-3 ml-auto">
+                <button 
+                  onClick={handleGenerate}
+                  disabled={!topic.trim() || atLimit || isSubmitting}
+                  className={`w-11 h-11 flex items-center justify-center rounded-full transition-all border border-[#D2D7F8]/60 ${topic.trim().length > 0 ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-[#1a1a1a] dark:bg-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-white/90 text-white'}`}
+                >
+                  {isSubmitting ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <ArrowRight className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Feature Cards Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-16 px-4 sm:px-0">
+          {[
+            { id: "course", label: "Course", sub: "Create a study plan to course", icon: BookOpen },
+            { id: "flashcards", label: "Flashcards", sub: "Explain complex topic to flashcards", icon: Sparkles },
+            { id: "quiz", label: "Practice Quiz", icon: Trophy, sub: "Test your knowledge with a quiz" },
+            { id: "report", label: "Report", sub: "Professional report or essay", icon: FileText, pro: true },
+          ].map((f) => (
+            <motion.div
+              key={f.id}
+              whileHover={{ y: -5 }}
+              onClick={() => {
+                if (f.pro && !isPremium) {
+                  toast.error("Pro subscription required.");
+                  router.push("/pricing");
+                  return;
+                }
+                setFormat(f.id);
+              }}
+              className={`backdrop-blur-lg border-2 p-4.5 rounded-2xl text-left transition-all cursor-pointer group relative overflow-hidden ${format === f.id 
+                ? "bg-green-50/70 dark:bg-green-500/10 border-green-600/30" 
+                : "bg-white/20 dark:bg-white/5 border-[#D2D7F8]/60 hover:bg-green-50/70 dark:hover:bg-white/10"}`}
+            >
+              {/* Shine effect */}
+              <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 group-hover:left-[200%] transition-all duration-1000 ease-out" />
+              
+              <div className="relative z-10">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 transition-colors ${format === f.id ? "bg-[#1a1a1a] dark:bg-white border-[#1a1a1a] dark:border-white" : "bg-white/80 dark:bg-white/10 border-[#D2D7F8]/60"} border shadow-none`}>
+                  <f.icon className={`w-4.5 h-4.5 ${format === f.id ? "text-white" : "text-foreground"}`} />
+                </div>
+                <div className="text-[13px] font-bold text-foreground mb-1 leading-tight">{f.label}</div>
+                <div className="text-[11px] text-muted-foreground font-medium leading-normal">{f.sub}</div>
+              </div>
+              {f.pro && !isPremium && (
+                <div className="absolute top-2 right-2">
+                  <Lock className="w-3 h-3 text-[#1a1a1a]/30" />
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+
+        {format === "report" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 animate-fade-in max-w-4xl mx-auto">
+            {[
+              { label: "Type", value: reportType, setter: setReportType, options: [
+                { v: "report", l: "Formal Report" },
+                { v: "essay", l: "Academic Essay" },
+                { v: "article", l: "Technical Article" },
+              ]},
+              { label: "Length", value: reportLength, setter: setReportLength, options: [
+                { v: "short", l: "Short (3-5 sections)" },
+                { v: "medium", l: "Medium (6-10 sections)" },
+                { v: "long", l: "Long (11-15 sections)" },
+              ]},
+              { label: "Style", value: citationStyle, setter: setCitationStyle, options: [
+                { v: "APA", l: "APA Style" },
+                { v: "MLA", l: "MLA Style" },
+                { v: "Chicago", l: "Chicago Style" },
+              ]},
+            ].map((group) => (
+              <div key={group.label} className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-bold text-[#1a1a1a]/40 tracking-widest px-1">{group.label}</span>
+                <div className="relative">
+                  <select
+                    value={group.value}
+                    onChange={(e) => group.setter(e.target.value)}
+                    className="w-full appearance-none bg-white dark:bg-white/5 font-bold text-xs text-foreground px-4 py-3 rounded-2xl border border-[#D2D7F8]/70 pr-10 focus:outline-none hover:bg-gray-50 dark:hover:bg-white/10 transition-colors cursor-pointer shadow-none"
+                  >
+                    {group.options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#1a1a1a]/40 pointer-events-none" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-green-500" />
+            Popular Learning Tracks
+          </h3>
+          <PopularTopics setTopic={setTopic} setLocalTopic={setLocalTopic} />
         </div>
       </div>
-
-      <div>
-        <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4 px-1">
-          Popular Learning Tracks
-        </h3>
-        <PopularTopics setTopic={setTopic} setLocalTopic={setLocalTopic} />
-      </div>
-    </div>
-  );
-}
+    );
+  }
 
 // Separate component for popular topics with API fetch
 function PopularTopics({ setTopic, setLocalTopic }) {

@@ -142,7 +142,7 @@ export default function ContactPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="w-20 h-20 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <MessageCircle className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">
@@ -187,7 +187,7 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
                       placeholder="John Doe"
                     />
                   </div>
@@ -206,7 +206,7 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -224,7 +224,7 @@ export default function ContactPage() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
                   >
                     <option value="general">General Inquiry</option>
                     <option value="support">Technical Support</option>
@@ -248,7 +248,7 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
                     placeholder="How can we help you?"
                   />
                 </div>
@@ -267,7 +267,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     required
                     rows={5}
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 resize-none"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 resize-none"
                     placeholder="Tell us more about your inquiry..."
                   />
                 </div>
@@ -277,7 +277,7 @@ export default function ContactPage() {
                   disabled={isSubmitting}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3.5 px-6 rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3.5 px-6 rounded-xl font-semibold hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
@@ -318,8 +318,8 @@ export default function ContactPage() {
                       className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
                       whileHover={{ x: 5 }}
                     >
-                      <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center group-hover:bg-violet-600 transition-colors">
-                        <Icon className="w-5 h-5 text-violet-600 group-hover:text-white transition-colors" />
+                      <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                        <Icon className="w-5 h-5 text-green-600 group-hover:text-white transition-colors" />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-slate-900 dark:text-white">
@@ -328,7 +328,7 @@ export default function ContactPage() {
                         <p className="text-xs text-slate-500 mb-1">
                           {info.description}
                         </p>
-                        <p className="text-sm font-medium text-violet-600">
+                        <p className="text-sm font-medium text-green-600">
                           {info.contact}
                         </p>
                       </div>
@@ -341,7 +341,7 @@ export default function ContactPage() {
             {/* Business Hours */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
               <div className="flex items-center gap-3 mb-5">
-                <Clock className="w-5 h-5 text-violet-600" />
+                <Clock className="w-5 h-5 text-green-600" />
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   Business Hours
                 </h3>
@@ -363,33 +363,6 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Department Contacts */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">
-                Department Contacts
-              </h3>
-
-              <div className="space-y-3">
-                {departments.map((dept, index) => {
-                  const Icon = dept.icon;
-                  return (
-                    <a
-                      key={index}
-                      href={`mailto:${dept.email}`}
-                      className="block p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon className="w-4 h-4 text-violet-600" />
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{dept.title}</p>
-                          <p className="text-xs text-slate-500">{dept.email}</p>
-                        </div>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
           </motion.div>
         </div>
 
@@ -414,7 +387,7 @@ export default function ContactPage() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-600 transition-colors"
+                  className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 transition-colors"
                 >
                   <social.icon className="w-5 h-5" />
                 </a>
@@ -431,33 +404,33 @@ export default function ContactPage() {
           transition={{ duration: 0.5, delay: 0.35 }}
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/help" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-violet-300 transition-colors group">
+            <Link href="/help" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-green-300 transition-colors group">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">Visit Help Center</p>
                   <p className="text-sm text-slate-500">BrowseFAQs and guides</p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
               </div>
             </Link>
             
-            <Link href="/pricing" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-violet-300 transition-colors group">
+            <Link href="/pricing" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-green-300 transition-colors group">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">View Pricing</p>
                   <p className="text-sm text-slate-500">Plans for every need</p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
               </div>
             </Link>
             
-            <Link href="/about" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-violet-300 transition-colors group">
+            <Link href="/about" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-green-300 transition-colors group">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">Learn About Us</p>
                   <p className="text-sm text-slate-500">Our mission and story</p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-violet-600 transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
               </div>
             </Link>
           </div>

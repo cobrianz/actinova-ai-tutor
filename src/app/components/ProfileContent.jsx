@@ -301,9 +301,9 @@ export default function ProfileContent() {
             <div className="mb-8 p-6 rounded-2xl bg-card text-foreground border border-border">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Avatar */}
-                <Avatar className="w-24 h-24 cursor-default border-2 border-primary/20 bg-primary/5">
+                <Avatar className="w-24 h-24 cursor-default border-2 border-green-500/20 bg-green-500/5">
                   <AvatarImage src={profileData?.user?.avatar || user?.avatar} alt={profileData?.user?.firstName || user?.name} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
+                  <AvatarFallback className="bg-green-100 text-green-700 text-3xl font-bold">
                     {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -319,7 +319,7 @@ export default function ProfileContent() {
 
                   <div className="flex flex-wrap justify-center md:justify-start gap-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${profileData?.usage?.isPremium
-                      ? "bg-gradient-to-r from-amber-200 to-yellow-400 text-yellow-900"
+                      ? "bg-gradient-to-r from-lime-200 to-yellow-400 text-yellow-900"
                       : "bg-secondary text-muted-foreground"
                       }`}>
                       {profileData?.usage?.isPremium ? <Crown size={12} /> : <Star size={12} />}
@@ -359,7 +359,7 @@ export default function ProfileContent() {
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${isActive
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-[#1a1a1a] text-white"
                       : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
                       }`}
                   >
@@ -383,7 +383,7 @@ export default function ProfileContent() {
                     <div className="flex items-center justify-center py-12">
                       <AlertCircle className="w-8 h-8 text-destructive mr-2" />
                       <span className="text-destructive">{error}</span>
-                      <button onClick={fetchProfileData} className="ml-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Retry</button>
+                      <button onClick={fetchProfileData} className="ml-4 px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-black">Retry</button>
                     </div>
                   ) : (
                     <>
@@ -420,17 +420,17 @@ export default function ProfileContent() {
                             <h2 className="text-2xl font-black text-foreground">Usage Analytics</h2>
                             <p className="text-sm text-muted-foreground">Detailed breakdown of your AI-powered activities</p>
                           </div>
-                          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 border border-primary/10">
-                            <Clock size={16} className="text-primary" />
-                            <span className="text-xs font-bold text-primary">Resets in {Math.max(1, 30 - new Date().getDate())} days</span>
+                          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/5 border border-green-500/10">
+                            <Clock size={16} className="text-green-600" />
+                            <span className="text-xs font-bold text-green-600">Resets in {Math.max(1, 30 - new Date().getDate())} days</span>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {/* Course Generation Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 border border-violet-500/10 hover:border-violet-500/30 transition-all">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-green-500/5 to-fuchsia-500/5 border border-green-500/10 hover:border-green-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-violet-500/10 text-violet-600">
+                              <div className="p-3 rounded-xl bg-green-500/10 text-green-600">
                                 <BookOpen size={24} />
                               </div>
                               <div className="text-right">
@@ -441,13 +441,13 @@ export default function ProfileContent() {
                             <div className="space-y-2">
                               <div className="flex justify-between text-xs font-bold">
                                 <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-violet-600">
+                                <span className="text-green-600">
                                   {profileData?.usage?.details?.courses?.limit === null || profileData?.usage?.details?.courses?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.courses?.limit}
                                 </span>
                               </div>
-                              <div className="h-2 w-full bg-violet-500/10 rounded-full overflow-hidden">
+                              <div className="h-2 w-full bg-green-500/10 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full transition-all duration-1000 ease-out"
+                                  className="h-full bg-gradient-to-r from-green-600 to-fuchsia-600 rounded-full transition-all duration-1000 ease-out"
                                   style={{ width: `${profileData?.usage?.details?.courses?.limit === null || profileData?.usage?.details?.courses?.limit === Infinity ? 100 : profileData?.usage?.details?.courses?.percent || 0}%` }}
                                 />
                               </div>
@@ -455,9 +455,9 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Report Generation Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 hover:border-blue-500/30 transition-all">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-green-500/5 to-emerald-500/5 border border-green-500/10 hover:border-green-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-600">
+                              <div className="p-3 rounded-xl bg-green-500/10 text-green-600">
                                 <FileText size={24} />
                               </div>
                               <div className="text-right">
@@ -468,13 +468,13 @@ export default function ProfileContent() {
                             <div className="space-y-2">
                               <div className="flex justify-between text-xs font-bold">
                                 <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-blue-600">
+                                <span className="text-green-600">
                                   {profileData?.usage?.details?.reports?.limit === null || profileData?.usage?.details?.reports?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.reports?.limit}
                                 </span>
                               </div>
-                              <div className="h-2 w-full bg-blue-500/10 rounded-full overflow-hidden">
+                              <div className="h-2 w-full bg-green-500/10 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full transition-all duration-1000 ease-out"
+                                  className="h-full bg-gradient-to-r from-green-600 to-emerald-600 rounded-full transition-all duration-1000 ease-out"
                                   style={{ width: `${profileData?.usage?.details?.reports?.limit === null || profileData?.usage?.details?.reports?.limit === Infinity ? 100 : profileData?.usage?.details?.reports?.percent || 0}%` }}
                                 />
                               </div>
@@ -509,9 +509,9 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Flashcard Sets Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-orange-500/5 to-yellow-500/5 border border-orange-500/10 hover:border-orange-500/30 transition-all">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-lime-500/5 to-yellow-500/5 border border-lime-500/10 hover:border-lime-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600">
+                              <div className="p-3 rounded-xl bg-lime-500/10 text-lime-600">
                                 <Sparkles size={24} />
                               </div>
                               <div className="text-right">
@@ -522,13 +522,13 @@ export default function ProfileContent() {
                             <div className="space-y-2">
                               <div className="flex justify-between text-xs font-bold">
                                 <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-orange-600">
+                                <span className="text-lime-600">
                                   {profileData?.usage?.details?.flashcards?.limit === null || profileData?.usage?.details?.flashcards?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.flashcards?.limit}
                                 </span>
                               </div>
-                              <div className="h-2 w-full bg-orange-500/10 rounded-full overflow-hidden">
+                              <div className="h-2 w-full bg-lime-500/10 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-orange-600 to-yellow-600 rounded-full transition-all duration-1000 ease-out"
+                                  className="h-full bg-gradient-to-r from-lime-600 to-yellow-600 rounded-full transition-all duration-1000 ease-out"
                                   style={{ width: `${profileData?.usage?.details?.flashcards?.limit === null || profileData?.usage?.details?.flashcards?.limit === Infinity ? 100 : profileData?.usage?.details?.flashcards?.percent || 0}%` }}
                                 />
                               </div>
@@ -536,9 +536,9 @@ export default function ProfileContent() {
                           </div>
 
                           {/* Quiz Sets Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-pink-500/5 border border-indigo-500/10 hover:border-indigo-500/30 transition-all">
+                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
                             <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-600">
+                              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600">
                                 <Target size={24} />
                               </div>
                               <div className="text-right">
@@ -549,13 +549,13 @@ export default function ProfileContent() {
                             <div className="space-y-2">
                               <div className="flex justify-between text-xs font-bold">
                                 <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-indigo-600">
+                                <span className="text-emerald-600">
                                   {profileData?.usage?.details?.quizzes?.limit === null || profileData?.usage?.details?.quizzes?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.quizzes?.limit}
                                 </span>
                               </div>
-                              <div className="h-2 w-full bg-indigo-500/10 rounded-full overflow-hidden">
+                              <div className="h-2 w-full bg-emerald-500/10 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-indigo-600 to-pink-600 rounded-full transition-all duration-1000 ease-out"
+                                  className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full transition-all duration-1000 ease-out"
                                   style={{ width: `${profileData?.usage?.details?.quizzes?.limit === null || profileData?.usage?.details?.quizzes?.limit === Infinity ? 100 : profileData?.usage?.details?.quizzes?.percent || 0}%` }}
                                 />
                               </div>
@@ -563,8 +563,8 @@ export default function ProfileContent() {
                           </div>
                         </div>
 
-                        <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 flex flex-col md:flex-row items-center gap-6">
-                          <div className="p-4 rounded-full bg-primary/10 text-primary">
+                        <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-green-500/5 to-green-500/10 border border-green-500/20 flex flex-col md:flex-row items-center gap-6">
+                          <div className="p-4 rounded-full bg-green-500/10 text-green-600">
                             <Zap size={32} className="animate-pulse" />
                           </div>
                           <div className="flex-1 text-center md:text-left">
@@ -580,7 +580,7 @@ export default function ProfileContent() {
                           {!profileData?.usage?.isPremium && (
                             <button
                               onClick={() => setActiveTab("billing")}
-                              className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-black hover:scale-[1.02] transition-transform"
+                              className="px-8 py-3 bg-[#1a1a1a] text-white rounded-xl font-black hover:scale-[1.02] transition-transform"
                             >
                               Upgrade Now
                             </button>
@@ -634,7 +634,7 @@ export default function ProfileContent() {
                     <button
                       onClick={handlePasswordChange}
                       disabled={updating}
-                      className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all flex items-center gap-2"
+                      className="px-6 py-2.5 bg-[#1a1a1a] text-white rounded-xl font-semibold hover:bg-black transition-all flex items-center gap-2"
                     >
                       {updating && <Loader2 size={16} className="animate-spin" />}
                       Update Password
@@ -688,7 +688,7 @@ export default function ProfileContent() {
                     <button
                       onClick={handleSaveSettings}
                       disabled={updating}
-                      className="px-8 py-2.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl font-semibold transition-all"
+                      className="px-8 py-2.5 bg-[#1a1a1a] text-white rounded-xl font-semibold transition-all hover:bg-black"
                     >
                       {updating ? "Saving..." : "Save Preferences"}
                     </button>
@@ -698,7 +698,7 @@ export default function ProfileContent() {
 
               {activeTab === "billing" && (
                 <div className="space-y-8">
-                  <div className={`p-6 rounded-2xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-blue-600 to-blue-400 text-white" : "bg-muted border border-border"}`}>
+                  <div className={`p-6 rounded-2xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-green-600 to-green-400 text-white" : "bg-muted border border-border"}`}>
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-4">
                         <div>
@@ -709,7 +709,7 @@ export default function ProfileContent() {
                               : profileData?.usage?.isPremium ? "PRO PLAN" : "FREE PLAN"}
                           </h2>
                         </div>
-                        {profileData?.usage?.isPremium ? <Crown className="text-amber-300" size={32} /> : <Star className="text-primary" size={32} />}
+                        {profileData?.usage?.isPremium ? <Crown className="text-lime-300" size={32} /> : <Star className="text-primary" size={32} />}
                       </div>
 
                       <p className={`max-w-md text-xs mb-4 ${profileData?.usage?.isPremium ? "text-white/90" : "text-muted-foreground"}`}>
@@ -722,7 +722,7 @@ export default function ProfileContent() {
                         {!profileData?.usage?.isPremium && (
                           <button
                             onClick={() => router.push("/pricing")}
-                            className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90"
+                            className="px-8 py-3 bg-[#1a1a1a] text-white rounded-xl font-bold hover:bg-black"
                           >
                             Upgrade to Pro
                           </button>

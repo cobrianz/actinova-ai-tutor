@@ -164,23 +164,7 @@ export default function Sidebar({
         >
           {/* Main Sidebar Content Wrapper to maintain width while animating */}
           <div className="w-64 h-full flex flex-col">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden">
-                  <img
-                    src="/logo.png"
-                    alt="Actirova AI Tutor"
-                    className="w-6 h-6 object-contain"
-                  />
-                </div>
-                <span className="text-xl font-bold text-foreground">
-                  Actirova AI Tutor
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-3">
-                Your personalized learning companion for any topic
-              </p>
-            </div>
+            {/* Removed Branding Section - Minimalist Mode */}
 
             <nav className="p-4 overflow-y-auto scrollbar-hide flex-1">
               <style jsx>{`
@@ -204,15 +188,15 @@ export default function Sidebar({
                       <button
                         onClick={() => handleItemClick(item.id)}
                         className={`flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                          ? "bg-accent text-accent-foreground border border-blue-200 dark:border-blue-800"
+                          ? "bg-accent text-accent-foreground border border-green-200 dark:border-green-800"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                           }`}
                       >
                         <div className="relative">
                           <Icon className="w-5 h-5" />
                           {item.premium && !isPro && (
-                            <div className="absolute -top-1 -right-1 bg-amber-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
-                              <Lock size={8} className="text-amber-950" />
+                            <div className="absolute -top-1 -right-1 bg-lime-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
+                              <Lock size={8} className="text-lime-950" />
                             </div>
                           )}
                         </div>
@@ -256,12 +240,12 @@ export default function Sidebar({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <TrendingUp className="w-4 h-4 text-blue-700 dark:text-blue-300" />
-                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                      <TrendingUp className="w-4 h-4 text-green-700 dark:text-green-300" />
+                      <span className="text-sm font-medium text-green-700 dark:text-green-300">
                         Usage
                       </span>
                     </div>
-                    <span className="text-xs text-blue-700 dark:text-blue-300">
+                    <span className="text-xs text-green-700 dark:text-green-300">
                       {isEnterprise ? "Enterprise" : (isPro ? "Pro" : "Free")}
                     </span>
                   </div>

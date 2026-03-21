@@ -54,16 +54,16 @@ export default function Features() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold mb-6 tracking-tight"
+            className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-[#1a1a1a]"
           >
-            Supercharge Your <span className="text-gradient">Learning Experience</span>
+            Supercharge Your <span className="text-green-500">Learning Experience</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-muted-foreground max-w-2xl mx-auto"
+            className="text-lg text-[#1a1a1a]/60 max-w-2xl mx-auto"
           >
             Discover a suite of intelligent tools designed to help you learn faster, 
             retain more, and achieve your educational goals with ease.
@@ -84,23 +84,26 @@ export default function Features() {
                   key={index}
                   variants={itemVariants}
                   whileHover={{ y: -5 }}
-                  className="group relative p-8 rounded-3xl border border-border-accent bg-card/50 hover:bg-card hover:border-primary/30 transition-all duration-300"
+                  className="group relative p-8 rounded-[32px] border-2 border-[#D2D7F8]/80 bg-green-50/40 backdrop-blur-lg hover:bg-green-50/70 transition-all cursor-pointer overflow-hidden"
                 >
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                  <Icon className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-                
-                {/* Decorative background element */}
-                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ChevronRight className="w-5 h-5 text-primary" />
-                </div>
-              </motion.div>
+                  <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 group-hover:left-[200%] transition-all duration-1000 ease-out" />
+                  
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-white/80 border border-[#D2D7F8]/80 flex items-center justify-center mb-6 group-hover:bg-[#1a1a1a] transition-colors">
+                      <Icon className="w-6 h-6 text-[#1a1a1a] group-hover:text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-3 text-[#1a1a1a]">
+                      {feature.title}
+                    </h3>
+                    <p className="text-[#1a1a1a]/60 leading-relaxed">
+                      {feature.description}
+                    </p>
+                    
+                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-5 h-5 text-[#1a1a1a]/40" />
+                    </div>
+                  </div>
+                </motion.div>
             );
           })}
         </motion.div>
@@ -110,35 +113,35 @@ export default function Features() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mt-20 p-8 md:p-12 rounded-[2.5rem] bg-foreground text-background relative overflow-hidden group"
+          className="mt-20 p-8 md:p-12 rounded-[32px] bg-green-200/90 backdrop-blur-xl border-2 border-white text-[#1a1a1a] relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/30 transition-colors" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-green-400/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-green-400/30 transition-colors" />
           
           <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+              <h3 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-[#1a1a1a]">
                 Ready to transform your learning journey?
               </h3>
-              <p className="text-background/80 text-lg mb-8">
+              <p className="text-[#1a1a1a]/60 text-lg mb-8">
                 Join 50,000+ students who are already using Actirova AI to accelerate their growth.
               </p>
               <div className="flex flex-wrap gap-4">
-                <div className="flex -space-x-2">
+                <div className="flex -space-x-4">
                   {[1,2,3,4].map(i => (
-                    <div key={i} className="w-10 h-10 rounded-full border-2 border-foreground bg-secondary-foreground overflow-hidden">
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-white overflow-hidden shadow-sm">
                       <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
                     </div>
                   ))}
                 </div>
-                <div className="flex flex-col justify-center">
-                  <div className="flex items-center gap-1 text-primary">
+                <div className="flex flex-col justify-center ml-2">
+                  <div className="flex items-center gap-1 text-yellow-400">
                     {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
                   </div>
-                  <span className="text-sm font-medium">4.9/5 from 2,000+ reviews</span>
+                  <span className="text-sm font-medium text-[#1a1a1a]/80">4.9/5 from 2,000+ reviews</span>
                 </div>
               </div>
             </div>
-            <div className="bg-background/10 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+            <div className="bg-white/60 backdrop-blur-md rounded-[24px] p-6 border-2 border-white shadow-sm">
               <div className="space-y-4">
                 {[
                   { label: "Adaptive Learning Rate", value: "94%" },
@@ -146,18 +149,18 @@ export default function Features() {
                   { label: "Completion Rate", value: "88%" }
                 ].map((stat, i) => (
                   <div key={i} className="flex justify-between items-center">
-                    <span className="text-sm font-medium opacity-80">{stat.label}</span>
+                    <span className="text-sm font-medium text-[#1a1a1a]/60">{stat.label}</span>
                     <div className="flex items-center gap-3">
-                      <div className="w-32 h-2 bg-background/20 rounded-full overflow-hidden">
+                      <div className="w-32 h-2 bg-black/5 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
                           whileInView={{ width: "100%" }}
                           viewport={{ once: true }}
                           transition={{ delay: 0.5 + i*0.1, duration: 1 }}
-                          className="h-full bg-primary"
+                          className="h-full bg-green-500"
                         />
                       </div>
-                      <span className="text-lg font-bold">{stat.value}</span>
+                      <span className="text-lg font-bold text-[#1a1a1a]">{stat.value}</span>
                     </div>
                   </div>
                 ))}

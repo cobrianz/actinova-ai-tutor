@@ -56,7 +56,7 @@ export default function ConfirmModal({
             className={`px-4 py-2 text-white rounded-lg transition-colors ${
               confirmColor === "red"
                 ? "bg-red-600 hover:bg-red-700"
-                : "bg-blue-600 hover:bg-blue-700"
+                : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {confirmText}

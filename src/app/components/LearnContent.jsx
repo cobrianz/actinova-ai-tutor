@@ -2102,8 +2102,8 @@ export default function LearnContent() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
         {error?.type === "disabled" ? (
           <>
-            <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">
-              <Lock className="w-10 h-10 text-amber-600 dark:text-amber-400" />
+            <div className="w-20 h-20 bg-lime-100 dark:bg-lime-900/30 rounded-full flex items-center justify-center mb-6">
+              <Lock className="w-10 h-10 text-lime-600 dark:text-lime-400" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Share Link Inactive</h2>
             <p className="text-muted-foreground max-w-md mb-8">
@@ -2201,15 +2201,15 @@ export default function LearnContent() {
               disabled={!courseData?._id || isSharingToggle}
               className={`p-1.5 sm:p-2 rounded-lg border transition-all ${isSharingToggle ? "opacity-50 cursor-not-allowed" : ""} ${
                 isMyShareActive 
-                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-sm" 
+                  ? "bg-green-500/10 text-green-500 border-green-500/20 shadow-sm" 
                   : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
               }`}
               title={isSharingToggle ? "Updating share status..." : (isMyShareActive ? "Shared by me (Click to disable)" : (courseData?.isShared ? "Reshare course" : "Share course"))}
             >
               {isSharingToggle ? (
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-blue-500/10" : ""}`} />
+                <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-green-500/10" : ""}`} />
               )}
             </button>
             <button
@@ -2337,7 +2337,7 @@ export default function LearnContent() {
                     user.subscription.plan === "pro" &&
                     user.subscription.status === "active") ||
                     user.isPremium)
-                  ? "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+                  ? "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-500/20"
                   : "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               }
             >
@@ -2397,7 +2397,7 @@ export default function LearnContent() {
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                         !isPro && moduleIndex >= FREE_READABLE_MODULES
                           ? "bg-muted text-muted-foreground"
-                          : "bg-blue-500/10 text-blue-600"
+                          : "bg-green-500/10 text-green-600"
                       }`}>
                         {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
                           <Lock className="w-4 h-4" />
@@ -2461,7 +2461,7 @@ export default function LearnContent() {
                                 {lessonTitle}
                               </span>
                               {generatingLessons.has(lessonId) && (
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 ml-2"></div>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 ml-2"></div>
                               )}
                             </div>
                             {!isCompleted && !generatingLessons.has(lessonId) && (
@@ -2478,7 +2478,7 @@ export default function LearnContent() {
 
           {/* Free user upgrade CTA at the bottom of the sidebar */}
           {!isPro && (
-            <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-blue-500/5">
+            <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-green-500/5">
               <div className="flex items-center space-x-2 mb-2">
                 <Lock className="w-4 h-4 text-primary" />
                 <span className="text-xs font-bold text-foreground">
@@ -2512,7 +2512,7 @@ export default function LearnContent() {
             <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
               {generatingLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
                     Generating lesson content...
                   </h3>
@@ -2760,9 +2760,9 @@ export default function LearnContent() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-lime-100 dark:bg-lime-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-8 h-8 text-orange-600 dark:text-orange-400"
+                  className="w-8 h-8 text-lime-600 dark:text-lime-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -2783,8 +2783,8 @@ export default function LearnContent() {
                 {format === "flashcards" ? "flashcard sets" : "courses"} this
                 month.
               </p>
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mb-6">
+                <p className="text-sm text-green-800 dark:text-green-200">
                   Upgrade to Pro for unlimited{" "}
                   {format === "flashcards" ? "flashcards" : "courses"} and
                   premium features!
@@ -2806,7 +2806,7 @@ export default function LearnContent() {
                     setLimitModalData(null);
                     router.push("/pricing");
                   }}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   Upgrade to Pro
                 </button>

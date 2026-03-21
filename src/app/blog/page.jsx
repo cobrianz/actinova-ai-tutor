@@ -145,9 +145,9 @@ export default function BlogPage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category.value
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                                    }`}
+                                    ? "bg-green-500 text-white shadow-lg shadow-green-500/20"
+                                : "bg-white/40 text-muted-foreground hover:bg-white/60 border border-white"
+                                }`}
                             >
                                 {category.name} ({category.count})
                             </motion.button>
@@ -166,9 +166,9 @@ export default function BlogPage() {
                         >
                             <div className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/50 backdrop-blur-xl shadow-2xl shadow-primary/5">
                                 {/* Decorative elements */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-background/40 to-purple-600/10 opacity-50 dark:opacity-30" />
-                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-                                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-background/40 to-teal-500/10 opacity-50 dark:opacity-30" />
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
+                                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
 
                                 {/* Grid Pattern */}
                                 <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.07]" style={{ backgroundImage: `radial-gradient(circle at 2px 2px, var(--foreground) 1px, transparent 0)`, backgroundSize: '40px 40px' }} />
@@ -177,7 +177,7 @@ export default function BlogPage() {
                                 <div className="relative p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row gap-12 items-center">
                                     <div className="flex-1 order-2 lg:order-1">
                                         <motion.div
-                                            className="inline-flex items-center space-x-2 mb-8 px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-full"
+                                            className="inline-flex items-center space-x-2 mb-8 px-4 py-1.5 bg-green-500/10 border border-green-500/20 text-green-600 rounded-full"
                                             whileHover={{ scale: 1.05 }}
                                         >
                                             <TrendingUp className="w-4 h-4" />
@@ -194,12 +194,12 @@ export default function BlogPage() {
 
                                         <div className="flex flex-wrap items-center gap-8 mb-10">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 p-[2px]">
-                                                    <div className="w-full h-full rounded-[14px] bg-card flex items-center justify-center overflow-hidden">
+                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 p-[2px]">
+                                                    <div className="w-full h-full rounded-[14px] bg-white flex items-center justify-center overflow-hidden">
                                                         {featuredPost.author?.avatar ? (
                                                             <img src={featuredPost.author.avatar} alt={featuredPost.author.name} className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <User className="w-6 h-6 text-primary" />
+                                                            <User className="w-6 h-6 text-green-600" />
                                                         )}
                                                     </div>
                                                 </div>
@@ -212,19 +212,19 @@ export default function BlogPage() {
                                             <div className="h-10 w-px bg-border hidden sm:block" />
 
                                             <div className="flex items-center gap-6">
-                                                <div className="flex items-center gap-2 text-sm font-bold bg-secondary/50 dark:bg-secondary/20 px-4 py-2 rounded-xl border border-border">
-                                                    <Calendar className="w-4 h-4 text-primary" />
+                                                <div className="flex items-center gap-2 text-sm font-bold bg-white/40 dark:bg-white/10 px-4 py-2 rounded-xl border-2 border-white">
+                                                    <Calendar className="w-4 h-4 text-green-600" />
                                                     <span className="text-muted-foreground">{featuredPost.date}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-sm font-bold bg-secondary/50 dark:bg-secondary/20 px-4 py-2 rounded-xl border border-border">
-                                                    <Clock className="w-4 h-4 text-accent" />
+                                                <div className="flex items-center gap-2 text-sm font-bold bg-white/40 dark:bg-white/10 px-4 py-2 rounded-xl border-2 border-white">
+                                                    <Clock className="w-4 h-4 text-teal-600" />
                                                     <span className="text-muted-foreground">{featuredPost.readTime}</span>
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap items-center gap-4 mt-auto lg:ml-auto justify-end w-full">
                                                 <Link
                                                     href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                                    className="group/btn inline-flex items-center space-x-3 bg-foreground text-background px-10 py-5 rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-foreground/10 dark:shadow-none"
+                                                    className="group/btn inline-flex items-center space-x-3 bg-green-500 text-white px-10 py-5 rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-green-500/20 border-2 border-white/20"
                                                 >
                                                     <span>Start Reading</span>
                                                     <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
@@ -243,11 +243,11 @@ export default function BlogPage() {
                                                             toast.success("Link copied to clipboard!");
                                                         }
                                                     }}
-                                                    className="p-5 bg-card  hover:bg-secondary text-foreground rounded-[1.5rem] transition-all"
+                                                    className="p-5 bg-white/40 hover:bg-white/60 text-foreground rounded-[1.5rem] transition-all border-2 border-white"
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
                                                 >
-                                                    <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
+                                                    <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-green-600" />
                                                 </motion.button>
                                             </div>
                                         </div>
@@ -332,7 +332,7 @@ export default function BlogPage() {
                                     >
                                         <div className="p-6">
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium">
+                                                <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded text-xs font-bold border border-green-500/20">
                                                     {post.category}
                                                 </span>
                                                 {post.trending && (
@@ -405,7 +405,7 @@ export default function BlogPage() {
 
                                                     <Link
                                                         href={`/blog/${post.slug || post._id}`}
-                                                        className="text-primary hover:text-primary/80 font-medium text-sm flex items-center space-x-1"
+                                                        className="text-green-600 hover:text-green-700 font-bold text-sm flex items-center space-x-1"
                                                     >
                                                         <span>Read</span>
                                                         <ArrowRight className="w-4 h-4" />
@@ -441,7 +441,7 @@ export default function BlogPage() {
                                 setSearchQuery("");
                                 setSelectedCategory("all");
                             }}
-                            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
                         >
                             Clear Filters
                         </button>
@@ -510,7 +510,7 @@ function NewsletterForm() {
                     />
                     <button
                         disabled={status === "loading"}
-                        className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
+                        className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors font-bold shadow-lg shadow-green-500/20 disabled:opacity-50 border border-white/20"
                     >
                         {status === "loading" ? "..." : "Subscribe"}
                     </button>
