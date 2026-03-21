@@ -37,16 +37,24 @@ export async function POST() {
     const tokensCol = db.collection("refreshTokens"); // ← Your token blacklist/allowlist
 
     // 2. Verify token is still valid in DB (rotation + revocation support)
+    // GRACE PERIOD: Allow a 60-second window for tokens that were just rotated.
+    // This prevents logouts when multiple tabs refresh simultaneously.
+    const gracePeriod = new Date(Date.now() - 60 * 1000); // 60 seconds ago
+
     const validToken = await tokensCol.findOne({
       token: refreshToken,
       userId: new ObjectId(decoded.id),
       jti: decoded.jti,
-      revoked: { $ne: true },
+      $or: [
+        { revoked: { $ne: true } },
+        { revoked: true, revokedAt: { $gt: gracePeriod } }
+      ],
       expiresAt: { $gt: new Date() },
     });
 
     if (!validToken) {
-      // Token was rotated or revoked → kill all sessions
+      console.warn(`[refresh] Persistent Token Mismatch/Expired for user ${decoded.id}. Token: ${refreshToken.substring(0, 10)}...`);
+      // Token was rotated over 60s ago or explicitly revoked → kill all sessions
       await tokensCol.updateMany(
         { userId: new ObjectId(decoded.id) },
         { $set: { revoked: true, revokedAt: new Date() } }
@@ -116,7 +124,7 @@ export async function POST() {
     const cookieOptions = {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "strict" : "lax",
+      sameSite: "lax",
       path: "/",
     };
 

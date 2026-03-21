@@ -100,6 +100,7 @@ export default function LearnContent() {
   const lastShareUpdateRef = useRef(0); // Timestamp of last personal share toggle
   const initializedCoursesRef = useRef(new Set()); // Track initialized courses
   const contentRef = useRef(null);
+  const lastWidthRef = useRef(typeof window !== "undefined" ? window.innerWidth : 0);
   const chatContainerRef = useRef(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitModalData, setLimitModalData] = useState(null);
@@ -366,16 +367,21 @@ export default function LearnContent() {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
+      const wasSmall = lastWidthRef.current < 768;
+      const isSmallNow = width < 768;
+      
       if (width >= 1024) { // Large
         setIsSidebarOpen(true);
         setIsRightPanelOpen(true);
       } else if (width >= 768) { // Medium
         setIsSidebarOpen(true);
         setIsRightPanelOpen(false);
-      } else { // Small
-        setIsSidebarOpen(true); // Open by default as requested
+      } else if (isSmallNow && !wasSmall) { // Only set default when CROSSING into small screen
+        setIsSidebarOpen(true); // Open by default once when entering mobile view
         setIsRightPanelOpen(false);
       }
+      
+      lastWidthRef.current = width;
     };
 
     // Set initial state
@@ -2022,7 +2028,7 @@ export default function LearnContent() {
       fetchInProgressRef.current = false;
       if (globalSafetyTimeout) clearTimeout(globalSafetyTimeout);
     };
-  }, [actualTopic, format, difficulty, user?._id || user?.id, loading, searchParams, params.shareId, fetchCourseData]);
+  }, [actualTopic, format, difficulty, user?._id || user?.id, loading, searchParams, params.shareId]);
 
   useEffect(() => {
     if (!courseData) return;
@@ -2492,11 +2498,16 @@ export default function LearnContent() {
           )}
         </div>
 
-        {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto hide-scrollbar bg-background"
+            onClick={() => {
+              // Close sidebar on mobile when content is touched/clicked
+              if (window.innerWidth < 1024 && isSidebarOpen) {
+                setIsSidebarOpen(false);
+              }
+            }}
+            className="flex-1 overflow-y-auto hide-scrollbar bg-background cursor-pointer lg:cursor-default"
           >
             <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
               {generatingLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? (
