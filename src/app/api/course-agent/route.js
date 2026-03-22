@@ -55,6 +55,55 @@ async function getPremiumStatus(db, userId) {
   }
 }
 
+// Helper to post-process AI generated content for robustness
+function postProcessContent(content) {
+  if (!content) return content;
+  
+  let processed = content;
+  const startRegex = /(?:^|\n)[ \t]*(?:chart\s*\n+)?([ \t]*\{)/g;
+  let match;
+  
+  // We'll iterate backwards or use a replacement strategy to avoid index shifting
+  // A simple strategy is to find all matches and then replace them
+  const replacements = [];
+  
+  while ((match = startRegex.exec(content)) !== null) {
+    const startIndex = match.index + (match[0].length - match[1].length);
+    let balance = 0;
+    let foundEnd = false;
+    let i = startIndex;
+    
+    for (; i < content.length; i++) {
+        if (content[i] === '{') balance++;
+        else if (content[i] === '}') {
+            balance--;
+            if (balance === 0) {
+                foundEnd = true;
+                i++;
+                break;
+            }
+        }
+    }
+    
+    if (foundEnd) {
+        const potentialJson = content.substring(startIndex, i).trim();
+        if (potentialJson.includes('"type"') && (potentialJson.includes('"data"') || potentialJson.includes('"datasets"'))) {
+            replacements.push({
+                full: content.substring(match.index, i),
+                json: potentialJson
+            });
+            startRegex.lastIndex = i;
+        }
+    }
+  }
+
+  replacements.forEach(r => {
+    processed = processed.replace(r.full, `\n\`\`\`chart\n${r.json}\n\`\`\`\n`);
+  });
+
+  return processed;
+}
+
 // === MAIN HANDLER ===
 export async function POST(request) {
   const userId = await getUserId(request);
@@ -329,8 +378,8 @@ Access tier: ${isPremium ? "Premium" : "Free"}
   \`\`\`
   CRITICAL: If you use backslashes (\) in JSON fields, you MUST escape them as double backslashes (\\) to ensure valid JSON (e.g., "description": "Formula: a = \\Delta v / \\Delta t").
 - **Interactive Data Charts**: Use \`\`\`chart\`\`\` blocks ONLY for quantitative data (bar, line, pie, doughnut).
-  CRITICAL: Do not use for flow diagrams.
-  CRITICAL: DO NOT use Python (Matplotlib, etc.) for visualizations. All data visualizations MUST use the \`\`\`chart\`\`\` block format.
+  CRITICAL: The \`\`\`chart\`\`\` block MUST start with \`\`\`chart and end with \`\`\` on its own line.
+  CRITICAL: NEVER include the word "chart" outside the triple backticks if it's meant to be a visualization block.
   Example structure:
   \`\`\`chart
   {
@@ -375,6 +424,7 @@ SITUATIONAL VISUALS: Use \`\`\`chart\`\`\` blocks ONLY when strictly necessary f
   });
 
   let content = completion.choices[0]?.message?.content?.trim();
+  content = postProcessContent(content);
 
   if (!content) {
     return NextResponse.json(

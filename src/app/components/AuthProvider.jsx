@@ -33,6 +33,9 @@ export function AuthProvider({ children }) {
   // Refs for timers
   const refreshPromiseRef = useRef(null);
   const mounted = useRef(false);
+  // Tracks whether a refresh has definitively failed (401/revoked) so the
+  // visibility-change handler does not keep hammering /api/refresh.
+  const refreshFailedRef = useRef(false);
 
   useEffect(() => {
     mounted.current = true;
@@ -62,6 +65,8 @@ export function AuthProvider({ children }) {
         });
 
         if (res.ok) {
+          // Successful refresh — clear the failure flag
+          refreshFailedRef.current = false;
           // After refreshing tokens, rehydrate user from server
           try {
             const meRes = await fetch("/api/me", {
@@ -81,10 +86,13 @@ export function AuthProvider({ children }) {
           }
           return true;
         } else {
+          // Mark refresh as failed so visibility-change stops retrying
+          refreshFailedRef.current = true;
           return false;
         }
       } catch (err) {
         console.error("Token refresh failed:", err);
+        refreshFailedRef.current = true;
         return false;
       } finally {
         refreshPromiseRef.current = null;
@@ -135,9 +143,15 @@ export function AuthProvider({ children }) {
         }
       }
 
-      // If everything failed, clear user
+      // If everything failed, clear user and redirect to login
       if (mounted.current) {
         setUser(null);
+        // Only redirect if we're on a protected route (not already on auth pages)
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth") && window.location.pathname !== "/") {
+          const loginUrl = new URL("/auth/login", window.location.origin);
+          loginUrl.searchParams.set("reason", "session_expired");
+          router.replace(loginUrl.pathname + loginUrl.search);
+        }
       }
       return null;
     } catch (err) {
@@ -159,7 +173,9 @@ export function AuthProvider({ children }) {
     if (!user) return;
 
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible") {
+      // Don't retry refresh if it has already definitively failed this session.
+      // The user will be redirected to login by fetchUser instead.
+      if (document.visibilityState === "visible" && !refreshFailedRef.current) {
         await refreshToken();
       }
     };

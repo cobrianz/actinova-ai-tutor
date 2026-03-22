@@ -105,6 +105,20 @@ export default function LessonChart({ type = 'bar', data, title, className = "" 
     scatter: Scatter,
   }[type] || Bar;
 
+  const isRadial = type === 'pie' || type === 'doughnut';
+
+  const chartOptions = {
+    ...defaultOptions,
+    scales: isRadial ? undefined : defaultOptions.scales,
+    plugins: {
+      ...defaultOptions.plugins,
+      legend: {
+        ...defaultOptions.plugins.legend,
+        position: isRadial ? 'right' : 'bottom',
+      }
+    }
+  };
+
   return (
     <div 
       className={`w-full my-10 flex flex-col rounded-2xl border border-border p-4 sm:p-6 transition-all ${className}`} 
@@ -117,7 +131,7 @@ export default function LessonChart({ type = 'bar', data, title, className = "" 
         </div>
       )}
       <div className="flex-1 relative">
-        <ChartComponent data={chartData} options={defaultOptions} />
+        <ChartComponent data={chartData} options={chartOptions} />
       </div>
     </div>
   );

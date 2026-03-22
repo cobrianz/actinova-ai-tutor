@@ -217,9 +217,17 @@ const cleanLatex = (text) => {
  * Shared parser to identify structural blocks (charts, tables, code, text)
  */
 export const parseContentIntoBlocks = (content) => {
-    if (!content) return [];
+    let normalizedContent = (content || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+    
+    // Strip outer triple backticks if they wrap the entire content
+    // e.g., ```markdown\n# Header\n... ```
+    const outerBacktickRegex = /^```(?:\w+)?\s*\n?([\s\S]+?)\n?```$/;
+    const outerMatch = normalizedContent.match(outerBacktickRegex);
+    if (outerMatch) {
+        normalizedContent = outerMatch[1].trim();
+    }
     const blocks = [];
-    const blockRegex = /```(\w+)?\s*\n([\s\S]*?)```/g;
+    const blockRegex = /^[ \t]*```(\w+)?\s*([\s\S]*?)```[ \t]*/gm;
     let lastIndex = 0;
     let match;
 
@@ -291,32 +299,105 @@ export const parseContentIntoBlocks = (content) => {
 
     const processTextAndTables = (text) => {
         if (!text.trim()) return;
-        const tikzRegex = /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g;
+        
+        // Can be preceded by optional "chart" keyword
+        let processedText = text;
         const visualMatches = [];
+        
+        // We use a temporary replacement strategy to handle naked charts within text blocks
+        // But since we want to return blocks, it's better to split the text
+        
+        const tikzRegex = /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g;
+        // First, find TikZ blocks
         let m;
         while ((m = tikzRegex.exec(text)) !== null) {
             visualMatches.push({ type: 'tikz', content: m[1], full: m[0], index: m.index });
         }
+        
+        // THEN, find naked charts with nested brace support
+        const startRegex = /(?:^|\n)[ \t]*(?:chart\s*\n+)?([ \t]*\{)/g;
+        let nMatch;
+        while ((nMatch = startRegex.exec(text)) !== null) {
+            const startIndex = nMatch.index + (nMatch[0].length - nMatch[1].length);
+            let balance = 0;
+            let foundEnd = false;
+            let i = startIndex;
+            
+            for (; i < text.length; i++) {
+                if (text[i] === '{') balance++;
+                else if (text[i] === '}') {
+                    balance--;
+                    if (balance === 0) {
+                        foundEnd = true;
+                        i++; // Include the closing brace
+                        break;
+                    }
+                }
+            }
+            
+            if (foundEnd) {
+                const potentialJson = text.substring(startIndex, i).trim();
+                // Verify it looks like our chart JSON
+                if (potentialJson.includes('"type"') && (potentialJson.includes('"data"') || potentialJson.includes('"datasets"'))) {
+                    visualMatches.push({ 
+                        type: 'nakedChart', 
+                        content: potentialJson, 
+                        full: text.substring(nMatch.index, i), 
+                        index: nMatch.index 
+                    });
+                    // Move the regex index forward
+                    startRegex.lastIndex = i;
+                }
+            }
+        }
+        
         visualMatches.sort((a, b) => a.index - b.index);
         let lastIdx = 0;
         visualMatches.forEach(vMatch => {
             const beforeText = text.substring(lastIdx, vMatch.index);
             if (beforeText.trim()) extractTablesFromText(beforeText);
-            processTikzBlock(vMatch.content, vMatch.full);
+            
+            if (vMatch.type === 'tikz') {
+                processTikzBlock(vMatch.content, vMatch.full);
+            } else if (vMatch.type === 'nakedChart') {
+                try {
+                    const code = vMatch.content.trim();
+                    let cleanedCode = code;
+                    cleanedCode = cleanedCode.replace(/,\s*([\}\]])/g, '$1');
+                    const sanitizedCode = cleanedCode.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+                    const chartData = JSON.parse(sanitizedCode);
+                    blocks.push({ 
+                        type: "chart", 
+                        chartType: chartData.type || "bar",
+                        data: chartData.data,
+                        title: chartData.title || "Interactive Data Chart"
+                    });
+                } catch (e) {
+                    blocks.push({ type: "code", lang: "chart", content: vMatch.content });
+                }
+            }
             lastIdx = vMatch.index + vMatch.full.length;
         });
         const remainingText = text.substring(lastIdx);
         if (remainingText.trim()) extractTablesFromText(remainingText);
     };
 
-    while ((match = blockRegex.exec(content)) !== null) {
-        const textBefore = content.substring(lastIndex, match.index);
+    while ((match = blockRegex.exec(normalizedContent)) !== null) {
+        const textBefore = normalizedContent.substring(lastIndex, match.index);
         processTextAndTables(textBefore);
+        
         const lang = (match[1] || "").toLowerCase().trim();
         const code = match[2].trim();
+        
+        // ... (rest of the block handling remains the same)
         if (lang === "chart") {
             try {
-                const sanitizedCode = code.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+                // More robust JSON cleaning for AI-generated code blocks
+                let cleanedCode = code.trim();
+                // Handle potential trailing commas in JSON (common with AI)
+                cleanedCode = cleanedCode.replace(/,\s*([\}\]])/g, '$1');
+                // Ensure backslashes are escaped properly for JSON.parse
+                const sanitizedCode = cleanedCode.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
                 const chartData = JSON.parse(sanitizedCode);
                 blocks.push({ 
                     type: "chart", 
@@ -325,21 +406,23 @@ export const parseContentIntoBlocks = (content) => {
                     title: chartData.title || "Interactive Data Chart"
                 });
             } catch (e) {
-                blocks.push({ type: "text", content: `\`\`\`${lang}\n${code}\n\`\`\`` });
+                console.error("Chart JSON parse error:", e, code);
+                // Fallback to code block instead of raw text to prevent double-rendering issues
+                blocks.push({ type: "code", lang: "chart", content: code });
             }
         } else if (lang === "table") {
             try {
                 const tableData = JSON.parse(code);
                 blocks.push({ type: "table", headers: tableData.headers, rows: tableData.rows, title: tableData.title });
             } catch (e) {
-                blocks.push({ type: "text", content: `\`\`\`${lang}\n${code}\n\`\`\`` });
+                blocks.push({ type: "code", lang: "table", content: code });
             }
         } else {
             blocks.push({ type: "code", lang, content: code });
         }
         lastIndex = blockRegex.lastIndex;
     }
-    processTextAndTables(content.substring(lastIndex));
+    processTextAndTables(normalizedContent.substring(lastIndex));
     return blocks;
 };
 

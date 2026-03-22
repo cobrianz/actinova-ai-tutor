@@ -70,11 +70,11 @@ Make them feel fresh, actionable, and impossible to ignore.${personalization}`,
         },
         {
           role: "user",
-          content: `Give me the 6 hottest, most in-demand online course topics for ${CURRENT_YEAR} — right now, today. Make them diverse, exciting, and perfectly relevant to real learners.`,
+          content: `Give me exactly 12 of the hottest, most in-demand online course topics for ${CURRENT_YEAR} — right now, today. Make them diverse, exciting, and perfectly relevant to real learners. Return ONLY a JSON array with exactly 12 objects.`,
         },
       ],
       temperature: 0.9,
-      max_tokens: 3000,
+      max_tokens: 4500,
     });
 
     let topics = [];
@@ -92,15 +92,20 @@ Make them feel fresh, actionable, and impossible to ignore.${personalization}`,
     }
 
     // === 4. Validation ===
-    if (topics.length < 12) {
+    if (topics.length < 6) {
       throw new Error("AI failed to generate sufficient trending topics");
     }
+    if (topics.length < 12) {
+      console.warn(`[trending-topics] AI returned only ${topics.length} topics (expected 12). Caching partial result.`);
+    }
+
+    const finalTopics = topics.slice(0, 12);
 
     // === 5. Cache Results (Shared global cache) ===
     await db.collection("explore_trending").deleteMany({ userId: "global_trending" });
     await db.collection("explore_trending").insertOne({
       userId: "global_trending",
-      topics: topics.slice(0, 12),
+      topics: finalTopics,
       createdAt: new Date(),
       generatedForUser: "global",
       model: "gpt-4o-mini",
@@ -108,7 +113,7 @@ Make them feel fresh, actionable, and impossible to ignore.${personalization}`,
 
     return {
       success: true,
-      topics: topics.slice(0, 12),
+      topics: finalTopics,
       source: "ai-generated",
       refreshedAt: new Date().toISOString(),
     };

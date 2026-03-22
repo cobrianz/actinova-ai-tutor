@@ -1034,10 +1034,9 @@ export default function LearnContent() {
 
   const renderContent = (content) => {
     if (!content) return "";
-
-    let html = content;
-
-    // keep content as generated
+    
+    // Normalize line endings to \n
+    let html = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 
     // First, escape any HTML that might be in the content
     const escapeHtml = (text) => {
@@ -1052,7 +1051,7 @@ export default function LearnContent() {
 
     // Handle code blocks FIRST (before other replacements) - CRITICAL
     const codeBlocks = [];
-    html = html.replace(/```(\w+)?\s*\n([\s\S]*?)```/g, (match, lang, code) => {
+    html = html.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
       // If the code block is explicitly marked as math or latex, render with KaTeX
       if (lang === "math" || lang === "latex" || lang === "tex") {
         try {
@@ -1192,18 +1191,23 @@ export default function LearnContent() {
       }
     );
 
+    // Remove Module and Lesson labels early and more aggressively
+    html = html.replace(/^\s*#+ (?:Module|Lesson|Course|Topic):\s*.*$/gim, "");
+    html = html.replace(/^\s*(?:Module|Lesson|Course|Topic):\s*.*$/gim, "");
+
     // Handle headers (removed main title as per user request)
-    html = html.replace(/^# (.*$)/gm, "");
+    // EXTREME ROBUSTNESS: Allow optional leading whitespace and ensure we match even if line endings are weird
+    html = html.replace(/^[ \t]*# (?!Module|Lesson|Course|Topic)(.*)$/gm, "");
     html = html.replace(
-      /^## (.*$)/gm,
+      /^[ \t]*## (.*$)/gm,
       '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-4 mt-8">$1</h2>'
     );
     html = html.replace(
-      /^### (.*$)/gm,
+      /^[ \t]*### (.*$)/gm,
       '<h3 class="text-xl lg:text-3xl font-bold font-serif text-foreground/90 mb-3 mt-6">$1</h3>'
     );
     html = html.replace(
-      /^#### (.*$)/gm,
+      /^[ \t]*#### (.*$)/gm,
       '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-4">$1</h4>'
     );
 
@@ -1215,17 +1219,17 @@ export default function LearnContent() {
 
     // Handle bold - must come before italics
     html = html.replace(
-      /\*\*([^\*\n]+?)\*\*/g,
+      /\*\*([\s\S]+?)\*\*/g,
       '<strong class="font-bold font-serif text-foreground">$1</strong>'
     );
     html = html.replace(
-      /<b>([^\n]+?)<\/b>/g,
+      /<b>([\s\S]+?)<\/b>/g,
       '<b class="font-bold font-serif text-foreground">$1</b>'
     );
 
     // Handle italics
     html = html.replace(
-      /\*([^\*\n]+?)\*/g,
+      /\*([^\*\n\s][^\*\n]*?)\*/g,
       '<em class="italic font-serif text-foreground/90">$1</em>'
     );
 
@@ -1288,27 +1292,17 @@ export default function LearnContent() {
         } else if (listStack.length > 0) {
           // Continuation of a list item
           processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] lg:text-lg leading-relaxed">${line}</div>`);
-        } else if (line.startsWith('<')) {
-          // Already HTML (header, blockquote, etc.)
+        } else if (line.startsWith('<h') || line.startsWith('<blockquote') || line.startsWith('<hr')) {
+          // Structural HTML elements that don't need paragraph wrapping
           processedHtml.push(line);
         } else {
-          // Regular paragraph
+          // Regular paragraph or formatted text starting with <strong or <em or <code
           processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed font-serif text-[1.05rem] lg:text-xl lg:leading-loose">${line}</p>`);
         }
       }
     }
     closeList();
     html = processedHtml.join("\n");
-
-    // Handle horizontal rules (removed as per user request)
-    html = html.replace(
-      /^\s*[-*_]{3,}\s*$/gm,
-      ''
-    );
-
-    // Underline Module and Lesson labels (removed as per user request)
-    html = html.replace(/^(Module: .*)$/gm, "");
-    html = html.replace(/^(Lesson: .*)$/gm, "");
 
     // Restore code blocks
     codeBlocks.forEach((block, i) => {
@@ -2710,7 +2704,7 @@ export default function LearnContent() {
                               <span className="text-[10px] font-black uppercase tracking-wider">AI Assistant</span>
                             </div>
                           )}
-                          <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: message.html ? message.message : message.message }} />
+                          <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: renderContent(message.message) }} />
                           <div className="text-[10px] mt-2 flex justify-end items-center space-x-1 opacity-50">
                             <span>{time}</span>
                             {isUser && <CheckCircle size={10} className="text-primary-foreground" />}

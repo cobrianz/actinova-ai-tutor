@@ -131,12 +131,26 @@ async function handleCron(request) {
       console.log(`[CRON] Cleaned up ${usageDeleteResult.deletedCount} old usage records`);
     }
 
-    // === 5. Log statistics ===
+    // === 5. Purge stale refresh tokens ===
+    // Remove tokens that have expired OR were revoked more than 2 days ago.
+    // This prevents the refreshTokens collection from growing unbounded and
+    // eliminates ghost tokens that cause "Persistent Token Mismatch" warnings.
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const tokenCleanup = await db.collection("refreshTokens").deleteMany({
+      $or: [
+        { expiresAt: { $lt: now } },                        // expired
+        { revoked: true, revokedAt: { $lt: twoDaysAgo } },  // revoked > 2 days ago
+      ],
+    });
+    console.log(`[CRON] Purged ${tokenCleanup.deletedCount} stale refresh tokens`);
+
+    // === 6. Log statistics ===
     const stats = {
       timestamp: new Date().toISOString(),
       expiredUsersDowngraded: expiredUsers.length,
       renewalRemindersQueued: expiringUsers.length,
       cancelledCleaned: cancelledResult.modifiedCount,
+      staleTokensPurged: tokenCleanup.deletedCount,
     };
 
     console.log("[CRON] Plan expiry check completed:", stats);
