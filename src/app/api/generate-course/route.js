@@ -280,7 +280,7 @@ async function handlePost(request) {
         5. Ensure lesson titles are specific and descriptive.
         6. Do not include lesson content; focus only on titles and structure.
         7. CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math.
-        8. IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+        8. MEGA IMPORTANT: NEVER wrap normal English sentences, standard text, or currencies (like $5.00) in math delimiters! If you wrap text in math delimiters, it ruins the formatting by removing all spaces (e.g. 5.00islikely). Only use them for actual standalone mathematical formulas.
         - DO NOT use Mermaid syntax or flowchart diagrams of any kind.
         - DO NOT use Python for data visualizations and charts.
         - Use only the following visual block types:
@@ -440,8 +440,8 @@ QUESTION REQUIREMENTS:
 - Focus on analysis, application, evaluation, and problem-solving
 - Each question must be clear, unambiguous, and professionally worded
 - Questions should test deep understanding, not just memorization
-- CRITICAL for Math Equations: Use \( ... \) for INLINE math and \[ ... \] for BLOCK math. 
-- IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+- CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math. 
+- MEGA IMPORTANT: NEVER wrap normal English sentences, standard text, or currencies (like $5.00) in math delimiters! If you wrap text in math delimiters, it ruins the formatting by removing all spaces (e.g. 5.00islikely). Only use them for actual standalone mathematical formulas.
 - NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
 - Return ONLY valid JSON with this exact structure:
 {

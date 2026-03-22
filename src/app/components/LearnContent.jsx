@@ -97,6 +97,7 @@ export default function LearnContent() {
   const [lessonContentLoading, setLessonContentLoading] = useState(false);
   const [generatingLessons, setGeneratingLessons] = useState(new Set()); // Track lessons being generated in background
   const [typingContent, setTypingContent] = useState("");
+  const initialFetchDone = useRef(false); // Fixes navigation loop bug
   const fetchInProgressRef = useRef(false); // Prevent duplicate API calls
   const lastShareUpdateRef = useRef(0); // Timestamp of last personal share toggle
   const initializedCoursesRef = useRef(new Set()); // Track initialized courses
@@ -302,7 +303,8 @@ export default function LearnContent() {
 
   // Initial lesson fetch trigger
   useEffect(() => {
-    if (courseData && !isLoading && activeLesson) {
+    if (courseData && !isLoading && activeLesson && !initialFetchDone.current) {
+      initialFetchDone.current = true;
       // Small delay to ensure state consistency
       const timer = setTimeout(() => {
         selectLesson(activeLesson.moduleId, activeLesson.lessonIndex);
@@ -1107,14 +1109,18 @@ export default function LearnContent() {
       }
     );
 
-    // Handle LaTeX with \[ \] delimiters (display mode)
+    // Handle LaTeX with \\[ \\] delimiters (display mode)
     html = html.replace(
       /\\\[([\s\S]*?)\\\]/g,
       (match, equation) => {
         const trimmed = equation.trim();
+        const wordCount = trimmed.split(/\s+/).length;
+        const hasMathCommands = /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right)/i.test(trimmed);
+        
         // Sanitization: If it's mostly text (many spaces, few symbols), don't render as raw math
-        if (trimmed.includes(' ') && !trimmed.includes('\\') && (trimmed.split(' ').length > 3 || trimmed.length > 40)) {
-          return `<div class="my-4 font-serif text-lg leading-relaxed">${trimmed}</div>`;
+        if (wordCount > 3 && !hasMathCommands) {
+          const plainText = trimmed.replace(/\\\$/g, '$');
+          return `<div class="my-4 font-serif text-lg leading-relaxed">${plainText}</div>`;
         }
         try {
           const rendered = katex.renderToString(trimmed, {
@@ -1129,14 +1135,18 @@ export default function LearnContent() {
       }
     );
 
-    // Handle LaTeX with \( \) delimiters (inline mode)
+    // Handle LaTeX with \\( \\) delimiters (inline mode)
     html = html.replace(
       /\\\(([\s\S]*?)\\\)/g,
       (match, equation) => {
         const trimmed = equation.trim();
+        const wordCount = trimmed.split(/\s+/).length;
+        const hasMathCommands = /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right)/i.test(trimmed);
+        
         // Sanitization: If it's mostly text, don't render as math
-        if (trimmed.includes(' ') && !trimmed.includes('\\') && (trimmed.split(' ').length > 3 || trimmed.length > 30)) {
-          return `<span>${trimmed}</span>`;
+        if (wordCount > 3 && !hasMathCommands) {
+          const plainText = trimmed.replace(/\\\$/g, '$');
+          return `<span>${plainText}</span>`;
         }
         try {
           const rendered = katex.renderToString(trimmed, {

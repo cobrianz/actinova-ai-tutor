@@ -217,7 +217,7 @@ RULES:
 - If the question asks for a definition, give just the definition
 - If the question asks for an explanation, give just the explanation needed
 - CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math. 
-- IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+- MEGA IMPORTANT: NEVER wrap normal English sentences, standard text, or currencies (like $5.00) in math delimiters! If you wrap text in math delimiters, it ruins the formatting by removing all spaces (e.g. 5.00islikely). Only use them for actual standalone mathematical formulas.
 - NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
 
 Course Title: ${courseTitle}
@@ -357,26 +357,7 @@ Access tier: ${isPremium ? "Premium" : "Free"}
 - In-depth step-by-step explanations with multiple examples
 - Industry best practices and common pitfalls
 - Detailed code examples (if relevant) with line-by-line explanations
-- **Process Flow Diagrams**: Use \`\`\`flow\`\`\` blocks ONLY for process flows, system architectures, or connected nodes. 
-  CRITICAL: Each node MUST have a specific "type": "start", "process", "decision", "end", or "custom". 
-  Example structure:
-  \`\`\`flow
-  {
-    "nodes": [
-      { "id": "1", "label": "Start Process", "type": "start", "description": "Initialization phase" },
-      { "id": "2", "label": "Analysis", "type": "process", "description": "Processing data" },
-      { "id": "3", "label": "Valid?", "type": "decision", "description": "Check requirements" },
-      { "id": "4", "label": "Finish", "type": "end", "description": "Final output" }
-    ],
-    "edges": [
-      { "source": "1", "target": "2", "label": "Initialize" },
-      { "source": "2", "target": "3", "label": "Analyze" },
-      { "source": "3", "target": "4", "label": "Yes" },
-      { "source": "3", "target": "2", "label": "No (Retry)" }
-    ]
-  }
-  \`\`\`
-  CRITICAL: If you use backslashes (\) in JSON fields, you MUST escape them as double backslashes (\\) to ensure valid JSON (e.g., "description": "Formula: a = \\Delta v / \\Delta t").
+- CRITICAL: DO NOT use Mermaid syntax, flowchart diagrams, or process flow diagrams of any kind. DO NOT output \`\`\`flow\`\`\` blocks.
 - **Interactive Data Charts**: Use \`\`\`chart\`\`\` blocks ONLY for quantitative data (bar, line, pie, doughnut).
   CRITICAL: The \`\`\`chart\`\`\` block MUST start with \`\`\`chart and end with \`\`\` on its own line.
   CRITICAL: NEVER include the word "chart" outside the triple backticks if it's meant to be a visualization block.
@@ -395,7 +376,7 @@ Access tier: ${isPremium ? "Premium" : "Free"}
 - Comprehensive Key takeaways
 - A specific "Further Reading" section with suggested topics
 - CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math. 
-- IMPORTANT: DO NOT wrap normal text, numbers with units (e.g., $100, 50%), or sentences in math delimiters. Only use them for actual mathematical formulas or algebraic variables.
+- MEGA IMPORTANT: NEVER wrap normal English sentences, standard text, or currencies (like $5.00) in math delimiters! If you wrap text in math delimiters, it ruins the formatting by removing all spaces (e.g. 5.00islikely). Only use them for actual standalone mathematical formulas.
 - NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
 - CRITICAL: DO NOT use Mermaid syntax or flowchart diagrams of any kind.
 - Use only the following visual block types:
