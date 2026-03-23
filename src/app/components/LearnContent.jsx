@@ -1694,7 +1694,7 @@ export default function LearnContent() {
           courseData.modules.forEach((module) => {
             if (module.lessons) {
               module.lessons.forEach((lesson, lessonIndex) => {
-                if (lesson.completed) {
+                if (lesson.completed || (lesson.content && lesson.content.length > 100)) {
                   const lessonId = lesson.id || `${module.id}-${lessonIndex}`;
                   completedLessonsFromDB.add(lessonId);
                 }
