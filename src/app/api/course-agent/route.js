@@ -276,9 +276,12 @@ async function handleGenerateLesson(body, userId, db) {
     difficulty = "intermediate",
   } = body;
 
-  if (!lessonTitle || !courseTopic) {
+  const mId = Number(moduleId);
+  const lIdx = Number(lessonIndex);
+
+  if (!lessonTitle || !courseTopic || isNaN(mId) || isNaN(lIdx)) {
     return NextResponse.json(
-      { error: "lessonTitle and courseTopic are required" },
+      { error: "lessonTitle, courseTopic, moduleId, and lessonIndex are required and must be valid" },
       { status: 400 }
     );
   }
@@ -323,13 +326,13 @@ async function handleGenerateLesson(body, userId, db) {
       { _id: new ObjectId(courseId) },
       {
         projection: {
-          [`modules.${moduleId - 1}.lessons.${lessonIndex}.content`]: 1,
+          [`modules.${mId - 1}.lessons.${lIdx}.content`]: 1,
         },
       }
     );
 
     const cachedContent =
-      course?.modules?.[moduleId - 1]?.lessons?.[lessonIndex]?.content;
+      course?.modules?.[mId - 1]?.lessons?.[lIdx]?.content;
 
     if (
       cachedContent &&
@@ -342,14 +345,14 @@ async function handleGenerateLesson(body, userId, db) {
   }
 
   // === Generate New Content ===
-  const promptBase = `Write an extremely detailed, high-quality educational lesson in Markdown.
-The lesson should be comprehensive, in-depth, and around 1000-1500 words minimum.
+  const promptBase = `Write an EXTREMELY DETAILED, high-quality academic educational lesson in Markdown. 
+The lesson MUST be exhaustive, comprehensive, and very long (target 1500-2500 words).
 
 Topic: ${courseTopic}
 Module: ${moduleTitle || "Core Concepts"}
 Lesson: ${lessonTitle}
 Difficulty: ${difficulty}
-Target length: ${wordCount} words
+Target length: ${wordCount} words (CRITICAL: Do not be concise. Dive extremely deep into every sub-topic).
 Access tier: ${isPremium ? "Premium" : "Free"}
 
 - Engaging and thorough introduction
@@ -414,32 +417,9 @@ SITUATIONAL VISUALS: Use \`\`\`chart\`\`\` blocks ONLY when strictly necessary f
     );
   }
 
-  // Ensure minimum length (at least 1000 words). If below threshold, attempt expansion.
-  const countWords = (txt) => (txt || "").split(/\s+/).filter(Boolean).length;
-  let attempts = 0;
-  while (countWords(content) < 1000 && attempts < 2) {
-    attempts += 1;
-    const expandPrompt = `${promptBase}\n\nThe lesson above is only ${countWords(content)} words. Please expand it significantly to reach at least 1000-1200 words. Add more examples, deeper explanations for each section, and more practice scenarios. Keep the same structure.`;
-    const expandResp = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a content expansion specialist for high-end educational courses." },
-        { role: "user", content: expandPrompt },
-      ],
-      temperature: 0.8,
-      max_tokens: isPremium ? 4000 : 3500,
-    });
-    const expanded = expandResp.choices[0]?.message?.content?.trim();
-    if (expanded && countWords(expanded) > countWords(content)) {
-      content = expanded;
-    } else {
-      break;
-    }
-  }
-
   // === Save to DB (if valid courseId) ===
   if (courseId && ObjectId.isValid(courseId)) {
-    const updatePath = `modules.${moduleId - 1}.lessons.${lessonIndex}.content`;
+    const updatePath = `modules.${mId - 1}.lessons.${lIdx}.content`;
     await db.collection("library").updateOne(
       { _id: new ObjectId(courseId) },
       {

@@ -634,7 +634,10 @@ export default function LearnContent() {
       // Show typing animation
       setTypingContent(data.content);
     } catch (error) {
-      toast.error("Failed to load lesson content");
+      console.error("Lesson generation error:", error);
+      toast.error("Generation took longer than expected. Please try refreshing in a few moments or try again.", {
+        duration: 5000,
+      });
       // Set a fallback message immutably
       setCourseData((prevData) => {
         if (!prevData) return prevData;
@@ -642,9 +645,10 @@ export default function LearnContent() {
           if (m.id === moduleId) {
             const newLessons = (m.lessons || []).map((l, idx) => {
               if (idx === lessonIndex) {
+                const existingContent = (typeof l === "object" && l.content) ? l.content : "";
                 return typeof l === "string"
-                  ? { title: l, content: "Failed to load content. Please try again." }
-                  : { ...l, content: "Failed to load content. Please try again." };
+                  ? { title: l, content: existingContent || "Taking a bit longer... If this persists, please refresh the page.", completed: false }
+                  : { ...l, content: existingContent || "Taking a bit longer... If this persists, please refresh the page.", completed: false };
               }
               return l;
             });
