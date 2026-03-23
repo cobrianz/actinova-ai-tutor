@@ -1,6 +1,0 @@
---- User Screenshot Case (Nested & Gaps) ---
-Type: text
-Content: "Consumer Behavior Influenced by Behavioral Insights:"
-Type: chart
-Data Title: Influences on Consumer Decision-Making
-

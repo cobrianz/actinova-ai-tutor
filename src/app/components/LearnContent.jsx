@@ -305,11 +305,8 @@ export default function LearnContent() {
   useEffect(() => {
     if (courseData && !isLoading && activeLesson && !initialFetchDone.current) {
       initialFetchDone.current = true;
-      // Small delay to ensure state consistency
-      const timer = setTimeout(() => {
-        selectLesson(activeLesson.moduleId, activeLesson.lessonIndex);
-      }, 500);
-      return () => clearTimeout(timer);
+      // Removed automatic selectLesson(activeLesson.moduleId, activeLesson.lessonIndex)
+      // to prevent Lesson 1 from auto-generating content.
     }
   }, [courseData, isLoading]);
 
@@ -473,16 +470,37 @@ export default function LearnContent() {
       cachedContent.trim() !== "" &&
       cachedContent.trim() !== "Content for this lesson is coming soon..."
     ) {
-      // Update course data with cached content
+      // Update course data with cached content immutably and mark as complete
       setCourseData((prevData) => {
-        const newData = { ...prevData };
-        if (newData.modules && newData.modules[moduleId - 1]) {
-          if (newData.modules[moduleId - 1].lessons[lessonIndex]) {
-            newData.modules[moduleId - 1].lessons[lessonIndex].content =
-              cachedContent;
+        if (!prevData) return prevData;
+        const newModules = (prevData.modules || []).map((m) => {
+          if (m.id === moduleId) {
+            const newLessons = (m.lessons || []).map((l, idx) => {
+              if (idx === lessonIndex) {
+                return typeof l === "string" 
+                  ? { title: l, content: cachedContent, completed: true }
+                  : { ...l, content: cachedContent, completed: true };
+              }
+              return l;
+            });
+            return { ...m, lessons: newLessons };
           }
+          return m;
+        });
+        return { ...prevData, modules: newModules };
+      });
+
+      // Synchronize local completion set using a consistent ID
+      const lessonId = (typeof lesson === "object" && lesson?.id) || `${moduleId}-${lessonIndex}`;
+      setCompletedLessons((prev) => {
+        const next = new Set(prev);
+        if (!next.has(lessonId)) {
+          next.add(lessonId);
+          try {
+            localStorage.setItem(progressKey(), JSON.stringify(Array.from(next)));
+          } catch (_) {}
         }
-        return newData;
+        return next;
       });
       return;
     }
@@ -539,16 +557,24 @@ export default function LearnContent() {
 
       const data = await response.json();
 
-      // Update course data with the new content
+      // Update course data with the new content immutably
       setCourseData((prevData) => {
-        const newData = { ...prevData };
-        if (newData.modules && newData.modules[moduleId - 1]) {
-          if (newData.modules[moduleId - 1].lessons[lessonIndex]) {
-            newData.modules[moduleId - 1].lessons[lessonIndex].content =
-              data.content;
+        if (!prevData) return prevData;
+        const newModules = (prevData.modules || []).map((m) => {
+          if (m.id === moduleId) {
+            const newLessons = (m.lessons || []).map((l, idx) => {
+              if (idx === lessonIndex) {
+                return typeof l === "string"
+                  ? { title: l, content: data.content, completed: true }
+                  : { ...l, content: data.content, completed: true };
+              }
+              return l;
+            });
+            return { ...m, lessons: newLessons };
           }
-        }
-        return newData;
+          return m;
+        });
+        return { ...prevData, modules: newModules };
       });
 
       // Save to local storage for faster future access (both cached and newly generated content)
@@ -564,17 +590,17 @@ export default function LearnContent() {
       }
 
       // Auto-mark lesson as completed now that content has been generated
-      const moduleArr = courseData?.modules || [];
-      const currentModule = moduleArr[moduleId - 1]; // Use direct index for safety matching fetch
+      const currentModule = (courseData?.modules || []).find(m => m.id === moduleId);
       const lesson = currentModule?.lessons?.[lessonIndex];
-      const lessonId = lesson?.id || `${moduleId}-${lessonIndex}`;
+      const lessonId = (lesson && typeof lesson !== "string" && lesson.id) || `${moduleId}-${lessonIndex}`;
       const courseId = courseData?._id ? String(courseData._id) : null;
 
-      // Update local completion state
+      // Update local completion state using a consistent ID
+      const finalLessonId = (lesson && typeof lesson !== "string" && lesson.id) || `${moduleId}-${lessonIndex}`;
       let updatedCompletedSet;
       setCompletedLessons((prev) => {
         const next = new Set(prev);
-        next.add(lessonId);
+        next.add(finalLessonId);
         updatedCompletedSet = next;
         // Persist to localStorage
         try {
@@ -583,14 +609,7 @@ export default function LearnContent() {
         return next;
       });
 
-      // Also mark completed on the courseData lesson object (for UI consistency)
-      setCourseData((prevData) => {
-        const newData = { ...prevData };
-        if (newData.modules?.[moduleId - 1]?.lessons?.[lessonIndex]) {
-          newData.modules[moduleId - 1].lessons[lessonIndex].completed = true;
-        }
-        return newData;
-      });
+      // Completion status is already handled in the previous setCourseData call
 
       // Persist completed flag to backend DB
       if (courseId) {
@@ -616,16 +635,24 @@ export default function LearnContent() {
       setTypingContent(data.content);
     } catch (error) {
       toast.error("Failed to load lesson content");
-      // Set a fallback message
+      // Set a fallback message immutably
       setCourseData((prevData) => {
-        const newData = { ...prevData };
-        if (newData.modules && newData.modules[moduleId - 1]) {
-          if (newData.modules[moduleId - 1].lessons[lessonIndex]) {
-            newData.modules[moduleId - 1].lessons[lessonIndex].content =
-              "Failed to load content. Please try again.";
+        if (!prevData) return prevData;
+        const newModules = (prevData.modules || []).map((m) => {
+          if (m.id === moduleId) {
+            const newLessons = (m.lessons || []).map((l, idx) => {
+              if (idx === lessonIndex) {
+                return typeof l === "string"
+                  ? { title: l, content: "Failed to load content. Please try again." }
+                  : { ...l, content: "Failed to load content. Please try again." };
+              }
+              return l;
+            });
+            return { ...m, lessons: newLessons };
           }
-        }
-        return newData;
+          return m;
+        });
+        return { ...prevData, modules: newModules };
       });
     } finally {
       setGeneratingLessons((prev) => {
@@ -654,14 +681,24 @@ export default function LearnContent() {
     try {
       const isNowCompleted = newCompleted.has(lessonId);
 
-      // 1. Update lesson.completed on courseData in memory for instant UI feedback
+      // 1. Update lesson.completed on courseData in memory for instant UI feedback immutably
       setCourseData((prevData) => {
-        const newData = { ...prevData };
-        const mod = newData.modules?.find((m) => m.id === moduleId);
-        if (mod?.lessons?.[lessonIndex]) {
-          mod.lessons[lessonIndex].completed = isNowCompleted;
-        }
-        return newData;
+        if (!prevData) return prevData;
+        const newModules = (prevData.modules || []).map((m) => {
+          if (m.id === moduleId) {
+            const newLessons = (m.lessons || []).map((l, idx) => {
+              if (idx === lessonIndex) {
+                return typeof l === "string"
+                  ? { title: l, completed: isNowCompleted }
+                  : { ...l, completed: isNowCompleted };
+              }
+              return l;
+            });
+            return { ...m, lessons: newLessons };
+          }
+          return m;
+        });
+        return { ...prevData, modules: newModules };
       });
 
       // 2. Save to Local Storage for immediate persistence
@@ -1219,6 +1256,14 @@ export default function LearnContent() {
     html = html.replace(
       /^[ \t]*#### (.*$)/gm,
       '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-4">$1</h4>'
+    );
+    html = html.replace(
+      /^[ \t]*##### (.*$)/gm,
+      '<h5 class="text-md lg:text-xl font-bold font-serif text-foreground/90 mb-1 mt-3">$1</h5>'
+    );
+    html = html.replace(
+      /^[ \t]*###### (.*$)/gm,
+      '<h6 class="text-sm lg:text-lg font-bold font-serif text-foreground/80 mb-1 mt-2">$1</h6>'
     );
 
     // Handle blockquotes
@@ -2435,7 +2480,9 @@ export default function LearnContent() {
                         const lessonId =
                           (typeof lesson !== "string" && lesson.id) ||
                           `${module.id}-${lessonIndex}`;
-                        const isCompleted = completedLessons.has(lessonId);
+                        const spinnerKey = `${module.id}-${lessonIndex}`;
+                        const isCompleted = completedLessons.has(lessonId) || 
+                          (typeof lesson !== "string" && (lesson.completed || (lesson.content && lesson.content.length > 100)));
                         const isActive =
                           activeLesson.moduleId === module.id &&
                           activeLesson.lessonIndex === lessonIndex;
@@ -2466,11 +2513,11 @@ export default function LearnContent() {
                               >
                                 {lessonTitle}
                               </span>
-                              {generatingLessons.has(lessonId) && (
+                              {generatingLessons.has(spinnerKey) && (
                                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 ml-2"></div>
                               )}
                             </div>
-                            {!isCompleted && !generatingLessons.has(lessonId) && (
+                            {!isCompleted && !generatingLessons.has(spinnerKey) && (
                               <Play className="w-4 h-4 text-muted-foreground" />
                             )}
                           </button>

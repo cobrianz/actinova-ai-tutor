@@ -722,6 +722,24 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                         const lines = pdf.splitTextToSize(headerText, contentWidth);
                         pdf.text(lines, margin, y);
                         y += (lines.length * 6) + 2;
+                    } else if (trimmedLine.startsWith("##### ")) {
+                        y += 2;
+                        pdf.setFont("times", "bold");
+                        pdf.setFontSize(11);
+                        pdf.setTextColor(...COLORS.text);
+                        const headerText = stripMarkdown(trimmedLine.substring(6));
+                        const lines = pdf.splitTextToSize(headerText, contentWidth);
+                        pdf.text(lines, margin, y);
+                        y += (lines.length * 6) + 1;
+                    } else if (trimmedLine.startsWith("###### ")) {
+                        y += 2;
+                        pdf.setFont("times", "bold");
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(...COLORS.textLight);
+                        const headerText = stripMarkdown(trimmedLine.substring(7));
+                        const lines = pdf.splitTextToSize(headerText, contentWidth);
+                        pdf.text(lines, margin, y);
+                        y += (lines.length * 5) + 1;
                     } else if (trimmedLine.startsWith("> ")) {
                         const quoteText = trimmedLine.substring(2).trim();
                         pdf.setFont("times", "italic");
