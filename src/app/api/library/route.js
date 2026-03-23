@@ -140,6 +140,7 @@ export async function GET(request) {
         progressMap.set(course.courseId?.toString(), {
           progress: course.progress || 0,
           completed: course.completed || false,
+          completedLessons: new Set(course.completedLessons || [])
         });
       });
     }
@@ -150,15 +151,39 @@ export async function GET(request) {
       const courseProgress = progressMap.get(c._id.toString()) || {
         progress: 0,
         completed: false,
+        completedLessons: new Set()
       };
+
+      let trueCompletedCount = 0;
+      let trueTotalLessons = 0;
+      const modules = c.modules || c.courseData?.modules || [];
+      modules.forEach((module, moduleIndex) => {
+        if (module.lessons) {
+          trueTotalLessons += module.lessons.length;
+          module.lessons.forEach((lesson, lessonIndex) => {
+            const lessonId = lesson.id || `${module.id || moduleIndex + 1}-${lessonIndex}`;
+            if (
+              lesson.completed ||
+              courseProgress.completedLessons.has(lessonId) ||
+              (lesson.content && lesson.content.length > 100)
+            ) {
+              trueCompletedCount++;
+            }
+          });
+        }
+      });
+      
+      const dynamicProgress = trueTotalLessons > 0 ? Math.round((trueCompletedCount / trueTotalLessons) * 100) : 0;
+      const calculatedProgress = Math.max(courseProgress.progress, dynamicProgress);
+
       items.push({
         id: `course_${c._id}`,
         type: "course",
         title: c.title || c.topic || c.originalTopic || (c.courseData?.title) || "Untitled Course",
         topic: c.originalTopic || c.topic,
         difficulty: c.difficulty || c.level,
-        progress: courseProgress.progress,
-        totalLessons: c.totalLessons || (c.courseData?.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)) || 0,
+        progress: calculatedProgress,
+        totalLessons: c.totalLessons || trueTotalLessons || 0,
         modules: c.totalModules || (c.courseData?.modules?.length) || 0,
         isPremium: c.isPremium || false,
         pinned: (library?.pinned || []).includes(`course_${c._id}`),
