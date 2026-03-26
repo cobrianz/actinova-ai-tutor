@@ -71,7 +71,7 @@ export default function Sidebar({
     } else {
       setSidebarOpen(false);
     }
-  }, [screenSize]);
+  }, [screenSize, setSidebarOpen]);
 
   useEffect(() => {
     if (activeContent) setActiveItem(activeContent);

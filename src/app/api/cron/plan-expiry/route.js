@@ -8,23 +8,13 @@
 
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
-
-// Verify cron secret to prevent unauthorized calls
-const CRON_SECRET = process.env.CRON_SECRET || "your-secret-key";
+import { authorizeCronRequest } from "../_lib";
 
 async function handleCron(request) {
   try {
-    // Verify cron secret (Support both standard Authorization header and custom x-cron-secret)
-    const authHeader = request.headers.get("authorization");
-    const customSecret = request.headers.get("x-cron-secret");
-    const secret = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : customSecret;
-
-    if (secret !== CRON_SECRET) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    const unauthorizedResponse = authorizeCronRequest(request);
+    if (unauthorizedResponse) {
+      return unauthorizedResponse;
     }
 
     const { db } = await connectToDatabase();

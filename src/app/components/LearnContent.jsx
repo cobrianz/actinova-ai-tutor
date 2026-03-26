@@ -458,8 +458,8 @@ export default function LearnContent() {
     }
 
     // Fetch lesson content if not already loaded
-    const module = courseData?.modules?.find((m) => m.id === moduleId);
-    const lesson = module?.lessons?.[lessonIndex];
+    const targetModule = courseData?.modules?.find((m) => m.id === moduleId);
+    const lesson = targetModule?.lessons?.[lessonIndex];
 
     // Check local storage first
     const localStorageKey = `lesson_${actualTopic}_${difficulty}_${moduleId}_${lessonIndex}`;
@@ -1381,12 +1381,12 @@ export default function LearnContent() {
   const getCurrentLesson = () => {
     if (!courseData || !courseData.modules) return null;
 
-    const module = courseData.modules.find(
+    const currentModule = courseData.modules.find(
       (m) => m.id === activeLesson.moduleId
     );
-    if (!module) return null;
+    if (!currentModule) return null;
 
-    const lesson = module.lessons[activeLesson.lessonIndex];
+    const lesson = currentModule.lessons[activeLesson.lessonIndex];
     if (typeof lesson === "string") {
       return {
         title: lesson,

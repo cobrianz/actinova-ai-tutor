@@ -2,10 +2,8 @@
 
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import { getTrackedUsageSummary } from "@/lib/usageSummary";
 import { ObjectId } from "mongodb";
-
-const FREE_LIMIT = 5;
-const PREMIUM_LIMIT = 15;
 
 async function getUserIdFromToken(request) {
   const authHeader = request.headers.get("authorization");
@@ -69,76 +67,6 @@ async function getUserIdFromToken(request) {
   return null;
 }
 
-async function getDetailedUsage(db, userId, user) {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  // Calculate dynamic reset date based on user creation day
-  const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
-  const resetDay = createdAt.getDate();
-  let nextReset = new Date(now.getFullYear(), now.getMonth(), resetDay);
-
-  // If the reset date for this month has already passed, set it for next month
-  if (nextReset <= now) {
-    nextReset = new Date(now.getFullYear(), now.getMonth() + 1, resetDay);
-  }
-
-  // Format reset date (e.g., "Jan 15th")
-  const day = nextReset.getDate();
-  const month = nextReset.toLocaleString('default', { month: 'short' });
-  const suffix = (day) => {
-    if (day > 3 && day < 21) return 'th';
-    switch (day % 10) {
-      case 1: return "st";
-      case 2: return "nd";
-      case 3: return "rd";
-      default: return "th";
-    }
-  };
-  const resetDateFormatted = `${month} ${day}${suffix(day)}`;
-
-  const [courseUsed, cardSetUsed, quizUsed] = await Promise.all([
-    db.collection("library").countDocuments({ userId, format: "course", createdAt: { $gte: startOfMonth } }),
-    db.collection("cardSets").countDocuments({ userId, createdAt: { $gte: startOfMonth } }),
-    db.collection("tests").countDocuments({ createdBy: userId, createdAt: { $gte: startOfMonth } })
-  ]);
-
-  const isPremium =
-    user.isPremium === true ||
-    (user.subscription?.plan === "pro" &&
-      user.subscription?.status === "active");
-
-  const isEnterprise =
-    user.subscription?.plan === "enterprise" &&
-    user.subscription?.status === "active";
-
-  const limits = {
-    courses: isEnterprise ? Infinity : (isPremium ? 15 : 2),
-    flashcards: isEnterprise ? Infinity : (isPremium ? 20 : 2),
-    quizzes: isEnterprise ? Infinity : (isPremium ? 20 : 1)
-  };
-
-  const coursePercent = Math.min(100, Math.round((courseUsed / limits.courses) * 100));
-  const cardPercent = Math.min(100, Math.round((cardSetUsed / limits.flashcards) * 100));
-  const quizPercent = Math.min(100, Math.round((quizUsed / limits.quizzes) * 100));
-
-  const maxPercent = Math.max(coursePercent, cardPercent, quizPercent);
-
-  return {
-    used: courseUsed + cardSetUsed + quizUsed,
-    limit: limits.courses + limits.flashcards + limits.quizzes,
-    percentage: maxPercent,
-    isPremium,
-    resetDate: resetDateFormatted,
-    details: {
-      courses: { used: courseUsed, limit: limits.courses, percent: coursePercent },
-      flashcards: { used: cardSetUsed, limit: limits.flashcards, percent: cardPercent },
-      quizzes: { used: quizUsed, limit: limits.quizzes, percent: quizPercent }
-    },
-    isAtLimit: maxPercent >= 100
-  };
-}
-
 export async function GET(request) {
   try {
     const userId = await getUserIdFromToken(request);
@@ -166,7 +94,7 @@ export async function GET(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const usage = await getDetailedUsage(db, userId, user);
+    const usage = await getTrackedUsageSummary(db, user);
 
     return NextResponse.json({
       success: true,
@@ -332,7 +260,7 @@ export async function PUT(request) {
         timeCommitment: updatedUser.timeCommitment,
         onboardingCompleted: updatedUser.onboardingCompleted || false,
         subscription: updatedUser.subscription,
-        usage: await getDetailedUsage(db, userId, updatedUser),
+        usage: await getTrackedUsageSummary(db, updatedUser),
       },
     });
   } catch (error) {

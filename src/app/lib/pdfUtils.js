@@ -1158,3 +1158,1080 @@ export const downloadReceiptAsPDF = async (data) => {
 
     pdf.save(`Actirova_Receipt_${data.receiptNumber || Date.now()}.pdf`);
 };
+
+export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
+    if (!resumeData) throw new Error("Resume data is required.");
+
+    const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+    });
+
+    const PAGE_WIDTH = pdf.internal.pageSize.getWidth();
+    const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
+    const MARGIN = 16;
+    const CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
+    const COLORS = {
+        text: [26, 26, 46],
+        muted: [100, 116, 139],
+        line: [226, 232, 240],
+        accent: [34, 197, 94],
+        accentSoft: [240, 253, 244],
+        headerAlign: "center",
+        sectionStyle: "pill",
+        summaryStyle: "plain",
+        entryStyle: "plain",
+        nameSize: 25,
+    };
+    const BASE_LINE_HEIGHT = 5.8;
+
+    const data = {
+        personalInfo: resumeData.personalInfo || {},
+        summary: resumeData.summary || "",
+        experience: resumeData.experience || [],
+        education: resumeData.education || [],
+        skills: resumeData.skills || [],
+        projects: resumeData.projects || [],
+        certifications: resumeData.certifications || [],
+        awards: resumeData.awards || [],
+        languages: resumeData.languages || [],
+        customSections: resumeData.customSections || [],
+    };
+
+    let y = 20;
+
+    const textValue = (value) => {
+        if (value === null || value === undefined) return "";
+        if (Array.isArray(value)) {
+            return value.filter(Boolean).join(", ");
+        }
+        return String(value).trim();
+    };
+
+    const normalizeList = (value) => {
+        if (Array.isArray(value)) {
+            return value
+                .map((item) => textValue(item))
+                .filter(Boolean);
+        }
+
+        return textValue(value)
+            .split(/\r?\n/)
+            .map((item) => item.replace(/^[-*•]\s*/, "").trim())
+            .filter(Boolean);
+    };
+
+    const ensureSpace = (needed = 12) => {
+        if (y + needed <= PAGE_HEIGHT - 18) {
+            return;
+        }
+
+        pdf.addPage();
+        y = 18;
+    };
+
+    const writeWrappedText = (text, x, width, options = {}) => {
+        const {
+            size = 11,
+            color = COLORS.text,
+            style = "normal",
+            lineHeight = BASE_LINE_HEIGHT,
+            align = "left",
+        } = options;
+
+        const value = textValue(text);
+        if (!value) return;
+
+        pdf.setFont("times", style);
+        pdf.setFontSize(size);
+        pdf.setTextColor(...color);
+
+        const lines = pdf.splitTextToSize(value, width);
+        ensureSpace(lines.length * lineHeight + 2);
+        pdf.text(lines, x, y, { align });
+        y += lines.length * lineHeight;
+    };
+
+    const drawSectionTitle = (title) => {
+        ensureSpace(14);
+        y += 2;
+        const label = textValue(title).toUpperCase();
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(...COLORS.muted);
+
+        if (COLORS.sectionStyle === "rule") {
+            pdf.setDrawColor(...COLORS.line);
+            pdf.setLineWidth(0.5);
+            pdf.line(MARGIN, y + 2.5, PAGE_WIDTH - MARGIN, y + 2.5);
+            pdf.text(label, MARGIN, y + 1.4);
+        } else if (COLORS.sectionStyle === "block") {
+            pdf.setFillColor(...COLORS.accent);
+            pdf.roundedRect(MARGIN, y - 4, CONTENT_WIDTH, 8.5, 2, 2, "F");
+            pdf.setTextColor(255, 255, 255);
+            pdf.text(label, MARGIN + 4, y + 1.4);
+        } else {
+            pdf.setDrawColor(...COLORS.line);
+            pdf.setLineWidth(0.35);
+            pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
+            const labelWidth = pdf.getTextWidth(label) + 12;
+            const labelX = (PAGE_WIDTH - labelWidth) / 2;
+            pdf.setFillColor(...COLORS.accentSoft);
+            pdf.roundedRect(labelX, y - 4, labelWidth, 8, 3, 3, "F");
+            pdf.setDrawColor(...COLORS.line);
+            pdf.roundedRect(labelX, y - 4, labelWidth, 8, 3, 3, "S");
+            pdf.text(label, PAGE_WIDTH / 2, y + 1.4, { align: "center" });
+        }
+        y += 10;
+    };
+
+    const drawMetaRow = (left, right) => {
+        const leftText = textValue(left);
+        const rightText = textValue(right);
+        if (!leftText && !rightText) return;
+
+        ensureSpace(8);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(10.5);
+        pdf.setTextColor(...COLORS.muted);
+        if (leftText) {
+            const leftLines = pdf.splitTextToSize(leftText, CONTENT_WIDTH * 0.62);
+            pdf.text(leftLines, MARGIN, y);
+        }
+        if (rightText) {
+            const rightLines = pdf.splitTextToSize(rightText, CONTENT_WIDTH * 0.32);
+            pdf.text(rightLines, PAGE_WIDTH - MARGIN, y, { align: "right" });
+        }
+        y += BASE_LINE_HEIGHT;
+    };
+
+    const drawBulletList = (items) => {
+        items.forEach((item) => {
+            const value = textValue(item);
+            if (!value) return;
+            ensureSpace(7);
+            pdf.setFont("times", "bold");
+            pdf.setFontSize(10);
+            pdf.setTextColor(...COLORS.accent);
+            pdf.text("•", MARGIN + 1, y);
+            pdf.setFont("times", "normal");
+            pdf.setFontSize(10.5);
+            pdf.setTextColor(...COLORS.text);
+            const lines = pdf.splitTextToSize(value, CONTENT_WIDTH - 8);
+            pdf.text(lines, MARGIN + 5, y);
+            y += lines.length * BASE_LINE_HEIGHT + 1.2;
+        });
+    };
+
+    const drawEntry = (entry, config = {}) => {
+        const title = textValue(config.title(entry));
+        const subtitle = textValue(config.subtitle ? config.subtitle(entry) : "");
+        const right = textValue(config.right ? config.right(entry) : "");
+        const details = config.details ? config.details(entry) : [];
+        const bullets = config.bullets ? config.bullets(entry) : [];
+
+        if (!title && !subtitle && !right && details.length === 0 && bullets.length === 0) {
+            return;
+        }
+
+        ensureSpace(16);
+        const entryX = COLORS.entryStyle === "indent" ? MARGIN + 4 : MARGIN;
+        const entryWidth = COLORS.entryStyle === "indent" ? CONTENT_WIDTH - 4 : CONTENT_WIDTH;
+
+        if (COLORS.entryStyle === "card") {
+            pdf.setFillColor(...COLORS.accentSoft);
+            pdf.roundedRect(MARGIN, y - 4, CONTENT_WIDTH, 10, 2, 2, "F");
+        } else if (COLORS.entryStyle === "rule") {
+            pdf.setDrawColor(...COLORS.line);
+            pdf.setLineWidth(0.35);
+            pdf.line(MARGIN, y - 2, PAGE_WIDTH - MARGIN, y - 2);
+        } else if (COLORS.entryStyle === "indent") {
+            pdf.setDrawColor(...COLORS.accent);
+            pdf.setLineWidth(0.8);
+            pdf.line(MARGIN, y - 3, MARGIN, y + 12);
+        }
+
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(13);
+        pdf.setTextColor(...COLORS.text);
+        const titleWidth = right ? entryWidth * 0.64 : entryWidth;
+        const titleLines = title ? pdf.splitTextToSize(title, titleWidth) : [];
+        if (titleLines.length > 0) {
+            pdf.text(titleLines, entryX, y);
+        }
+
+        if (right) {
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(10.5);
+            pdf.setTextColor(...COLORS.muted);
+            const rightLines = pdf.splitTextToSize(right, entryWidth * 0.3);
+            pdf.text(rightLines, PAGE_WIDTH - MARGIN, y, { align: "right" });
+        }
+
+        if (titleLines.length > 0) {
+            y += titleLines.length * BASE_LINE_HEIGHT;
+        }
+
+        if (subtitle) {
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(11);
+            pdf.setTextColor(...COLORS.muted);
+            const subtitleLines = pdf.splitTextToSize(subtitle, entryWidth);
+            pdf.text(subtitleLines, entryX, y);
+            y += subtitleLines.length * BASE_LINE_HEIGHT;
+        }
+
+        details
+            .map((detail) => textValue(detail))
+            .filter(Boolean)
+            .forEach((detail) => {
+                pdf.setFont("times", "normal");
+                pdf.setFontSize(10.2);
+                pdf.setTextColor(...COLORS.text);
+                const detailLines = pdf.splitTextToSize(detail, entryWidth);
+                ensureSpace(detailLines.length * 4.7 + 1);
+                pdf.text(detailLines, entryX, y);
+                y += detailLines.length * BASE_LINE_HEIGHT;
+            });
+
+        drawBulletList(bullets);
+        y += COLORS.entryStyle === "card" ? 4 : 2;
+    };
+
+    const buildDateRange = (startDate, endDate, dateRange) => {
+        const combined = textValue(dateRange);
+        if (combined) return combined;
+        const start = textValue(startDate);
+        const end = textValue(endDate);
+        if (start && end) return `${start} - ${end}`;
+        return start || end;
+    };
+
+    const personalInfo = data.personalInfo;
+    const fullName = textValue(personalInfo.fullName || personalInfo.name || "Your Name");
+    const jobTitle = textValue(personalInfo.jobTitle);
+    const summary = textValue(personalInfo.summary || data.summary);
+    const contacts = [
+        personalInfo.email,
+        personalInfo.phone,
+        personalInfo.location,
+        personalInfo.website,
+        personalInfo.linkedin,
+        personalInfo.github,
+    ]
+        .map((item) => textValue(item))
+        .filter(Boolean);
+
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(COLORS.nameSize);
+    pdf.setTextColor(...COLORS.text);
+    const headerX = COLORS.headerAlign === "left" ? MARGIN : PAGE_WIDTH / 2;
+    const headerAlign = COLORS.headerAlign === "left" ? "left" : "center";
+    pdf.text(fullName, headerX, y, { align: headerAlign });
+    y += 8;
+
+    if (jobTitle) {
+        pdf.setFont("times", "italic");
+        pdf.setFontSize(13);
+        pdf.setTextColor(...COLORS.muted);
+        pdf.text(jobTitle, headerX, y, { align: headerAlign });
+        y += 7;
+    }
+
+    if (contacts.length > 0) {
+        const contactLine = contacts.join("  |  ");
+        writeWrappedText(contactLine, headerX, CONTENT_WIDTH, {
+            size: 10.2,
+            color: COLORS.muted,
+            align: headerAlign,
+            lineHeight: BASE_LINE_HEIGHT,
+        });
+        y += 2;
+    }
+
+    if (summary) {
+        drawSectionTitle("Summary");
+        if (COLORS.summaryStyle === "box") {
+            const summaryLines = pdf.splitTextToSize(summary, CONTENT_WIDTH - 10);
+            const summaryHeight = Math.max(14, summaryLines.length * BASE_LINE_HEIGHT + 6);
+            ensureSpace(summaryHeight + 2);
+            pdf.setFillColor(...COLORS.accentSoft);
+            pdf.roundedRect(MARGIN, y - 3, CONTENT_WIDTH, summaryHeight, 2, 2, "F");
+            pdf.setDrawColor(...COLORS.line);
+            pdf.roundedRect(MARGIN, y - 3, CONTENT_WIDTH, summaryHeight, 2, 2, "S");
+            writeWrappedText(summary, MARGIN + 5, CONTENT_WIDTH - 10, {
+                size: 11,
+                color: COLORS.text,
+                lineHeight: BASE_LINE_HEIGHT,
+            });
+        } else {
+            writeWrappedText(summary, MARGIN, CONTENT_WIDTH, {
+                size: 11,
+                color: COLORS.text,
+                lineHeight: BASE_LINE_HEIGHT,
+            });
+        }
+        y += 2;
+    }
+
+    if (data.experience.length > 0) {
+        drawSectionTitle("Experience");
+        data.experience.forEach((item) => {
+            drawEntry(item, {
+                title: (entry) => entry.title,
+                subtitle: (entry) => [entry.company, entry.location].filter(Boolean).join(" | "),
+                right: (entry) => buildDateRange(entry.startDate, entry.endDate, entry.dateRange),
+                bullets: (entry) => normalizeList(entry.description),
+            });
+        });
+    }
+
+    if (data.education.length > 0) {
+        drawSectionTitle("Education");
+        data.education.forEach((item) => {
+            drawEntry(item, {
+                title: (entry) => entry.degree,
+                subtitle: (entry) => [entry.school, entry.location].filter(Boolean).join(" | "),
+                right: (entry) => buildDateRange(entry.startDate, entry.endDate, entry.dateRange),
+                details: (entry) => normalizeList(entry.description),
+            });
+        });
+    }
+
+    if (false && data.skills.length > 0) {
+        drawSectionTitle("Skills");
+        writeWrappedText(normalizeList(data.skills).join(" • "), MARGIN, CONTENT_WIDTH, {
+            size: 10.8,
+            color: COLORS.text,
+            lineHeight: BASE_LINE_HEIGHT,
+        });
+        y += 2;
+    }
+
+    if (data.projects.length > 0) {
+        drawSectionTitle("Projects");
+        data.projects.forEach((item) => {
+            drawEntry(item, {
+                title: (entry) => entry.name,
+                subtitle: (entry) => entry.technologies,
+                right: (entry) => buildDateRange(entry.startDate, entry.endDate, entry.dateRange),
+                bullets: (entry) => normalizeList(entry.description),
+            });
+        });
+    }
+
+    if (data.certifications.length > 0) {
+        drawSectionTitle("Certifications");
+        data.certifications.forEach((item) => {
+            drawEntry(item, {
+                title: (entry) => entry.name,
+                subtitle: (entry) => entry.issuer,
+                right: (entry) => entry.date,
+                details: (entry) => normalizeList(entry.url),
+            });
+        });
+    }
+
+    if (data.awards.length > 0) {
+        drawSectionTitle("Awards");
+        data.awards.forEach((item) => {
+            drawEntry(item, {
+                title: (entry) => entry.title,
+                subtitle: (entry) => entry.org,
+                right: (entry) => entry.date,
+                details: (entry) => normalizeList(entry.description),
+            });
+        });
+    }
+
+    if (data.languages.length > 0) {
+        drawSectionTitle("Languages");
+        const languageText = data.languages
+            .map((item) => {
+                if (typeof item === "string") return item;
+                const language = textValue(item.language);
+                const level = textValue(item.level);
+                return [language, level].filter(Boolean).join(" - ");
+            })
+            .filter(Boolean)
+            .join(" • ");
+
+        writeWrappedText(languageText, MARGIN, CONTENT_WIDTH, {
+            size: 10.8,
+            color: COLORS.text,
+            lineHeight: BASE_LINE_HEIGHT,
+        });
+        y += 2;
+    }
+
+    if (data.skills.length > 0) {
+        drawSectionTitle("Skills");
+        writeWrappedText(normalizeList(data.skills).join(" • "), MARGIN, CONTENT_WIDTH, {
+            size: 10.8,
+            color: COLORS.text,
+            lineHeight: BASE_LINE_HEIGHT,
+        });
+        y += 2;
+    }
+
+    data.customSections.forEach((section) => {
+        const title = textValue(section.title || section.name);
+        const content = normalizeList(section.items || section.content || section.description);
+        if (!title || content.length === 0) return;
+
+        drawSectionTitle(title);
+        drawBulletList(content);
+    });
+
+    const totalPages = pdf.internal.pages.length - 1;
+    for (let page = 1; page <= totalPages; page++) {
+        pdf.setPage(page);
+        pdf.setDrawColor(...COLORS.line);
+        pdf.setLineWidth(0.25);
+        pdf.line(MARGIN, PAGE_HEIGHT - 12, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 12);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(...COLORS.muted);
+        pdf.text("Actirova Resume Builder", MARGIN, PAGE_HEIGHT - 8);
+        pdf.text(`Page ${page} of ${totalPages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 8, {
+            align: "right",
+        });
+    }
+
+    pdf.save(`${fileName}.pdf`);
+};
+
+export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
+    if (!resumeData) throw new Error("Resume data is required.");
+
+    const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Tab, TabStopPosition, TabStopType, LeaderType, Table, TableRow, TableCell, WidthType }, fileSaverModule] = await Promise.all([
+        import("docx"),
+        import("file-saver"),
+    ]);
+    const saveAs =
+        fileSaverModule.saveAs ||
+        fileSaverModule.default?.saveAs ||
+        fileSaverModule.default;
+
+    if (typeof saveAs !== "function") {
+        throw new Error("File saver is unavailable");
+    }
+
+    const data = {
+        personalInfo: resumeData.personalInfo || {},
+        summary: resumeData.summary || "",
+        experience: resumeData.experience || [],
+        education: resumeData.education || [],
+        skills: resumeData.skills || [],
+        projects: resumeData.projects || [],
+        certifications: resumeData.certifications || [],
+        awards: resumeData.awards || [],
+        languages: resumeData.languages || [],
+        customSections: resumeData.customSections || [],
+    };
+
+    const textValue = (value) => {
+        if (value === null || value === undefined) return "";
+        if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+        return String(value).trim();
+    };
+
+    const normalizeList = (value) => {
+        if (Array.isArray(value)) {
+            return value.map((item) => textValue(item)).filter(Boolean);
+        }
+
+        return textValue(value)
+            .split(/\r?\n/)
+            .map((item) => item.replace(/^[-*•]\s*/, "").trim())
+            .filter(Boolean);
+    };
+
+    const buildDateRange = (startDate, endDate, dateRange) => {
+        const combined = textValue(dateRange);
+        if (combined) return combined;
+        const start = textValue(startDate);
+        const end = textValue(endDate);
+        if (start && end) return `${start} - ${end}`;
+        return start || end;
+    };
+
+    const sectionHeading = (label) =>
+        new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 280, after: 120 },
+            border: {
+                bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" },
+            },
+            children: [
+                new TextRun({
+                    text: textValue(label).toUpperCase(),
+                    bold: true,
+                    color: "166534",
+                    size: 24,
+                }),
+            ],
+        });
+
+    const bulletParagraphs = (items) =>
+        items
+            .map((item) => textValue(item))
+            .filter(Boolean)
+            .map(
+                (item) =>
+                    new Paragraph({
+                        text: item,
+                        bullet: { level: 0 },
+                        spacing: { after: 80, line: 360 },
+                    })
+            );
+
+    const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+
+    const twoColumnTable = (leftParagraphs = [], rightParagraphs = [], options = {}) =>
+        new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: {
+                top: noBorder,
+                bottom: noBorder,
+                left: noBorder,
+                right: noBorder,
+                insideHorizontal: noBorder,
+                insideVertical: noBorder,
+            },
+            rows: [
+                new TableRow({
+                    children: [
+                        new TableCell({
+                            width: { size: options.leftWidth || 78, type: WidthType.PERCENTAGE },
+                            borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                            margins: { top: 0, bottom: 0, left: 0, right: 120 },
+                            children: leftParagraphs,
+                        }),
+                        new TableCell({
+                            width: { size: options.rightWidth || 22, type: WidthType.PERCENTAGE },
+                            borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                            margins: { top: 0, bottom: 0, left: 120, right: 0 },
+                            children: rightParagraphs.length > 0 ? rightParagraphs : [new Paragraph({ text: "" })],
+                        }),
+                    ],
+                }),
+            ],
+        });
+
+    const entryHeaderTable = (leftText, rightText, options = {}) =>
+        twoColumnTable(
+            [
+                new Paragraph({
+                    spacing: options.spacing || { before: 120, after: 40 },
+                    children: [
+                        new TextRun({
+                            text: textValue(leftText),
+                            bold: options.bold ?? true,
+                            italics: options.italicsLeft ?? false,
+                            size: options.leftSize || 24,
+                            color: options.leftColor || "111827",
+                        }),
+                    ],
+                }),
+            ],
+            rightText ? [
+                new Paragraph({
+                    alignment: AlignmentType.RIGHT,
+                    spacing: options.spacing || { before: 120, after: 40 },
+                    children: [
+                        new TextRun({
+                            text: textValue(rightText),
+                            bold: options.boldRight ?? false,
+                            italics: options.italicsRight ?? true,
+                            size: options.rightSize || 20,
+                            color: options.rightColor || "64748B",
+                        }),
+                    ],
+                }),
+            ] : [],
+            options
+        );
+
+    const content = [];
+    const fullName = textValue(data.personalInfo.fullName || data.personalInfo.name || "Your Name");
+    const jobTitle = textValue(data.personalInfo.jobTitle);
+    const contactLine = [
+        data.personalInfo.email,
+        data.personalInfo.phone,
+        data.personalInfo.location,
+        data.personalInfo.website,
+        data.personalInfo.linkedin,
+        data.personalInfo.github,
+    ]
+        .map((item) => textValue(item))
+        .filter(Boolean)
+        .join(" | ");
+
+    content.push(
+        new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 120 },
+            children: [
+                new TextRun({
+                    text: fullName,
+                    bold: true,
+                    size: 34,
+                    color: "111827",
+                }),
+            ],
+        })
+    );
+
+    if (jobTitle) {
+        content.push(
+            new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 100 },
+                children: [
+                    new TextRun({
+                        text: jobTitle,
+                        italics: true,
+                        size: 24,
+                        color: "475569",
+                    }),
+                ],
+            })
+        );
+    }
+
+    if (contactLine) {
+        content.push(
+            new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 },
+                children: [
+                    new TextRun({
+                        text: contactLine,
+                        size: 20,
+                        color: "64748B",
+                    }),
+                ],
+            })
+        );
+    }
+
+    const summary = textValue(data.personalInfo.summary || data.summary);
+    if (summary) {
+        content.push(sectionHeading("Summary"));
+        content.push(
+            new Paragraph({
+                text: summary,
+                spacing: { after: 120, line: 360 },
+            })
+        );
+    }
+
+    if (data.experience.length > 0) {
+        content.push(sectionHeading("Experience"));
+        data.experience.forEach((item) => {
+            const title = textValue(item.title);
+            const subtitle = [item.company, item.location].map((value) => textValue(value)).filter(Boolean).join(" | ");
+            const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
+            if (title) {
+                content.push(entryHeaderTable(title, dateRange));
+            }
+            if (subtitle) {
+                content.push(new Paragraph({ text: subtitle, spacing: { after: 80 }, thematicBreak: false }));
+            }
+            content.push(...bulletParagraphs(normalizeList(item.description)));
+        });
+    }
+
+    if (data.education.length > 0) {
+        content.push(sectionHeading("Education"));
+        data.education.forEach((item) => {
+            const title = textValue(item.degree);
+            const subtitle = [item.school, item.location].map((value) => textValue(value)).filter(Boolean).join(" | ");
+            const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
+            if (title) {
+                content.push(entryHeaderTable(title, dateRange));
+            }
+            if (subtitle) {
+                content.push(new Paragraph({ text: subtitle, spacing: { after: 80 } }));
+            }
+            normalizeList(item.description).forEach((line) => {
+                content.push(new Paragraph({ text: line, spacing: { after: 80, line: 360 } }));
+            });
+        });
+    }
+
+    if (false && data.skills.length > 0) {
+        content.push(sectionHeading("Skills"));
+        content.push(
+            new Paragraph({
+                text: normalizeList(data.skills).join(" • "),
+                spacing: { after: 120, line: 360 },
+            })
+        );
+    }
+
+    if (data.projects.length > 0) {
+        content.push(sectionHeading("Projects"));
+        data.projects.forEach((item) => {
+            const title = textValue(item.name);
+            const subtitle = textValue(item.technologies);
+            const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
+            if (title) {
+                content.push(entryHeaderTable(title, dateRange));
+            }
+            if (subtitle) {
+                content.push(new Paragraph({ text: subtitle, spacing: { after: 80 } }));
+            }
+            content.push(...bulletParagraphs(normalizeList(item.description)));
+        });
+    }
+
+    if (data.certifications.length > 0) {
+        content.push(sectionHeading("Certifications"));
+        data.certifications.forEach((item) => {
+            const leftLine = [item.name, item.issuer].map((value) => textValue(value)).filter(Boolean).join(" | ");
+            if (leftLine || item.date) {
+                content.push(entryHeaderTable(leftLine, item.date, { spacing: { after: 100 }, bold: true, rightSize: 20 }));
+            }
+            normalizeList(item.url).forEach((value) => {
+                content.push(new Paragraph({ text: value, spacing: { after: 80, line: 360 } }));
+            });
+        });
+    }
+
+    if (data.awards.length > 0) {
+        content.push(sectionHeading("Awards"));
+        data.awards.forEach((item) => {
+            const leftLine = [item.title, item.org].map((value) => textValue(value)).filter(Boolean).join(" | ");
+            if (leftLine || item.date) {
+                content.push(entryHeaderTable(leftLine, item.date, { spacing: { after: 80 }, bold: true, rightSize: 20 }));
+            }
+            normalizeList(item.description).forEach((value) => {
+                content.push(new Paragraph({ text: value, spacing: { after: 80, line: 360 } }));
+            });
+        });
+    }
+
+    if (data.languages.length > 0) {
+        content.push(sectionHeading("Languages"));
+        content.push(
+            new Paragraph({
+                text: data.languages
+                    .map((item) => {
+                        if (typeof item === "string") return item;
+                        return [textValue(item.language), textValue(item.level)].filter(Boolean).join(" - ");
+                    })
+                    .filter(Boolean)
+                    .join(" • "),
+                spacing: { after: 120, line: 360 },
+            })
+        );
+    }
+
+    if (data.skills.length > 0) {
+        content.push(sectionHeading("Skills"));
+        content.push(
+            new Paragraph({
+                text: normalizeList(data.skills).join(" • "),
+                spacing: { after: 120, line: 360 },
+            })
+        );
+    }
+
+    data.customSections.forEach((section) => {
+        const title = textValue(section.title || section.name);
+        const items = normalizeList(section.items || section.content || section.description);
+        if (!title || items.length === 0) return;
+        content.push(sectionHeading(title));
+        content.push(...bulletParagraphs(items));
+    });
+
+    const doc = new Document({
+        sections: [
+            {
+                properties: {},
+                children: content,
+            },
+        ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${fileName}.docx`);
+};
+
+const resolveSaveAs = async () => {
+    const fileSaverModule = await import("file-saver");
+    const saveAs =
+        fileSaverModule.saveAs ||
+        fileSaverModule.default?.saveAs ||
+        fileSaverModule.default;
+
+    if (typeof saveAs !== "function") {
+        throw new Error("File saver is unavailable");
+    }
+
+    return saveAs;
+};
+
+const normalizeLetterParagraphs = (content) =>
+    String(content || "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split(/\n\s*\n/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean);
+
+const normalizeLetterLines = (block = "") =>
+    String(block || "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .replace(/\]\s+(?=\[)/g, "]\n")
+        .replace(/\s+\|\s+/g, "\n")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+const buildLetterLayout = ({ content, company = "", personalInfo = {} }) => {
+    const paragraphs = normalizeLetterParagraphs(content);
+    const senderName = String(personalInfo.fullName || personalInfo.name || "Applicant").trim();
+    const senderRole = String(personalInfo.jobTitle || "").trim();
+    const senderLines = [
+        senderName,
+        senderRole,
+        personalInfo.email,
+        personalInfo.phone,
+        personalInfo.location,
+    ]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean);
+
+    const normalizedSenderLineSet = new Set(
+        senderLines.map((line) => line.toLowerCase())
+    );
+
+    const contentLines = paragraphs.flatMap((paragraph) => normalizeLetterLines(paragraph));
+    const filteredLines = contentLines.filter((line) => {
+        const normalized = line.toLowerCase();
+        if (normalizedSenderLineSet.has(normalized)) return false;
+        if (personalInfo.email && normalized.includes(String(personalInfo.email).toLowerCase())) return false;
+        if (personalInfo.phone && normalized.includes(String(personalInfo.phone).toLowerCase())) return false;
+        return true;
+    });
+
+    const salutationIndex = filteredLines.findIndex((line) => /^dear\b/i.test(line));
+    const dateIndex = filteredLines.findIndex((line) =>
+        /^\[date\]$/i.test(line) ||
+        /^date[:\s]/i.test(line) ||
+        /\b\d{4}\b/.test(line)
+    );
+
+    const dateLine = dateIndex >= 0 ? filteredLines[dateIndex] : "";
+    const recipientLines = filteredLines.filter((line, index) => {
+        if (index === dateIndex) return false;
+        if (salutationIndex >= 0 && index >= salutationIndex) return false;
+        return true;
+    });
+    const salutationLine = salutationIndex >= 0 ? filteredLines[salutationIndex] : "";
+    const bodyLines = filteredLines.slice(salutationIndex >= 0 ? salutationIndex + 1 : 0);
+    const bodyParagraphs = normalizeLetterParagraphs(bodyLines.join("\n\n"));
+
+    return {
+        senderLines,
+        dateLine,
+        recipientLines: recipientLines.length > 0 ? recipientLines : company ? [company] : [],
+        salutationLine,
+        bodyParagraphs,
+    };
+};
+
+export const downloadLetterAsPDF = async (
+    { content, type = "cover-letter", company = "", personalInfo = {} },
+    fileName = "Letter"
+) => {
+    if (!content?.trim()) {
+        throw new Error("Letter content is required.");
+    }
+
+    const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+    });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pageWidth - margin * 2;
+    const letterData = buildLetterLayout({ content, company, personalInfo });
+    const senderName = letterData.senderLines[0] || "Applicant";
+    let y = 24;
+
+    const ensureSpace = (spaceNeeded = 10) => {
+        if (y + spaceNeeded <= pageHeight - 18) return;
+        pdf.addPage();
+        y = 24;
+    };
+
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(18);
+    pdf.setTextColor(17, 24, 39);
+    pdf.text(senderName, margin, y);
+    y += 7;
+
+    letterData.senderLines.slice(1).forEach((line, index) => {
+        ensureSpace(8);
+        pdf.setFont("times", index === 0 ? "italic" : "normal");
+        pdf.setFontSize(index === 0 ? 11 : 10);
+        pdf.setTextColor(index === 0 ? 71 : 100, index === 0 ? 85 : 116, index === 0 ? 105 : 139);
+        pdf.text(line, margin, y);
+        y += 6;
+    });
+
+    if (letterData.senderLines.length > 1) {
+        y += 1;
+    }
+
+    if (letterData.dateLine) {
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(11);
+        pdf.setTextColor(31, 41, 55);
+        pdf.text(letterData.dateLine, margin, y);
+        y += 8;
+    }
+
+    if (letterData.recipientLines.length > 0) {
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(11);
+        pdf.setTextColor(31, 41, 55);
+        letterData.recipientLines.forEach((line) => {
+            ensureSpace(8);
+            pdf.text(line, margin, y);
+            y += 6;
+        });
+        y += 2;
+    }
+
+    if (letterData.salutationLine) {
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(11);
+        pdf.setTextColor(31, 41, 55);
+        pdf.text(letterData.salutationLine, margin, y);
+        y += 8;
+    }
+
+    pdf.setFont("times", "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(31, 41, 55);
+
+    letterData.bodyParagraphs.forEach((paragraph) => {
+        const lines = pdf.splitTextToSize(paragraph, contentWidth);
+        ensureSpace(lines.length * 6 + 6);
+        pdf.text(lines, margin, y);
+        y += lines.length * 6 + 4;
+    });
+
+    const totalPages = pdf.internal.pages.length - 1;
+    for (let page = 1; page <= totalPages; page++) {
+        pdf.setPage(page);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(senderName, margin, pageHeight - 8);
+        pdf.text(`Page ${page} of ${totalPages}`, pageWidth - margin, pageHeight - 8, {
+            align: "right",
+        });
+    }
+
+    pdf.save(`${fileName}.pdf`);
+};
+
+export const downloadLetterAsDOCX = async (
+    { content, type = "cover-letter", company = "", personalInfo = {} },
+    fileName = "Letter"
+) => {
+    if (!content?.trim()) {
+        throw new Error("Letter content is required.");
+    }
+
+    const [{ Document, Packer, Paragraph, TextRun, AlignmentType }, saveAs] = await Promise.all([
+        import("docx"),
+        resolveSaveAs(),
+    ]);
+    const letterData = buildLetterLayout({ content, company, personalInfo });
+    const senderName = letterData.senderLines[0] || "Applicant";
+    const children = [
+        new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { after: 120 },
+            children: [new TextRun({ text: senderName, bold: true, size: 30 })],
+        }),
+    ];
+
+    if (letterData.senderLines[1]) {
+        children.push(
+            new Paragraph({
+                spacing: { after: 80 },
+                children: [new TextRun({ text: letterData.senderLines[1], italics: true, color: "475569", size: 22 })],
+            })
+        );
+    }
+
+    letterData.senderLines.slice(2).forEach((line, index, list) => {
+        children.push(
+            new Paragraph({
+                spacing: { after: index === list.length - 1 ? 160 : 80 },
+                children: [new TextRun({ text: line, color: "64748B", size: 20 })],
+            })
+        );
+    });
+
+    if (letterData.dateLine) {
+        children.push(
+            new Paragraph({
+                spacing: { after: 160 },
+                children: [new TextRun({ text: letterData.dateLine, size: 22 })],
+            })
+        );
+    }
+
+    letterData.recipientLines.forEach((line, index) => {
+        children.push(
+            new Paragraph({
+                spacing: { after: index === letterData.recipientLines.length - 1 ? 160 : 80 },
+                children: [new TextRun({ text: line, size: 22 })],
+            })
+        );
+    });
+
+    if (letterData.salutationLine) {
+        children.push(
+            new Paragraph({
+                spacing: { after: 160, line: 360 },
+                children: [new TextRun({ text: letterData.salutationLine, size: 22 })],
+            })
+        );
+    }
+
+    letterData.bodyParagraphs.forEach((paragraph) => {
+        children.push(
+            new Paragraph({
+                spacing: { after: 160, line: 360 },
+                children: [new TextRun({ text: paragraph, size: 22 })],
+            })
+        );
+    });
+
+    const doc = new Document({
+        sections: [
+            {
+                properties: {},
+                children,
+            },
+        ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${fileName}.docx`);
+};

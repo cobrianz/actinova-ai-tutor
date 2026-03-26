@@ -9,10 +9,33 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 async function handlePost(request) {
     const user = request.user;
     const body = await request.json();
-    const { projectTitle, description, role } = body;
+    const { projectTitle, description, technologies, role } = body;
 
     if (!projectTitle) {
         return NextResponse.json({ error: "Project title is required" }, { status: 400 });
+    }
+
+    const haystack = [projectTitle, description, Array.isArray(technologies) ? technologies.join(" ") : technologies]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+    const technicalKeywords = [
+        "app", "web", "mobile", "software", "platform", "dashboard", "api", "automation",
+        "ai", "ml", "data", "analytics", "system", "tool", "bot", "portal", "react", "next",
+        "node", "python", "javascript", "typescript", "sql", "cloud", "frontend", "backend",
+        "fullstack", "devops", "saas",
+    ];
+    const nonTechnicalKeywords = [
+        "cooking", "chef", "recipe", "bakery", "fashion", "makeup", "hair", "gardening",
+        "farming", "florist", "interior decor", "event planning", "cleaning", "photography",
+        "tailoring", "craft", "restaurant service",
+    ];
+
+    const isTechnical = technicalKeywords.some((keyword) => haystack.includes(keyword)) &&
+        !nonTechnicalKeywords.some((keyword) => haystack.includes(keyword));
+
+    if (!isTechnical) {
+        return NextResponse.json({ error: "AI prompt generation is only supported for technical or software projects" }, { status: 400 });
     }
 
     const prompt = `You are a senior software engineer and technical project manager.
@@ -21,6 +44,7 @@ Write a comprehensive, step-by-step developer prompt that the user can copy and 
 
 Project Title: "${projectTitle}"
 Brief Idea: "${description || "No description provided"}"
+Technologies Mentioned: "${Array.isArray(technologies) ? technologies.join(", ") : (technologies || "Not specified")}"
 Target Role: "${role || "Software Developer"}"
 
 Provide a detailed AI prompt that includes:

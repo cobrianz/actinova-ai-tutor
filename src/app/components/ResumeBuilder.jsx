@@ -16,6 +16,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+import {
+    downloadLetterAsDOCX,
+    downloadLetterAsPDF,
+    downloadResumeAsPDF,
+    downloadResumeAsDOCX
+} from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
 
 // ─── Initial Form Data ──────────────────────────────────────────
@@ -24,6 +30,104 @@ const initialFormData = {
     experience: [], education: [], skills: [], projects: [],
     certifications: [], awards: [], languages: [],
     customSections: [],
+};
+
+const hasMeaningfulResumeContent = (resume) => {
+    if (!resume) return false;
+    const personalInfo = resume.personalInfo || {};
+    return !!(
+        personalInfo.fullName ||
+        personalInfo.name ||
+        personalInfo.jobTitle ||
+        personalInfo.summary ||
+        resume.summary ||
+        (resume.experience || []).length > 0 ||
+        (resume.education || []).length > 0 ||
+        (resume.skills || []).length > 0 ||
+        (resume.projects || []).length > 0 ||
+        (resume.certifications || []).length > 0 ||
+        (resume.awards || []).length > 0 ||
+        (resume.languages || []).length > 0
+    );
+};
+
+const getUserIdentityDefaults = (user) => ({
+    fullName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || user?.name || "",
+    email: user?.email || "",
+});
+
+const TECHNICAL_PROJECT_KEYWORDS = [
+    "app", "web", "mobile", "software", "platform", "dashboard", "api", "automation",
+    "ai", "ml", "data", "analytics", "system", "site", "tool", "bot", "portal",
+    "react", "next", "node", "python", "javascript", "typescript", "sql", "cloud",
+    "frontend", "backend", "fullstack", "devops", "saas",
+];
+
+const NON_TECHNICAL_PROJECT_KEYWORDS = [
+    "cooking", "chef", "recipe", "bakery", "fashion", "makeup", "hair", "gardening",
+    "farming", "florist", "interior decor", "event planning", "cleaning", "photography",
+    "tailoring", "craft", "restaurant service",
+];
+
+const isPromptEligibleProject = (project) => {
+    const haystack = [
+        project?.title,
+        project?.description,
+        Array.isArray(project?.technologies) ? project.technologies.join(" ") : project?.technologies,
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+    if (!haystack) return false;
+    if (NON_TECHNICAL_PROJECT_KEYWORDS.some((keyword) => haystack.includes(keyword))) return false;
+    return TECHNICAL_PROJECT_KEYWORDS.some((keyword) => haystack.includes(keyword));
+};
+
+const normalizeProfileLink = (field, value) => {
+    const text = String(value || "").trim();
+    if (!text) return "";
+
+    if (field === "github") {
+        if (/github\.com/i.test(text)) return text;
+        if (/^https?:\/\//i.test(text)) return text;
+        return `github.com/${text.replace(/^@/, "")}`;
+    }
+
+    if (field === "linkedin") {
+        if (/linkedin\.com/i.test(text)) return text;
+        if (/^https?:\/\//i.test(text)) return text;
+        return `linkedin.com/in/${text.replace(/^@/, "")}`;
+    }
+
+    return text;
+};
+
+const hasUserEnteredResumeContent = (resume, user) => {
+    if (!resume) return false;
+    const personalInfo = resume.personalInfo || {};
+    const defaults = getUserIdentityDefaults(user);
+    const fullName = (personalInfo.fullName || personalInfo.name || "").trim();
+    const email = (personalInfo.email || "").trim();
+
+    return !!(
+        (fullName && fullName !== defaults.fullName) ||
+        (personalInfo.jobTitle || "").trim() ||
+        (personalInfo.summary || resume.summary || "").trim() ||
+        (email && email !== defaults.email) ||
+        (personalInfo.phone || "").trim() ||
+        (personalInfo.location || "").trim() ||
+        (personalInfo.website || "").trim() ||
+        (personalInfo.linkedin || "").trim() ||
+        (personalInfo.github || "").trim() ||
+        (resume.experience || []).length > 0 ||
+        (resume.education || []).length > 0 ||
+        (resume.skills || []).length > 0 ||
+        (resume.projects || []).length > 0 ||
+        (resume.certifications || []).length > 0 ||
+        (resume.awards || []).length > 0 ||
+        (resume.languages || []).length > 0
+    );
 };
 
 function getCompletionScore(data) {
@@ -134,10 +238,14 @@ function FormResumePreview({ data, onUpdate }) {
 
     const handleBlur = (section, field, value, index = null) => {
         if (!onUpdate) return;
+        const normalizedValue =
+            section === "personalInfo" && (field === "github" || field === "linkedin")
+                ? normalizeProfileLink(field, value)
+                : value;
         if (index !== null) {
-            onUpdate(section, index, field, value);
+            onUpdate(section, index, field, normalizedValue);
         } else {
-            onUpdate(section, field, value);
+            onUpdate(section, field, normalizedValue);
         }
     };
 
@@ -229,7 +337,12 @@ function FormResumePreview({ data, onUpdate }) {
     };
 
     return (
-        <div id="resume-preview" ref={containerRef} onMouseUp={handleSelection} className="p-8 md:p-12 bg-white min-h-[1000px] relative text-[#1a1a2e] font-serif">
+        <div
+            id="resume-preview"
+            ref={containerRef}
+            onMouseUp={handleSelection}
+            className="p-8 md:p-12 bg-white min-h-[1000px] relative text-[#1a1a2e] font-serif"
+        >
             {tooltipPos && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     style={{ position: 'absolute', top: tooltipPos.top, left: tooltipPos.left, transform: 'translateX(-50%)' }}
@@ -328,14 +441,14 @@ function FormResumePreview({ data, onUpdate }) {
                                             {exp.company}
                                         </span>
                                     </div>
-                                    <span
-                                        contentEditable
-                                        suppressContentEditableWarning
-                                        onBlur={(e) => handleBlur('experience', 'dateRange', e.target.innerText, i)}
-                                        className="text-[13px] font-bold text-slate-500 uppercase tracking-wider outline-none focus:bg-slate-50 rounded px-1"
-                                    >
-                                        {exp.startDate} – {exp.endDate}
-                                    </span>
+                                <span
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => handleBlur('experience', 'dateRange', e.target.innerText, i)}
+                                    className="text-[13px] font-bold text-slate-500 uppercase tracking-wider outline-none focus:bg-slate-50 rounded px-1"
+                                >
+                                    {exp.dateRange || `${exp.startDate || ""}${exp.startDate || exp.endDate ? " – " : ""}${exp.endDate || ""}`}
+                                </span>
                                 </div>
                                 <p
                                     contentEditable
@@ -387,7 +500,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     onBlur={(e) => handleBlur('education', 'dateRange', e.target.innerText, i)}
                                     className="text-[13px] font-bold text-slate-400 uppercase tracking-widest leading-none outline-none focus:bg-slate-50 rounded px-1"
                                 >
-                                    {edu.startDate} – {edu.endDate}
+                                    {edu.dateRange || `${edu.startDate || ""}${edu.startDate || edu.endDate ? " – " : ""}${edu.endDate || ""}`}
                                 </span>
                             </div>
                         ))}
@@ -580,6 +693,35 @@ const ResumeBuilder = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [skillInput, setSkillInput] = useState("");
     const completionScore = useMemo(() => getCompletionScore(formData), [formData]);
+    const currentResumeData = useMemo(() => ({
+        ...(generatedResume || {}),
+        ...formData,
+        personalInfo: {
+            ...(generatedResume?.personalInfo || {}),
+            ...formData.personalInfo,
+        },
+    }), [formData, generatedResume]);
+    const groupedHistory = useMemo(() => ({
+        resumes: history.filter((item) => item.type === "resume"),
+        coverLetters: history.filter((item) => item.type === "cover-letter"),
+        applicationLetters: history.filter((item) => item.type === "application-letter"),
+        portfolios: history.filter((item) => item.type === "portfolio"),
+    }), [history]);
+
+    const normalizedResumeForPersistence = useMemo(() => ({
+        ...currentResumeData,
+        experience: Array.isArray(currentResumeData?.experience) ? currentResumeData.experience : [],
+        education: Array.isArray(currentResumeData?.education) ? currentResumeData.education : [],
+        skills: Array.isArray(currentResumeData?.skills) ? currentResumeData.skills : [],
+        projects: Array.isArray(currentResumeData?.projects) ? currentResumeData.projects : [],
+        certifications: Array.isArray(currentResumeData?.certifications) ? currentResumeData.certifications : [],
+        awards: Array.isArray(currentResumeData?.awards) ? currentResumeData.awards : [],
+        languages: Array.isArray(currentResumeData?.languages) ? currentResumeData.languages : [],
+        customSections: Array.isArray(currentResumeData?.customSections) ? currentResumeData.customSections : [],
+        personalInfo: {
+            ...(currentResumeData?.personalInfo || {}),
+        },
+    }), [currentResumeData]);
 
     const updatePersonalInfo = useCallback((field, value) => {
         setFormData(prev => ({ ...prev, personalInfo: { ...prev.personalInfo, [field]: value } }));
@@ -622,13 +764,13 @@ const ResumeBuilder = () => {
 
     React.useEffect(() => {
         if (user) {
+            const defaults = getUserIdentityDefaults(user);
             setFormData(prev => {
-                const fName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || "";
                 return {
                     ...prev,
                     personalInfo: {
                         ...prev.personalInfo,
-                        fullName: prev.personalInfo.fullName || fName,
+                        fullName: prev.personalInfo.fullName || defaults.fullName,
                         email: prev.personalInfo.email || user.email || ""
                     }
                 };
@@ -649,7 +791,7 @@ const ResumeBuilder = () => {
         const isPP = editorTab === 'portfolio';
 
         let type = "resume";
-        let dataToSave = generatedResume || formData;
+        let dataToSave = normalizedResumeForPersistence;
         let title = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.name || "Draft Resume";
 
         if (isCL) {
@@ -675,7 +817,21 @@ const ResumeBuilder = () => {
 
         const timer = setTimeout(() => {
             try {
-                const draft = { type, title, data: dataToSave, metadata: { jobDescription } };
+                const draft = {
+                    type,
+                    title,
+                    data: dataToSave,
+                    metadata: {
+                        jobDescription,
+                        documentId:
+                            type === "resume" ? (savedResumeId || undefined) :
+                                type === "cover-letter" ? (savedCLId || undefined) :
+                                    type === "application-letter" ? (savedALId || undefined) :
+                                        type === "portfolio" ? (savedPPId || undefined) :
+                                            undefined,
+                        resumeId: type === "resume" ? undefined : (savedResumeId || undefined),
+                    }
+                };
                 localStorage.setItem(`career_draft_${type}`, JSON.stringify(draft));
                 // Optional: show a small toast for local save if needed, though it might be too spammy.
             } catch (error) {
@@ -683,7 +839,7 @@ const ResumeBuilder = () => {
             }
         }, 1500);
         return () => clearTimeout(timer);
-    }, [formData, generatedResume, coverLetter, applicationLetter, portfolioPrompts, editorTab]);
+    }, [normalizedResumeForPersistence, coverLetter, applicationLetter, portfolioPrompts, editorTab, jobDescription, savedResumeId, savedCLId, savedALId, savedPPId]);
 
     React.useEffect(() => {
         // Load from local storage on mount - but ONLY if there's no current in-memory content to avoid overwriting it
@@ -708,20 +864,27 @@ const ResumeBuilder = () => {
                     if (!hasCurrentContent) {
                         setFormData(prev => ({ ...prev, ...parsed.data }));
                         setGeneratedResume(parsed.data);
+                        if (parsed.metadata?.documentId) setSavedResumeId(parsed.metadata.documentId);
                     }
                 } else if (type === "cover-letter") {
                     if (!coverLetter) {
                         setCoverLetter(parsed.data.content || "");
                         setCoverLetterCompany(parsed.data.company || "");
+                        if (parsed.metadata?.documentId) setSavedCLId(parsed.metadata.documentId);
+                        if (parsed.metadata?.resumeId) setSavedResumeId(parsed.metadata.resumeId);
                     }
                 } else if (type === "application-letter") {
                     if (!applicationLetter) {
                         setApplicationLetter(parsed.data.content || "");
                         setCoverLetterCompany(parsed.data.company || "");
+                        if (parsed.metadata?.documentId) setSavedALId(parsed.metadata.documentId);
+                        if (parsed.metadata?.resumeId) setSavedResumeId(parsed.metadata.resumeId);
                     }
                 } else if (type === "portfolio") {
                     if (!portfolioPrompts.length) {
                         setPortfolioPrompts(parsed.data.prompts || []);
+                        if (parsed.metadata?.documentId) setSavedPPId(parsed.metadata.documentId);
+                        if (parsed.metadata?.resumeId) setSavedResumeId(parsed.metadata.resumeId);
                     }
                 }
                 if (parsed.metadata?.jobDescription && !jobDescription) {
@@ -742,7 +905,7 @@ const ResumeBuilder = () => {
 
         let type = "resume";
         let documentId = savedResumeId;
-        let dataToSave = generatedResume || formData;
+        let dataToSave = normalizedResumeForPersistence;
         let title = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.name || "Draft Resume";
 
         if (isCL) {
@@ -789,7 +952,10 @@ const ResumeBuilder = () => {
                 type,
                 title,
                 data: dataToSave,
-                metadata: { jobDescription }
+                metadata: {
+                    jobDescription,
+                    resumeId: type === "resume" ? undefined : (savedResumeId || undefined),
+                }
             });
             if (response.ok) {
                 const saved = await response.json();
@@ -832,10 +998,49 @@ const ResumeBuilder = () => {
         }
     }, [searchParams, jobDescription, isGenerating, generatedResume]);
 
+    const persistCareerDocument = async ({ id, type, title, data }) => {
+        const response = await apiClient.post("/api/career/history", {
+            id,
+            type,
+            title,
+            data,
+            metadata: {
+                jobDescription,
+                resumeId: savedResumeId || undefined,
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to save document");
+        }
+
+        const saved = await response.json();
+        setHistory(prev => {
+            const filtered = prev.filter(item => item._id !== saved._id);
+            return [saved, ...filtered].slice(0, 20);
+        });
+        return saved;
+    };
+
     const loadHistoryItem = (item) => {
         if (item.type === "resume") {
             setGeneratedResume(item.data);
-            setFormData(prev => ({ ...prev, ...item.data }));
+            setFormData(prev => ({
+                ...prev,
+                ...item.data,
+                experience: Array.isArray(item.data?.experience) ? item.data.experience : [],
+                education: Array.isArray(item.data?.education) ? item.data.education : [],
+                skills: Array.isArray(item.data?.skills) ? item.data.skills : [],
+                projects: Array.isArray(item.data?.projects) ? item.data.projects : [],
+                certifications: Array.isArray(item.data?.certifications) ? item.data.certifications : [],
+                awards: Array.isArray(item.data?.awards) ? item.data.awards : [],
+                languages: Array.isArray(item.data?.languages) ? item.data.languages : [],
+                customSections: Array.isArray(item.data?.customSections) ? item.data.customSections : [],
+                personalInfo: {
+                    ...prev.personalInfo,
+                    ...(item.data?.personalInfo || {}),
+                },
+            }));
             setSavedResumeId(item._id); // Track ID so saves are updates, not duplicates
             setEditorTab('editor');
             toast.success("Resume restored!");
@@ -843,12 +1048,14 @@ const ResumeBuilder = () => {
             setCoverLetter(item.data.content || "");
             setCoverLetterCompany(item.data.company || "");
             setSavedCLId(item._id);
+            if (item.metadata?.resumeId) setSavedResumeId(item.metadata.resumeId);
             setEditorTab('cover-letter');
             toast.success("Cover letter restored!");
         } else if (item.type === "application-letter") {
             setApplicationLetter(item.data.content || "");
             setCoverLetterCompany(item.data.company || "");
             setSavedALId(item._id);
+            if (item.metadata?.resumeId) setSavedResumeId(item.metadata.resumeId);
             setEditorTab('application-letter');
             toast.success("Application letter restored!");
         } else if (item.type === "portfolio") {
@@ -875,7 +1082,7 @@ const ResumeBuilder = () => {
     };
 
     const handleOptimize = async () => {
-        const textToOptimize = resumeText.trim() || JSON.stringify(generatedResume || formData);
+        const textToOptimize = resumeText.trim() || JSON.stringify(currentResumeData);
 
         if (!textToOptimize || textToOptimize === "{}" || textToOptimize.length < 50) {
             toast.error("Please add some content to your resume first");
@@ -960,6 +1167,11 @@ const ResumeBuilder = () => {
             setFormData(initialFormData);
             setGeneratedResume(null);
             setSavedResumeId(null);
+            setCoverLetter("");
+            setApplicationLetter("");
+            setCoverLetterCompany("");
+            setSavedCLId(null);
+            setSavedALId(null);
             setIsEditing(true);
             setActiveSection("personal");
             toast.success("Started a new resume draft");
@@ -982,8 +1194,9 @@ const ResumeBuilder = () => {
         setIsGeneratingCL(true);
         const toastId = toast.loading(isApplication ? "Drafting application letter..." : "Drafting cover letter...");
         try {
+            const resumeForLetter = hasUserEnteredResumeContent(currentResumeData, user) ? currentResumeData : null;
             const response = await apiClient.post("/api/career/cover-letter/generate", {
-                resume: generatedResume || formData,
+                resume: resumeForLetter,
                 role: jobDescription,
                 company: coverLetterCompany || undefined,
                 type: isApplication ? "application-letter" : "cover-letter"
@@ -992,6 +1205,17 @@ const ResumeBuilder = () => {
                 const data = await response.json();
                 setCoverLetter(data.content || "");
                 setEditorTab("cover-letter");
+                try {
+                    const saved = await persistCareerDocument({
+                        id: savedCLId || undefined,
+                        type: "cover-letter",
+                        title: `Cover Letter for ${coverLetterCompany || jobDescription || 'Role'}`,
+                        data: { content: data.content || "", company: coverLetterCompany },
+                    });
+                    setSavedCLId(saved._id);
+                } catch (saveErr) {
+                    console.error("Failed to auto-save cover letter", saveErr);
+                }
                 toast.success("Cover letter generated!", { id: toastId });
             } else {
                 throw new Error("Failed to generate cover letter");
@@ -1011,8 +1235,9 @@ const ResumeBuilder = () => {
         setIsGeneratingAL(true);
         const toastId = toast.loading("Drafting application letter...");
         try {
+            const resumeForLetter = hasUserEnteredResumeContent(currentResumeData, user) ? currentResumeData : null;
             const response = await apiClient.post("/api/career/cover-letter/generate", {
-                resume: generatedResume || formData,
+                resume: resumeForLetter,
                 role: jobDescription,
                 company: coverLetterCompany,
                 type: "application-letter"
@@ -1021,6 +1246,17 @@ const ResumeBuilder = () => {
                 const data = await response.json();
                 setApplicationLetter(data.content || "");
                 setEditorTab("application-letter");
+                try {
+                    const saved = await persistCareerDocument({
+                        id: savedALId || undefined,
+                        type: "application-letter",
+                        title: `Application Letter for ${coverLetterCompany || jobDescription || 'Role'}`,
+                        data: { content: data.content || "", company: coverLetterCompany },
+                    });
+                    setSavedALId(saved._id);
+                } catch (saveErr) {
+                    console.error("Failed to auto-save application letter", saveErr);
+                }
                 toast.success("Application letter generated!", { id: toastId });
             } else {
                 throw new Error("Failed to generate application letter");
@@ -1033,9 +1269,12 @@ const ResumeBuilder = () => {
     };
 
     const handleGenerate = async () => {
-        if (!jobDescription.trim()) {
-            toast.error("Please provide a target job role");
-            setError("Job role is required");
+        const trimmedRole = jobDescription.trim();
+        const trimmedResumeText = resumeText.trim();
+
+        if (!trimmedRole && !trimmedResumeText) {
+            toast.error("Add a target role or paste an existing resume");
+            setError("A job role or pasted resume is required");
             return;
         }
         setIsGenerating(true);
@@ -1043,7 +1282,8 @@ const ResumeBuilder = () => {
         const toastId = toast.loading("Generating your professional resume...");
         try {
             const response = await apiClient.post("/api/career/resume/generate", {
-                role: jobDescription
+                role: trimmedRole,
+                resumeText: trimmedResumeText || undefined,
             });
             if (response.ok) {
                 const data = await response.json();
@@ -1052,17 +1292,20 @@ const ResumeBuilder = () => {
                 }
                 setGeneratedResume(data);
                 setFormData(prev => ({ ...prev, ...data }));
+                if (trimmedResumeText) {
+                    setResumeText("");
+                }
                 toast.success("Resume generated successfully!", { id: toastId });
 
                 // Auto-save to DB and capture ID to prevent future duplicates
                 try {
-                    const title = data.personalInfo?.fullName || data.personalInfo?.name || jobDescription || "Draft Resume";
+                    const title = data.personalInfo?.fullName || data.personalInfo?.name || trimmedRole || "Draft Resume";
                     const saved = await apiClient.post("/api/career/history", {
                         id: savedResumeId || undefined,
                         type: "resume",
                         title,
                         data,
-                        metadata: { jobDescription }
+                        metadata: { jobDescription: trimmedRole }
                     }).then(r => r.json());
                     if (saved._id) {
                         setSavedResumeId(saved._id);
@@ -1089,43 +1332,29 @@ const ResumeBuilder = () => {
 
     const handleGenerateProjectAI = async (index) => {
         const project = portfolioPrompts[index];
-        const toastId = toast.loading(`Generating full details for ${project.title}...`);
+        if (!isPromptEligibleProject(project)) {
+            toast.error("AI prompt generation is only available for technical or software-based projects.");
+            return;
+        }
+        const toastId = toast.loading(`Generating AI build prompt for ${project.title}...`);
         try {
             const response = await apiClient.post("/api/career/portfolio/refine", {
                 projectTitle: project.title,
                 description: project.description,
+                technologies: project.technologies,
                 role: jobDescription
             });
             if (response.ok) {
                 const data = await response.json();
-                setPortfolioPrompts(prev => prev.map((p, i) => i === index ? { ...p, description: data.content, refined: true } : p));
-
-                // USER REQUEST: Auto-insert into resume instead of just showing it
-                const newProject = {
-                    name: project.title,
-                    description: data.content,
-                    technologies: Array.isArray(project.technologies) ? project.technologies.join(", ") : (project.technologies || "")
-                };
-
-                setFormData(prev => ({
-                    ...prev,
-                    projects: [...(prev.projects || []), newProject]
-                }));
-
-                setGeneratedResume(prev => {
-                    const base = prev || formData;
-                    return {
-                        ...base,
-                        projects: [...(base.projects || []), newProject]
-                    };
-                });
-
-                toast.success("Project refined and added to resume!", { id: toastId });
-                setEditorTab("editor");
-                setActiveSection("projects");
+                setPortfolioPrompts(prev => prev.map((p, i) => i === index ? {
+                    ...p,
+                    aiPrompt: data.content,
+                    promptGenerated: true
+                } : p));
+                toast.success("AI project prompt ready!", { id: toastId });
             }
         } catch (error) {
-            toast.error("Failed to refine project", { id: toastId });
+            toast.error("Failed to generate project prompt", { id: toastId });
         }
     };
 
@@ -1157,7 +1386,7 @@ const ResumeBuilder = () => {
         const toastId = toast.loading("Analyzing ATS match...");
         try {
             const response = await apiClient.post("/api/career/resume/match", {
-                resume: generatedResume || formData,
+                resume: currentResumeData,
                 jobDescription: jobMatchDescription
             });
             if (response.ok) {
@@ -1181,7 +1410,7 @@ const ResumeBuilder = () => {
         const toastId = toast.loading("Refining your resume based on match results...");
         try {
             const response = await apiClient.post("/api/career/resume/refine", {
-                resume: generatedResume || formData,
+                resume: currentResumeData,
                 jobDescription: jobMatchDescription,
                 matchResult: jobMatchResult
             });
@@ -1227,20 +1456,103 @@ const ResumeBuilder = () => {
             toast.error(error.message || "Could not find relevant course data", { id: toastId });
         }
     };
+    const exportToDOCX = async () => {
+        const toastId = toast.loading("Preparing your Word document...");
+        const resumeData = currentResumeData;
+            const hasResumeContent = hasMeaningfulResumeContent(resumeData);
+
+        if (editorTab === 'editor' && !hasResumeContent) {
+            toast.error("No resume content to export", { id: toastId });
+            return;
+        }
+
+        const fileName = (resumeData?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
+
+        try {
+            if (editorTab === "cover-letter") {
+                if (!coverLetter?.trim()) {
+                    toast.error("No cover letter to export", { id: toastId });
+                    return;
+                }
+                await downloadLetterAsDOCX({
+                    content: coverLetter,
+                    type: "cover-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, `${fileName}_Cover_Letter`);
+            } else if (editorTab === "application-letter") {
+                if (!applicationLetter?.trim()) {
+                    toast.error("No application letter to export", { id: toastId });
+                    return;
+                }
+                await downloadLetterAsDOCX({
+                    content: applicationLetter,
+                    type: "application-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, `${fileName}_Application_Letter`);
+            } else {
+                await downloadResumeAsDOCX(resumeData, fileName);
+            }
+            toast.success("Editable DOCX downloaded!", { id: toastId });
+        } catch (error) {
+            console.error("Resume DOCX export error:", error);
+            toast.error("Failed to export DOCX", { id: toastId });
+        }
+    };
+
     const exportToPDF = async () => {
         const toastId = toast.loading("Preparing your PDF...");
+        const resumeData = currentResumeData;
+        const hasResumeContent = hasMeaningfulResumeContent(resumeData);
 
         let targetId = 'resume-preview';
-        let fileName = (generatedResume?.personalInfo?.fullName || formData?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
+        let fileName = (resumeData?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
 
         if (editorTab === 'cover-letter') {
-            if (!coverLetter) { toast.error("No cover letter to export", { id: toastId }); return; }
-            targetId = 'cover-letter-export';
+            if (!coverLetter?.trim()) { toast.error("No cover letter to export", { id: toastId }); return; }
             fileName = `${fileName}_Cover_Letter`;
+            try {
+                await downloadLetterAsPDF({
+                    content: coverLetter,
+                    type: "cover-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, fileName);
+                toast.success("Downloaded!", { id: toastId });
+            } catch (error) {
+                console.error("Cover letter PDF export error:", error);
+                toast.error("Failed to export PDF", { id: toastId });
+            }
+            return;
         } else if (editorTab === 'application-letter') {
-            if (!applicationLetter) { toast.error("No application letter to export", { id: toastId }); return; }
-            targetId = 'application-letter-export';
+            if (!applicationLetter?.trim()) { toast.error("No application letter to export", { id: toastId }); return; }
             fileName = `${fileName}_Application_Letter`;
+            try {
+                await downloadLetterAsPDF({
+                    content: applicationLetter,
+                    type: "application-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, fileName);
+                toast.success("Downloaded!", { id: toastId });
+            } catch (error) {
+                console.error("Application letter PDF export error:", error);
+                toast.error("Failed to export PDF", { id: toastId });
+            }
+            return;
+        } else if (!hasResumeContent) {
+            toast.error("No resume content to export", { id: toastId });
+            return;
+        } else {
+            try {
+                await downloadResumeAsPDF(resumeData, fileName);
+                toast.success("Downloaded!", { id: toastId });
+            } catch (error) {
+                console.error("Resume PDF export error:", error);
+                toast.error("Failed to export PDF", { id: toastId });
+            }
+            return;
         }
 
         const element = document.getElementById(targetId);
@@ -1261,35 +1573,56 @@ const ResumeBuilder = () => {
 
             await new Promise(resolve => setTimeout(resolve, 150));
 
-            // Strip unsupported CSS color functions (oklch, color-mix) for canvas rendering
-            const stripUnsupportedColors = (clonedDoc) => {
-                const FALLBACK_BG = '#ffffff';
-                const FALLBACK_COLOR = '#1a1a2e';
-                const UNSUPPORTED = /oklch\s*\(|color-mix\s*\(|lab\s*\(|lch\s*\(/i;
-                const win = clonedDoc.defaultView || window;
-                clonedDoc.querySelectorAll('*').forEach(el => {
-                    const computed = win.getComputedStyle(el);
-                    if (UNSUPPORTED.test(computed.backgroundColor))
-                        el.style.setProperty('background-color', el === clonedDoc.body ? FALLBACK_BG : 'transparent', 'important');
-                    if (UNSUPPORTED.test(computed.color))
-                        el.style.setProperty('color', FALLBACK_COLOR, 'important');
-                    if (UNSUPPORTED.test(computed.borderColor))
-                        el.style.setProperty('border-color', '#e2e8f0', 'important');
-                    if (el.hasAttribute('style')) {
-                        let style = el.getAttribute('style');
-                        style = style.replace(/oklch\([^)]*\)/gi, FALLBACK_COLOR);
-                        el.setAttribute('style', style);
-                    }
-                });
-            };
-
             // Capture at 3× for crisp print quality
             const canvas = await html2canvas(element, {
                 scale: 3,
                 useCORS: true,
                 logging: false,
                 backgroundColor: "#ffffff",
-                onclone: (_clonedDoc, clonedElement) => {
+                onclone: (clonedDoc, clonedElement) => {
+                    const FALLBACK_TEXT = "#1a1a2e";
+                    const FALLBACK_BG = "#ffffff";
+                    const FALLBACK_BORDER = "#e2e8f0";
+                    const UNSUPPORTED = /oklch\s*\(|color-mix\s*\(|lab\s*\(|lch\s*\(/i;
+                    const colorProps = [
+                        ["color", FALLBACK_TEXT],
+                        ["backgroundColor", FALLBACK_BG],
+                        ["borderColor", FALLBACK_BORDER],
+                        ["borderTopColor", FALLBACK_BORDER],
+                        ["borderRightColor", FALLBACK_BORDER],
+                        ["borderBottomColor", FALLBACK_BORDER],
+                        ["borderLeftColor", FALLBACK_BORDER],
+                        ["outlineColor", FALLBACK_BORDER],
+                        ["textDecorationColor", FALLBACK_TEXT],
+                        ["boxShadow", "none"],
+                        ["textShadow", "none"],
+                        ["fill", FALLBACK_TEXT],
+                        ["stroke", FALLBACK_TEXT],
+                        ["caretColor", FALLBACK_TEXT],
+                        ["columnRuleColor", FALLBACK_BORDER],
+                        ["-webkit-text-fill-color", FALLBACK_TEXT],
+                        ["-webkit-text-stroke-color", FALLBACK_TEXT],
+                    ];
+                    const root = clonedDoc.documentElement;
+                    [
+                        ["--background", FALLBACK_BG],
+                        ["--foreground", FALLBACK_TEXT],
+                        ["--card", FALLBACK_BG],
+                        ["--card-foreground", FALLBACK_TEXT],
+                        ["--popover", FALLBACK_BG],
+                        ["--popover-foreground", FALLBACK_TEXT],
+                        ["--primary", "#166534"],
+                        ["--primary-foreground", FALLBACK_BG],
+                        ["--secondary", "#f8fafc"],
+                        ["--secondary-foreground", FALLBACK_TEXT],
+                        ["--muted", "#f8fafc"],
+                        ["--muted-foreground", "#475569"],
+                        ["--accent", "#dcfce7"],
+                        ["--accent-foreground", "#166534"],
+                        ["--border", FALLBACK_BORDER],
+                    ].forEach(([name, value]) => {
+                        root.style.setProperty(name, value);
+                    });
                     // The only reliable fix for oklch: read computed styles from the
                     // ORIGINAL elements (browsers resolve oklch → rgb in getComputedStyle)
                     // and apply those resolved rgb values to the clone as inline styles.
@@ -1300,9 +1633,22 @@ const ResumeBuilder = () => {
                         const cloneEl = clonedAll[idx];
                         if (!cloneEl) return;
                         const cs = window.getComputedStyle(origEl);
-                        cloneEl.style.setProperty('color', cs.color, 'important');
-                        cloneEl.style.setProperty('background-color', cs.backgroundColor, 'important');
-                        cloneEl.style.setProperty('border-color', cs.borderColor, 'important');
+
+                        colorProps.forEach(([prop, fallback]) => {
+                            const value = cs.getPropertyValue(prop) || cs[prop];
+                            const safeValue = value && !UNSUPPORTED.test(value) ? value : fallback;
+                            cloneEl.style.setProperty(prop, safeValue, 'important');
+                        });
+
+                        if (cloneEl.hasAttribute('style')) {
+                            const safeStyle = cloneEl
+                                .getAttribute('style')
+                                .replace(/oklch\([^)]*\)/gi, FALLBACK_TEXT)
+                                .replace(/color-mix\([^)]*\)/gi, FALLBACK_TEXT)
+                                .replace(/lab\([^)]*\)/gi, FALLBACK_TEXT)
+                                .replace(/lch\([^)]*\)/gi, FALLBACK_TEXT);
+                            cloneEl.setAttribute('style', safeStyle);
+                        }
                     });
 
                     // Hide interactive edit buttons from the PDF output
@@ -1374,6 +1720,53 @@ const ResumeBuilder = () => {
         toast.success("Copied to clipboard!");
     };
 
+    const renderHistoryCard = (item) => (
+        <div key={item._id} onClick={() => loadHistoryItem(item)}
+            className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-green-400 dark:hover:border-green-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-green-500/10 transition-colors" />
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="flex items-center gap-2">
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' || item.type === 'application-letter' || item.type === 'portfolio'
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                        : 'bg-green-50 dark:bg-green-900/20'
+                        }`}>
+                        {item.type === 'cover-letter' ? <FileText size={18} className="text-emerald-600 dark:text-emerald-400" /> :
+                            item.type === 'application-letter' ? <Target size={18} className="text-emerald-600 dark:text-emerald-400" /> :
+                                item.type === 'portfolio' ? <FolderOpen size={18} className="text-emerald-600 dark:text-emerald-400" /> :
+                                    <Edit2 size={18} className="text-green-600 dark:text-green-400" />}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 capitalize">{item.type || "Document"}</span>
+                        <span className="text-xs font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <button onClick={e => deleteHistoryItem(e, item._id)} className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors opacity-100">
+                    <Trash2 size={14} />
+                </button>
+            </div>
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 line-clamp-1 border-b border-slate-50 dark:border-slate-800 pb-3 relative z-10">
+                {item.title || "Untitled Document"}
+            </h4>
+            <div className="flex-1 relative z-10">
+                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 italic">
+                    {item.type === 'cover-letter' ? `Cover letter for ${item.data?.company || 'Company'}` :
+                        item.type === 'application-letter' ? `Application letter for ${item.data?.company || 'Company'}` :
+                            item.type === 'portfolio' ? `${item.data?.prompts?.length || 0} Project Ideas` :
+                                item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft..."}
+                </p>
+            </div>
+            <div className="mt-4 pt-4 flex justify-between items-center relative z-10 text-[10px] font-black">
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Saved
+                </div>
+                <span className="text-green-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Open document <ArrowRight size={12} />
+                </span>
+            </div>
+        </div>
+    );
+
     return (
         <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
@@ -1422,21 +1815,26 @@ const ResumeBuilder = () => {
                     >
                         <TrendingUp size={14} className="mr-1.5" /> Match to Job
                     </Button>
-                    <Button variant="outline" onClick={exportToPDF} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
+                    {false && <Button variant="outline" onClick={exportToPDF} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
                         <Download size={14} className="mr-1.5" /> Export PDF
-                    </Button>
+                    </Button>}
+                    {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
+                        <Button variant="outline" onClick={exportToDOCX} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
+                            <Download size={14} className="mr-1.5" /> Export DOCX
+                        </Button>
+                    )}
                 </div>
 
                 <div className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
                     {editorTab === 'editor' && (
                         <div className="h-full">
-                            {!(generatedResume || formData.personalInfo.fullName || formData.personalInfo.jobTitle || (formData.projects || []).length > 0 || (formData.experience || []).length > 0 || (formData.education || []).length > 0 || (formData.skills || []).length > 0) ? (
+                            {!hasUserEnteredResumeContent(currentResumeData, user) ? (
                                 <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
                                     <div className="w-20 h-20 rounded-3xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6">
                                         <FileText className="w-10 h-10 text-green-500" />
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Your resume preview</h3>
-                                    <p className="text-slate-500 max-w-sm mb-8">Start filling in your information and watch your professional resume come to life in real time.</p>
+                                    <p className="text-slate-500 max-w-xl mb-8">Start from a target role, paste your full current resume for a full rebuild, or use your library and watch your professional resume come to life in real time.</p>
                                     <div className="w-full max-w-md space-y-4">
                                         <InputField
                                             label="Target Job Role"
@@ -1445,8 +1843,15 @@ const ResumeBuilder = () => {
                                             placeholder="e.g. Senior Fullstack Developer"
                                             icon={Target}
                                         />
+                                        <InputField
+                                            label="Paste Existing Resume (Optional)"
+                                            value={resumeText}
+                                            onChange={e => setResumeText(e.target.value)}
+                                            placeholder="Paste the full resume here and the AI will restructure it into a new editable resume."
+                                            rows={8}
+                                        />
                                         <div className="flex gap-3">
-                                            <Button onClick={handleGenerate} disabled={isGenerating || !jobDescription} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl">
+                                            <Button onClick={handleGenerate} disabled={isGenerating || (!jobDescription.trim() && !resumeText.trim())} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl">
                                                 {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                                                 Generate with AI
                                             </Button>
@@ -1517,7 +1922,7 @@ const ResumeBuilder = () => {
                                 </div>
                             ) : (
                                 <FormResumePreview
-                                    data={generatedResume || formData}
+                                    data={currentResumeData}
                                     onUpdate={(section, indexOrField, fieldOrValue, value) => {
                                         if (section === 'personalInfo') {
                                             updatePersonalInfo(indexOrField, fieldOrValue);
@@ -1703,14 +2108,24 @@ const ResumeBuilder = () => {
                                                     ))}
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        onClick={() => prompt.refined ? copyToClipboard(prompt.description) : handleGenerateProjectAI(i)}
-                                                        className={`flex-1 text-xs py-5 rounded-xl border-emerald-100 hover:bg-emerald-50 text-emerald-600 ${prompt.refined ? 'bg-emerald-50 border-emerald-500' : ''}`}
-                                                    >
-                                                        {prompt.refined ? <Copy size={14} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
-                                                        {prompt.refined ? 'Copy Prompt' : 'Gen with AI'}
-                                                    </Button>
+                                                    {isPromptEligibleProject(prompt) ? (
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => prompt.promptGenerated ? copyToClipboard(prompt.aiPrompt || "") : handleGenerateProjectAI(i)}
+                                                            className={`flex-1 text-xs py-5 rounded-xl border-emerald-100 hover:bg-emerald-50 text-emerald-600 ${prompt.promptGenerated ? 'bg-emerald-50 border-emerald-500' : ''}`}
+                                                        >
+                                                            {prompt.promptGenerated ? <Copy size={14} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
+                                                            {prompt.promptGenerated ? 'Copy Prompt' : 'Get Prompt'}
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            variant="outline"
+                                                            disabled
+                                                            className="flex-1 text-xs py-5 rounded-xl border-slate-200 text-slate-400"
+                                                        >
+                                                            Not for AI Prompt
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         onClick={() => addToResume(prompt)}
                                                         className="flex-1 text-xs py-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -1814,48 +2229,23 @@ const ResumeBuilder = () => {
                             Recent Work
                         </h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {history.map(item => (
-                            <div key={item._id} onClick={() => loadHistoryItem(item)}
-                                className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-green-400 dark:hover:border-green-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-green-500/10 transition-colors" />
-                                <div className="flex justify-between items-start mb-4 relative z-10">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
-                                            item.type === 'portfolio' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
-                                                'bg-green-50 dark:bg-green-900/20'
-                                            }`}>
-                                            {item.type === 'cover-letter' ? <FileText size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                                                item.type === 'portfolio' ? <FolderOpen size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                                                    <Target size={18} className="text-green-600 dark:text-green-400" />}
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-slate-400 capitalize">{item.type || "Document"}</span>
-                                            <span className="text-xs font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                    <button onClick={e => deleteHistoryItem(e, item._id)} className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors opacity-100">
-                                        <Trash2 size={14} />
-                                    </button>
+                    <div className="space-y-10">
+                        {[
+                            { title: "Resumes", items: groupedHistory.resumes },
+                            { title: "Cover Letters", items: groupedHistory.coverLetters },
+                            { title: "Application Letters", items: groupedHistory.applicationLetters },
+                            { title: "Portfolio Ideas", items: groupedHistory.portfolios },
+                        ].map((section) => section.items.length > 0 && (
+                            <div key={section.title} className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                                    <h4 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        {section.title}
+                                    </h4>
+                                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
                                 </div>
-                                <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 line-clamp-1 border-b border-slate-50 dark:border-slate-800 pb-3 relative z-10">
-                                    {item.title || "Untitled Document"}
-                                </h4>
-                                <div className="flex-1 relative z-10">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 italic">
-                                        {item.type === 'cover-letter' ? `Cover letter for ${item.data?.company || 'Company'}` :
-                                            item.type === 'portfolio' ? `${item.data?.prompts?.length || 0} Project Ideas` :
-                                                item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft..."}
-                                    </p>
-                                </div>
-                                <div className="mt-4 pt-4 flex justify-between items-center relative z-10 text-[10px] font-black">
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        Saved
-                                    </div>
-                                    <span className="text-green-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                                        Open document <ArrowRight size={12} />
-                                    </span>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {section.items.map(renderHistoryCard)}
                                 </div>
                             </div>
                         ))}
@@ -1959,14 +2349,23 @@ const ResumeBuilder = () => {
                                     >
                                         <TrendingUp size={16} className="mr-2" /> Match Job
                                     </Button>
-                                    <Button
+                                    {false && <Button
                                         variant="outline"
                                         onClick={() => { exportToPDF(); setShowMobileActions(false); }}
                                         className="py-7 rounded-2xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-[10px]"
                                     >
                                         <Download size={16} className="mr-2" /> Export PDF
-                                    </Button>
+                                    </Button>}
                                 </div>
+                                {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => { exportToDOCX(); setShowMobileActions(false); }}
+                                        className="w-full py-7 rounded-2xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-[10px]"
+                                    >
+                                        <Download size={16} className="mr-2" /> Export DOCX
+                                    </Button>
+                                )}
                             </div>
                         </motion.div>
                     </div>

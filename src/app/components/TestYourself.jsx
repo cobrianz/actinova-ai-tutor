@@ -10,6 +10,8 @@ import {
   BrainCircuit,
   CheckCircle,
   Award,
+  ChevronLeft,
+  ChevronRight,
   Trash2,
   Filter,
 } from "lucide-react";

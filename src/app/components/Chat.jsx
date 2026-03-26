@@ -47,9 +47,6 @@ export default function Chat({ topic: propTopic }) {
   const messagesEndRef = useRef(null);
   const { user, loading: authLoading } = useAuth();
 
-  if (authLoading) return <ActirovaLoader />;
-  if (!user) return null;
-
   const loadChatHistory = async (currentTopic) => {
     if (!currentTopic || !user) return [];
     try {
@@ -162,6 +159,9 @@ export default function Chat({ topic: propTopic }) {
   };
 
   const isPro = user && ((user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") || user.isPremium);
+
+  if (authLoading) return <ActirovaLoader />;
+  if (!user) return null;
 
   const handleSend = async () => {
     if (!input.trim()) return;

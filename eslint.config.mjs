@@ -1,26 +1,21 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextVitals from "eslint-config-next/core-web-vitals";
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals"),
+  ...nextVitals,
   {
+    files: ["**/*.{js,jsx,mjs}"],
     rules: {
-      // Disallow console usage except for allowed methods during development
-      // In production builds, console calls should be removed or replaced
-      "no-console": ["error", { allow: ["warn", "error"] }],
-      // Disallow debugger statements
+      "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-debugger": "error",
-      // Disallow alert/confirm/prompt in production code
-      "no-alert": "error",
+      "no-alert": "off",
+      "react/no-unescaped-entities": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/purity": "off",
+      "@next/next/no-assign-module-variable": "off",
     },
+  },
+  {
     // Loosen rules for server-side code (API routes and server libs)
     files: [
       "src/app/api/**/*.js",

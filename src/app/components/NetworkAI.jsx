@@ -84,11 +84,6 @@ const NetworkAI = () => {
             if (res.ok) {
                 const data = await res.json();
                 setResults(data);
-                const label = subMode === "outreach" ? (targetPerson.name || "Contact") : (careerGoals || "Goal");
-                await apiClient.post("/api/career/history", {
-                    type: "network", title: label, data,
-                    metadata: { subMode, targetPerson: { ...targetPerson }, userSkills, careerGoals, platform }
-                });
                 fetchHistory();
                 toast.success("Network strategy generated!");
             } else {

@@ -30,16 +30,23 @@ async function handlePost(request) {
         const docType = isApplication ? "Application Letter" : "Cover Letter";
         const companyStr = company ? ` at "${company}"` : "";
 
+        const effectiveResume = resume && typeof resume === "object" ? resume : null;
+
         const systemPrompt = `You are a professional career coach.
 Create a highly persuasive, professional, and tailored ${docType} for the role: "${role}"${companyStr}.
-Use the following resume data: ${JSON.stringify(resume)}.
+Use the following resume data when available: ${JSON.stringify(effectiveResume || {})}.
 Candidate Name: "${user.firstName || ""} ${user.lastName || ""}".
 ${user.email ? `Candidate Email: "${user.email}".\n` : ''}
+${effectiveResume?.personalInfo?.phone ? `Candidate Phone: "${effectiveResume.personalInfo.phone}".\n` : ''}
+${effectiveResume?.personalInfo?.location ? `Candidate Location: "${effectiveResume.personalInfo.location}".\n` : ''}
+${effectiveResume?.personalInfo?.linkedin ? `Candidate LinkedIn: "${effectiveResume.personalInfo.linkedin}".\n` : ''}
+${effectiveResume?.personalInfo?.website ? `Candidate Website: "${effectiveResume.personalInfo.website}".\n` : ''}
 
 CRITICAL RULES:
 1. Make the ${docType} CONCISE and punchy. It must NOT be too long. Aim for 3-4 short paragraphs maximum.
 2. Structure it professionally with placeholders for contact info if not provided.
 3. Highlight the most relevant skills from the resume for the specific role${company ? ` and emphasize value brought to ${company}` : ''}.
+4. If resume data is missing, use the logged-in user details above and keep the letter truthful and generic rather than inventing resume history.
 Return the output in a JSON format: { "content": "..." }. DO NOT use any emojis in your response.`;
 
         const completion = await openai.chat.completions.create({

@@ -10,7 +10,7 @@ const careerHistorySchema = new mongoose.Schema(
         type: {
             type: String,
             required: [true, "History type is required"],
-            enum: ["resume", "interview", "skill-gap", "network"],
+            enum: ["resume", "cover-letter", "application-letter", "portfolio", "interview", "skill-gap", "network"],
         },
         title: {
             type: String,

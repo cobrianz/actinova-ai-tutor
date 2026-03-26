@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -327,4 +326,144 @@ body[data-exporting="true"] [class*="border-green-"] { border-color: #10b981 !im
 .dark .visual-block-wrapper {
   background: transparent !important;
   border-color: transparent !important;
+}
+
+/* ─── Resume Templates ────────────────────────────────────────── */
+
+/* Classic (Default) */
+#resume-preview[data-template="classic"] {
+  font-family: var(--font-eb-garamond), 'Georgia', serif;
+}
+#resume-preview[data-template="classic"] .group\/sec > div:first-child h3 {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #333 !important;
+  border-radius: 0 !important;
+  padding: 0 0 4px 0 !important;
+  color: #1a1a2e !important;
+}
+#resume-preview[data-template="classic"] .group\/sec > div:first-child .bg-slate-200 {
+  display: none !important;
+}
+
+/* Executive: Formal and dark-accented */
+#resume-preview[data-template="executive"] {
+  font-family: 'Times New Roman', Times, serif;
+}
+#resume-preview[data-template="executive"] header h1 {
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em !important;
+}
+#resume-preview[data-template="executive"] .group\/sec > div:first-child h3 {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  padding: 4px 16px !important;
+  font-family: ui-sans-serif, system-ui, sans-serif !important;
+}
+#resume-preview[data-template="executive"] .group\/sec > div:first-child .bg-slate-200 {
+  background-color: #0f172a !important;
+  height: 2px !important;
+}
+#resume-preview[data-template="executive"] h4 {
+  color: #0f172a !important;
+}
+
+/* Modern: Fresh green editorial style */
+#resume-preview[data-template="modern"] {
+  font-family: var(--font-jost), "Jost", ui-sans-serif, system-ui, sans-serif;
+}
+#resume-preview[data-template="modern"] header h1 {
+  color: #059669;
+}
+#resume-preview[data-template="modern"] .group\/sec > div:first-child h3 {
+  background-color: #ecfdf5 !important;
+  color: #059669 !important;
+  border-color: #a7f3d0 !important;
+}
+#resume-preview[data-template="modern"] .group\/sec > div:first-child .bg-slate-200 {
+  background-color: #a7f3d0 !important;
+}
+#resume-preview[data-template="modern"] h4 {
+  color: #059669 !important;
+}
+#resume-preview[data-template="modern"] .border-l-2.border-slate-50 {
+  border-color: #a7f3d0 !important;
+}
+
+/* Minimal: Clean monochrome spacing */
+#resume-preview[data-template="minimal"] {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #333;
+}
+#resume-preview[data-template="minimal"] header h1 {
+  font-weight: 400;
+  letter-spacing: 0.1em !important;
+}
+#resume-preview[data-template="minimal"] header p {
+  font-weight: 300;
+}
+#resume-preview[data-template="minimal"] .group\/sec > div:first-child h3 {
+  background-color: transparent !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+  border-radius: 9999px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase;
+}
+
+/* Scholar: Academic and centered */
+#resume-preview[data-template="scholar"] {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+}
+#resume-preview[data-template="scholar"] header {
+  align-items: center;
+  text-align: center;
+}
+#resume-preview[data-template="scholar"] .group\/sec > div:first-child {
+  justify-content: center;
+}
+#resume-preview[data-template="scholar"] .group\/sec > div:first-child h3 {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid #000 !important;
+  border-top: 1px solid #000 !important;
+  border-radius: 0 !important;
+  text-transform: uppercase;
+  color: #000 !important;
+  letter-spacing: 0.2em !important;
+}
+#resume-preview[data-template="scholar"] .group\/sec > div:first-child .bg-slate-200 {
+  display: none !important;
+}
+
+/* Bold: High-contrast statement look */
+#resume-preview[data-template="bold"] {
+  font-family: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  color: #000;
+}
+#resume-preview[data-template="bold"] header h1 {
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 3rem;
+  line-height: 1;
+  letter-spacing: -0.05em !important;
+}
+#resume-preview[data-template="bold"] .group\/sec > div:first-child h3 {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-radius: 0 !important;
+  font-weight: 900 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em !important;
+}
+#resume-preview[data-template="bold"] .group\/sec > div:first-child .bg-slate-200 {
+  background-color: #000 !important;
+  height: 4px !important;
+}
+#resume-preview[data-template="bold"] h4 {
+  font-weight: 900 !important;
+  color: #000 !important;
 }

@@ -3,44 +3,44 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-    List, ListOrdered, Save, Download, FileText, ChevronRight,
-    Sparkles, Loader2, CheckCircle2, ChevronDown,
-    LetterText, Minus, Plus, PanelRight, X,
-    RefreshCcw, ArrowLeftRight, Maximize2, Minimize2, Activity,
-    ShieldCheck, AlertTriangle, AlertCircle
+    List, ListOrdered, Save, Download, FileText,
+    Sparkles, Loader2, CheckCircle2,
+    Plus, PanelRight, X, Table2
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 import { useRouter } from "next/navigation";
-import { saveAs } from "file-saver";
-import { useTheme } from "./ThemeProvider";
 import { useAuth } from "./AuthProvider";
 import UpgradeModal from "./UpgradeModal";
-import {
-    Document,
-    Packer,
-    Paragraph,
-    TextRun,
-    HeadingLevel,
-    AlignmentType
-} from "docx";
+
+const stripHtmlText = (value = "") =>
+    String(value || "")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
 export default function ReportEditor({ reportId }) {
-    const { theme } = useTheme();
-    const { isPro, isEnterprise } = useAuth();
+    const { user, isPro, isEnterprise } = useAuth();
+    const loggedInUserName =
+        user?.name ||
+        [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+        (user?.email ? user.email.split("@")[0] : "");
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generatingSection, setGeneratingSection] = useState(null);
     const [generatingAbstract, setGeneratingAbstract] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [selectedFontFamily, setSelectedFontFamily] = useState("Inter");
+    const [selectedFontFamily, setSelectedFontFamily] = useState("Inter, system-ui, sans-serif");
     const [selectedFontSize, setSelectedFontSize] = useState("3");
     const [selectedLineHeight, setSelectedLineHeight] = useState("2.0");
-    const [authorName, setAuthorName] = useState("Research Author");
-    const [institution, setInstitution] = useState("Actinova University");
-    const [courseName, setCourseName] = useState("Advanced Academic Writing");
-    const [studentName, setStudentName] = useState("Actinova Student");
-    const [submissionDate, setSubmissionDate] = useState(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+    const [authorName, setAuthorName] = useState("");
+    const [institution, setInstitution] = useState("");
+    const [courseName, setCourseName] = useState("");
+    const [studentName, setStudentName] = useState("");
+    const [submissionDate, setSubmissionDate] = useState("");
     const [allReferences, setAllReferences] = useState([]);
     const [sectionLengths, setSectionLengths] = useState({});
     const [zoom, setZoom] = useState(100);
@@ -52,26 +52,50 @@ export default function ReportEditor({ reportId }) {
     const referencesRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const saveTimeoutRef = useRef(null);
+    const saveInFlightRef = useRef(false);
     const loadedRef = useRef(false);
     const [toolbar, setToolbar] = useState({ visible: false, x: 0, y: 0, text: '', range: null });
     const [isRewriting, setIsRewriting] = useState(false);
-    const [validationResults, setValidationResults] = useState(null);
-    const [isValidating, setIsValidating] = useState(false);
     const [citationStyle, setCitationStyle] = useState("APA 7");
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [customSectionTitle, setCustomSectionTitle] = useState("");
+    const [customSectionDescription, setCustomSectionDescription] = useState("");
+    const [customSectionPages, setCustomSectionPages] = useState(1);
+    const [customSectionPlacement, setCustomSectionPlacement] = useState("end");
     const pendingContentRef = useRef(null); // holds fullContent until editor mounts
     const pendingTitlePageContentRef = useRef(null); // holds titlePageContent until editor mounts
     const pendingReportRef = useRef(null);  // holds report data until editor mounts
+    const activeEditableRef = useRef(null);
     const router = useRouter();
 
-    useEffect(() => {
-        fetchReport();
-        return () => {
-            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-        };
-    }, [reportId]);
+    const saveBlob = useCallback(async (blob, fileName) => {
+        const fileSaverModule = await import("file-saver");
+        const saveFile =
+            fileSaverModule.saveAs ||
+            fileSaverModule.default?.saveAs ||
+            fileSaverModule.default;
 
-    const fetchReport = async () => {
+        if (typeof saveFile !== "function") {
+            throw new Error("File saver is unavailable");
+        }
+
+        saveFile(blob, fileName);
+    }, []);
+
+    const setActiveEditable = useCallback((node) => {
+        if (node) {
+            activeEditableRef.current = node;
+        }
+    }, []);
+
+    const getActiveEditable = useCallback(() => {
+        if (activeEditableRef.current?.isConnected) {
+            return activeEditableRef.current;
+        }
+        return editorRef.current || titlePageRef.current || referencesRef.current;
+    }, []);
+
+    const fetchReport = useCallback(async () => {
         try {
             const res = await apiClient.get(`/api/reports/${reportId}`);
             if (res.ok) {
@@ -80,10 +104,14 @@ export default function ReportEditor({ reportId }) {
                 setReport(r);
                 pendingReportRef.current = r; // save for after editor mounts
                 // Restore metadata from DB
-                if (r.authorName) setAuthorName(r.authorName);
-                if (r.institution) setInstitution(r.institution);
-                if (r.courseName) setCourseName(r.courseName);
-                if (r.studentName) setStudentName(r.studentName);
+                if (r.authorName && r.authorName !== "Research Author") setAuthorName(r.authorName);
+                if (r.institution && r.institution !== "Actinova University") setInstitution(r.institution);
+                if (r.courseName && r.courseName !== "Advanced Academic Writing") setCourseName(r.courseName);
+                if (r.studentName && r.studentName !== "Actinova Student") {
+                    setStudentName(r.studentName);
+                } else if (loggedInUserName) {
+                    setStudentName(loggedInUserName);
+                }
                 if (r.submissionDate) setSubmissionDate(r.submissionDate);
                 if (r.citationStyle) setCitationStyle(r.citationStyle);
                 // Restore section length preferences
@@ -107,7 +135,20 @@ export default function ReportEditor({ reportId }) {
         } finally {
             setLoading(false); // triggers re-render → editor mounts → useEffect below fires
         }
-    };
+    }, [reportId, router, loggedInUserName]);
+
+    useEffect(() => {
+        fetchReport();
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, [fetchReport]);
+
+    useEffect(() => {
+        const needsLoggedInName = studentName === "" || studentName === "Actinova Student";
+        if (!loggedInUserName || !needsLoggedInName) return;
+        setStudentName(loggedInUserName);
+    }, [loggedInUserName, studentName]);
 
     // After loading finishes, the editor div is now in the DOM.
     // Apply the pending content and generate the title page if needed.
@@ -148,6 +189,25 @@ export default function ReportEditor({ reportId }) {
         loadedRef.current = true;
     }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    useEffect(() => {
+        if (!referencesRef.current || loading) return;
+        if (document.activeElement === referencesRef.current) return;
+
+        if (allReferences.length > 0) {
+            referencesRef.current.innerHTML = allReferences
+                .map((ref) => `<p class="report-reference">${ref}</p>`)
+                .join("");
+        } else {
+            referencesRef.current.innerHTML = `
+                <div contenteditable="false" class="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
+                    <div class="flex flex-col items-center">
+                        <p class="text-sm text-slate-400 font-medium">Citations will be automatically compiled here</p>
+                    </div>
+                </div>
+            `;
+        }
+    }, [allReferences, loading]);
+
     const handleSelection = useCallback(() => {
         const selection = window.getSelection();
         const text = selection.toString().trim();
@@ -173,39 +233,6 @@ export default function ReportEditor({ reportId }) {
         }
     }, []);
 
-    const handleRewrite = async (action) => {
-        if (!toolbar.text || isRewriting) return;
-        setIsRewriting(true);
-        try {
-            const res = await apiClient.post('/api/rewrite-content', {
-                text: toolbar.text,
-                action,
-                topic: report?.title,
-                citationStyle: report?.citationStyle
-            });
-
-            if (res.ok) {
-                const { data } = await res.json();
-                if (toolbar.range) {
-                    const selection = window.getSelection();
-                    selection.removeAllRanges();
-                    selection.addRange(toolbar.range);
-                    document.execCommand('insertText', false, data);
-                    handleEditorInput();
-                    toast.success(`Content ${action}ed`);
-                }
-            } else {
-                toast.error("Failed to rewrite content");
-            }
-        } catch (error) {
-            console.error("Rewrite error:", error);
-            toast.error("An error occurred during rewrite");
-        } finally {
-            setIsRewriting(false);
-            setToolbar(prev => ({ ...prev, visible: false }));
-        }
-    };
-
     useEffect(() => {
         const handleMouseUp = () => {
             setTimeout(handleSelection, 0);
@@ -226,13 +253,22 @@ export default function ReportEditor({ reportId }) {
     }, [handleSelection]);
 
     const saveReport = useCallback(async (contentOverride = null, sectionsOverride = null, referencesOverride = null) => {
-        if (!editorRef.current && !contentOverride) return;
+        if (!editorRef.current && !contentOverride) return false;
+        if (saveInFlightRef.current) return false;
+
+        saveInFlightRef.current = true;
         setSaving(true);
         try {
             const content = contentOverride || editorRef.current.innerHTML;
             const titlePageContent = titlePageRef.current ? titlePageRef.current.innerHTML : '';
             const sections = sectionsOverride || report?.sections;
-            const references = referencesOverride || (referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences);
+            const references = referencesOverride || (
+                referencesRef.current
+                    ? Array.from(referencesRef.current.querySelectorAll('p.report-reference'))
+                        .map((p) => p.innerText.trim())
+                        .filter(Boolean)
+                    : allReferences
+            );
 
             const res = await apiClient.patch(`/api/reports/${reportId}`, {
                 fullContent: content,
@@ -254,13 +290,30 @@ export default function ReportEditor({ reportId }) {
 
             if (res.ok) {
                 setLastSaved(new Date());
+                return true;
             }
+            return false;
         } catch (error) {
             console.error("Auto-save failed:", error);
+            return false;
         } finally {
+            saveInFlightRef.current = false;
             setSaving(false);
         }
-    }, [reportId, report, allReferences, authorName, institution, courseName, studentName, submissionDate, citationStyle]);
+    }, [reportId, report, allReferences, authorName, institution, courseName, studentName, submissionDate, citationStyle, sectionLengths]);
+
+    const handleManualSave = useCallback(async () => {
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = null;
+        }
+
+        const didSave = await saveReport();
+
+        if (didSave) {
+            toast.success("Saved");
+        }
+    }, [saveReport]);
 
     const handleEditorInput = useCallback(() => {
         if (!loadedRef.current) return; // skip saves during initial content restore
@@ -269,44 +322,6 @@ export default function ReportEditor({ reportId }) {
             saveReport();
         }, 2000); // 2s debounce autosave
     }, [saveReport]);
-
-    const handleCommand = useCallback((command, value = null) => {
-        if (!editorRef.current) return;
-
-        // Ensure editor has focus
-        editorRef.current.focus();
-
-        // Apply command
-        document.execCommand(command, false, value);
-
-        // Force an input event to trigger auto-save if content changed
-        handleEditorInput();
-    }, [handleEditorInput]);
-
-    const handleLineHeightChange = (lineHeight) => {
-        setSelectedLineHeight(lineHeight);
-        if (!editorRef.current) return;
-
-        editorRef.current.focus();
-
-        // Apply line height using execCommand with styleWithCSS
-        try {
-            document.execCommand('styleWithCSS', false, true);
-            // We use <div> and <span> to apply line height to selection
-            document.execCommand('formatBlock', false, 'div');
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const parent = range.commonAncestorContainer.parentElement;
-                if (parent) parent.style.lineHeight = lineHeight;
-            }
-        } catch (e) {
-            // Fallback: apply to editor style if nothing selected
-            editorRef.current.style.lineHeight = lineHeight;
-        }
-
-        handleEditorInput();
-    };
 
     // Logic to track header positions for the floating outline
     const updateHeaderOffsets = useCallback(() => {
@@ -340,6 +355,257 @@ export default function ReportEditor({ reportId }) {
         setHeaderOffsets(offsets);
     }, [report?.outline]);
 
+    const applySelectionCommand = useCallback((command, value = null) => {
+        if (!toolbar.range) return;
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(toolbar.range);
+        document.execCommand(command, false, value);
+        handleEditorInput();
+        updateHeaderOffsets();
+        setToolbar((prev) => ({ ...prev, visible: false }));
+    }, [toolbar.range, handleEditorInput, updateHeaderOffsets]);
+
+    const handleCommand = useCallback((command, value = null) => {
+        const target = getActiveEditable();
+        if (!target) return;
+
+        target.focus();
+
+        // Apply command
+        document.execCommand(command, false, value);
+
+        // Force an input event to trigger auto-save if content changed
+        handleEditorInput();
+    }, [getActiveEditable, handleEditorInput]);
+
+    const buildSectionHTML = useCallback((section, sectionData) => {
+        let html = `<h2 data-section-id="${section.id}" style="font-weight: bold; font-size: 1.75rem; margin-top: 2rem; margin-bottom: 1.25rem;">${sectionData.heading}</h2>`;
+        if (sectionData.paragraphs && Array.isArray(sectionData.paragraphs)) {
+            html += sectionData.paragraphs.map(p => `<p style="margin-bottom: 1.75rem; text-align: justify;">${p}</p>`).join('');
+        } else if (sectionData.content) {
+            html += sectionData.content.split('\n\n').map(p => `<p style="margin-bottom: 1.75rem; text-align: justify;">${p}</p>`).join('');
+        }
+
+        return `<div data-generated-section-id="${section.id}">${html}</div>`;
+    }, []);
+
+    const insertSectionIntoEditor = useCallback((section, sectionHtml, outline = []) => {
+        if (!editorRef.current) return;
+
+        const editor = editorRef.current;
+        const existingWrapper = editor.querySelector(`[data-generated-section-id="${section.id}"]`);
+        if (existingWrapper) {
+            existingWrapper.remove();
+        } else {
+            const existingHeading = editor.querySelector(`h2[data-section-id="${section.id}"]`);
+            existingHeading?.parentElement?.remove();
+        }
+
+        const temp = document.createElement("div");
+        temp.innerHTML = sectionHtml;
+        const sectionNode = temp.firstElementChild;
+        if (!sectionNode) return;
+
+        const currentIndex = outline.findIndex((item) => item.id === section.id);
+        const nextSection = currentIndex >= 0
+            ? outline.slice(currentIndex + 1).find((item) => editor.querySelector(`[data-generated-section-id="${item.id}"], h2[data-section-id="${item.id}"]`))
+            : null;
+
+        if (nextSection) {
+            const nextNode = editor.querySelector(`[data-generated-section-id="${nextSection.id}"]`) ||
+                editor.querySelector(`h2[data-section-id="${nextSection.id}"]`)?.parentElement;
+            if (nextNode) {
+                editor.insertBefore(sectionNode, nextNode);
+                return;
+            }
+        }
+
+        editor.appendChild(sectionNode);
+    }, []);
+
+    const serializeEditorBlocks = useCallback((root) => {
+        const blocks = [];
+        const normalizeInlineText = (text) => String(text || "").replace(/\s+/g, " ");
+        const getNodeAlignment = (node, inheritedAlignment = "justify") => {
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return inheritedAlignment;
+
+            const explicitAlignment =
+                node.style?.textAlign ||
+                node.getAttribute?.("align") ||
+                "";
+
+            const normalizedAlignment = String(explicitAlignment).toLowerCase();
+            if (["left", "center", "right", "justify"].includes(normalizedAlignment)) {
+                return normalizedAlignment;
+            }
+
+            return inheritedAlignment;
+        };
+
+        const collectRuns = (node, inherited = { bold: false, italics: false, underline: false }) => {
+            if (!node) return [];
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const value = normalizeInlineText(node.textContent);
+                if (!value.trim()) return [];
+                return [{ text: value, ...inherited }];
+            }
+
+            if (node.nodeType !== Node.ELEMENT_NODE) return [];
+
+            const tag = node.tagName.toUpperCase();
+            const style = node.style || {};
+            const nextStyle = {
+                bold: inherited.bold || tag === "B" || tag === "STRONG" || style.fontWeight === "bold" || Number(style.fontWeight) >= 600,
+                italics: inherited.italics || tag === "I" || tag === "EM" || style.fontStyle === "italic",
+                underline: inherited.underline || tag === "U" || style.textDecoration?.includes("underline"),
+            };
+
+            if (tag === "BR") {
+                return [{ text: "\n", ...nextStyle }];
+            }
+
+            return Array.from(node.childNodes).flatMap((child) => collectRuns(child, nextStyle));
+        };
+
+        const cleanRuns = (runs = []) =>
+            runs
+                .map((run) => ({
+                    ...run,
+                    text: String(run.text || "").replace(/\s+/g, run.text?.includes("\n") ? "\n" : " "),
+                }))
+                .filter((run) => run.text && run.text.trim());
+
+        const walk = (node, inheritedAlignment = "justify") => {
+            if (!node) return;
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const value = String(node.textContent || "").replace(/\s+/g, " ").trim();
+                if (value) {
+                    blocks.push({ type: "paragraph", runs: [{ text: value }], alignment: inheritedAlignment });
+                }
+                return;
+            }
+
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+            const tag = node.tagName.toUpperCase();
+            const blockAlignment = getNodeAlignment(node, inheritedAlignment);
+
+            if (tag === "TABLE") {
+                const rows = Array.from(node.querySelectorAll("tr"))
+                    .map((row) =>
+                        Array.from(row.querySelectorAll("th,td"))
+                            .map((cell) => ({
+                                runs: cleanRuns(collectRuns(cell)),
+                                alignment: getNodeAlignment(cell, blockAlignment),
+                            }))
+                    )
+                    .filter((row) => row.some((cell) => cell.runs?.length));
+
+                if (rows.length > 0) blocks.push({ type: "table", rows, alignment: blockAlignment });
+                return;
+            }
+
+            if (tag === "UL" || tag === "OL") {
+                const items = Array.from(node.querySelectorAll(":scope > li"))
+                    .map((item) => ({
+                        runs: cleanRuns(collectRuns(item)),
+                        alignment: getNodeAlignment(item, blockAlignment),
+                    }))
+                    .filter((item) => item.runs?.length);
+                if (items.length > 0) {
+                    blocks.push({ type: "list", ordered: tag === "OL", items, alignment: blockAlignment });
+                }
+                return;
+            }
+
+            if (/^H[1-6]$/.test(tag)) {
+                const runs = cleanRuns(collectRuns(node));
+                if (runs.length > 0) {
+                    blocks.push({ type: "heading", level: Number(tag[1]), runs, alignment: blockAlignment });
+                }
+                return;
+            }
+
+            if (tag === "P" || tag === "BLOCKQUOTE") {
+                const runs = cleanRuns(collectRuns(node));
+                if (runs.length > 0) {
+                    blocks.push({ type: "paragraph", runs, alignment: blockAlignment });
+                }
+                return;
+            }
+
+            if (tag === "DIV" || tag === "SECTION" || tag === "ARTICLE") {
+                Array.from(node.childNodes).forEach((child) => walk(child, blockAlignment));
+                return;
+            }
+
+            const runs = cleanRuns(collectRuns(node));
+            if (runs.length > 0) {
+                blocks.push({ type: "paragraph", runs, alignment: blockAlignment });
+            }
+        };
+
+        Array.from(root?.childNodes || []).forEach(walk);
+        return blocks;
+    }, []);
+
+    const handleLineHeightChange = (lineHeight) => {
+        setSelectedLineHeight(lineHeight);
+        const target = getActiveEditable();
+        if (!target) return;
+
+        target.focus();
+
+        // Apply line height using execCommand with styleWithCSS
+        try {
+            document.execCommand('styleWithCSS', false, true);
+            // We use <div> and <span> to apply line height to selection
+            document.execCommand('formatBlock', false, 'div');
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const parent = range.commonAncestorContainer.parentElement;
+                if (parent) parent.style.lineHeight = lineHeight;
+            }
+        } catch (e) {
+            // Fallback: apply to editor style if nothing selected
+            target.style.lineHeight = lineHeight;
+        }
+
+        handleEditorInput();
+    };
+
+    const handleInsertTable = useCallback(() => {
+        const target = getActiveEditable();
+        if (!target) return;
+
+        const requestedRows = typeof window !== "undefined" ? window.prompt("Number of rows", "3") : "3";
+        const requestedCols = typeof window !== "undefined" ? window.prompt("Number of columns", "3") : "3";
+        const rows = Math.max(1, Math.min(12, Number.parseInt(requestedRows || "3", 10) || 3));
+        const cols = Math.max(1, Math.min(8, Number.parseInt(requestedCols || "3", 10) || 3));
+
+        target.focus();
+        const tableHtml = `
+            <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
+                <tbody>
+                    ${Array.from({ length: rows }).map(() => `
+                        <tr>
+                            ${Array.from({ length: cols }).map(() => `
+                                <td style="border: 1px solid #cbd5e1; padding: 0.75rem; min-width: 96px;">Cell</td>
+                            `).join("")}
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+        document.execCommand("insertHTML", false, tableHtml);
+        handleEditorInput();
+    }, [getActiveEditable, handleEditorInput]);
+
     useEffect(() => {
         const container = scrollContainerRef.current;
         if (!container) return;
@@ -363,10 +629,10 @@ export default function ReportEditor({ reportId }) {
         };
     }, [updateHeaderOffsets]);
 
-    const getTitlePageHTML = (reportData = report) => {
+    const getTitlePageHTML = useCallback((reportData = report) => {
         if (!reportData) return '';
 
-        const style = (reportData.citationStyle || "APA").toUpperCase();
+        const style = (citationStyle || reportData.citationStyle || "APA").toUpperCase();
         const isAPA = style.includes('APA');
         const isMLA = style.includes('MLA');
         const isChicago = style.includes('CHICAGO');
@@ -377,49 +643,50 @@ export default function ReportEditor({ reportId }) {
         if (isAPA) {
             return `
                 <div id="title-page" style="text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 20cm; padding-top: 5cm; color: ${textColor};">
-                    <h1 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 2rem; line-height: 2;">${reportData.title || "Untitled Report"}</h1>
+                    <h1 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 2rem; line-height: 2; text-align: center;">${reportData.title || "Untitled Report"}</h1>
                     <div style="line-height: 2;">
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${studentName || "Student Name"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${institution || "Institution Name"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${courseName || "Course Name"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${authorName || "Instructor Name"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${submissionDate}</p>
+                        <p style="font-size: 1rem; margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
+                        <p style="font-size: 1rem; margin-bottom: 0px;">${institution || "University Name"}</p>
+                        <p style="font-size: 1rem; margin-bottom: 0px;">${courseName || "Course Title"}</p>
+                        <p style="font-size: 1rem; margin-bottom: 0px;">${authorName || "Instructor"}</p>
+                        <p style="font-size: 1rem; margin-bottom: 0px;">${submissionDate || "Date"}</p>
                     </div>
                 </div>
             `;
         } else if (isMLA) {
             return `
                 <div id="title-page" style="text-align: left; padding-top: 1cm; line-height: 2; color: ${textColor};">
-                    <p style="margin-bottom: 0px;">${studentName || "Student Name"}</p>
-                    <p style="margin-bottom: 0px;">${authorName || "Instructor Name"}</p>
-                    <p style="margin-bottom: 0px;">${courseName || "Course Name"}</p>
-                    <p style="margin-bottom: 2rem;">${submissionDate}</p>
+                    <p style="margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
+                    <p style="margin-bottom: 0px;">${authorName || "Instructor"}</p>
+                    <p style="margin-bottom: 0px;">${courseName || "Course Title"}</p>
+                    <p style="margin-bottom: 2rem;">${submissionDate || "Date"}</p>
                     <h1 style="font-size: 1.25rem; font-weight: normal; text-align: center; margin-top: 3rem; margin-bottom: 2rem;">${reportData.title || "Untitled Report"}</h1>
                 </div>
             `;
         } else if (isChicago) {
             return `
                 <div id="title-page" style="text-align: center; display: flex; flex-direction: column; justify-content: space-between; min-height: 22cm; padding: 4cm 0; color: ${textColor};">
-                    <h1 style="font-size: 1.35rem; font-weight: bold; margin-bottom: 4rem; line-height: 2;">${reportData.title || "Untitled Report"}</h1>
+                    <h1 style="font-size: 1.35rem; font-weight: bold; margin-bottom: 4rem; line-height: 2; text-align: center;">${reportData.title || "Untitled Report"}</h1>
                     <div style="line-height: 2; margin-top: auto;">
-                        <p style="font-size: 1.1rem; margin-bottom: 0px;">${studentName || "Student Name"}</p>
-                        <p style="font-size: 1.1rem; margin-bottom: 0.px;">${courseName || "Course Name"}</p>
-                        <p style="font-size: 1.1rem; margin-bottom: 0px;">${submissionDate}</p>
+                        <p style="font-size: 1.1rem; margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.px;">${courseName || "Course Title"}</p>
+                        <p style="font-size: 1.1rem; margin-bottom: 0px;">${submissionDate || "Date"}</p>
                     </div>
                 </div>
             `;
         } else {
             return `
                 <div id="title-page" style="text-align: center; padding-top: 5cm; line-height: 2; color: ${textColor};">
-                    <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 2rem;">${reportData.title || "Untitled Report"}</h1>
-                    <div style="width: 60px; height: 2px; background: #6366f1; margin: 2rem auto;"></div>
-                    <p style="font-weight: bold; margin-bottom: 0px;">${studentName}</p>
-                    <p style="margin-bottom: 0px;">${institution}</p>
-                    <p style="margin-top: 2rem;">${submissionDate}</p>
+                    <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 2rem; text-align: center;">${reportData.title || "Untitled Report"}</h1>
+                    <p style="font-weight: bold; margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
+                    <p style="margin-bottom: 0px;">${institution || "University Name"}</p>
+                    <p style="margin-bottom: 0px;">${courseName || "Course Title"}</p>
+                    <p style="margin-bottom: 0px;">${authorName || "Instructor"}</p>
+                    <p style="margin-top: 2rem;">${submissionDate || "Date"}</p>
                 </div>
             `;
         }
-    };
+    }, [report, citationStyle, studentName, loggedInUserName, institution, courseName, authorName, submissionDate]);
 
     const generateTitlePage = (reportData = report) => {
         if (!titlePageRef.current || !reportData) return;
@@ -444,13 +711,18 @@ export default function ReportEditor({ reportId }) {
                 handleEditorInput();
             }
         }
-    }, [studentName, authorName, courseName, institution, submissionDate, report?.title, citationStyle]);
+    }, [report, getTitlePageHTML, handleEditorInput]);
 
     // Keyboard shortcuts handler
     useEffect(() => {
         const handleKeyDown = (e) => {
             // Only handle shortcuts when editor is focused
-            if (!editorRef.current || !editorRef.current.contains(document.activeElement)) return;
+            const activeElement = document.activeElement;
+            const isEditableFocused =
+                editorRef.current?.contains(activeElement) ||
+                titlePageRef.current?.contains(activeElement) ||
+                referencesRef.current?.contains(activeElement);
+            if (!isEditableFocused) return;
 
             // Ctrl/Cmd + B for Bold
             if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
@@ -470,14 +742,13 @@ export default function ReportEditor({ reportId }) {
             // Ctrl/Cmd + S for Save
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                saveReport();
-                toast.success("Saved!");
+                handleManualSave();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [saveReport, handleCommand]);
+    }, [handleManualSave, handleCommand]);
 
 
     const generateAbstract = async () => {
@@ -494,7 +765,7 @@ export default function ReportEditor({ reportId }) {
                 topic: report.topic,
                 type: report.type,
                 difficulty: report.academicLevel || "Undergraduate",
-                citationStyle: report.citationStyle || "APA 7",
+                citationStyle: citationStyle || "APA 7",
                 criticalDepth: report.criticalDepth || "Moderate",
                 requestedPages: 1,
                 existingContent: editorRef.current.innerHTML,
@@ -572,7 +843,7 @@ export default function ReportEditor({ reportId }) {
                 topic: report.topic,
                 type: report.type,
                 difficulty: report.academicLevel || "Undergraduate",
-                citationStyle: report.citationStyle || "APA 7",
+                citationStyle: citationStyle || "APA 7",
                 criticalDepth: report.criticalDepth || "Moderate",
                 requestedPages: sectionLengths[section.id] || 1,
                 existingContent: editorRef.current.innerHTML,
@@ -597,16 +868,8 @@ export default function ReportEditor({ reportId }) {
 
                     toast.success("Cover metadata updated!");
                 } else {
-                    const div = document.createElement('div');
-                    // Convert JSON content to HTML
-                    let html = `<h2 data-section-id="${section.id}" style="font-weight: bold; font-size: 1.75rem; margin-top: 2rem; margin-bottom: 1.25rem;">${sectionData.heading}</h2>`;
-                    if (sectionData.paragraphs && Array.isArray(sectionData.paragraphs)) {
-                        html += sectionData.paragraphs.map(p => `<p style="margin-bottom: 1.75rem; text-align: justify;">${p}</p>`).join('');
-                    } else if (sectionData.content) {
-                        html += sectionData.content.split('\n\n').map(p => `<p style="margin-bottom: 1.75rem; text-align: justify;">${p}</p>`).join('');
-                    }
-                    div.innerHTML = html;
-                    editorRef.current.appendChild(div);
+                    const html = buildSectionHTML(section, sectionData);
+                    insertSectionIntoEditor(section, html, report.outline || []);
                 }
 
                 // Immediately update offsets
@@ -636,33 +899,146 @@ export default function ReportEditor({ reportId }) {
         }
     };
 
-
-    const exportAsLaTeX = async () => {
-        try {
-            const res = await apiClient.post("/api/latex-converter", {
-                structuredContent: {
-                    title: report.title,
-                    author: authorName,
-                    institution: institution,
-                    course: courseName,
-                    name: studentName,
-                    date: submissionDate,
-                    abstract: report.abstract || "",
-                    titlePageContent: titlePageRef.current ? titlePageRef.current.innerText : "",
-                    sections: [{ title: "Content", content: editorRef.current.innerText }],
-                    references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
-                }
-            });
-            const data = await res.json();
-            if (data.success) {
-                const blob = new Blob([data.latex], { type: "text/plain" });
-                saveAs(blob, `${report.title || "Report"}.tex`);
-                toast.success("LaTeX Exported");
-            }
-        } catch (error) {
-            toast.error("LaTeX Export failed");
-        }
+    const applyEditorFontFamily = (fontFamily) => {
+        setSelectedFontFamily(fontFamily);
+        const target = getActiveEditable();
+        if (!target) return;
+        target.style.fontFamily = fontFamily;
+        handleEditorInput();
     };
+
+    const applyEditorFontSize = (fontSize) => {
+        setSelectedFontSize(fontSize);
+        const target = getActiveEditable();
+        if (!target) return;
+        target.style.fontSize = {
+            "1": "10px",
+            "2": "12px",
+            "3": "16px",
+            "4": "18px",
+            "5": "24px"
+        }[fontSize] || "16px";
+        handleEditorInput();
+    };
+
+    const handleGenerateCustomSection = async () => {
+        const title = customSectionTitle.trim();
+        const description = customSectionDescription.trim();
+        const existingOutline = report.outline || [];
+
+        if (!title) {
+            toast.error("Add a section title first");
+            return;
+        }
+
+        const id = title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "") || `section-${Date.now()}`;
+        const section = {
+            id,
+            title,
+            description: description || `Generate a well-structured ${title} section for this report.`,
+        };
+        const insertIndex = customSectionPlacement === "start"
+            ? 0
+            : customSectionPlacement === "end"
+                ? existingOutline.length
+                : Math.max(existingOutline.findIndex((item) => item.id === customSectionPlacement) + 1, existingOutline.length);
+        const updatedOutline = [...existingOutline];
+        updatedOutline.splice(insertIndex, 0, section);
+        const updatedLengths = { ...sectionLengths, [id]: customSectionPages };
+
+        setReport((prev) => ({ ...prev, outline: updatedOutline }));
+        setSectionLengths(updatedLengths);
+        setCustomSectionTitle("");
+        setCustomSectionDescription("");
+        setCustomSectionPages(1);
+        setCustomSectionPlacement("end");
+
+        await apiClient.patch(`/api/reports/${reportId}`, {
+            outline: updatedOutline,
+            sectionLengths: updatedLengths,
+        });
+
+        await generateSection(section);
+    };
+
+    const handleRewriteSelection = useCallback(async (action) => {
+        if (!toolbar.range || isRewriting) return;
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(toolbar.range);
+
+        const selectedText = selection.toString().trim();
+        if (!selectedText) return;
+
+        setIsRewriting(true);
+        try {
+            const res = await apiClient.post("/api/rewrite-content", {
+                text: selectedText,
+                action,
+                topic: report?.topic,
+                citationStyle,
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to rewrite selection");
+            }
+
+            const data = await res.json();
+            const rewrittenText = String(data?.data || "").trim();
+            if (!rewrittenText) {
+                throw new Error("Empty rewrite response");
+            }
+
+            selection.removeAllRanges();
+            selection.addRange(toolbar.range);
+
+            const inserted = document.execCommand("insertText", false, rewrittenText);
+            if (!inserted && toolbar.range) {
+                const range = toolbar.range.cloneRange();
+                range.deleteContents();
+                range.insertNode(document.createTextNode(rewrittenText));
+            }
+
+            handleEditorInput();
+            setToolbar((prev) => ({ ...prev, visible: false }));
+            toast.success("Selection updated");
+        } catch (error) {
+            console.error("Rewrite selection error:", error);
+            toast.error(error.message || "Failed to rewrite selection");
+        } finally {
+            setIsRewriting(false);
+        }
+    }, [toolbar.range, isRewriting, report?.topic, citationStyle, handleEditorInput]);
+
+    const scrollToSection = useCallback((sectionId) => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const targetOffset = headerOffsets[sectionId];
+        if (typeof targetOffset === "number") {
+            container.scrollTo({
+                top: Math.max(targetOffset - 80, 0),
+                behavior: "smooth",
+            });
+            return;
+        }
+
+        if (sectionId === "abstract") {
+            const abstractHeading = Array.from(editorRef.current?.querySelectorAll("h2") || []).find(
+                (heading) => heading.textContent?.trim().toLowerCase() === "abstract"
+            );
+            abstractHeading?.scrollIntoView({ behavior: "smooth", block: "start" });
+            return;
+        }
+
+        const sectionHeading = editorRef.current?.querySelector(`h2[data-section-id="${sectionId}"]`);
+        sectionHeading?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [headerOffsets]);
+
 
     const exportAsDOCX = async () => {
         if (!editorRef.current) return;
@@ -674,7 +1050,8 @@ export default function ReportEditor({ reportId }) {
         }
 
         try {
-            // Server-side docx generation using docxtemplater
+            const contentBlocks = serializeEditorBlocks(editorRef.current);
+            const titlePageBlocks = titlePageRef.current ? serializeEditorBlocks(titlePageRef.current) : [];
             const res = await apiClient.post("/api/generate-doc", {
                 title: report.title,
                 author: authorName,
@@ -683,32 +1060,20 @@ export default function ReportEditor({ reportId }) {
                 name: studentName,
                 date: submissionDate,
                 citationStyle: citationStyle,
-                abstract: report.abstract || "",
                 titlePageContent: titlePageRef.current ? titlePageRef.current.innerHTML : "",
-                // Parse the current HTML into multiple sections and paragraphs for the template
-                sections: Array.from(editorRef.current.querySelectorAll('h2')).map(h2 => {
-                    const heading = (h2.textContent || h2.innerText || '').trim();
-                    if (!heading || heading === 'undefined') return null;
-                    let paragraphs = [];
-                    let next = h2.nextElementSibling;
-                    while (next && next.tagName !== 'H2') {
-                        const text = (next.textContent || next.innerText || '').trim();
-                        if (next.tagName === 'P' && text) {
-                            paragraphs.push(text);
-                        }
-                        next = next.nextElementSibling;
-                    }
-                    return { heading, paragraphs };
-                }).filter(s => s && s.heading && s.heading !== 'undefined'),
-                references: referencesRef.current ? Array.from(referencesRef.current.querySelectorAll('p')).map(p => p.innerText) : allReferences
+                titlePageBlocks,
+                contentBlocks,
+                references: referencesRef.current
+                    ? Array.from(referencesRef.current.querySelectorAll('p.report-reference')).map((p) => p.innerText)
+                    : allReferences
             });
 
             if (!res.ok) throw new Error("Failed to generate DOCX");
 
             const blob = await res.blob();
             const fileName = (report.title || "Report").replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "_").substring(0, 100);
-            saveAs(blob, `${fileName}.docx`);
-            toast.success("DOCX Exported (Template Layout)");
+            await saveBlob(blob, `${fileName}.docx`);
+            toast.success("DOCX Exported");
         } catch (error) {
             console.error("DOCX Error:", error);
             toast.error("Failed to export Word Document");
@@ -735,7 +1100,7 @@ export default function ReportEditor({ reportId }) {
                 setStatusIndex((prev) => (prev + 1) % statuses.length);
             }, 2000);
             return () => clearInterval(interval);
-        }, []);
+        }, [statuses.length]);
 
         return (
             <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-all duration-500 animate-in fade-in">
@@ -764,205 +1129,75 @@ export default function ReportEditor({ reportId }) {
         );
     };
 
-    const runStructuralValidation = async () => {
-        setIsValidating(true);
-        try {
-            // First save to ensure we validate latest content
-            await saveReport();
-
-            const res = await apiClient.get(`/api/reports/${reportId}/validate`);
-            if (res.ok) {
-                const { results } = await res.json();
-                setValidationResults(results);
-                toast.success(`Structure validated: Score ${results.structureScore}/100`);
-            } else {
-                toast.error("Structural validation failed");
-            }
-        } catch (error) {
-            console.error("Validation error:", error);
-            toast.error("Could not complete structural validation");
-        } finally {
-            setIsValidating(false);
-        }
-    };
-
     if (loading || !report) {
         return <LoadingScreen />;
     }
 
+    const referenceCount = Array.isArray(allReferences) ? allReferences.length : 0;
+    const customSectionPositionOptions = [
+        { value: "start", label: "At the beginning" },
+        ...(report.outline || []).map((section) => ({
+            value: section.id,
+            label: `After ${section.title}`,
+        })),
+        { value: "end", label: "At the end" },
+    ];
+    const outlineItems = [
+        {
+            id: "abstract",
+            title: "Abstract",
+            description: "Summary of the document",
+            generating: generatingAbstract,
+            hasContent: !!report.abstract,
+            onGenerate: () => generateAbstract(),
+        },
+        ...(report.outline || []).map((section) => ({
+            id: section.id,
+            title: section.title,
+            description: section.description,
+            generating: generatingSection === section.id,
+            hasContent: !!report.sections?.[section.id],
+            onGenerate: () => generateSection(section),
+        })),
+        {
+            id: "references",
+            title: "References",
+            description: `${referenceCount} reference${referenceCount === 1 ? "" : "s"} in the document`,
+            generating: false,
+            hasContent: referenceCount > 0,
+            onGenerate: () => {
+                referencesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                referencesRef.current?.focus();
+            },
+        },
+    ];
+
     return (
-        <div className="flex w-full h-[calc(100vh-68px)] bg-gradient-to-br from-slate-50 via-green-50 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden font-inter">
-
-            {/* Professional Metadata Sidebar */}
-            <div className="hidden xl:flex flex-col w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Document Metadata</h3>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => saveReport()}
-                                disabled={saving}
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors"
-                                title="Save Changes"
-                            >
-                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            </button>
-                            <button
-                                onClick={exportAsDOCX}
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors"
-                                title="Download Word (.docx)"
-                            >
-                                <Download className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Title</label>
-                            <input
-                                type="text"
-                                value={report?.title || ''}
-                                onChange={(e) => setReport({ ...report, title: e.target.value })}
-                                placeholder="Report title"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Student Name</label>
-                            <input
-                                type="text"
-                                value={studentName}
-                                onChange={(e) => setStudentName(e.target.value)}
-                                placeholder="Student name"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Institution</label>
-                            <input
-                                type="text"
-                                value={institution}
-                                onChange={(e) => setInstitution(e.target.value)}
-                                placeholder="Institution"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Course</label>
-                            <input
-                                type="text"
-                                value={courseName}
-                                onChange={(e) => setCourseName(e.target.value)}
-                                placeholder="Course name"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Author</label>
-                            <input
-                                type="text"
-                                value={authorName}
-                                onChange={(e) => setAuthorName(e.target.value)}
-                                placeholder="Author name"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Date</label>
-                            <input
-                                type="text"
-                                value={submissionDate}
-                                onChange={(e) => setSubmissionDate(e.target.value)}
-                                placeholder="Submission date"
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Citation Style / Template</label>
-                            <select
-                                value={citationStyle}
-                                onChange={(e) => setCitationStyle(e.target.value)}
-                                className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
-                            >
-                                <option value="APA 7">APA 7th Edition</option>
-                                <option value="MLA 9">MLA 9th Edition</option>
-                                <option value="Chicago">Chicago Style</option>
-                                <option value="Academic">Standard Academic</option>
-                            </select>
-                            <p className="mt-1 text-[10px] text-slate-400">Selects the .docx template used for export</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Progress</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="font-medium">{Object.values(report?.sections || {}).filter(Boolean).length}</span>
-                        <span>of</span>
-                        <span className="font-medium">{report?.outline?.length || 0}</span>
-                        <span>sections drafted</span>
-                    </div>
-                    <div className="mt-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-500"
-                            style={{ width: `${report?.outline ? (Object.values(report?.sections || {}).filter(Boolean).length / report.outline.length) * 100 : 0}%` }}
-                        />
-                    </div>
-                </div>
-            </div>
+        <div className="flex w-full h-[calc(100vh-68px)] bg-[#1f2430] overflow-hidden font-inter">
 
             {/* Main Content Area */}
-            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0">
-
-                {/* Floating Action Buttons */}
-                <div className="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-[60] flex items-center gap-2 no-print xl:hidden">
-                    <button
-                        onClick={() => setShowOutline(v => !v)}
-                        className={`p-3 rounded-full transition-all shadow-lg hover:shadow-xl ${showOutline ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}
-                        title={showOutline ? 'Hide Outline' : 'Show Outline'}
-                    >
-                        <PanelRight className="w-5 h-5" />
-                    </button>
-
-                    <button onClick={() => saveReport()} disabled={saving} className="p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-all shadow-lg hover:shadow-xl disabled:opacity-50" title="Save Changes">
-                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            if (isPro || isEnterprise) {
-                                exportAsDOCX();
-                            } else {
-                                setShowUpgradeModal(true);
-                            }
-                        }}
-                        className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full transition-all shadow-lg hover:shadow-xl"
-                        title="Download Word (.docx)"
-                    >
-                        <Download className="w-5 h-5" />
-                    </button>
-                </div>
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0 bg-[#d1d5db]">
 
                 {/* Document Page Wrapper */}
-                <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-12" >
+                <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-8" >
+                    <div className="mb-4 flex w-full max-w-[1600px] justify-end px-3 md:px-4 lg:px-10 xl:hidden">
+                        <button
+                            onClick={() => setShowOutline(true)}
+                            className="inline-flex items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                        >
+                            <PanelRight className="h-4 w-4" />
+                            <span>Outline</span>
+                        </button>
+                    </div>
 
-                    {/* Multi-page visualization container */}
-                    <div className="document-container relative bg-transparent w-full max-w-full md:max-w-[260mm] mb-32 p-0 md:p-4 lg:p-10 flex flex-col items-center" >
+                    <div className="flex w-full max-w-[1600px] items-start justify-center gap-6 px-0 md:px-4 lg:px-10">
+                        {/* Multi-page visualization container */}
+                        <div className="document-container relative bg-transparent w-full max-w-full md:max-w-[280mm] mb-32 flex flex-col items-center gap-7" >
 
-                        {/* Title Page */}
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm] mb-8"
+                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-200 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
                             style={{
-                                boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
+                                boxShadow: '0 30px 100px rgba(15,23,42,0.14), 0 0 1px rgba(15,23,42,0.15)',
                                 padding: 'clamp(1rem, 5vw, 1.5cm)',
                                 minHeight: '29.7cm'
                             }
@@ -971,29 +1206,25 @@ export default function ReportEditor({ reportId }) {
                             <div
                                 ref={titlePageRef}
                                 contentEditable="true"
+                                onFocus={() => setActiveEditable(titlePageRef.current)}
                                 onInput={handleEditorInput}
                                 suppressContentEditableWarning={true}
                                 className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 h-full"
                                 style={{
-                                    fontFamily: 'Inter, system-ui, sans-serif'
+                                    fontFamily: selectedFontFamily
                                 }}
                             />
                         </div>
-
-                        {/* Visual Page Gap */}
-                        <div className="h-4 w-full no-print" />
-
-                        {/* Main Content Page - Professional Design */}
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-200 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
                             style={{
-                                boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
+                                boxShadow: '0 30px 100px rgba(15,23,42,0.14), 0 0 1px rgba(15,23,42,0.15)',
                                 padding: 'clamp(1rem, 5vw, 1.5cm)'
                             }}
                         >
                             <div className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 min-h-[29.7cm]"
                                 style={{
-                                    fontFamily: 'Inter, system-ui, sans-serif',
+                                    fontFamily: selectedFontFamily,
                                     fontSize: {
                                         "1": "10px",
                                         "2": "12px",
@@ -1006,6 +1237,7 @@ export default function ReportEditor({ reportId }) {
                                 }}
                                 ref={editorRef}
                                 contentEditable="true"
+                                onFocus={() => setActiveEditable(editorRef.current)}
                                 onInput={(e) => {
                                     handleEditorInput();
                                     updateHeaderOffsets();
@@ -1014,15 +1246,10 @@ export default function ReportEditor({ reportId }) {
                                 placeholder="Start typing your research report..."
                             />
                         </div>
-
-                        {/* Visual Page Gap */}
-                        <div className="h-8 w-full no-print" />
-
-                        {/* References Page */}
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative rounded-lg overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-300 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-200 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
                             style={{
-                                boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1)',
+                                boxShadow: '0 30px 100px rgba(15,23,42,0.14), 0 0 1px rgba(15,23,42,0.15)',
                                 padding: 'clamp(1rem, 5vw, 1.5cm)',
                                 minHeight: '29.7cm'
                             }}
@@ -1037,27 +1264,134 @@ export default function ReportEditor({ reportId }) {
                                 <div
                                     ref={referencesRef}
                                     contentEditable="true"
+                                    onFocus={() => setActiveEditable(referencesRef.current)}
                                     onInput={handleEditorInput}
                                     suppressContentEditableWarning={true}
                                     className="space-y-6 prose dark:prose-invert max-w-none flex-1 outline-none min-h-[500px] references-container"
-                                >
-                                    {allReferences.length > 0 ? (
-                                        allReferences.map((ref, i) => (
-                                            <p key={i} className="report-reference">
-                                                {ref}
-                                            </p>
-                                        ))
-                                    ) : (
-                                        <div contentEditable="false" suppressContentEditableWarning={true} className="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
-                                            <div className="flex flex-col items-center">
-                                                <FileText className="w-12 h-12 text-slate-300 mb-3" />
-                                                <p className="text-sm text-slate-400 font-medium">Citations will be automatically compiled here</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                />
                             </div>
                         </div>
+                        </div>
+
+                        <aside className="hidden xl:block sticky top-16 w-[280px] border border-slate-300 bg-white shadow-sm">
+                            <div className="border-b border-slate-200 px-4 py-3 bg-slate-50">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-900">Outline</h3>
+                                        <p className="mt-1 text-xs text-slate-500">Open sections or generate missing content.</p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={handleManualSave}
+                                            disabled={saving}
+                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            title="Save Changes"
+                                        >
+                                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                        </button>
+                                        <button
+                                            onClick={exportAsDOCX}
+                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100"
+                                            title="Download Word (.docx)"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="max-h-[70vh] overflow-y-auto bg-white outline-scrollbar">
+                                <div className="border-b border-slate-200 px-4 py-4">
+                                    <div className="space-y-3">
+                                        <div>
+                                            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Custom Section</span>
+                                            <p className="mt-1 text-xs leading-5 text-slate-500">Describe the section and choose where it should appear in the outline.</p>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={customSectionTitle}
+                                            onChange={(e) => setCustomSectionTitle(e.target.value)}
+                                            placeholder="Section title"
+                                            className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                        />
+                                        <textarea
+                                            value={customSectionDescription}
+                                            onChange={(e) => setCustomSectionDescription(e.target.value)}
+                                            placeholder="What should this section include?"
+                                            rows={3}
+                                            className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                        />
+                                        <select
+                                            value={customSectionPlacement}
+                                            onChange={(e) => setCustomSectionPlacement(e.target.value)}
+                                            className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                        >
+                                            {customSectionPositionOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>{option.label}</option>
+                                            ))}
+                                        </select>
+                                        <div className="flex items-center gap-2">
+                                            {[1, 2, 3].map((pages) => (
+                                                <button
+                                                    key={pages}
+                                                    onClick={() => setCustomSectionPages(pages)}
+                                                    className={`flex-1 border px-2 py-1.5 text-xs font-semibold transition-all ${customSectionPages === pages ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-emerald-50"}`}
+                                                >
+                                                    {pages}p
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={handleGenerateCustomSection}
+                                            disabled={!!generatingSection}
+                                            className="flex w-full items-center justify-center gap-2 bg-emerald-600 px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-60"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                            Generate Section
+                                        </button>
+                                    </div>
+                                </div>
+                                {outlineItems.map((item, index) => (
+                                    <div key={item.id} className="border-b border-slate-200 px-4 py-4 last:border-b-0">
+                                        <div className="flex items-start gap-3">
+                                            <div className={`mt-1 h-2.5 w-2.5 flex-shrink-0 ${item.hasContent ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                            <div className="min-w-0 flex-1">
+                                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                                            {item.id === "abstract" ? "Abstract" : `Section ${index}`}
+                                        </p>
+                                        <h4 className="mt-1 text-sm font-medium text-slate-900">{item.title}</h4>
+                                        <p className="mt-1 text-xs leading-5 text-slate-500">{item.description}</p>
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    if (item.id === "references") {
+                                                        referencesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                                        return;
+                                                    }
+                                                    scrollToSection(item.id);
+                                                }}
+                                                className="border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition-all hover:bg-slate-50"
+                                            >
+                                                Open
+                                            </button>
+                                            <button
+                                                onClick={item.onGenerate}
+                                                disabled={item.generating}
+                                                className={`ml-auto px-3 py-1.5 text-xs font-semibold text-white transition-all ${item.generating
+                                                    ? "bg-slate-400"
+                                                    : item.hasContent
+                                                        ? "bg-slate-700 hover:bg-slate-800"
+                                                        : "bg-emerald-600 hover:bg-emerald-700"
+                                                    }`}
+                                            >
+                                                {item.id === "references" ? "Open" : item.generating ? "Generating..." : item.hasContent ? "Regenerate" : "Generate"}
+                                            </button>
+                                        </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
                     </div>
                 </div>
             </div>
@@ -1069,169 +1403,6 @@ export default function ReportEditor({ reportId }) {
                 feature="Report Export"
                 description="Exporting reports as Word Documents (.docx) is a premium feature."
             />
-
-            {/* Right Sidebar Outline Panel - Desktop Only */}
-            {
-                showOutline && (
-                    <div className="hidden xl:flex flex-col w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
-                        {/* Header */}
-                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-green-50/50 dark:from-slate-800 dark:to-slate-800/50">
-                            <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Outline & Content</h3>
-                                </div>
-                                <button
-                                    onClick={runStructuralValidation}
-                                    disabled={isValidating}
-                                    className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400 transition-colors"
-                                    title="Run Structural Validation"
-                                >
-                                    {isValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                                </button>
-                            </div>
-                            <button onClick={() => setShowOutline(false)} className="absolute top-6 right-6 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-all">
-                                <X className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                            </button>
-                        </div>
-
-                        {/* Validation Results Panel */}
-                        {validationResults && (
-                            <div className="mx-4 mt-4 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-emerald-900/10">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-emerald-600" />
-                                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Structure Score</span>
-                                    </div>
-                                    <span className={`text-sm font-black ${validationResults.structureScore > 80 ? 'text-emerald-500' : validationResults.structureScore > 50 ? 'text-lime-500' : 'text-rose-500'}`}>
-                                        {validationResults.structureScore}%
-                                    </span>
-                                </div>
-
-                                <div className="space-y-2">
-                                    {validationResults.missingSections.length > 0 && (
-                                        <div className="flex items-start gap-2">
-                                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-rose-600 leading-tight">Missing: {validationResults.missingSections.join(', ')}</p>
-                                        </div>
-                                    )}
-                                    {validationResults.emptySections.length > 0 && (
-                                        <div className="flex items-start gap-2">
-                                            <AlertTriangle className="w-3.5 h-3.5 text-lime-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-lime-600 leading-tight">Empty: {validationResults.emptySections.join(', ')}</p>
-                                        </div>
-                                    )}
-                                    {validationResults.distributionWarnings.map((warn, i) => (
-                                        <div key={i} className="flex items-start gap-2">
-                                            <AlertTriangle className="w-3.5 h-3.5 text-lime-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-lime-600 leading-tight">{warn}</p>
-                                        </div>
-                                    ))}
-                                    {validationResults.structuralDrift.length > 0 && (
-                                        <div className="flex items-start gap-2">
-                                            <RefreshCcw className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-[10px] text-emerald-600 leading-tight">Structure drift detected in {validationResults.structuralDrift.length} sections.</p>
-                                        </div>
-                                    )}
-                                    {validationResults.structureScore === 100 && (
-                                        <div className="flex items-center gap-2 py-1">
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                            <p className="text-[10px] text-emerald-600 font-bold">Perfect academic structure!</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <button
-                                    onClick={() => setValidationResults(null)}
-                                    className="w-full mt-3 py-1 text-[9px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
-                                >
-                                    Dismiss
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-                            <div className="p-4 space-y-3">
-                                {/* Abstract Card */}
-                                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-slate-800/50 dark:to-slate-800/30 hover:border-emerald-300 dark:hover:border-emerald-600 transition-all group">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Abstract</span>
-                                        {report.abstract && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                                    </div>
-                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Summary</h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">Concise overview of the entire document</p>
-                                    <button
-                                        onClick={generateAbstract}
-                                        disabled={generatingAbstract}
-                                        className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${generatingAbstract ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                                            report.abstract ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600' :
-                                                'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
-                                            }`}
-                                    >
-                                        {generatingAbstract ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                        <span>{generatingAbstract ? 'Generating...' : report.abstract ? 'Regenerate' : 'Generate'}</span>
-                                    </button>
-                                </div>
-
-                                {/* Section Cards */}
-                                {report.outline.map((section, idx) => {
-                                    const isGenerating = generatingSection === section.id;
-                                    const isDone = report.sections?.[section.id];
-                                    const currentTargetLength = sectionLengths[section.id] || 1;
-
-                                    return (
-                                        <div
-                                            key={section.id}
-                                            className={`p-4 rounded-xl border transition-all group ${isDone
-                                                ? 'bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
-                                                : 'bg-gradient-to-br from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-600'
-                                                }`}
-                                        >
-                                            <div className="flex items-start justify-between mb-2">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Section {idx + 1}</span>
-                                                {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
-                                            </div>
-                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2">{section.title}</h4>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed">{section.description}</p>
-
-                                            {!isDone && (
-                                                <div className="mb-3 flex items-center gap-1 bg-white dark:bg-slate-700 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
-                                                    {[1, 2, 3].map(pages => (
-                                                        <button
-                                                            key={pages}
-                                                            onClick={() => setSectionLengths({ ...sectionLengths, [section.id]: pages })}
-                                                            className={`flex-1 py-1.5 rounded text-xs font-semibold transition-all ${currentTargetLength === pages
-                                                                ? 'bg-emerald-600 text-white shadow-sm'
-                                                                : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
-                                                                }`}
-                                                        >{pages}p</button>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            <button
-                                                onClick={() => generateSection(section)}
-                                                disabled={isGenerating}
-                                                className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${isGenerating
-                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                                                    isDone
-                                                        ? 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
-                                                    }`}
-                                            >
-                                                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                                <span>{isGenerating ? 'Drafting...' : isDone ? 'Regenerate' : 'Draft'}</span>
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
             {/* Mobile Outline Drawer — slides up from bottom on small screens when toggled */}
             {
                 showOutline && (
@@ -1240,7 +1411,7 @@ export default function ReportEditor({ reportId }) {
                         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowOutline(false)} />
 
                         {/* Drawer panel - Professional bottom sheet */}
-                        <div className="relative bg-white dark:bg-slate-900 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto shadow-2xl border-t border-slate-200 dark:border-slate-700">
+                        <div className="relative bg-white dark:bg-slate-900 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto shadow-2xl border-t border-slate-200 dark:border-slate-700 outline-scrollbar">
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
                                 <div className="flex items-center gap-2">
                                     <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -1252,51 +1423,42 @@ export default function ReportEditor({ reportId }) {
                             </div>
 
                             {/* Mobile Metadata Inputs */}
-                            <div className="mb-8 space-y-4">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Metadata</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Title</label>
-                                        <input
-                                            type="text"
-                                            value={report?.title || ''}
-                                            onChange={(e) => setReport({ ...report, title: e.target.value })}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Name</label>
-                                        <input
-                                            type="text"
-                                            value={studentName}
-                                            onChange={(e) => setStudentName(e.target.value)}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Institution</label>
-                                        <input
-                                            type="text"
-                                            value={institution}
-                                            onChange={(e) => setInstitution(e.target.value)}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Course</label>
-                                        <input
-                                            type="text"
-                                            value={courseName}
-                                            onChange={(e) => setCourseName(e.target.value)}
-                                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
                             <div className="flex items-center gap-2 mb-4">
                                 <Sparkles className="w-4 h-4 text-emerald-600" />
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">AI Outline</h4>
+                            </div>
+
+                            <div className="mb-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 space-y-3">
+                                <input
+                                    type="text"
+                                    value={customSectionTitle}
+                                    onChange={(e) => setCustomSectionTitle(e.target.value)}
+                                    placeholder="Custom section title"
+                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                                <textarea
+                                    value={customSectionDescription}
+                                    onChange={(e) => setCustomSectionDescription(e.target.value)}
+                                    placeholder="What should the AI cover?"
+                                    rows={3}
+                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                                />
+                                <select
+                                    value={customSectionPlacement}
+                                    onChange={(e) => setCustomSectionPlacement(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                                >
+                                    {customSectionPositionOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={async () => { await handleGenerateCustomSection(); setShowOutline(false); }}
+                                    className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    Generate Section
+                                </button>
                             </div>
 
                             {/* Abstract card */}
@@ -1320,7 +1482,7 @@ export default function ReportEditor({ reportId }) {
                             </div>
 
                             {/* Section Cards */}
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {report.outline.map((section, idx) => {
                                     const isGenerating = generatingSection === section.id;
                                     const isDone = report.sections?.[section.id];
@@ -1382,50 +1544,106 @@ export default function ReportEditor({ reportId }) {
             {
                 toolbar.visible && (
                     <div
-                        className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl p-1 animate-in fade-in zoom-in duration-200"
+                        className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex flex-wrap items-center gap-0.5 rounded-md bg-white border border-slate-300 shadow-xl p-1 animate-in fade-in zoom-in duration-200 max-w-[min(90vw,520px)]"
                         style={{ left: toolbar.x, top: toolbar.y }}
                     >
                         <div className="flex items-center gap-0.5">
                             <button
-                                onClick={() => handleRewrite('regenerate')}
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                                title="Regenerate"
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("bold")}
+                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Bold"
                             >
-                                <RefreshCcw className="w-3.5 h-3.5 group-hover:text-emerald-600" />
-                                <span className="text-[10px] font-medium">Regen</span>
-                            </button>
-                            <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
-                            <button
-                                onClick={() => handleRewrite('reparaphrase')}
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                                title="Paraphrase"
-                            >
-                                <ArrowLeftRight className="w-3.5 h-3.5 group-hover:text-emerald-600" />
-                                <span className="text-[10px] font-medium">Paraphrase</span>
+                                <Bold className="w-3.5 h-3.5" />
                             </button>
                             <button
-                                onClick={() => handleRewrite('expand')}
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                                title="Expand"
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("italic")}
+                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Italic"
                             >
-                                <Maximize2 className="w-3.5 h-3.5 group-hover:text-lime-600" />
-                                <span className="text-[10px] font-medium">Expand</span>
+                                <Italic className="w-3.5 h-3.5" />
                             </button>
                             <button
-                                onClick={() => handleRewrite('shorten')}
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 group transition-colors"
-                                title="Shorten"
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("underline")}
+                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Underline"
                             >
-                                <Minimize2 className="w-3.5 h-3.5 group-hover:text-rose-600" />
-                                <span className="text-[10px] font-medium">Shorten</span>
+                                <Underline className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("formatBlock", "h2")}
+                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Heading"
+                            >
+                                H
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("justifyLeft")}
+                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Align Left"
+                            >
+                                <AlignLeft className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("justifyCenter")}
+                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Align Center"
+                            >
+                                <AlignCenter className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => applySelectionCommand("justifyRight")}
+                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                title="Align Right"
+                            >
+                                <AlignRight className="w-3.5 h-3.5" />
                             </button>
                         </div>
-
-                        {isRewriting && (
-                            <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                            </div>
-                        )}
+                        <div className="mx-0.5 h-5 w-px bg-slate-200" />
+                        <div className="flex items-center gap-0.5">
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => handleRewriteSelection("regenerate")}
+                                disabled={isRewriting}
+                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Regenerate"
+                            >
+                                {isRewriting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Redo"}
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => handleRewriteSelection("shorten")}
+                                disabled={isRewriting}
+                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Shorten"
+                            >
+                                Short
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => handleRewriteSelection("expand")}
+                                disabled={isRewriting}
+                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Expand"
+                            >
+                                Expand
+                            </button>
+                            <button
+                                onMouseDown={preventFocus}
+                                onClick={() => handleRewriteSelection("reparaphrase")}
+                                disabled={isRewriting}
+                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Rephrase"
+                            >
+                                Reword
+                            </button>
+                        </div>
                     </div>
                 )
             }
@@ -1437,6 +1655,28 @@ export default function ReportEditor({ reportId }) {
         }
         .dark {
           --report-text-color: #cbd5e1;
+        }
+
+        .outline-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #10b981 rgba(148, 163, 184, 0.18);
+        }
+
+        .outline-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .outline-scrollbar::-webkit-scrollbar-track {
+          background: rgba(148, 163, 184, 0.14);
+        }
+
+        .outline-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #34d399, #059669);
+          border-radius: 999px;
+        }
+
+        .outline-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #10b981, #047857);
         }
 
         @media print {
@@ -1503,21 +1743,13 @@ export default function ReportEditor({ reportId }) {
           font-size: 2.5rem; 
           margin-top: 3rem; 
           margin-bottom: 1.5rem; 
-          border-bottom: 3px solid #e2e8f0;
-          padding-bottom: 1.5rem;
           line-height: 1.2;
-        }
-        
-        .dark .prose h1 {
-           border-bottom-color: #334155;
         }
 
         .prose h2 { 
           font-size: 1.875rem; 
           margin-top: 2.5rem; 
           margin-bottom: 1.25rem; 
-          border-left: 5px solid #6366f1;
-          padding-left: 1.5rem;
           line-height: 1.25;
         }
         
@@ -1552,8 +1784,8 @@ export default function ReportEditor({ reportId }) {
             line-height: 1.5 !important;
             margin-bottom: 0.5rem !important;
           }
-          .prose h1 { font-size: 1.5rem; margin-top: 1.5rem; padding-bottom: 0.75rem; }
-          .prose h2 { font-size: 1.25rem; margin-top: 1.25rem; padding-left: 0.75rem; }
+          .prose h1 { font-size: 1.5rem; margin-top: 1.5rem; }
+          .prose h2 { font-size: 1.25rem; margin-top: 1.25rem; }
           .prose h3 { font-size: 1.1rem; margin-top: 1rem; }
           .prose p { font-size: 12px; line-height: 2; margin-bottom: 1rem; }
           .document-page { 
@@ -1599,13 +1831,8 @@ export default function ReportEditor({ reportId }) {
           color: #f1f5f9 !important;
         }
 
-        .dark.prose h1 { 
-          border-bottom-color: #334155;
-        }
-        
         .dark.prose h2 { 
           color: #e2e8f0 !important;
-          border-left-color: #6366f1;
         }
 
         .dark.prose p, .dark.prose li {
@@ -1653,3 +1880,6 @@ export default function ReportEditor({ reportId }) {
         </div >
     );
 }
+
+
+

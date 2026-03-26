@@ -28,9 +28,6 @@ import UpgradeModal from "./UpgradeModal";
 export default function PremiumCourses() {
   const router = useRouter();
   const { user, loading: authLoading, isPro } = useAuth();
-
-  if (authLoading) return <ActirovaLoader />;
-  if (!user) return null;
   const [courses, setCourses] = useState([]);
   const [trendingCourses, setTrendingCourses] = useState([]);
   const [featured, setFeatured] = useState(null);
@@ -86,6 +83,9 @@ export default function PremiumCourses() {
       }
     }
   }, [featured, isDataLoading, personalizedCourses, courses, trendingCourses]);
+
+  if (authLoading) return <ActirovaLoader />;
+  if (!user) return null;
 
   const fetchCourses = async () => {
     try {
