@@ -135,10 +135,10 @@ export default function Hero({ handleGetStarted }) {
 
           <motion.p
             variants={itemVariants}
-            className="text-base md:text-lg text-[#1a1a1a]/60 mb-10 max-w-xl mx-auto leading-relaxed"
+            className="text-base md:text-lg text-[#1a1a1a]/60 mb-10 max-w-3xl mx-auto leading-relaxed"
           >
-            Achieve your goals faster with a tutor that adapts to your unique learning style. 
-            Personalized, efficient, and always available.
+            Generate courses, flashcards, quizzes, reports, premium learning tracks, AI chat sessions,
+            and career tools from one workspace built to help you learn and grow faster.
           </motion.p>
 
           {/* Main Prompt Box with Animated Border */}

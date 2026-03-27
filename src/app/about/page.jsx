@@ -193,9 +193,9 @@ export default function AboutPage() {
             </p>
             <div className="space-y-6">
               {[
-                { title: "Smart Notes", desc: "AI-generated summaries and key concepts from any topic.", icon: Rocket },
-                { title: "Progress Analytics", desc: "Visual data tracking your growth across subjects.", icon: Globe },
-                { title: "Interactive Quizzes", desc: "Dynamic assessments that adapt to your knowledge level.", icon: Zap }
+                { title: "Multi-Format Study Generation", desc: "Create courses, flashcards, quizzes, and reports from a single idea.", icon: Rocket },
+                { title: "Library and Progress Tracking", desc: "Save, pin, share, revisit, and measure progress across your learning workspace.", icon: Globe },
+                { title: "Career Acceleration Tools", desc: "Use resume building, interview prep, networking AI, and skill-gap analysis in the same platform.", icon: Zap }
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">

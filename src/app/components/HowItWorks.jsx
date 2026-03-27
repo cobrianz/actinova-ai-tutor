@@ -29,7 +29,7 @@ const steps = [
     number: "01",
     title: "Create Your Profile",
     description:
-      "Set up your personalized learning profile with your goals, interests, and current skill level.",
+      "Set up your goals, interests, and skill level so Actirova can personalize recommendations and generated content.",
     icon: User,
     color: "from-green-500 to-teal-600",
     lightColor: "from-green-100 to-teal-100",
@@ -37,9 +37,9 @@ const steps = [
   },
   {
     number: "02",
-    title: "AI Learning Path",
+    title: "Generate a Course or Study Tool",
     description:
-      "Our AI analyzes your profile and creates a customized curriculum tailored to your needs.",
+      "Start with a prompt and turn it into a course, flashcard set, quiz, or report depending on how you want to learn.",
     icon: Sparkles,
     color: "from-green-500 to-emerald-500",
     lightColor: "from-green-100 to-emerald-100",
@@ -47,9 +47,9 @@ const steps = [
   },
   {
     number: "03",
-    title: "Interactive Lessons",
+    title: "Study Through Courses and Premium Tracks",
     description:
-      "Engage with bite-sized lessons featuring videos, quizzes, and hands-on exercises.",
+      "Work through structured lessons, premium curricula, and saved learning material organized in your library.",
     icon: BookOpen,
     color: "from-emerald-500 to-green-500",
     lightColor: "from-emerald-100 to-green-100",
@@ -57,9 +57,9 @@ const steps = [
   },
   {
     number: "04",
-    title: "Practice & Apply",
+    title: "Practice with Quizzes, Flashcards, and AI Chat",
     description:
-      "Reinforce your learning with real-world projects and AI-powered coding challenges.",
+      "Reinforce concepts through topic-based chat, review flashcards, and test your understanding with interactive quizzes.",
     icon: Brain,
     color: "from-teal-500 to-teal-500",
     lightColor: "from-teal-100 to-teal-100",
@@ -67,9 +67,9 @@ const steps = [
   },
   {
     number: "05",
-    title: "Track Progress",
+    title: "Track, Save, Share, and Download",
     description:
-      "Monitor your growth with detailed analytics, streaks, and milestone achievements.",
+      "Monitor progress, manage usage, pin important items, share course links, and download completed courses where available.",
     icon: TrendingUp,
     color: "from-emerald-500 to-green-500",
     lightColor: "from-emerald-100 to-green-100",
@@ -77,9 +77,9 @@ const steps = [
   },
   {
     number: "06",
-    title: "Reports and Essays",
+    title: "Turn Learning into Career Momentum",
     description:
-      "Generate comprehensive reports and essays based on your learning journey to document insights.",
+      "Use resumes, interview prep, networking AI, skill-gap analysis, and career trends to apply what you learn professionally.",
     icon: Trophy,
     color: "from-lime-500 to-lime-500",
     lightColor: "from-lime-100 to-lime-100",
@@ -737,8 +737,8 @@ export default function HowItWorks() {
             Works
           </h2>
           <p className="text-lg md:text-xl text-[#1a1a1a]/60 max-w-2xl mx-auto leading-relaxed">
-            Your journey from beginner to expert, powered by AI and designed for
-            real results.
+            From first prompt to saved study materials and career execution, each step maps
+            to tools already available in the platform.
           </p>
         </motion.div>
 

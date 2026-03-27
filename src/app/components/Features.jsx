@@ -4,12 +4,16 @@ import { motion } from "framer-motion";
 import { 
   Zap, 
   Brain, 
-  Target, 
+  Star as StarIcon,
   TrendingUp, 
-  Clock, 
-  Shield, 
   BookOpen, 
-  Smartphone,
+  Search,
+  FileText,
+  HelpCircle,
+  ScrollText,
+  MessageCircle,
+  Briefcase,
+  Users,
   ChevronRight
 } from "lucide-react";
 import { data } from "../lib/landingData";
@@ -38,12 +42,18 @@ export default function Features() {
 
   // Map icons to features (fallback to Zap if not found)
   const iconMap = {
-    "Personalized Paths": Brain,
-    "Smart Progress": TrendingUp,
-    "Real-time Feedback": Zap,
-    "Expert Content": BookOpen,
-    "Learn Anywhere": Smartphone,
-    "Secure & Private": Shield,
+    "AI Course Generation": Zap,
+    "Premium Courses": StarIcon,
+    "Explore & Discover": Search,
+    "Library, Sharing & Downloads": BookOpen,
+    "Flashcards with Review Tools": FileText,
+    "Quizzes & Performance Tracking": HelpCircle,
+    "Reports & Essays": ScrollText,
+    "AI Tutor Chat": MessageCircle,
+    "Progress & Usage Insights": TrendingUp,
+    "Resume & ATS Optimization": Briefcase,
+    "Interview & Networking AI": Users,
+    "Skill Gap & Career Trends": Brain,
   };
 
   return (
@@ -65,8 +75,8 @@ export default function Features() {
             transition={{ delay: 0.1 }}
             className="text-lg text-[#1a1a1a]/60 max-w-2xl mx-auto"
           >
-            Discover a suite of intelligent tools designed to help you learn faster, 
-            retain more, and achieve your educational goals with ease.
+            Every major workflow already in the product, from generating study material
+            to tracking progress and using career acceleration tools.
           </motion.p>
         </div>
 
@@ -120,10 +130,10 @@ export default function Features() {
           <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h3 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-[#1a1a1a]">
-                Ready to transform your learning journey?
+                One platform for learning, practice, writing, and career growth.
               </h3>
               <p className="text-[#1a1a1a]/60 text-lg mb-8">
-                Join 50,000+ students who are already using Actirova AI to accelerate their growth.
+                Move from idea to course, quiz, flashcards, report, library review, and career action without switching tools.
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="flex -space-x-4">
@@ -144,9 +154,9 @@ export default function Features() {
             <div className="bg-white/60 backdrop-blur-md rounded-[24px] p-6 border-2 border-white shadow-sm">
               <div className="space-y-4">
                 {[
-                  { label: "Adaptive Learning Rate", value: "94%" },
-                  { label: "Retention Improvement", value: "2.4x" },
-                  { label: "Completion Rate", value: "88%" }
+                  { label: "Study Generation Modes", value: "4" },
+                  { label: "Core Product Areas", value: "10+" },
+                  { label: "Career AI Tools", value: "4" }
                 ].map((stat, i) => (
                   <div key={i} className="flex justify-between items-center">
                     <span className="text-sm font-medium text-[#1a1a1a]/60">{stat.label}</span>

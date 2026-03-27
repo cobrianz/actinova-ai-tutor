@@ -41,8 +41,8 @@ export default function CTA({ handleGetStarted }) {
             </h2>
             
             <p className="text-lg md:text-xl text-white/80 mb-12 leading-relaxed">
-              Experience the power of personalized AI tutoring. No credit card required 
-              to start. Cancel anytime.
+              Start with course generation and expand into quizzes, flashcards, reports,
+              AI chat, premium tracks, and career tools as your workflow grows.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
@@ -61,9 +61,9 @@ export default function CTA({ handleGetStarted }) {
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-white/80 font-medium">
               {[
                 "No credit card required",
-                "14-day free trial",
-                "Advanced AI features",
-                "24/7 Support"
+                "Courses, quizzes, flashcards, and reports",
+                "AI chat and premium tracks",
+                "Career growth toolkit"
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />

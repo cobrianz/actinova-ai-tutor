@@ -4,91 +4,91 @@ export const data = {
       icon: "Sparkles",
       title: "AI Course Generation",
       description:
-        "Create custom courses instantly with our advanced AI that generates personalized learning content tailored to your goals and skill level.",
+        "Generate structured courses on any topic with lessons tailored to your subject, difficulty level, and learning goals.",
     },
     {
-      icon: "Target",
-      title: "Smart Progress Tracking",
+      icon: "Star",
+      title: "Premium Courses",
       description:
-        "Real-time analytics show your learning journey with expiry tracking for premium courses and milestone achievements.",
-    },
-    {
-      icon: "BookOpen",
-      title: "Personal Learning Library",
-      description:
-        "Build and organize your personal collection of courses with progress tracking, bookmarks, and easy access to continue learning anytime.",
-    },
-    {
-      icon: "FileText",
-      title: "Flashcards & Quizzes",
-      description:
-        "Master concepts with AI-generated flashcards and challenge yourself with interactive quizzes to reinforce your learning and track improvement.",
-    },
-    {
-      icon: "MessageCircle",
-      title: "AI Learning Companion",
-      description:
-        "Get instant help and answers from our AI chatbot that guides you through concepts, solves problems, and keeps you motivated on your learning journey.",
+        "Unlock curated premium tracks, featured curricula, trending topics, and personalized recommendations for deeper mastery.",
     },
     {
       icon: "Search",
       title: "Explore & Discover",
       description:
-        "Discover trending courses and explore new topics with our smart recommendation system that matches content to your interests and learning goals.",
+        "Browse trending topics, category-based discovery, and AI-suggested subjects to find what to learn next.",
     },
     {
-      icon: "Brain",
-      title: "Adaptive Learning Paths",
+      icon: "BookOpen",
+      title: "Library, Sharing & Downloads",
       description:
-        "Our intelligent algorithm adjusts difficulty levels and pacing based on your performance, ensuring optimal learning speed for maximum retention.",
+        "Keep all your courses in one place, pin favorites, share learning links, and download completed courses as PDFs on supported plans.",
     },
     {
-      icon: "Award",
+      icon: "FileText",
+      title: "Flashcards with Review Tools",
+      description:
+        "Turn topics into flashcard sets, bookmark important decks, and revisit concepts with built-in review workflows.",
+    },
+    {
+      icon: "HelpCircle",
+      title: "Quizzes & Performance Tracking",
+      description:
+        "Generate practice quizzes, track attempts, review results, and measure your progress across tests and assignments.",
+    },
+    {
+      icon: "ScrollText",
       title: "Reports & Essays",
       description:
-        "Generate comprehensive reports and essays based on your learning journey. Synthesize knowledge and document your insights effectively.",
+        "Create AI-assisted reports, essays, and research documents with structure, citation style options, and an editor workflow.",
+    },
+    {
+      icon: "MessageCircle",
+      title: "AI Tutor Chat",
+      description:
+        "Open focused study chats by topic, continue past conversations, and get on-demand explanations while you learn.",
     },
     {
       icon: "TrendingUp",
-      title: "Performance Analytics",
+      title: "Progress & Usage Insights",
       description:
-        "Detailed insights into your learning patterns, strengths, weaknesses, and improvement areas with actionable recommendations to accelerate growth.",
+        "Monitor course completion, pinned content, average progress, usage limits, and premium course access windows from the dashboard.",
     },
     {
-      icon: "Rocket",
-      title: "Career Growth Tools",
+      icon: "Briefcase",
+      title: "Resume & ATS Optimization",
       description:
-        "Access resume builders, interview prep courses, and skill assessments designed to accelerate your career advancement and landing dream jobs.",
+        "Build resumes from scratch, refine existing resumes, and tailor them for specific roles with AI-powered career guidance.",
     },
     {
       icon: "Users",
-      title: "Community & Networking",
+      title: "Interview & Networking AI",
       description:
-        "Connect with millions of learners worldwide, join study groups, participate in discussions, and build valuable professional relationships.",
+        "Practice interview questions, get feedback, and generate smarter networking outreach for professional opportunities.",
     },
     {
-      icon: "Zap",
-      title: "Real-Time Collaboration",
+      icon: "Brain",
+      title: "Skill Gap & Career Trends",
       description:
-        "Study together with peers through live sessions, group projects, and collaborative learning experiences that make education more engaging.",
+        "Analyze skill gaps and explore trending careers and in-demand skills to decide what to learn next for your career.",
     },
   ],
   steps: [
     {
-      title: "Create Your Profile",
-      description: "Set your learning goals and interests so our AI can understand your unique journey."
+      title: "Set Up Your Learning Profile",
+      description: "Choose your interests, level, and goals so the platform can personalize what to generate and recommend."
     },
     {
-      title: "Generate Your Path",
-      description: "Get a custom-built learning path with courses, quizzes, and resources tailored to you."
+      title: "Generate What You Need",
+      description: "Create a course, flashcards, a quiz, or a report from a single prompt depending on how you want to study."
     },
     {
-      title: "Learn & Interact",
-      description: "Study with AI-powered tools, ask questions, and get instant feedback on your progress."
+      title: "Study with Multiple Tools",
+      description: "Learn through guided lessons, premium curricula, topic-based AI chat, and saved materials in your library."
     },
     {
-      title: "Master & Achieve",
-      description: "Complete courses, generate detailed reports, and showcase your new skills to the world."
+      title: "Review, Track, and Advance",
+      description: "Reinforce learning with quizzes and flashcards, monitor progress, and use career tools to turn skills into outcomes."
     }
   ],
   testimonials: [
