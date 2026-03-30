@@ -15,4 +15,12 @@ const nextConfig = {
   serverExternalPackages: ['@react-pdf/renderer', 'puppeteer'],
 };
 
-export default nextConfig;
+export default async () => {
+  const { default: withPWA } = await import('next-pwa');
+  return withPWA({
+    dest: 'public',
+    disable: process.env.NODE_ENV === 'development',
+    register: true,
+    skipWaiting: true,
+  })(nextConfig);
+};

@@ -3,6 +3,7 @@ import { Jost, Bricolage_Grotesque, EB_Garamond } from "next/font/google";
 import { AuthProvider } from "./components/AuthProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
+import InstallPrompt from "./components/InstallPrompt";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -61,6 +62,7 @@ export const metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }) {
@@ -79,6 +81,7 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             {children}
             <ToasterClient />
+            <InstallPrompt />
             <SpeedInsights />
           </AuthProvider>
         </GoogleOAuthProvider>
