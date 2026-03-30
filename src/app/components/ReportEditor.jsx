@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
+import { setSafeInnerHTML } from "@/../lib/sanitizer";
 import UpgradeModal from "./UpgradeModal";
 
 const stripHtmlText = (value = "") =>
@@ -162,27 +163,28 @@ export default function ReportEditor({ reportId }) {
         if (content) {
             // Clean up content if it still has the title-page (migration)
             const temp = document.createElement('div');
-            temp.innerHTML = content;
+            setSafeInnerHTML(temp, content);
             const existingTitlePage = temp.querySelector('#title-page');
             const existingBreak = temp.querySelector('.title-page-break');
             if (existingTitlePage) existingTitlePage.remove();
             if (existingBreak) existingBreak.remove();
 
-            editorRef.current.innerHTML = temp.innerHTML;
+            setSafeInnerHTML(editorRef.current, temp.innerHTML);
             pendingContentRef.current = null;
         }
 
         if (r && titlePageRef.current) {
             if (pendingTitlePageContentRef.current) {
-                titlePageRef.current.innerHTML = pendingTitlePageContentRef.current;
+                setSafeInnerHTML(titlePageRef.current, pendingTitlePageContentRef.current);
                 pendingTitlePageContentRef.current = null;
             } else {
-                titlePageRef.current.innerHTML = getTitlePageHTML(r);
+                setSafeInnerHTML(titlePageRef.current, getTitlePageHTML(r));
             }
         }
 
         if (r && r.references && referencesRef.current && referencesRef.current.innerHTML === '') {
-            referencesRef.current.innerHTML = r.references.map(ref => `<p class="report-reference">${ref}</p>`).join('');
+            const refHTML = r.references.map(ref => `<p class="report-reference">${ref}</p>`).join('');
+            setSafeInnerHTML(referencesRef.current, refHTML);
         }
 
         // Mark as fully loaded — autosave is now safe
@@ -194,17 +196,19 @@ export default function ReportEditor({ reportId }) {
         if (document.activeElement === referencesRef.current) return;
 
         if (allReferences.length > 0) {
-            referencesRef.current.innerHTML = allReferences
+            const refHTML = allReferences
                 .map((ref) => `<p class="report-reference">${ref}</p>`)
                 .join("");
+            setSafeInnerHTML(referencesRef.current, refHTML);
         } else {
-            referencesRef.current.innerHTML = `
+            const placeholderHTML = `
                 <div contenteditable="false" class="text-center py-16 flex items-center justify-center h-full no-references-placeholder">
                     <div class="flex flex-col items-center">
                         <p class="text-sm text-slate-400 font-medium">Citations will be automatically compiled here</p>
                     </div>
                 </div>
             `;
+            setSafeInnerHTML(referencesRef.current, placeholderHTML);
         }
     }, [allReferences, loading]);
 
@@ -404,7 +408,7 @@ export default function ReportEditor({ reportId }) {
         }
 
         const temp = document.createElement("div");
-        temp.innerHTML = sectionHtml;
+        setSafeInnerHTML(temp, sectionHtml);
         const sectionNode = temp.firstElementChild;
         if (!sectionNode) return;
 
@@ -691,7 +695,7 @@ export default function ReportEditor({ reportId }) {
     const generateTitlePage = (reportData = report) => {
         if (!titlePageRef.current || !reportData) return;
         const html = getTitlePageHTML(reportData);
-        titlePageRef.current.innerHTML = html;
+        setSafeInnerHTML(titlePageRef.current, html);
     };
 
     // Keep the title page DOM synced with state changes
@@ -703,11 +707,11 @@ export default function ReportEditor({ reportId }) {
 
             // Create a temporary container to extract just the title-page part
             const temp = document.createElement('div');
-            temp.innerHTML = html;
+            setSafeInnerHTML(temp, html);
             const newTitleNode = temp.querySelector('#title-page');
 
             if (newTitleNode && newTitleNode.innerHTML !== titlePageNode.innerHTML) {
-                titlePageNode.innerHTML = newTitleNode.innerHTML;
+                setSafeInnerHTML(titlePageNode, newTitleNode.innerHTML);
                 handleEditorInput();
             }
         }
@@ -801,7 +805,7 @@ export default function ReportEditor({ reportId }) {
                 } else {
                     // Insert abstract at the beginning of the editor content
                     const div = document.createElement('div');
-                    div.innerHTML = html;
+                    setSafeInnerHTML(div, html);
                     if (editorRef.current.firstChild) {
                         editorRef.current.insertBefore(div, editorRef.current.firstChild);
                     } else {

@@ -11,6 +11,7 @@ import ConfirmModal from "./ConfirmModal";
 import { useAuth } from "./AuthProvider";
 import ActirovaLoader from "./ActirovaLoader";
 import { apiClient } from "@/lib/csrfClient";
+import { createSafeHTMLFragment } from "@/../lib/sanitizer";
 import { motion, AnimatePresence } from "framer-motion";
 import UpgradeModal from "./UpgradeModal";
 
@@ -303,7 +304,7 @@ export default function Chat({ topic: propTopic }) {
                           <span className="ml-2 font-normal">{new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                         </div>
                         <div className="text-[15px] leading-7 text-slate-700 dark:text-slate-300"
-                          dangerouslySetInnerHTML={{ __html: renderFormattedContent(message.content) }} />
+                          dangerouslySetInnerHTML={createSafeHTMLFragment(renderFormattedContent(message.content))} />
                       </div>
                     </motion.div>
                   );

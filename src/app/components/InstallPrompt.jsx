@@ -53,7 +53,7 @@ export default function InstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
+    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-72">
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -79,7 +79,7 @@ export default function InstallPrompt() {
         <div className="mt-4 flex space-x-3">
           <button
             onClick={handleInstallClick}
-            className="flex-1 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="flex-1 bg-green-300 text-gray-900 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
           >
             Install App
           </button>
