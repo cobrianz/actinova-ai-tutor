@@ -1,9 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import {
   BookOpen,
   Star,
-  Sparkles,
   Search,
   CreditCard,
   Plus,
@@ -164,7 +164,24 @@ export default function Sidebar({
         >
           {/* Main Sidebar Content Wrapper to maintain width while animating */}
           <div className="w-64 h-full flex flex-col">
-            {/* Removed Branding Section - Minimalist Mode */}
+            {/* Branding Section */}
+            <div className="p-6 border-b border-border">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 relative flex-shrink-0">
+                    <Image
+                      src="/logo.png"
+                      alt="Actirova Logo"
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <h2 className="text-lg font-bold text-foreground">Actirova</h2>
+                </div>
+                <p className="text-xs text-muted-foreground">Your personalized learning companion for any topic</p>
+              </div>
+            </div>
 
             <nav className="p-4 overflow-y-auto scrollbar-hide flex-1">
               <style jsx>{`
@@ -172,6 +189,9 @@ export default function Sidebar({
                   display: none;
                 }
               `}</style>
+              <div className="mb-4">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">Menu</h3>
+              </div>
               <ul className="space-y-4">
                 {navigation.map((item, index) => {
                   const Icon = item.icon;

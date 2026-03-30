@@ -157,7 +157,7 @@ function ResetPasswordForm() {
   // Show loading only if we're validating a token
   if (token && tokenValid === null) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-sans" style={{ backgroundColor: '#DFE3FC' }}>
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/10 border-t-primary"></div>
       </div>
     );
@@ -166,8 +166,16 @@ function ResetPasswordForm() {
   // Show error only if token validation failed
   if (token && tokenValid === false) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full text-center">
+      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/hero.png" 
+            alt="Hero Background" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-white/10" />
+        </div>
+        <div className="relative z-10 max-w-md w-full text-center">
           <div className="mx-auto h-20 w-20 bg-red-50 rounded-2xl flex items-center justify-center mb-6 border border-red-100 shadow-sm">
             <AlertCircle className="h-10 w-10 text-red-500" />
           </div>
@@ -190,8 +198,16 @@ function ResetPasswordForm() {
 
   if (passwordReset) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full text-center">
+      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/hero.png" 
+            alt="Hero Background" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-white/10" />
+        </div>
+        <div className="relative z-10 max-w-md w-full text-center">
           <div className="mx-auto h-20 w-20 bg-green-50 rounded-2xl flex items-center justify-center mb-6 border border-green-100 shadow-sm">
             <CheckCircle className="h-10 w-10 text-green-500" />
           </div>
@@ -213,11 +229,12 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex overflow-hidden font-sans">
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-sans" style={{ backgroundColor: '#DFE3FC' }}>
+
       {/* Centered Form */}
-      <div className="w-full flex items-center justify-center p-8 sm:p-12 lg:p-20 overflow-y-auto bg-white">
-        <div className="max-w-md w-full flex flex-col">
-          <div className="text-center mb-10">
+      <div className="relative z-10 flex items-center justify-center w-full px-6 py-12 md:py-0 overflow-y-auto">
+        <div className="max-w-md w-full flex flex-col bg-white/30 backdrop-blur-2xl rounded-2xl border-2 border-white p-6">
+          <div className="text-center mb-6">
             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
@@ -226,7 +243,7 @@ function ResetPasswordForm() {
             </Link>
           </div>
 
-          <div className="text-left mb-8">
+          <div className="text-left mb-6">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-6">
               <Lock className="w-6 h-6 text-primary" />
             </div>
@@ -234,8 +251,8 @@ function ResetPasswordForm() {
             <p className="text-gray-500 font-medium">Please enter a strong, unique password</p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-5">
+          <form className="space-y-3" onSubmit={handleSubmit}>
+            <div className="space-y-3">
               <div className="space-y-2">
                 <label
                   htmlFor="password"
@@ -252,7 +269,7 @@ function ResetPasswordForm() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
+                    className="block w-full pl-10 pr-10 py-2.5 bg-white/80 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="••••••••"
                   />
                   <button
@@ -285,7 +302,7 @@ function ResetPasswordForm() {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3.5 bg-gray-50/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-primary/20 focus:border-primary transition-all"
+                    className="block w-full pl-10 pr-10 py-2.5 bg-white/80 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="••••••••"
                   />
                   <button
@@ -302,7 +319,7 @@ function ResetPasswordForm() {
                 </div>
               </div>
 
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-5">
+              <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
                 <h4 className="text-[11px] font-black text-primary uppercase tracking-wider mb-2">
                   Validation Checklist:
                 </h4>
@@ -324,7 +341,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
+                className="w-full py-2.5 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-lg shadow-none transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
               >
                 {loading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
@@ -334,7 +351,7 @@ function ResetPasswordForm() {
               </button>
             </div>
 
-            <div className="pt-6 text-center">
+            <div className="pt-3 text-center">
               <Link
                 href="/auth/login"
                 className="text-sm font-bold text-gray-500 hover:text-primary transition-colors"

@@ -106,64 +106,15 @@ export default function ForgotPasswordPage() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-white font-sans overflow-hidden">
-      {/* Left Column - Desktop Only - Glassy like Navbar */}
-      <div className="hidden lg:flex lg:w-1/3 bg-[#D2D7F8]/80 backdrop-blur-xl flex-col p-12 border-r-2 border-white relative overflow-hidden">
-        {/* Subtle Wavy Pattern Overlay - Sharper */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M0 20 Q 25 10 50 20 T 100 20 V 100 H 0 Z" fill="currentColor" />
-          </svg>
-        </div>
-        
-        <div className="relative z-10 mb-auto text-left">
-          <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 group">
-            <div className="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-105">
-              <img src="/logo.png" alt="logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="font-bricolage transition-colors">Actirova AI</span>
-          </Link>
-          
-          <div className="mt-20 space-y-8">
-            {steps.map((s, index) => (
-              <div key={s.id} className="flex gap-4 group">
-                <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${step >= s.id ? "border-green-600 bg-green-50 text-green-600" : "border-slate-200 bg-white text-slate-400 group-hover:border-slate-300"}`}>
-                    {s.id < step ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <span className="text-xs font-black">{s.id}</span>
-                    )}
-                  </div>
-                  {index !== steps.length - 1 && (
-                    <div className={`w-0.5 h-12 my-1 transition-colors duration-300 ${step > s.id ? "bg-green-600" : "bg-slate-200"}`} />
-                  )}
-                </div>
-                 <div className="pt-0.5">
-                  <h4 className={`text-sm font-bold transition-colors ${step >= s.id ? "text-gray-900" : "text-gray-500"}`}>{s.title}</h4>
-                  <p className="text-xs font-medium text-gray-400 mt-0.5">{s.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-sans" style={{ backgroundColor: '#DFE3FC' }}>
+      {/* Overlay */}
+      <div className="absolute inset-0 z-0 opacity-40" style={{ backgroundColor: '#DFE3FC' }} />
 
-        <div className="mt-auto">
-          <Link 
-            href="/auth/login" 
-            className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-green-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to login
-          </Link>
-        </div>
-      </div>
-
-      {/* Right Column - Main Form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 lg:bg-white overflow-y-auto">
-        <div className="w-full max-w-sm space-y-10 py-12">
+      {/* Main Form Container */}
+      <div className="relative z-10 flex flex-col items-center justify-center w-full px-6 py-12 md:py-0">
+        <div className="w-full max-w-sm space-y-4 py-6 bg-white/30 backdrop-blur-2xl rounded-2xl border-2 border-white p-6">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex justify-center mb-8">
+          <div className="lg:hidden flex justify-center mb-6">
              <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 group">
               <div className="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-105">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
@@ -171,8 +122,8 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
 
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 mb-6">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 mb-4">
                <Lock className="w-8 h-8 text-green-600" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2 tracking-tight">
@@ -187,7 +138,7 @@ export default function ForgotPasswordPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-4">
               {step === 1 && (
                 <div className="space-y-1.5">
@@ -198,7 +149,7 @@ export default function ForgotPasswordPage() {
                       id="email"
                       type="email"
                       placeholder="name@example.com"
-                      className="pl-10 h-11 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none"
+                      className="pl-10 h-10 bg-white/80 border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -208,7 +159,7 @@ export default function ForgotPasswordPage() {
               )}
 
               {step === 2 && (
-                <div className="space-y-1.5 text-center">
+                <div className="space-y-1 text-center">
                   <Label htmlFor="code" className="text-sm font-bold text-gray-700 mb-2 block">Reset code</Label>
                   <input
                     id="code"
@@ -220,12 +171,12 @@ export default function ForgotPasswordPage() {
                     placeholder="000000"
                     maxLength={6}
                   />
-                  <p className="text-[10px] font-black text-gray-400 mt-4 uppercase tracking-widest">Enter the 6-digit verification code</p>
+                  <p className="text-[10px] font-black text-gray-400 mt-2.5 uppercase tracking-widest">Enter the 6-digit verification code</p>
                 </div>
               )}
 
               {step === 3 && (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-sm font-bold text-gray-700 ml-1">New password</Label>
                     <div className="relative">
@@ -275,7 +226,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700"
+                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700"
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
@@ -294,7 +245,7 @@ export default function ForgotPasswordPage() {
               )}
             </div>
 
-            <p className="text-center text-sm font-medium text-gray-500 pt-4">
+            <p className="text-center text-sm font-medium text-gray-500 pt-1">
               Remember your password?{" "}
               <Link
                 href="/auth/login"
@@ -304,17 +255,6 @@ export default function ForgotPasswordPage() {
               </Link>
             </p>
           </form>
-        </div>
-        
-        {/* Footer Link for Mobile */}
-        <div className="lg:hidden mt-auto pb-8">
-           <Link 
-            href="/auth/login" 
-            className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-green-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to login
-          </Link>
         </div>
       </div>
     </div>
