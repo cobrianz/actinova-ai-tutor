@@ -70,12 +70,17 @@ export async function generateBlogPost(period = "monthly") {
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const prompt = buildPrompt(period);
-  const completion = await openai.responses.create({
-    model: "gpt-4.1-mini",
-    input: prompt,
-    text: { format: "json" },
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    response_format: { type: "json_object" },
   });
-  const raw = completion.output_text || "{}";
+  const raw = completion.choices[0]?.message?.content || "{}";
   let data;
   try {
     data = JSON.parse(raw);
