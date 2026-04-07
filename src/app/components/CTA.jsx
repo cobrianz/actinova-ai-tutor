@@ -41,8 +41,8 @@ export default function CTA({ handleGetStarted }) {
             </h2>
             
             <p className="text-lg md:text-xl text-white/80 mb-12 leading-relaxed">
-              Start with course generation and expand into quizzes, flashcards, reports,
-              AI chat, premium tracks, and career tools as your workflow grows.
+              Start with free generation, expand into premium marketplace courses,
+              and use quizzes, flashcards, reports, AI chat, and career tools as your workflow grows.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
@@ -61,9 +61,10 @@ export default function CTA({ handleGetStarted }) {
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-white/80 font-medium">
               {[
                 "No credit card required",
-                "Courses, quizzes, flashcards, and reports",
-                "AI chat and premium tracks",
-                "Career growth toolkit"
+                "2 free course generations to start",
+                "Marketplace premium courses and AI chat",
+                "Career growth toolkit with paid resume export",
+                "Quizzes, flashcards, and reports"
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />

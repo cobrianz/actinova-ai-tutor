@@ -1,20 +1,30 @@
-"use client";
-
 import LandingPage from "./components/LandingPage";
-import { useEffect } from "react";
-import { apiClient } from "@/lib/csrfClient";
+import { connectToDatabase } from "@/lib/mongodb";
+import { getActiveSiteNotice } from "@/lib/siteNotices";
 
-export default function Home() {
-  useEffect(() => {
-    // Increment visitor counter on page load
-    apiClient.get("/api/visitor-counter").catch(() => {
-      // Ignore errors for visitor counter in production
-    });
-  }, []);
+export default async function Home() {
+  let initialNotice = null;
+
+  try {
+    const { db } = await connectToDatabase();
+    const notice = await getActiveSiteNotice(db);
+    initialNotice = notice
+      ? {
+          id: notice._id?.toString?.() || notice.key,
+          key: notice.key,
+          title: notice.title,
+          message: notice.message,
+          variant: notice.variant,
+          icon: notice.icon,
+        }
+      : null;
+  } catch (error) {
+    console.error("Failed to prefetch landing notice:", error);
+  }
 
   return (
     <div>
-      <LandingPage />
+      <LandingPage initialNotice={initialNotice} />
     </div>
   );
 }

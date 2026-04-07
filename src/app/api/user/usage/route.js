@@ -80,6 +80,7 @@ export async function GET(request) {
         projection: {
           monthlyUsage: 1,
           isPremium: 1,
+          "subscription.tier": 1,
           "subscription.plan": 1,
           "subscription.status": 1,
         },

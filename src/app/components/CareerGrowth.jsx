@@ -95,7 +95,8 @@ const CareerGrowth = () => {
     );
 
     const setSubTab = (tool, extraParams = {}) => {
-        if (tool !== "overview" && !isPro) {
+        const isFreeResumeTool = tool === "resume";
+        if (tool !== "overview" && !isPro && !isFreeResumeTool) {
             setShowPremiumModal(true);
             return;
         }
@@ -279,7 +280,7 @@ const CareerGrowth = () => {
         }
     }, [subTab]);
 
-    if (subTab !== "overview" && isPro) {
+    if (subTab !== "overview" && (isPro || subTab === "resume")) {
         return (
             <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-0 sm:px-6 lg:px-8 min-h-[80vh]">
                 {renderHeader()}
@@ -289,9 +290,9 @@ const CareerGrowth = () => {
                     transition={{ duration: 0.4 }}
                 >
                     {subTab === "resume" && <ResumeBuilder />}
-                    {subTab === "interview" && <InterviewPrep />}
-                    {subTab === "skillgap" && <SkillGapAnalysis />}
-                    {subTab === "network" && <NetworkAI />}
+                    {subTab === "interview" && isPro && <InterviewPrep />}
+                    {subTab === "skillgap" && isPro && <SkillGapAnalysis />}
+                    {subTab === "network" && isPro && <NetworkAI />}
                 </motion.div>
             </div>
         );
@@ -336,14 +337,6 @@ const CareerGrowth = () => {
                         variants={itemVariants}
                         className="md:col-span-8 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 md:p-10 transition-all hover:scale-[1.01] hover:shadow-2xl hover:shadow-green-500/20 hover:border-green-500/50"
                     >
-                        {!isPro && (
-                            <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-lime-950" />
-                                    PRO
-                                </div>
-                            </div>
-                        )}
                         <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-500/10 opacity-50" />
                         <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[length:20px_20px]" />
                         <div className="absolute -bottom-12 -right-12 w-32 sm:w-48 h-32 sm:h-48 bg-green-500/20 rounded-full blur-3xl group-hover:bg-green-500/30 transition-colors" />

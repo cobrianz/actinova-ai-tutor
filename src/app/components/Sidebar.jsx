@@ -44,10 +44,10 @@ export default function Sidebar({
     { name: "Explore", id: "explore", icon: Search },
     { name: "Library", id: "library", icon: BookOpen },
     { name: "Reports & Essays", id: "reports-library", icon: ScrollText, premium: true },
-    { name: "Career Growth", id: "career", icon: Briefcase, premium: true },
+    { name: "Career Growth", id: "career", icon: Briefcase, premium: true, showLock: false },
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
-    { name: "Premium", id: "premium-courses", icon: Star, premium: true },
+    { name: "Premium", id: "premium-courses", icon: Star, premium: true, showLock: false },
     // Only show upgrade when auth has finished loading and user is not pro
     !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },
   ].filter(Boolean);
@@ -214,14 +214,14 @@ export default function Sidebar({
                       >
                         <div className="relative">
                           <Icon className="w-5 h-5" />
-                          {item.premium && !isPro && (
+                          {item.premium && item.showLock !== false && !isPro && (
                             <div className="absolute -top-1 -right-1 bg-lime-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
                               <Lock size={8} className="text-lime-950" />
                             </div>
                           )}
                         </div>
                         <span className="flex-1 text-left">{item.name}</span>
-                        {item.premium && !isPro && (
+                        {item.premium && item.showLock !== false && !isPro && (
                           <Lock size={12} className="text-muted-foreground/40" />
                         )}
                       </button>

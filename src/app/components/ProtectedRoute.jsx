@@ -19,7 +19,11 @@ export default function ProtectedRoute({ children }) {
     }
     
     if (!user) {
-      router.push("/auth/login");
+      const callbackUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : pathname || "/dashboard";
+      router.push(`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
     

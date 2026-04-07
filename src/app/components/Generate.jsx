@@ -26,6 +26,8 @@ import { motion } from "framer-motion";
 export default function Generate({ setActiveContent }) {
   const searchParams = useSearchParams();
   const initialTopic = searchParams.get("topic") || "";
+  const premiumRequestedFromQuery =
+    searchParams.get("premiumRequested") === "true";
 
   const [topic, setTopic] = useState(initialTopic);
   const [localTopic, setLocalTopic] = useState(initialTopic);
@@ -39,6 +41,8 @@ export default function Generate({ setActiveContent }) {
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usageData, setUsageData] = useState(null);
+  const [premiumRequested, setPremiumRequested] = useState(premiumRequestedFromQuery);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const router = useRouter();
   const { user, loading, refreshToken, isPro } = useAuth();
 
@@ -51,6 +55,7 @@ export default function Generate({ setActiveContent }) {
       setLocalTopic(t);
     }
     if (f) setFormat(f);
+    setPremiumRequested(searchParams.get("premiumRequested") === "true");
   }, [searchParams]);
 
   // Fetch live usage data from the server
@@ -171,7 +176,28 @@ export default function Generate({ setActiveContent }) {
     }
   }, [searchParams, topic, user, loading]);
 
-  const handleGenerate = async (retryCount = 0) => {
+  const startPremiumCheckout = async (subject) => {
+    try {
+      setIsSubmitting(true);
+      const response = await apiClient.post("/api/billing/create-session", {
+        purchaseType: "premium-generation",
+        topic: subject,
+        difficulty,
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.sessionUrl) {
+        throw new Error(data.error || "Failed to start premium checkout");
+      }
+
+      window.location.href = data.sessionUrl;
+    } catch (error) {
+      toast.error(error.message || "Failed to start premium checkout");
+      setIsSubmitting(false);
+    }
+  };
+
+  const continueGeneration = async ({ premium = false } = {}) => {
     if (!topic.trim()) return;
     if (isSubmitting) return; // prevent double submissions
 
@@ -186,14 +212,20 @@ export default function Generate({ setActiveContent }) {
       return;
     }
 
-    setIsSubmitting(true);
     const subject = topic.trim();
+    const shouldContinuePaidPremiumGeneration =
+      format === "course" &&
+      premium &&
+      searchParams.get("payment") === "success";
+
+    setPremiumRequested(premium);
+    setIsSubmitting(true);
 
     // Local cache key for previously generated courses
     const cacheKey = `generated_${subject}_${format}_${difficulty}`;
     try {
       const cached = localStorage.getItem(cacheKey);
-      if (cached) {
+      if (cached && !premium) {
         // Route immediately to existing course
         router.push(
           `/learn/${encodeURIComponent(subject)}?format=${format}&difficulty=${difficulty}`
@@ -201,6 +233,11 @@ export default function Generate({ setActiveContent }) {
         return;
       }
     } catch { }
+
+    if (format === "course" && premium && !shouldContinuePaidPremiumGeneration) {
+      await startPremiumCheckout(subject);
+      return;
+    }
 
     // Handle flashcard generation directly
     if (format === "flashcards") {
@@ -374,7 +411,7 @@ export default function Generate({ setActiveContent }) {
     // Loader will stay visible during navigation and be cleared by LearnContent
     setShowLoader(true);
     router.push(
-      `/learn/${encodeURIComponent(subject)}?format=${format}&difficulty=${difficulty}`
+      `/learn/${encodeURIComponent(subject)}?format=${format}&difficulty=${difficulty}${premium ? "&premiumRequested=true" : ""}`
     );
 
     // Safety fallback to clear loader after 5 seconds if navigation fails or hangs
@@ -382,6 +419,27 @@ export default function Generate({ setActiveContent }) {
       setShowLoader(false);
       setIsSubmitting(false);
     }, 5000);
+  };
+
+  const handleGenerate = async () => {
+    if (!topic.trim()) return;
+    if (isSubmitting) return;
+
+    const shouldContinuePaidPremiumGeneration =
+      format === "course" &&
+      premiumRequested &&
+      searchParams.get("payment") === "success";
+
+    if (
+      format === "course" &&
+      !isPremium &&
+      !shouldContinuePaidPremiumGeneration
+    ) {
+      setShowPremiumModal(true);
+      return;
+    }
+
+    await continueGeneration({ premium: shouldContinuePaidPremiumGeneration });
   };
 
   // Keep hook order stable: always call effect, conditionally act inside it
@@ -405,6 +463,63 @@ export default function Generate({ setActiveContent }) {
 
   return (
     <div className="relative min-h-screen">
+      {showPremiumModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl border border-[#D2D7F8]/40 bg-white p-6 shadow-2xl dark:bg-[#020617]">
+            <div className="mb-5 flex items-start gap-3">
+              <div className="rounded-2xl bg-green-100 p-3 text-green-700 dark:bg-green-500/15 dark:text-green-400">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-foreground">
+                  Make this generated course premium for $6
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  After successful checkout, generation continues automatically and the course is saved as a premium item in your dashboard.
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6 rounded-2xl border border-[#D2D7F8]/40 bg-green-50/70 p-4 dark:bg-white/5">
+              <p className="text-sm font-medium text-foreground">
+                Topic:
+                <span className="ml-2 font-bold">{topic.trim() || "Untitled course"}</span>
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPremiumModal(false);
+                  continueGeneration({ premium: false });
+                }}
+                className="flex-1 rounded-2xl border border-[#D2D7F8]/60 px-4 py-3 text-sm font-bold text-foreground transition hover:bg-secondary/50"
+              >
+                Continue Free
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPremiumModal(false);
+                  continueGeneration({ premium: true });
+                }}
+                className="flex-1 rounded-2xl bg-green-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-700"
+              >
+                Upgrade for $6
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowPremiumModal(false)}
+              className="mt-3 w-full text-center text-sm font-medium text-muted-foreground transition hover:text-foreground"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
       {showLoader && (
         <div data-actirova-loader-overlay="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <ActirovaLoader text={format} />

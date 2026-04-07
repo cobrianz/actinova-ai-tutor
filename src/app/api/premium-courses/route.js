@@ -1,336 +1,261 @@
-// src/app/api/premium-courses/route.js
-
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import PersonalizedDiscovery from "@/models/PersonalizedDiscovery";
 import { ObjectId } from "mongodb";
-import OpenAI from "openai";
+import { connectToDatabase } from "@/lib/mongodb";
+import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
+import {
+  ensureMarketplaceSeedCourses,
+  getMarketplaceEnrollment,
+  buildAccessSummary,
+  MARKETPLACE_PRICE_USD,
+  normalizeTopicKey,
+  slugifyCourseTitle,
+  syncUserPaidCoursesToMarketplace,
+} from "@/lib/courseCommerce";
+import { getTrackedUsageSummary } from "@/lib/usageSummary";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getPaidTierStatus(user) {
+  const plan = String(user?.subscription?.plan || "").toLowerCase();
+  const tier = String(user?.subscription?.tier || "").toLowerCase();
+  const status = user?.subscription?.status;
+  const isEnterprise = (tier === "enterprise" || plan === "enterprise") && status === "active";
+  const isPremium =
+    (tier === "pro" ||
+      plan === "pro" ||
+      plan === "premium" ||
+      tier === "enterprise" ||
+      plan === "enterprise") &&
+    status === "active";
 
-// In-memory cache (auto-refreshes every 5 minutes)
-let cachedData = null;
-let lastFetched = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-// Seed data — beautiful, production-grade courses
-const PREMIUM_COURSES_SEED = [
-  {
-    title: "Complete Full-Stack Development Bootcamp 2025",
-    slug: "fullstack-bootcamp-2025",
-    description:
-      "Master React, Node.js, TypeScript, Next.js, and deploy production apps",
-    instructor: "Sarah Chen",
-    avatar: "/instructors/sarah-chen.jpg",
-    duration: "12 weeks",
-    students: 18750,
-    rating: 4.95,
-    reviews: 3421,
-    difficulty: "Intermediate",
-    category: "Full-Stack",
-    thumbnail: "/courses/fullstack-2025.jpg",
-    highlights: [
-      "Build 6 portfolio-ready apps (SaaS, AI tools, e-commerce)",
-      "Master TypeScript, tRPC, Prisma, NextAuth",
-      "Deploy to Vercel, AWS, Railway",
-      "Lifetime updates + private Discord",
-    ],
-    outcomes: [
-      "Land $120k+ remote dev jobs",
-      "Build production-grade apps solo",
-      "Contribute to open source confidently",
-    ],
-    price: 229,
-    originalPrice: 599,
-    featured: true,
-    bestseller: true,
-    tags: ["React", "Next.js", "TypeScript", "Node.js", "Prisma", "tRPC"],
-    modules: 10,
-    lessons: 68,
-    projects: 6,
-    certificate: true,
-    createdAt: new Date("2025-01-15"),
-    updatedAt: new Date(),
-  },
-  {
-    title: "AI Engineering Mastery",
-    slug: "ai-engineering-2025",
-    description:
-      "Build and deploy production AI apps with LLMs, RAG, and agents",
-    instructor: "Dr. Maya Patel",
-    avatar: "/instructors/maya-patel.jpg",
-    duration: "10 weeks",
-    students: 12400,
-    rating: 4.98,
-    reviews: 2189,
-    difficulty: "Advanced",
-    category: "AI & ML",
-    thumbnail: "/courses/ai-engineering.jpg",
-    highlights: [
-      "Fine-tune Llama 3 & Mistral",
-      "Build RAG pipelines with Pinecone",
-      "Create autonomous AI agents",
-      "Deploy to production with monitoring",
-    ],
-    price: 399,
-    originalPrice: 799,
-    featured: false,
-    bestseller: true,
-    tags: ["Python", "LangChain", "LlamaIndex", "FastAPI", "Docker"],
-    modules: 9,
-    lessons: 52,
-    projects: 4,
-    certificate: true,
-    createdAt: new Date("2025-02-20"),
-    updatedAt: new Date(),
-  },
-  {
-    title: "The Ultimate System Design Interview",
-    slug: "system-design-masterclass",
-    description: "Ace FAANG interviews with real-world system design patterns",
-    instructor: "Alex Kim",
-    avatar: "/instructors/alex-kim.jpg",
-    duration: "8 weeks",
-    students: 9800,
-    rating: 4.93,
-    reviews: 1890,
-    difficulty: "Advanced",
-    category: "Career",
-    thumbnail: "/courses/system-design.jpg",
-    highlights: [
-      "Solve 50+ real interview questions",
-      "Design Netflix, Uber, WhatsApp, TikTok",
-      "Rate limiting, caching, sharding, queues",
-      "Whiteboard + code solutions",
-    ],
-    price: 179,
-    originalPrice: 399,
-    featured: false,
-    bestseller: false,
-    tags: ["System Design", "Scalability", "Distributed Systems", "Interview"],
-    modules: 7,
-    lessons: 42,
-    projects: 12,
-    certificate: true,
-    createdAt: new Date("2025-01-10"),
-    updatedAt: new Date(),
-  },
-];
-
-// Auto-seed only once in production
-async function ensureCourses(db) {
-  const col = db.collection("premium_courses");
-  const count = await col.countDocuments();
-
-  if (count === 0) {
-    console.log("Seeding premium courses...");
-    await col.insertMany(
-      PREMIUM_COURSES_SEED.map((course) => ({
-        ...course,
-        _id: new ObjectId(),
-      }))
-    );
-    console.log("Premium courses seeded successfully");
-  }
+  return {
+    isPremium,
+    isEnterprise,
+  };
 }
 
-export async function GET(request) {
-  try {
-    const { db } = await connectToDatabase();
+async function handleGet(request) {
+  const { db } = await connectToDatabase();
+  await ensureMarketplaceSeedCourses(db);
+  if (request.user?._id) {
+    await syncUserPaidCoursesToMarketplace({
+      db,
+      userId: request.user._id.toString(),
+    });
+  }
 
-        // 1. Check for Authentication
-    let userId = null;
-    let userInterests = [];
-    let userGoals = [];
-    let recentCourses = [];
-    let userSkillLevel = "intermediate";
-    let userLearningStyle = "";
-    let userAgeGroup = "";
-    let userEducationLevel = "";
-    let userTimeCommitment = "";
+  const coursesCol = db.collection("courses");
+  const courses = await coursesCol
+    .find({ isGlobal: true, isPublished: true, isPremium: true })
+    .sort({ featured: -1, createdAt: -1, rating: -1 })
+    .toArray();
+  const courseIds = courses.map((course) => course._id);
 
-    const authHeader = request.headers.get("authorization");
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      try {
-        const token = authHeader.split(" ")[1];
-        const decoded = await import("@/lib/auth").then(m => m.verifyToken(token));
-
-        if (decoded?.id) {
-          userId = new ObjectId(decoded.id);
-          const user = await db.collection("users").findOne(
-            { _id: userId },
+  const [marketplaceEnrollments, marketplaceLibraryCopies] = courseIds.length
+    ? await Promise.all([
+        db
+          .collection("enrollments")
+          .find(
             {
-              projection: {
-                interests: 1,
-                interestCategories: 1,
-                goals: 1,
-                skillLevel: 1,
-                learningStyle: 1,
-                ageGroup: 1,
-                educationLevel: 1,
-                timeCommitment: 1
-              }
-            }
-          );
-
-          if (user) {
-            const cats = user.interestCategories || [];
-            const ints = user.interests || [];
-            userInterests = [...new Set([...cats, ...ints])].map(i => i.toLowerCase());
-            userGoals = user.goals || [];
-            userSkillLevel = user.skillLevel || "intermediate";
-            userLearningStyle = user.learningStyle || "";
-            userAgeGroup = user.ageGroup || "";
-            userEducationLevel = user.educationLevel || "";
-            userTimeCommitment = user.timeCommitment || "";
-
-            const courses = await db.collection("library")
-              .find({ userId, format: "course" })
-              .sort({ createdAt: -1 })
-              .limit(5)
-              .project({ title: 1 })
-              .toArray();
-            recentCourses = courses.map(c => c.title);
-          }
-        }
-      } catch (e) {
-        console.warn("Premium courses personalisation: Auth failed", e.message);
-      }
-    }
-
-    // 2. Return cached personalized discovery if available and fresh
-    if (userId) {
-      try {
-        const cached = await PersonalizedDiscovery.findOne({
-          userId,
-          type: "premium_courses",
-          expiresAt: { $gt: new Date() }
-        });
-
-        if (cached) {
-          return NextResponse.json(cached.content);
-        }
-      } catch (err) {
-        console.error("PersonalizedDiscovery fetch error:", err);
-      }
-    }
-
-    // 3. Generate Personalized Premium Courses
-    let finalResult = null;
-
-    if (userId && (userInterests.length > 0 || recentCourses.length > 0)) {
-            const systemPrompt = `You are a high-end educational curator. Generate 3-5 premium, "Masterclass" style course recommendations for a learner.
-        
-USER CONTEXT:
-- Interests: ${userInterests.join(", ") || "General learning"}
-- Goals: ${userGoals.join(", ") || "Career advancement"}
-- Skill Level: ${userSkillLevel}
-- Learning Style: ${userLearningStyle || "Any"}
-- Age Group: ${userAgeGroup || "Adult"}
-- Education Level: ${userEducationLevel || "Any"}
-- Time Commitment: ${userTimeCommitment || "Flexible"}
-- Previous Courses: ${recentCourses.join(", ") || "None"}
-
-Think of these as "Elite" or "Pro" level courses that provide deep industry value. Match the user's skill level and learning style.
-
-JSON Structure:
-{
-  "featured": {
-    "title": "Main Featured Course Name",
-    "slug": "course-slug",
-    "description": "Deep description",
-    "instructor": "World-class name",
-    "avatar": "URL",
-    "duration": "e.g. 10 weeks",
-    "students": number,
-    "rating": number (4.8-5.0),
-    "reviews": number,
-    "difficulty": "Advanced|Intermediate",
-    "category": "Category",
-    "thumbnail": "URL",
-    "highlights": ["Highly specific outcome 1", "Outcome 2"],
-    "outcomes": ["Career shift 1", "Skill mastery 2"],
-    "price": number,
-    "originalPrice": number,
-    "featured": true,
-    "bestseller": true,
-    "tags": ["tag1", "tag2"],
-    "modules": number,
-    "lessons": number,
-    "projects": number,
-    "certificate": true
-  },
-  "courses": [
-    // Array of 2-4 more elite courses matching the same structure but featured: false
-  ]
-}`;
-
-      try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-          messages: [{ role: "system", content: systemPrompt }]
-        });
-
-        const generated = JSON.parse(completion.choices[0].message.content);
-        const processedResult = {
-          featured: generated.featured,
-          courses: generated.courses || [],
-          total: (generated.courses?.length || 0) + (generated.featured ? 1 : 0),
-          updatedAt: new Date().toISOString(),
-          personalized: true
-        };
-
-        // Cache the result for 30 days
-        await PersonalizedDiscovery.updateOne(
-          { userId, type: "premium_courses" },
-          {
-            $set: {
-              content: processedResult,
-              expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            }
-          },
-          { upsert: true }
-        );
-
-        finalResult = processedResult;
-      } catch (aiErr) {
-        console.error("AI Premium Gen failed:", aiErr);
-      }
-    }
-
-    // 4. Fallback to static seed data if guest or AI failed
-    if (!finalResult) {
-      // Use static seed if already in DB
-      const col = db.collection("premium_courses");
-      await ensureCourses(db);
-
-      const [f, others] = await Promise.all([
-        col.findOne({ featured: true }),
-        col
-          .find({ featured: { $ne: true } })
-          .sort({ students: -1, rating: -1 })
+              type: "marketplace-course",
+              courseId: { $in: courseIds },
+            },
+            { projection: { courseId: 1, userId: 1 } }
+          )
           .toArray(),
-      ]);
+        db
+          .collection("library")
+          .find(
+            {
+              format: "course",
+              sourceMarketplaceCourseId: { $in: courseIds },
+            },
+            { projection: { sourceMarketplaceCourseId: 1, userId: 1 } }
+          )
+          .toArray(),
+      ])
+    : [[], []];
 
-      finalResult = {
-        featured: f,
-        courses: others,
-        total: others.length + (f ? 1 : 0),
-        updatedAt: new Date().toISOString(),
-        personalized: false
-      };
+  const studentCounts = new Map();
+  marketplaceEnrollments.forEach((entry) => {
+    const courseId = entry.courseId?.toString();
+    const userId = entry.userId?.toString();
+    if (!courseId || !userId) return;
+
+    if (!studentCounts.has(courseId)) {
+      studentCounts.set(courseId, new Set());
     }
+    studentCounts.get(courseId).add(userId);
+  });
 
-    return NextResponse.json(finalResult);
-  } catch (error) {
-    console.error("Premium courses API error:", error);
-    return NextResponse.json(
-      { error: "Failed to load premium courses" },
-      { status: 500 }
-    );
-  }
+  marketplaceLibraryCopies.forEach((entry) => {
+    const courseId = entry.sourceMarketplaceCourseId?.toString();
+    const userId = entry.userId?.toString();
+    if (!courseId || !userId) return;
+
+    if (!studentCounts.has(courseId)) {
+      studentCounts.set(courseId, new Set());
+    }
+    studentCounts.get(courseId).add(userId);
+  });
+
+  const user = request.user;
+  const userId = user?._id?.toString();
+  const { isPremium, isEnterprise } = getPaidTierStatus(user);
+  const usage = user ? await getTrackedUsageSummary(db, user) : null;
+  const courseUsage = usage?.details?.courses || null;
+  const existingLibraryCourses = userId
+    ? await db
+        .collection("library")
+        .find(
+          {
+            userId: new ObjectId(userId),
+            format: "course",
+          },
+          {
+            projection: {
+              sourceMarketplaceCourseId: 1,
+              title: 1,
+              topic: 1,
+              originalTopic: 1,
+            },
+          }
+        )
+        .toArray()
+    : [];
+  const limitReached =
+    Boolean(isPremium) && !isEnterprise && Boolean(courseUsage?.limit !== null && courseUsage?.used >= courseUsage?.limit);
+
+  const enriched = await Promise.all(
+    courses.map(async (course) => {
+      let access;
+
+      if (isPremium) {
+        access = {
+          hasAccess: !limitReached,
+          isExpired: false,
+          daysLeft: 30,
+          actionLabel: limitReached ? "Monthly limit reached" : "Start Learning",
+          source: "subscription",
+          usage: courseUsage || null,
+          limitReached,
+        };
+      } else {
+        const enrollment = userId
+          ? await getMarketplaceEnrollment(db, userId, course._id.toString())
+          : null;
+        access = {
+          ...buildAccessSummary(enrollment),
+          source: "purchase",
+          usage: null,
+          limitReached: false,
+        };
+      }
+
+      const hasGenerated = existingLibraryCourses.some((entry) => {
+        const sourceId = entry.sourceMarketplaceCourseId?.toString();
+        return (
+          sourceId === course._id.toString() ||
+          String(entry.originalTopic || "").toLowerCase() === String(course.title || "").toLowerCase() ||
+          String(entry.title || "").toLowerCase() === String(course.title || "").toLowerCase() ||
+          normalizeTopicKey(entry.topic || "") === normalizeTopicKey(course.title || "")
+        );
+      });
+
+      return {
+        id: course._id.toString(),
+        slug: course.slug || slugifyCourseTitle(course.title),
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        difficulty: course.difficulty,
+        duration: course.duration,
+        instructor: course.instructor || "Actirova Academy",
+        thumbnail: course.thumbnail || "/hero.png",
+        badge: course.badge || "Premium",
+        featured: Boolean(course.featured),
+        isPremium: true,
+        isGlobal: true,
+        price: course.price || MARKETPLACE_PRICE_USD,
+        rating: course.rating || 0,
+        students: studentCounts.get(course._id.toString())?.size || 0,
+        totalModules: course.totalModules || course.modules?.length || 20,
+        totalLessons: course.totalLessons || course.lessonsCount || 100,
+        highlights: course.highlights || [],
+        hasGenerated,
+        access,
+      };
+    })
+  );
+
+  return NextResponse.json({
+    success: true,
+    courses: enriched,
+  });
 }
+
+async function handlePost(request) {
+  const user = request.user;
+  const body = await request.json();
+  const { db } = await connectToDatabase();
+
+  const required = ["title", "description", "category", "difficulty"];
+  for (const field of required) {
+    if (!body[field]) {
+      return NextResponse.json(
+        { error: `Missing required field: ${field}` },
+        { status: 400 }
+      );
+    }
+  }
+
+  const doc = {
+    title: body.title,
+    description: body.description,
+    category: body.category,
+    difficulty: String(body.difficulty).toLowerCase(),
+    duration: body.duration || "30 days",
+    instructor: body.instructor || "Actirova Academy",
+    thumbnail: body.thumbnail || "/hero.png",
+    badge: body.badge || "Admin Pick",
+    featured: Boolean(body.featured),
+    slug: body.slug || slugifyCourseTitle(body.title),
+    isPremium: true,
+    isGlobal: true,
+    isPublished: body.isPublished !== false,
+    price: Number(body.price || MARKETPLACE_PRICE_USD),
+    tierRequired: "premium-course",
+    students: Number(body.students || 0),
+    rating: Number(body.rating || 0),
+    highlights: Array.isArray(body.highlights) ? body.highlights : [],
+    totalModules: Number(body.totalModules || body.modules?.length || 0),
+    totalLessons: Number(body.totalLessons || body.lessonsCount || 0),
+    lessonsCount: Number(body.totalLessons || body.lessonsCount || 0),
+    tags: Array.isArray(body.tags) ? body.tags : [],
+    modules: Array.isArray(body.modules) ? body.modules : [],
+    createdBy: new ObjectId(user._id),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const result = await db.collection("courses").insertOne(doc);
+
+  return NextResponse.json(
+    {
+      success: true,
+      course: {
+        ...doc,
+        id: result.insertedId.toString(),
+      },
+    },
+    { status: 201 }
+  );
+}
+
+export const GET = combineMiddleware(
+  withErrorHandling,
+  (handler) => withAuth(handler, { optional: true })
+)(handleGet);
+
+export const POST = combineMiddleware(
+  withErrorHandling,
+  (handler) => withAuth(handler, { roles: ["admin"] })
+)(handlePost);

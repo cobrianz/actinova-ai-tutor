@@ -36,13 +36,15 @@ function getUserIdFromRequest(request) {
 
 export async function GET(request, { params }) {
   try {
+    const resolvedParams = await params;
+    const testId = resolvedParams?.id;
     await connectToDatabase();
     const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const test = await Test.findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(testId),
       createdBy: userId,
     });
     if (!test) {
@@ -59,13 +61,15 @@ export async function GET(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    const resolvedParams = await params;
+    const testId = resolvedParams?.id;
     await connectToDatabase();
     const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const deletedTest = await Test.findOneAndDelete({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(testId),
       createdBy: userId,
     });
     if (!deletedTest) {

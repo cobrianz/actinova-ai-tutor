@@ -70,18 +70,36 @@ async function saveHistoryHandler(req) {
 
         // Update by specific ID if provided to prevent duplicates when renaming
         if (id) {
+            const existing = await CareerHistory.findOne({ _id: id, userId });
+            if (!existing) {
+                return NextResponse.json({ error: "History item not found" }, { status: 404 });
+            }
             const updated = await CareerHistory.findOneAndUpdate(
                 { _id: id, userId },
-                { $set: { title, data, metadata, updatedAt: new Date() } },
+                {
+                    $set: {
+                        title,
+                        data,
+                        metadata: { ...(existing.metadata || {}), ...(metadata || {}) },
+                        updatedAt: new Date(),
+                    },
+                },
                 { new: true }
             );
             if (updated) return NextResponse.json(updated, { status: 200 });
         }
 
         // Upsert: update if same user + type + title exists, otherwise create
+        const existingByTitle = await CareerHistory.findOne({ userId, type, title });
         const record = await CareerHistory.findOneAndUpdate(
             { userId, type, title },
-            { $set: { data, metadata, updatedAt: new Date() } },
+            {
+                $set: {
+                    data,
+                    metadata: { ...(existingByTitle?.metadata || {}), ...(metadata || {}) },
+                    updatedAt: new Date(),
+                },
+            },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
         return NextResponse.json(record, { status: 200 });

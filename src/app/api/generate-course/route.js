@@ -8,6 +8,13 @@ import { getUserPlanLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 import { withAPIRateLimit, trackAPIUsage, checkAPILimit } from "@/lib/planMiddleware";
+import {
+  buildAccessSummary,
+  getPaidPremiumGenerationIntent,
+  getMarketplaceEnrollment,
+  consumePremiumGenerationIntent,
+  publishPaidLibraryCourseToMarketplace,
+} from "@/lib/courseCommerce";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -25,6 +32,9 @@ async function handlePost(request) {
       difficulty = "beginner",
       format = "course",
       questions,
+      premiumRequested = false,
+      forceRegenerate = false,
+      marketplaceCourseId = null,
     } = body;
 
     if (!topic?.trim())
@@ -39,12 +49,58 @@ async function handlePost(request) {
 
     const { db } = await connectToDatabase();
     const planLimits = getUserPlanLimits(user);
-    const isPremium = user?.subscription?.tier !== "free" && user?.subscription?.status === "active";
-
+    const subscriptionTier = String(
+      user?.subscription?.tier || user?.subscription?.plan || ""
+    ).toLowerCase();
+    const isEnterprise =
+      subscriptionTier === "enterprise" &&
+      user?.subscription?.status === "active";
+    const hasActiveSubscription =
+      user?.subscription?.status === "active" &&
+      subscriptionTier &&
+      subscriptionTier !== "free";
     const apiFeatureName = format === "quiz" ? "quiz" : "generate-course";
     const limitCheck = await checkAPILimit(user._id, apiFeatureName);
+    const isOverUsageLimit = !limitCheck.withinLimit && limitCheck.limit !== -1;
+    const marketplaceEnrollment =
+      format === "course" && marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)
+        ? await getMarketplaceEnrollment(db, userId.toString(), marketplaceCourseId)
+        : null;
+    const marketplaceAccess = marketplaceEnrollment
+      ? buildAccessSummary(marketplaceEnrollment)
+      : null;
+    const hasUnlockedMarketplaceAccess = Boolean(marketplaceAccess?.hasAccess);
+    let premiumIntent = null;
+    let isPremium = hasActiveSubscription;
 
-    if (!limitCheck.withinLimit && limitCheck.limit !== -1) {
+    if (format === "course" && premiumRequested) {
+      const requiresPremiumPayment =
+        (!hasActiveSubscription && !hasUnlockedMarketplaceAccess) ||
+        (!isEnterprise && isOverUsageLimit && !hasUnlockedMarketplaceAccess);
+
+      if (requiresPremiumPayment) {
+        premiumIntent = await getPaidPremiumGenerationIntent({
+          db,
+          userId,
+          topic,
+          difficulty,
+        });
+
+        if (!premiumIntent) {
+          return NextResponse.json(
+            { error: "Premium payment required before continuing generation" },
+            { status: 402 }
+          );
+        }
+      }
+
+      isPremium = true;
+    }
+
+    if (
+      isOverUsageLimit &&
+      !(format === "course" && premiumRequested && (premiumIntent || hasUnlockedMarketplaceAccess))
+    ) {
         return NextResponse.json(
             {
                 error: "API rate limit exceeded",
@@ -106,14 +162,52 @@ async function handlePost(request) {
     const normalizedTopic = canon.isDuplicate ? canon.matchedTopic : canon.searchableTopic.trim().toLowerCase();
 
     // Check for existing course (exact match on normalized/matched topic)
-    const existingCourse = await db.collection("library").findOne({
+    const existingCourseQuery = {
       userId: new ObjectId(userId),
-      topic: normalizedTopic,
       format: "course",
       difficulty,
-    });
+    };
 
-    if (existingCourse) {
+    if (marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)) {
+      existingCourseQuery.$or = [
+        { sourceMarketplaceCourseId: new ObjectId(marketplaceCourseId) },
+        { topic: normalizedTopic },
+      ];
+    } else {
+      existingCourseQuery.topic = normalizedTopic;
+    }
+
+    const existingCourse = await db.collection("library").findOne(existingCourseQuery);
+
+    if (
+      format === "course" &&
+      !hasActiveSubscription &&
+      !premiumRequested &&
+      !hasUnlockedMarketplaceAccess &&
+      !existingCourse
+    ) {
+      const lifetimeFreeCoursesUsed = await db.collection("library").countDocuments({
+        userId: new ObjectId(userId),
+        format: "course",
+        isPremium: { $ne: true },
+        sourceMarketplaceCourseId: { $exists: false },
+      });
+
+      if (lifetimeFreeCoursesUsed >= planLimits.generateCourseLimit) {
+        return NextResponse.json(
+          {
+            error: "Free lifetime course limit reached",
+            message: `You have already generated your ${planLimits.generateCourseLimit} free courses.`,
+            used: lifetimeFreeCoursesUsed,
+            limit: planLimits.generateCourseLimit,
+            isPremium: false,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    if (existingCourse && !forceRegenerate) {
       // Scenario 1: Course exists, user is premium, but course is NOT premium. Upgrade it.
       if (isPremium && !existingCourse.isPremium) {
         const { modules, lessonsPerModule, totalLessons } = planLimits;
@@ -197,12 +291,41 @@ async function handlePost(request) {
             })),
           })),
           isPremium: true,
+          premiumAccessExpiresAt:
+            premiumIntent?.accessExpiresAt || marketplaceAccess?.expiryDate || null,
+          premiumPaymentReference:
+            premiumIntent?.reference || existingCourse.premiumPaymentReference || null,
+          sourceMarketplaceCourseId:
+            marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)
+              ? new ObjectId(marketplaceCourseId)
+              : existingCourse.sourceMarketplaceCourseId || null,
           lastAccessed: new Date(),
         };
 
         await db
           .collection("library")
           .updateOne({ _id: existingCourse._id }, { $set: updatedCourseDoc });
+
+        let publishedMarketplaceCourseId = updatedCourseDoc.sourceMarketplaceCourseId || null;
+        if (premiumIntent?._id && !updatedCourseDoc.sourceMarketplaceCourseId) {
+          publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
+            db,
+            userId: userId.toString(),
+            libraryCourse: {
+              ...existingCourse,
+              ...updatedCourseDoc,
+              _id: existingCourse._id,
+            },
+          });
+        }
+
+        if (premiumIntent?._id) {
+          await consumePremiumGenerationIntent({
+            db,
+            intentId: premiumIntent._id.toString(),
+            generatedCourseId: existingCourse._id.toString(),
+          });
+        }
 
         // Increment usage after successful upgrade
         await trackAPIUsage(userId, "generate-course");
@@ -216,10 +339,35 @@ async function handlePost(request) {
             totalModules: updatedCourseDoc.totalModules,
             totalLessons: updatedCourseDoc.totalLessons,
             modules: updatedCourseDoc.modules,
+            isPremium: updatedCourseDoc.isPremium,
+            premiumAccessExpiresAt: updatedCourseDoc.premiumAccessExpiresAt || null,
+            sourceMarketplaceCourseId:
+              publishedMarketplaceCourseId || updatedCourseDoc.sourceMarketplaceCourseId || null,
           },
           isExisting: true,
           wasUpgraded: true,
           message: "Course upgraded to premium version!",
+        });
+      }
+
+      if (premiumIntent?._id && existingCourse.isPremium) {
+        await consumePremiumGenerationIntent({
+          db,
+          intentId: premiumIntent._id.toString(),
+          generatedCourseId: existingCourse._id.toString(),
+        });
+      }
+
+      let publishedMarketplaceCourseId = existingCourse.sourceMarketplaceCourseId || null;
+      if (
+        existingCourse.premiumAccessExpiresAt &&
+        !existingCourse.sourceMarketplaceCourseId &&
+        !marketplaceCourseId
+      ) {
+        publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
+          db,
+          userId: userId.toString(),
+          libraryCourse: existingCourse,
         });
       }
 
@@ -232,6 +380,10 @@ async function handlePost(request) {
           totalModules: existingCourse.totalModules,
           totalLessons: existingCourse.totalLessons,
           modules: existingCourse.modules,
+          isPremium: existingCourse.isPremium,
+          premiumAccessExpiresAt: existingCourse.premiumAccessExpiresAt || null,
+          sourceMarketplaceCourseId:
+            publishedMarketplaceCourseId || existingCourse.sourceMarketplaceCourseId || null,
         },
         isExisting: true,
         wasUpgraded: false,
@@ -306,7 +458,7 @@ async function handlePost(request) {
     }
 
     const normalizedModules = normalizeModules(course.modules || [], topic, lessonsPerModule);
-    const courseId = new ObjectId();
+    const courseId = existingCourse?._id || new ObjectId();
     const courseDoc = {
       _id: courseId,
       userId: new ObjectId(userId),
@@ -338,11 +490,48 @@ async function handlePost(request) {
       progress: 0,
       completed: false,
       pinned: false,
+      premiumAccessExpiresAt:
+        premiumIntent?.accessExpiresAt || marketplaceAccess?.expiryDate || null,
+      premiumPaymentReference: premiumIntent?.reference || null,
+      sourceMarketplaceCourseId:
+        marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)
+          ? new ObjectId(marketplaceCourseId)
+          : existingCourse?.sourceMarketplaceCourseId || null,
       createdAt: new Date(),
       lastAccessed: new Date(),
     };
 
-    await db.collection("library").insertOne(courseDoc);
+    if (existingCourse) {
+      const { _id, ...updatableCourseDoc } = courseDoc;
+      await db.collection("library").updateOne(
+        { _id: existingCourse._id },
+        {
+          $set: {
+            ...updatableCourseDoc,
+            createdAt: existingCourse.createdAt || courseDoc.createdAt,
+          },
+        }
+      );
+    } else {
+      await db.collection("library").insertOne(courseDoc);
+    }
+
+    let publishedMarketplaceCourseId = courseDoc.sourceMarketplaceCourseId || null;
+    if (premiumIntent?._id && !courseDoc.sourceMarketplaceCourseId) {
+      publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
+        db,
+        userId: userId.toString(),
+        libraryCourse: courseDoc,
+      });
+    }
+
+    if (premiumIntent?._id) {
+      await consumePremiumGenerationIntent({
+        db,
+        intentId: premiumIntent._id.toString(),
+        generatedCourseId: courseId.toString(),
+      });
+    }
 
     // Increment usage after successful generation
     await trackAPIUsage(userId, "generate-course");
@@ -357,6 +546,10 @@ async function handlePost(request) {
         totalModules: 20,
         totalLessons: 100,
         modules: courseDoc.modules,
+        isPremium: courseDoc.isPremium,
+        premiumAccessExpiresAt: courseDoc.premiumAccessExpiresAt || null,
+        sourceMarketplaceCourseId:
+          publishedMarketplaceCourseId || courseDoc.sourceMarketplaceCourseId || null,
       },
       difficulty,
       isPremium,

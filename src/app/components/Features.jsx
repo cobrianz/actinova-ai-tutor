@@ -66,7 +66,7 @@ export default function Features() {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-[#1a1a1a]"
           >
-            Supercharge Your <span className="text-green-500">Learning Experience</span>
+            Improve Your <span className="text-green-500">Learning Experience</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -76,7 +76,7 @@ export default function Features() {
             className="text-lg text-[#1a1a1a]/60 max-w-2xl mx-auto"
           >
             Every major workflow already in the product, from generating study material
-            to tracking progress and using career acceleration tools.
+            to unlocking premium marketplace content and using career acceleration tools.
           </motion.p>
         </div>
 
@@ -133,7 +133,7 @@ export default function Features() {
                 One platform for learning, practice, writing, and career growth.
               </h3>
               <p className="text-[#1a1a1a]/60 text-lg mb-8">
-                Move from idea to course, quiz, flashcards, report, library review, and career action without switching tools.
+                Move from idea to course, quiz, flashcards, report, premium marketplace access, and career action without switching tools.
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="flex -space-x-4">

@@ -110,6 +110,7 @@ export default function Library({ setActiveContent }) {
                  completedLessons: Math.round(
                    (item.progress / 100) * (item.totalLessons || item.totalCards || 0)
                  ),
+                 premiumAccessExpiresAt: item.premiumAccessExpiresAt || null,
                  isPinned: item.pinned || false,
                  pinned: item.pinned || false,
                  createdAt: item.createdAt,
@@ -125,6 +126,7 @@ export default function Library({ setActiveContent }) {
                    difficulty: item.difficulty,
                  },
                  isGenerated: true,
+                 isPremium: item.isPremium || false,
                  isEnrolled: item.isEnrolled || false,
                  sharerName: item.sharerName || null,
                  // Preserve local share state
@@ -146,6 +148,7 @@ export default function Library({ setActiveContent }) {
           completedLessons: Math.round(
             (item.progress / 100) * (item.totalLessons || item.totalCards || 0)
           ),
+          premiumAccessExpiresAt: item.premiumAccessExpiresAt || null,
           isPinned: item.pinned || false,
           pinned: item.pinned || false,
           createdAt: item.createdAt,
@@ -161,6 +164,7 @@ export default function Library({ setActiveContent }) {
             difficulty: item.difficulty,
           },
           isGenerated: true,
+          isPremium: item.isPremium || false,
           isEnrolled: item.isEnrolled || false,
           sharerName: item.sharerName || null,
           shareId: item.shareId,
@@ -651,6 +655,13 @@ export default function Library({ setActiveContent }) {
                   <div className="p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
                       <div className="flex-1 min-w-0">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          {course.premiumAccessExpiresAt && (
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                              paid
+                            </span>
+                          )}
+                        </div>
                         <h3 className="text-lg font-semibold text-foreground line-clamp-2">
                           {course.title}
                         </h3>

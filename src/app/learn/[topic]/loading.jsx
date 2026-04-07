@@ -1,3 +1,5 @@
+import ActirovaLoader from "../../components/ActirovaLoader";
+
 export default function Loading() {
-  return null
+  return <ActirovaLoader text="course" />;
 }

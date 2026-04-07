@@ -23,6 +23,33 @@ function getCsrfToken() {
   return match ? match[1] : null;
 }
 
+function getSafeCallbackUrl(rawCallbackUrl) {
+  if (!rawCallbackUrl || typeof window === "undefined") return null;
+
+  try {
+    const parsed = new URL(rawCallbackUrl, window.location.origin);
+    if (parsed.origin !== window.location.origin) {
+      return null;
+    }
+
+    const relativeUrl = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    const isPremiumMarketplaceRedirect =
+      parsed.pathname === "/dashboard" &&
+      parsed.searchParams.get("tab") === "premium-courses";
+
+    if (
+      isPremiumMarketplaceRedirect &&
+      parsed.searchParams.get("authFlow") !== "shared-course"
+    ) {
+      return null;
+    }
+
+    return relativeUrl;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -196,7 +223,7 @@ export function AuthProvider({ children }) {
 
       // Check for callbackUrl in search params
       const searchParams = new URLSearchParams(window.location.search);
-      const callbackUrl = searchParams.get("callbackUrl");
+      const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
 
       if (callbackUrl) {
         router.replace(callbackUrl);

@@ -565,7 +565,7 @@ export default function Flashcards({ cardData }) {
                 </h4>
                 <p className="text-white/90 mb-8 max-w-md">
                   Generate unlimited flashcards, access advanced features, and
-                  supercharge your learning experience with premium tools.
+                  improve your learning experience with premium tools.
                 </p>
                 <div className="flex gap-4 w-full max-w-sm">
                   <button

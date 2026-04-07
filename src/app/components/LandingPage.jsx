@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import Hero from "./Hero";
@@ -9,10 +10,17 @@ import Testimonials from "./Testimonials";
 import CTA from "./CTA";
 import Footer from "./Footer";
 import HeroNavbar from './heroNavbar';
+import { apiClient } from "@/lib/csrfClient";
 
-export default function LandingPage() {
+export default function LandingPage({ initialNotice = null }) {
   const router = useRouter();
   const { user } = useAuth();
+
+  useEffect(() => {
+    apiClient.get("/api/visitor-counter").catch(() => {
+      // Ignore errors for visitor counter in production
+    });
+  }, []);
 
   const handleGetStarted = (redirectPath = "/dashboard") => {
     if (user) {
@@ -26,7 +34,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">
       <HeroNavbar handleGetStarted={handleGetStarted} />
       <main>
-        <Hero handleGetStarted={handleGetStarted} />
+        <Hero handleGetStarted={handleGetStarted} initialNotice={initialNotice} />
         <Features />
         <HowItWorks />
         <Testimonials />

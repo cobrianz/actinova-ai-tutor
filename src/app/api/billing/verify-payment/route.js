@@ -1,30 +1,201 @@
 import { NextResponse } from "next/server";
-import { connectToMongoDB } from "@/lib/db";
-import User from "@/models/User";
-import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { connectToDatabase } from "@/lib/mongodb";
+import {
+  grantMarketplaceCourseAccess,
+  savePremiumGenerationIntent,
+} from "@/lib/courseCommerce";
 
-// Helper: Generate redirect URL from request
-const redirectTo = (req, path) => {
-  const url = new URL(path, req.url);
-  return NextResponse.redirect(url);
-};
+function redirectTo(request, path) {
+  return NextResponse.redirect(new URL(path, request.url));
+}
+
+function getSuccessRedirect(metadata, reference) {
+  const purchaseType = metadata.purchaseType || "subscription";
+
+  if (purchaseType === "marketplace-course") {
+    return `/dashboard?tab=premium-courses&payment=success&purchaseType=marketplace-course&courseId=${encodeURIComponent(
+      metadata.courseId || ""
+    )}&ref=${encodeURIComponent(reference)}`;
+  }
+
+  if (purchaseType === "premium-generation") {
+    const topic = String(metadata.topic || "").trim();
+    if (!topic) {
+      return `/dashboard?tab=generate&payment=success&purchaseType=premium-generation&ref=${encodeURIComponent(reference)}`;
+    }
+
+    const params = new URLSearchParams({
+      format: "course",
+      difficulty: metadata.difficulty || "beginner",
+      premiumRequested: "true",
+      payment: "success",
+      purchaseType: "premium-generation",
+      ref: reference,
+    });
+    return `/learn/${encodeURIComponent(topic)}?${params.toString()}`;
+  }
+
+  if (purchaseType === "resume-export") {
+    return `/dashboard?tab=career&tool=resume&payment=success&purchaseType=resume-export&historyId=${encodeURIComponent(
+      metadata.historyId || ""
+    )}&exportFormat=${encodeURIComponent(
+      metadata.exportFormat || "docx"
+    )}&ref=${encodeURIComponent(reference)}`;
+  }
+
+  return `/checkout/success?kind=subscription&plan=${encodeURIComponent(
+    metadata.plan || "pro"
+  )}&cycle=${encodeURIComponent(
+    metadata.billingCycle || "monthly"
+  )}&ref=${encodeURIComponent(reference)}`;
+}
+
+async function recordBillingEntry({ db, userId, data, metadata }) {
+  const billingEntry = {
+    type: metadata.purchaseType === "subscription" ? "subscription" : "one-time",
+    description:
+      metadata.purchaseType === "marketplace-course"
+        ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
+        : metadata.purchaseType === "premium-generation"
+          ? `Premium course generation: ${metadata.topic}`
+          : metadata.purchaseType === "resume-export"
+            ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+          : `Subscription: ${metadata.plan || "pro"}`,
+    plan: metadata.plan || metadata.purchaseType || "subscription",
+    billingCycle: metadata.billingCycle || "monthly",
+    amount: data.amount / 100,
+    currency: data.currency,
+    reference: data.reference,
+    transactionId: data.id,
+    status: "success",
+    paymentMethod: data.channel,
+    gateway: "paystack",
+    gatewayResponse: data.gateway_response,
+    paidAt: data.paid_at ? new Date(data.paid_at) : new Date(),
+    metadata: {
+      ...metadata,
+      authorization_code: data.authorization?.authorization_code,
+      card_type: data.authorization?.card_type,
+      last4: data.authorization?.last4,
+    },
+  };
+
+  await db.collection("users").updateOne(
+    { _id: new ObjectId(userId) },
+    { $push: { billingHistory: billingEntry } }
+  );
+}
+
+async function markResumeExportPaid({ db, userId, historyId, reference, amount, currency }) {
+  if (!historyId || !ObjectId.isValid(historyId)) {
+    throw new Error("Invalid resume history id");
+  }
+
+  const now = new Date();
+  const result = await db.collection("careerhistories").findOneAndUpdate(
+    {
+      _id: new ObjectId(historyId),
+      userId: new ObjectId(userId),
+      type: "resume",
+    },
+    {
+      $set: {
+        "metadata.exportPaid": true,
+        "metadata.exportPaidAt": now,
+        "metadata.exportReference": reference,
+        "metadata.exportAmount": amount,
+        "metadata.exportCurrency": currency,
+      },
+    },
+    { returnDocument: "after" }
+  );
+
+  if (!result) {
+    throw new Error("Resume not found for export payment");
+  }
+}
+
+async function applySuccessfulPayment({ db, user, data, metadata }) {
+  const purchaseType = metadata.purchaseType || "subscription";
+
+  if (purchaseType === "marketplace-course") {
+    await grantMarketplaceCourseAccess({
+      db,
+      userId: user._id.toString(),
+      courseId: metadata.courseId,
+      reference: data.reference,
+      amount: data.amount / 100,
+      currency: data.currency,
+    });
+    return;
+  }
+
+  if (purchaseType === "premium-generation") {
+    await savePremiumGenerationIntent({
+      db,
+      userId: user._id.toString(),
+      topic: metadata.topic,
+      difficulty: metadata.difficulty || "beginner",
+      reference: data.reference,
+      amount: data.amount / 100,
+      currency: data.currency,
+    });
+    return;
+  }
+
+  if (purchaseType === "resume-export") {
+    await markResumeExportPaid({
+      db,
+      userId: user._id.toString(),
+      historyId: metadata.historyId,
+      reference: data.reference,
+      amount: data.amount / 100,
+      currency: data.currency,
+    });
+    return;
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now);
+  if ((metadata.billingCycle || "monthly") === "yearly") {
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+  }
+
+  await db.collection("users").updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        isPremium: true,
+        "subscription.plan": metadata.plan || "pro",
+        "subscription.tier":
+          String(metadata.plan || "pro").toLowerCase().includes("enterprise")
+            ? "enterprise"
+            : "pro",
+        "subscription.status": "active",
+        "subscription.billingCycle": metadata.billingCycle || "monthly",
+        "subscription.currentPeriodStart": now,
+        "subscription.currentPeriodEnd": expiresAt,
+        "subscription.lastPaymentDate": now,
+        "subscription.paystackCustomerCode": data.customer?.customer_code,
+        "subscription.paystackReference": data.reference,
+        "subscription.autoRenew": true,
+      },
+    }
+  );
+}
 
 export async function GET(request) {
-  const startTime = Date.now();
-
   try {
-    await connectToMongoDB();
-
     const { searchParams } = new URL(request.url);
-    const reference =
-      searchParams.get("reference") || searchParams.get("trxref");
+    const reference = searchParams.get("reference") || searchParams.get("trxref");
 
     if (!reference) {
       return redirectTo(request, "/dashboard?payment=error&msg=no-reference");
     }
 
-    // === 1. Verify transaction with Paystack ===
     const verifyRes = await fetch(
       `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
       {
@@ -36,258 +207,64 @@ export async function GET(request) {
     );
 
     if (!verifyRes.ok) {
-      const err = await verifyRes.text();
-      console.error(`Paystack API error ${verifyRes.status}:`, err);
       return redirectTo(request, "/dashboard?payment=error&msg=provider-error");
     }
 
-    const { status, message, data } = await verifyRes.json();
-
-    if (!status || !data) {
-      console.error("Paystack verification failed:", { message, data });
-      return redirectTo(
-        request,
-        "/dashboard?payment=failed&msg=invalid-response"
-      );
+    const { status, data } = await verifyRes.json();
+    if (!status || !data || data.status !== "success") {
+      return redirectTo(request, "/dashboard?payment=failed");
     }
 
-    if (data.status !== "success") {
-      console.log(`Payment not successful: ${data.status}`, data);
-      return redirectTo(
-        request,
-        `/dashboard?payment=failed&status=${data.status}`
-      );
-    }
-
-    // payment verified successfully
-
-    // === 2. Extract critical data ===
     const metadata = data.metadata || {};
     const userId = metadata.userId;
-    const plan = metadata.plan || "pro";
-    const billingCycle = metadata.billingCycle || "monthly";
-
-    if (!userId) {
-      console.error("Missing userId in metadata");
+    if (!userId || !ObjectId.isValid(userId)) {
       return redirectTo(request, "/dashboard?payment=error&msg=no-user");
     }
 
-    // === 3. Find user ===
-    let user = null;
-    try {
-      user = await User.findById(userId).select("-password");
-    } catch (e) {
-      console.warn("User.findById threw", e.message || e);
-    }
-
-    // Fallback: search by email (in case of race condition)
-    if (!user && data.customer?.email) {
-      // try find by email fallback
-      try {
-        user = await User.findOne({ email: data.customer.email }).select(
-          "-password"
-        );
-      } catch (e) {
-        console.warn("User.findOne by email threw", e.message || e);
-      }
-    }
-
-    // Extra fallback: native driver lookup in case Mongoose models/connection mismatch
+    const { db } = await connectToDatabase();
+    const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
     if (!user) {
-      try {
-        // Attempt native DB lookup for userId fallback
-        const { db } = await connectToDatabase();
-        let objId = null;
-        try {
-          objId = new ObjectId(userId);
-        } catch (e) {
-          console.warn("Invalid ObjectId format for userId", userId);
-        }
-
-        if (objId) {
-          const nativeUser = await db.collection("users").findOne({ _id: objId });
-          if (nativeUser) {
-            user = nativeUser;
-          } else if (data.customer?.email) {
-            const nativeByEmail = await db.collection("users").findOne({ email: data.customer.email });
-            if (nativeByEmail) {
-              user = nativeByEmail;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Native DB lookup failed", e.message || e);
-      }
-    }
-
-    if (!user) {
-      console.error("User not found", { userId, email: data.customer?.email });
       return redirectTo(request, "/dashboard?payment=error&msg=user-not-found");
     }
 
-    // === 4. Prevent duplicate processing ===
-    const alreadyProcessed = user.billingHistory?.some(
-      (h) => h.reference === data.reference
-    );
+    const alreadyProcessed = Array.isArray(user.billingHistory)
+      ? user.billingHistory.some((entry) => entry.reference === data.reference)
+      : false;
 
-    if (alreadyProcessed) {
-      console.log("Transaction already processed (idempotent)", data.reference);
-      const successUrl = `/checkout/success?plan=${plan}&cycle=${billingCycle}&ref=${data.reference}&amount=${data.amount / 100}`;
-      return redirectTo(request, successUrl);
+    if (!alreadyProcessed) {
+      await recordBillingEntry({ db, userId, data, metadata });
+      await applySuccessfulPayment({ db, user, data, metadata });
     }
 
-    // === 5. Calculate subscription period ===
-    const now = new Date();
-    const expiresAt = new Date(now);
-
-    if (billingCycle === "yearly") {
-      expiresAt.setFullYear(now.getFullYear() + 1);
-    } else {
-      expiresAt.setMonth(now.getMonth() + 1);
-    }
-
-    // === 6. Create billing record ===
-    const billingEntry = {
-      type: "subscription",
-      plan,
-      billingCycle,
-      amount: data.amount / 100,
-      currency: data.currency,
-      reference: data.reference,
-      transactionId: data.id,
-      status: "success",
-      paymentMethod: data.channel,
-      gateway: "paystack",
-      gatewayResponse: data.gateway_response,
-      paidAt: data.paid_at ? new Date(data.paid_at) : now,
-      metadata: {
-        ...metadata, // Preserve custom fields (userId, paymentMethod, plan, etc.)
-        authorization_code: data.authorization?.authorization_code,
-        card_type: data.authorization?.card_type,
-        last4: data.authorization?.last4,
-        exp_month: data.authorization?.exp_month,
-        exp_year: data.authorization?.exp_year,
-        bank: data.authorization?.bank,
-        country_code: data.authorization?.country_code,
-      },
-    };
-
-    // === 7. Update user subscription ===
-    let updatedUser = null;
-    try {
-      updatedUser = await User.findByIdAndUpdate(
-        user._id,
-        {
-          $set: {
-            isPremium: true,
-            "subscription.plan": plan,
-            "subscription.status": "active",
-            "subscription.billingCycle": billingCycle,
-            "subscription.currentPeriodStart": now,
-            "subscription.currentPeriodEnd": expiresAt,
-            "subscription.paystackCustomerCode": data.customer?.customer_code,
-            "subscription.paystackReference": data.reference,
-            "subscription.lastPaymentDate": now,
-            "subscription.autoRenew": true,
-          },
-          $push: { billingHistory: billingEntry },
-        },
-        { new: true, runValidators: true }
-      );
-    } catch (e) {
-      // Mongoose update threw
-      updatedUser = null;
-    }
-
-    // If Mongoose update failed or returned null, try native DB update
-    if (!updatedUser) {
-      try {
-        // Attempt native DB update as a fallback
-        const { db } = await connectToDatabase();
-        const objId = new ObjectId(user._id);
-        const res = await db.collection("users").updateOne(
-          { _id: objId },
-          {
-            $set: {
-              isPremium: true,
-              "subscription.plan": plan,
-              "subscription.status": "active",
-              "subscription.billingCycle": billingCycle,
-              "subscription.currentPeriodStart": now,
-              "subscription.currentPeriodEnd": expiresAt,
-              "subscription.paystackCustomerCode": data.customer?.customer_code,
-              "subscription.paystackReference": data.reference,
-              "subscription.lastPaymentDate": now,
-              "subscription.autoRenew": true,
-            },
-            $push: { billingHistory: billingEntry },
-          }
-        );
-
-        if (res.matchedCount > 0) {
-          const { db: _db } = await connectToDatabase();
-          updatedUser = await _db.collection("users").findOne({ _id: objId });
-        }
-      } catch (e) {
-        // native DB update failed
-      }
-    }
-
-    if (!updatedUser) {
-      return redirectTo(request, "/dashboard?payment=error&msg=update-failed");
-    }
-
-    // === 8. Send confirmation email (non-blocking) ===
-    import("@/lib/email")
-      .then(({ sendUpgradeEmail }) => {
-        sendUpgradeEmail({
-          to: user.email,
-          name: user.firstName || user.name,
-          plan,
-          billingCycle,
-          amount: data.amount / 100,
-          currency: data.currency,
-          expiresAt,
-          reference: data.reference,
-        }).catch((err) => console.error("Failed to send upgrade email:", err));
-      })
-      .catch(() => console.warn("Email module not available"));
-
-    // === 9. Success! ===
-    const successUrl = `/checkout/success?plan=${plan}&cycle=${billingCycle}&ref=${data.reference}&amount=${data.amount / 100}`;
-    // verification complete
-    return redirectTo(request, successUrl);
+    return redirectTo(request, getSuccessRedirect(metadata, data.reference));
   } catch (error) {
-    console.error("Payment verification crashed:", error.message);
+    console.error("Payment verification crashed:", error);
     return redirectTo(request, "/dashboard?payment=error&msg=server-error");
   }
 }
 
-// Optional: Debug endpoint (remove or protect in production!)
 export async function POST(request) {
   if (process.env.NODE_ENV === "production") {
-    return NextResponse.json(
-      { error: "Debug endpoint disabled" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Debug endpoint disabled" }, { status: 404 });
   }
 
   try {
     const { reference } = await request.json();
-    if (!reference)
-      return NextResponse.json(
-        { error: "reference required" },
-        { status: 400 }
-      );
+    if (!reference) {
+      return NextResponse.json({ error: "reference required" }, { status: 400 });
+    }
 
-    const res = await fetch(
-      `https://api.paystack.co/transaction/verify/${reference}`,
+    const response = await fetch(
+      `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
       {
-        headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    const data = await res.json();
+    const data = await response.json();
     return NextResponse.json({
       reference,
       success: data.status && data.data?.status === "success",

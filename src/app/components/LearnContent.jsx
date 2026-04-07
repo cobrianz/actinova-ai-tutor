@@ -56,6 +56,9 @@ export default function LearnContent() {
   const format = searchParams.get("format") || "course";
   const difficulty = searchParams.get("difficulty") || "beginner";
   const existingQuizId = searchParams.get("existing");
+  const premiumRequested = searchParams.get("premiumRequested") === "true";
+  const forceRegenerate = searchParams.get("forceRegenerate") === "true";
+  const marketplaceCourseId = searchParams.get("marketplaceCourseId");
   // Use original topic if provided, otherwise use the URL topic
   const actualTopic = originalTopic ? decodeURIComponent(originalTopic) : topic;
   const [activeView, setActiveView] = useState("outline");
@@ -116,52 +119,68 @@ export default function LearnContent() {
   const [showQuestionResults, setShowQuestionResults] = useState(false);
 
   const isPro = (() => {
-    // 1. Direct Pro/Enterprise/Premium
-    const hasOwnPremium = user && (
-      (user.subscription?.plan === "pro" || user.subscription?.plan === "enterprise" || user.subscription?.tier === "pro" || user.subscription?.tier === "enterprise") || 
-      user.isPremium
+    const hasOwnPremiumPlan = Boolean(
+      user &&
+        user.subscription?.status === "active" &&
+        (
+          ["pro", "enterprise", "premium"].includes(
+            String(user.subscription?.plan || "").toLowerCase()
+          ) ||
+          ["pro", "enterprise"].includes(
+            String(user.subscription?.tier || "").toLowerCase()
+          ) ||
+          user.isPremium
+        )
     );
-    if (hasOwnPremium) return true;
-    
-    // 2. Owner check
-    if (user && courseData?.userId && String(user._id || user.id) === String(courseData.userId)) return true;
+    if (hasOwnPremiumPlan) return true;
 
-    // 3. Chain of Inheritance (Enrolled users)
+    const hasCoursePremiumWindow = Boolean(
+      courseData?.isPremium &&
+        courseData?.premiumAccessExpiresAt &&
+        new Date(courseData.premiumAccessExpiresAt) > new Date()
+    );
+    if (hasCoursePremiumWindow) return true;
+
     if (user && Array.isArray(courseData?.enrolled)) {
-      const myEnrollment = courseData.enrolled.find(e => String(e.userId || e) === String(user._id || user.id));
+      const myEnrollment = courseData.enrolled.find(
+        (e) => String(e.userId || e) === String(user._id || user.id)
+      );
       if (myEnrollment) {
-        // A. Hierarchical Config (New)
         if (myEnrollment.invitedByShareId && Array.isArray(courseData.shareConfigs)) {
-          const config = courseData.shareConfigs.find(c => c.shareId === myEnrollment.invitedByShareId);
+          const config = courseData.shareConfigs.find(
+            (c) => c.shareId === myEnrollment.invitedByShareId
+          );
           if (config && config.isActive && config.tier !== "free") return true;
         }
-        
-        // B. Legacy/Owner Fallback
-        // If the root owner has sharing enabled and is/was a premium user
-        if (courseData.isShared && (courseData.sharerTier !== "free" && courseData.sharePlan !== "free")) {
-           // We assume legacy sharerTier/sharePlan being anything other than null/free means Pro/Enterprise inherited
-           if (courseData.sharerTier || courseData.sharePlan) return true;
+
+        if (
+          courseData.isShared &&
+          courseData.sharerTier &&
+          courseData.sharerTier !== "free"
+        ) {
+          return true;
         }
       }
     }
 
-    // 4. Public Viewing (Via Share Link)
     if (shareId) {
-      // Check the specific link config first
       if (Array.isArray(courseData?.shareConfigs)) {
-        const config = courseData.shareConfigs.find(c => c.shareId === shareId);
+        const config = courseData.shareConfigs.find((c) => c.shareId === shareId);
         if (config && config.isActive && config.tier !== "free") return true;
       }
-      // Fallback for legacy shareId or direct sharerTier presence
-      if (courseData?.isShared && (courseData?.sharerTier !== "free" || courseData?.sharePlan !== "free")) {
-         if (courseData.sharerTier || courseData.sharePlan) return true;
+      if (
+        courseData?.isShared &&
+        ((courseData?.sharerTier && courseData.sharerTier !== "free") ||
+          (courseData?.sharePlan && courseData.sharePlan !== "free"))
+      ) {
+        return true;
       }
     }
 
     return false;
   })();
-  // Free users can read modules 1-3; modules 4+ are padlocked
-  const FREE_READABLE_MODULES = 3;
+  // Free users can read modules 1-2; remaining modules are padlocked unless they have premium access for this course.
+  const FREE_READABLE_MODULES = 2;
   const freeReadableModules = isPro ? Infinity : FREE_READABLE_MODULES;
 
   const myShareConfig = Array.isArray(courseData?.shareConfigs)
@@ -1081,6 +1100,45 @@ export default function LearnContent() {
     // Normalize line endings to \n
     let html = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 
+    const mathCommandPattern =
+      /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right|text|begin|end|overline|underline|vec|hat|bar)/i;
+    const mathSymbolPattern = /(?:\^|_|=|[+\-*/]=?|[<>]=?|\\%|\\times|\\cdot|\\div|\\pm|\\mp)/;
+    const plainSentencePattern = /[A-Za-z]{3,}\s+[A-Za-z]{3,}/;
+    const currencyLikePattern = /(?:^|[\s,(])\d{1,3}(?:,\d{3})+(?:\.\d+)?(?:[\s,.)]|$)/;
+
+    const shouldRenderAsMath = (equation, { displayMode = false } = {}) => {
+      const trimmed = equation.trim();
+      if (!trimmed) return false;
+
+      const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+      const hasMathCommands = mathCommandPattern.test(trimmed);
+      const hasMathSymbols = mathSymbolPattern.test(trimmed);
+      const hasStructuredMath =
+        /[{}[\]]/.test(trimmed) ||
+        /(?:^|[^A-Za-z])\d+\s*(?:[+\-*/=<>^_]|\\times|\\cdot|\\div)/.test(trimmed) ||
+        /(?:[+\-*/=<>^_]|\\times|\\cdot|\\div)\s*\d+/.test(trimmed);
+      const looksLikeSentence = plainSentencePattern.test(trimmed);
+      const isMostlyWords = !/\d/.test(trimmed) && wordCount > 2;
+      const isCurrencyOrNumberPhrase =
+        currencyLikePattern.test(trimmed) && !hasMathCommands && !hasMathSymbols;
+
+      if (hasMathCommands) return true;
+
+      if (!hasMathSymbols && !hasStructuredMath) {
+        return false;
+      }
+
+      if (!displayMode && looksLikeSentence && wordCount > 3 && !hasMathCommands) {
+        return false;
+      }
+
+      if (isMostlyWords || isCurrencyOrNumberPhrase) {
+        return false;
+      }
+
+      return true;
+    };
+
     // First, escape any HTML that might be in the content
     const escapeHtml = (text) => {
       const map = {
@@ -1155,11 +1213,8 @@ export default function LearnContent() {
       /\\\[([\s\S]*?)\\\]/g,
       (match, equation) => {
         const trimmed = equation.trim();
-        const wordCount = trimmed.split(/\s+/).length;
-        const hasMathCommands = /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right)/i.test(trimmed);
         
-        // Sanitization: If it's mostly text (many spaces, few symbols), don't render as raw math
-        if (wordCount > 3 && !hasMathCommands) {
+        if (!shouldRenderAsMath(trimmed, { displayMode: true })) {
           const plainText = trimmed.replace(/\\\$/g, '$');
           return `<div class="my-4 font-serif text-lg leading-relaxed">${plainText}</div>`;
         }
@@ -1181,11 +1236,8 @@ export default function LearnContent() {
       /\\\(([\s\S]*?)\\\)/g,
       (match, equation) => {
         const trimmed = equation.trim();
-        const wordCount = trimmed.split(/\s+/).length;
-        const hasMathCommands = /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right)/i.test(trimmed);
         
-        // Sanitization: If it's mostly text, don't render as math
-        if (wordCount > 3 && !hasMathCommands) {
+        if (!shouldRenderAsMath(trimmed)) {
           const plainText = trimmed.replace(/\\\$/g, '$');
           return `<span>${plainText}</span>`;
         }
@@ -1207,8 +1259,13 @@ export default function LearnContent() {
     html = html.replace(
       /\$\$([\s\S]*?)\$\$/g,
       (match, equation) => {
+        const trimmed = equation.trim();
+        if (!shouldRenderAsMath(trimmed, { displayMode: true })) {
+          const plainText = trimmed.replace(/\\\$/g, "$");
+          return `<div class="my-4 font-serif text-lg leading-relaxed">${plainText}</div>`;
+        }
         try {
-          const rendered = katex.renderToString(equation.trim(), {
+          const rendered = katex.renderToString(trimmed, {
             displayMode: true,
             throwOnError: false,
             output: 'html'
@@ -1224,12 +1281,15 @@ export default function LearnContent() {
     html = html.replace(
       /\$([^\$\n]+?)\$/g,
       (match, equation) => {
-        // Skip if it looks like a price ($100 or $5.99)
-        if (/^\d+(\.\d{2})?$/.test(equation.trim())) {
+        const trimmed = equation.trim();
+        if (/^\d+(?:\.\d{2})?$/.test(trimmed)) {
+          return match;
+        }
+        if (!shouldRenderAsMath(trimmed)) {
           return match;
         }
         try {
-          const rendered = katex.renderToString(equation.trim(), {
+          const rendered = katex.renderToString(trimmed, {
             displayMode: false,
             throwOnError: false,
             output: 'html',
@@ -1568,7 +1628,7 @@ export default function LearnContent() {
         }
 
         // Fallback to searching by topic/format/difficulty if not found by shareId
-        if (!existingCourse && actualTopic) {
+        if (!existingCourse && actualTopic && !forceRegenerate) {
           existingCourse = libraryData.items?.find((c) => {
             if (c.type !== "course") return false;
             const matchesTopic =
@@ -1652,6 +1712,21 @@ export default function LearnContent() {
           (existingCourse.courseData?.modules &&
             existingCourse.courseData.modules.length > 0))
       ) {
+        const existingCourseData = existingCourse.courseData || existingCourse;
+        const existingPremiumExpiry = existingCourseData.premiumAccessExpiresAt
+          ? new Date(existingCourseData.premiumAccessExpiresAt)
+          : null;
+        const hasLivePremiumAccess =
+          existingCourseData.isPremium &&
+          (!existingPremiumExpiry || existingPremiumExpiry > new Date());
+        const shouldUpgradeExistingCourse =
+          format === "course" && premiumRequested && !hasLivePremiumAccess;
+
+        if (shouldUpgradeExistingCourse) {
+          console.log(
+            "Premium access requested for existing free course, continuing generation flow."
+          );
+        } else {
         // Course exists - use it!
         console.log(
           "✅ Found course:",
@@ -1659,7 +1734,7 @@ export default function LearnContent() {
         );
 
         // Extract course data from the correct location
-        const courseData = existingCourse.courseData || existingCourse;
+        const courseData = existingCourseData;
 
         // SYNC LOCK: If we recently toggled share locally, don't let stale server
         // shareConfigs overwrite our optimistic state (MongoDB eventual consistency)
@@ -1736,6 +1811,7 @@ export default function LearnContent() {
         initializedCoursesRef.current.add(courseKey);
         clearTimeout(globalSafetyTimeout);
         return;
+        }
       }
     } catch (e) {
       console.error("Error checking course source:", e);
@@ -1868,17 +1944,20 @@ export default function LearnContent() {
     } else {
       // Course generation
       apiEndpoint = "/api/generate-course";
-      requestBody =
-        format === "guide"
-          ? {
-            topic: actualTopic,
-            difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
-          }
-          : {
-            topic: actualTopic,
-            format,
-            difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
-          };
+        requestBody =
+          format === "guide"
+            ? {
+             topic: actualTopic,
+              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+            }
+            : {
+             topic: actualTopic,
+              format,
+              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+             premiumRequested,
+             forceRegenerate,
+             marketplaceCourseId,
+            };
     }
 
     try {
@@ -1967,30 +2046,6 @@ export default function LearnContent() {
             leftovers.forEach((n) => n.remove());
           }
         }, 1000);
-      }
-
-      // Persist generated course to library (no-op on server if already saved)
-      try {
-        const libRes = await apiClient.post("/api/library", {
-          action: "add",
-          course: {
-            isGenerated: true,
-            courseData: courseDataToSet,
-            title: courseDataToSet.title,
-            topic: courseDataToSet.topic || actualTopic,
-            level: courseDataToSet.level || difficulty,
-            format,
-          },
-        }, {
-          headers: {
-            "x-user-id": user?._id || user?.id || user?.idString || "",
-          }
-        });
-        if (!libRes.ok) {
-          console.warn("Failed to store course in library");
-        }
-      } catch (libErr) {
-        console.warn("Error storing course in library:", libErr);
       }
 
       // Refresh user profile/usage so sidebar & upgrade reflect new quotas
@@ -2543,7 +2598,7 @@ export default function LearnContent() {
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-                You can read modules 1–3 for free. Upgrade to Pro to unlock all 20 modules.
+                You can read modules 1-2 for free. Upgrade to Pro or unlock this course to access all 20 modules.
               </p>
               <button
                 onClick={() => router.push("/pricing")}

@@ -10,7 +10,7 @@ export const data = {
       icon: "Star",
       title: "Premium Courses",
       description:
-        "Unlock curated premium tracks, featured curricula, trending topics, and personalized recommendations for deeper mastery.",
+        "Unlock admin-curated marketplace courses, discover paid community-generated courses, and access premium learning tracks from one shared marketplace.",
     },
     {
       icon: "Search",
@@ -22,7 +22,7 @@ export const data = {
       icon: "BookOpen",
       title: "Library, Sharing & Downloads",
       description:
-        "Keep all your courses in one place, pin favorites, share learning links, and download completed courses as PDFs on supported plans.",
+        "Keep all your courses in one place, pin favorites, share highlighted course links, and reuse paid content across your learning library.",
     },
     {
       icon: "FileText",
@@ -52,13 +52,13 @@ export const data = {
       icon: "TrendingUp",
       title: "Progress & Usage Insights",
       description:
-        "Monitor course completion, pinned content, average progress, usage limits, and premium course access windows from the dashboard.",
+        "Monitor course completion, pinned content, average progress, free-tier limits, and premium course access windows from the dashboard.",
     },
     {
       icon: "Briefcase",
       title: "Resume & ATS Optimization",
       description:
-        "Build resumes from scratch, refine existing resumes, and tailor them for specific roles with AI-powered career guidance.",
+        "Build resumes for free, improve pasted resumes with AI, and export polished DOCX resumes when you need a paid download.",
     },
     {
       icon: "Users",
@@ -76,15 +76,15 @@ export const data = {
   steps: [
     {
       title: "Set Up Your Learning Profile",
-      description: "Choose your interests, level, and goals so the platform can personalize what to generate and recommend."
+      description: "Choose your interests, level, and goals so the platform can personalize what to generate, recommend, and save for you."
     },
     {
       title: "Generate What You Need",
-      description: "Create a course, flashcards, a quiz, or a report from a single prompt depending on how you want to study."
+      description: "Create a course, flashcards, a quiz, a report, or a resume workflow from a single prompt depending on what you need next."
     },
     {
       title: "Study with Multiple Tools",
-      description: "Learn through guided lessons, premium curricula, topic-based AI chat, and saved materials in your library."
+      description: "Learn through guided lessons, premium marketplace curricula, topic-based AI chat, and saved materials in your library."
     },
     {
       title: "Review, Track, and Advance",
@@ -132,17 +132,17 @@ export const data = {
     {
       question: "Can I access courses offline?",
       answer:
-        "Yes! Premium subscribers can download course materials and videos for offline viewing. Perfect for learning on the go.",
+        "Some downloads are available on supported paid paths. Premium learning access and resume exports are handled through the product's paid flows.",
     },
     {
       question: "What if I'm not satisfied with my subscription?",
       answer:
-        "We offer a 30-day money-back guarantee. If you're not completely satisfied, we'll refund your subscription, no questions asked.",
+        "You can start on the free tier, test the product workflows, and only pay when you need premium plan access, premium course unlocks, or paid exports.",
     },
     {
       question: "Can I generate reports or essays?",
       answer:
-        "Yes, you can generate comprehensive reports and essays based on your learning materials to help synthesize your knowledge and document insights.",
+        "Yes. You can generate structured reports and essays with the built-in writing workflow, alongside courses, quizzes, flashcards, and career tools.",
     },
   ],
 };

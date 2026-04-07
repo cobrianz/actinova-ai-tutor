@@ -39,7 +39,7 @@ const steps = [
     number: "02",
     title: "Generate a Course or Study Tool",
     description:
-      "Start with a prompt and turn it into a course, flashcard set, quiz, or report depending on how you want to learn.",
+      "Start with a prompt and turn it into a course, flashcard set, quiz, report, or resume workflow depending on what you need.",
     icon: Sparkles,
     color: "from-green-500 to-emerald-500",
     lightColor: "from-green-100 to-emerald-100",
@@ -49,7 +49,7 @@ const steps = [
     number: "03",
     title: "Study Through Courses and Premium Tracks",
     description:
-      "Work through structured lessons, premium curricula, and saved learning material organized in your library.",
+      "Work through structured lessons, premium marketplace courses, and saved learning material organized in your library.",
     icon: BookOpen,
     color: "from-emerald-500 to-green-500",
     lightColor: "from-emerald-100 to-green-100",
@@ -69,7 +69,7 @@ const steps = [
     number: "05",
     title: "Track, Save, Share, and Download",
     description:
-      "Monitor progress, manage usage, pin important items, share course links, and download completed courses where available.",
+      "Monitor progress, manage usage, pin important items, share highlighted course links, and export paid resumes when needed.",
     icon: TrendingUp,
     color: "from-emerald-500 to-green-500",
     lightColor: "from-emerald-100 to-green-100",
@@ -737,7 +737,7 @@ export default function HowItWorks() {
             Works
           </h2>
           <p className="text-lg md:text-xl text-[#1a1a1a]/60 max-w-2xl mx-auto leading-relaxed">
-            From first prompt to saved study materials and career execution, each step maps
+            From first prompt to saved study materials, premium marketplace access, and career execution, each step maps
             to tools already available in the platform.
           </p>
         </motion.div>

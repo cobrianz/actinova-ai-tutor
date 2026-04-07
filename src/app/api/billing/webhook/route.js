@@ -1,276 +1,226 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-export const dynamic = "force-dynamic";
 import crypto from "crypto";
+import { headers } from "next/headers";
+import { ObjectId } from "mongodb";
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import User from "@/models/User";
+import {
+  grantMarketplaceCourseAccess,
+  savePremiumGenerationIntent,
+} from "@/lib/courseCommerce";
 
-// Configuration
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-const WEBHOOK_TIMEOUT_MS = 10_000; // 10 seconds
+export const dynamic = "force-dynamic";
 
-// Helper: Verify Paystack signature
 function verifySignature(body, signature) {
-  if (!PAYSTACK_SECRET_KEY || !signature) return false;
+  if (!process.env.PAYSTACK_SECRET_KEY || !signature) {
+    return false;
+  }
+
   const hash = crypto
-    .createHmac("sha512", PAYSTACK_SECRET_KEY)
+    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
     .update(body)
     .digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
+
+  return hash === signature;
 }
 
-// Helper: Safe JSON parse
-function safeParse(body) {
-  try {
-    return JSON.parse(body);
-  } catch (err) {
-    console.error("Invalid JSON in webhook:", err);
-    return null;
-  }
-}
+async function appendBillingIfNeeded({ db, userId, data, metadata }) {
+  const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+  const alreadyProcessed = Array.isArray(user?.billingHistory)
+    ? user.billingHistory.some((entry) => entry.reference === data.reference)
+    : false;
 
-// Helper: Idempotent billing entry
-async function addBillingEntry(userId, data, source = "webhook") {
-  const existing = await User.findOne({
-    _id: userId,
-    "billingHistory.reference": data.reference,
-  });
-
-  if (existing) {
-    console.log("Duplicate webhook ignored (idempotent):", data.reference);
-    return false; // already processed
+  if (alreadyProcessed) {
+    return false;
   }
 
-  const entry = {
-    type: "subscription",
-    plan: data.metadata?.plan || "premium",
-    billingCycle: data.metadata?.billingCycle || "monthly",
-    amount: data.amount / 100,
-    currency: data.currency,
-    reference: data.reference,
-    transactionId: data.id,
-    status: "success",
-    paymentMethod: data.channel,
-    gateway: "paystack",
-    source,
-    gatewayResponse: data.gateway_response,
-    paidAt: data.paid_at ? new Date(data.paid_at) : new Date(),
-    metadata: {
-      authorization_code: data.authorization?.authorization_code,
-      card_type: data.authorization?.card_type,
-      last4: data.authorization?.last4,
-      bank: data.authorization?.bank,
-    },
-  };
-
-  await User.findByIdAndUpdate(
-    userId,
-    { $push: { billingHistory: entry } },
-    { runValidators: true }
+  await db.collection("users").updateOne(
+    { _id: new ObjectId(userId) },
+    {
+      $push: {
+        billingHistory: {
+          type: metadata.purchaseType === "subscription" ? "subscription" : "one-time",
+          plan: metadata.plan || metadata.purchaseType || "subscription",
+          billingCycle: metadata.billingCycle || "monthly",
+          amount: data.amount / 100,
+          currency: data.currency,
+          reference: data.reference,
+          transactionId: data.id,
+          status: "success",
+          paymentMethod: data.channel,
+          gateway: "paystack",
+          paidAt: data.paid_at ? new Date(data.paid_at) : new Date(),
+          description:
+            metadata.purchaseType === "marketplace-course"
+              ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
+              : metadata.purchaseType === "premium-generation"
+                ? `Premium course generation: ${metadata.topic}`
+                : metadata.purchaseType === "resume-export"
+                  ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+                  : `Subscription: ${metadata.plan || "pro"}`,
+          metadata,
+        },
+      },
+    }
   );
 
   return true;
 }
 
-// Helper: Update subscription period
-async function updateSubscriptionPeriod(user, data) {
+async function markResumeExportPaid({ db, userId, historyId, reference, amount, currency }) {
+  if (!historyId || !ObjectId.isValid(historyId)) {
+    throw new Error("Invalid resume history id");
+  }
+
   const now = new Date();
-  const expiresAt = new Date(now);
-
-  const cycle = data.metadata?.billingCycle || "monthly";
-  if (cycle === "yearly") {
-    expiresAt.setFullYear(now.getFullYear() + 1);
-  } else {
-    expiresAt.setMonth(now.getMonth() + 1);
-  }
-
-  const incomingPlan = data.metadata?.plan || "pro";
-  let tier = "pro";
-  if (incomingPlan.toLowerCase().includes("enterprise")) {
-    tier = "enterprise";
-  } else if (incomingPlan.toLowerCase() === "free") {
-    tier = "free";
-  }
-
-  await User.findByIdAndUpdate(
-    user._id,
+  const result = await db.collection("careerhistories").findOneAndUpdate(
+    {
+      _id: new ObjectId(historyId),
+      userId: new ObjectId(userId),
+      type: "resume",
+    },
     {
       $set: {
-        isPremium: tier !== "free",
-        "subscription.plan": incomingPlan,
-        "subscription.tier": tier,
+        "metadata.exportPaid": true,
+        "metadata.exportPaidAt": now,
+        "metadata.exportReference": reference,
+        "metadata.exportAmount": amount,
+        "metadata.exportCurrency": currency,
+      },
+    },
+    { returnDocument: "after" }
+  );
+
+  if (!result) {
+    throw new Error("Resume not found for export payment");
+  }
+}
+
+async function applyPurchase({ db, userId, data, metadata }) {
+  const purchaseType = metadata.purchaseType || "subscription";
+
+  if (purchaseType === "marketplace-course") {
+    await grantMarketplaceCourseAccess({
+      db,
+      userId,
+      courseId: metadata.courseId,
+      reference: data.reference,
+      amount: data.amount / 100,
+      currency: data.currency,
+    });
+    return;
+  }
+
+  if (purchaseType === "premium-generation") {
+    await savePremiumGenerationIntent({
+      db,
+      userId,
+      topic: metadata.topic,
+      difficulty: metadata.difficulty || "beginner",
+      reference: data.reference,
+      amount: data.amount / 100,
+      currency: data.currency,
+    });
+    return;
+  }
+
+  if (purchaseType === "resume-export") {
+    await markResumeExportPaid({
+      db,
+      userId,
+      historyId: metadata.historyId,
+      reference: data.reference,
+      amount: data.amount / 100,
+      currency: data.currency,
+    });
+    return;
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now);
+  if ((metadata.billingCycle || "monthly") === "yearly") {
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+  }
+
+  await db.collection("users").updateOne(
+    { _id: new ObjectId(userId) },
+    {
+      $set: {
+        isPremium: true,
+        "subscription.plan": metadata.plan || "pro",
+        "subscription.tier":
+          String(metadata.plan || "pro").toLowerCase().includes("enterprise")
+            ? "enterprise"
+            : "pro",
         "subscription.status": "active",
-        "subscription.billingCycle": cycle,
+        "subscription.billingCycle": metadata.billingCycle || "monthly",
         "subscription.currentPeriodStart": now,
         "subscription.currentPeriodEnd": expiresAt,
         "subscription.lastPaymentDate": now,
         "subscription.paystackCustomerCode": data.customer?.customer_code,
         "subscription.paystackReference": data.reference,
       },
-    },
-    { runValidators: true }
+    }
   );
 }
 
 export async function POST(request) {
-  const startTime = Date.now();
   const bodyRaw = await request.text();
-  const signature = headers().get("x-paystack-signature");
+  const headersList = await headers();
+  const signature = headersList.get("x-paystack-signature");
 
-  console.log("Webhook received", {
-    event: "unknown",
-    hasSignature: !!signature,
-    bodyLength: bodyRaw.length,
-  });
+  if (!verifySignature(bodyRaw, signature)) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(bodyRaw);
+  } catch (error) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  if (event?.event !== "charge.success" || !event?.data?.metadata?.userId) {
+    return NextResponse.json({ received: true, ignored: true });
+  }
 
   try {
-    // === 1. Validate request timeout (prevent replay attacks) ===
-    const deliveredAt = headers().get("x-paystack-delivered-at");
-    if (deliveredAt) {
-      const age = Date.now() - new Date(deliveredAt).getTime();
-      if (age > WEBHOOK_TIMEOUT_MS) {
-        console.warn("Webhook too old, possible replay attack");
-        return NextResponse.json({ error: "Expired" }, { status: 410 });
-      }
+    const { db } = await connectToDatabase();
+    const metadata = event.data.metadata || {};
+    const userId = metadata.userId;
+
+    if (!ObjectId.isValid(userId)) {
+      return NextResponse.json({ error: "Invalid user" }, { status: 400 });
     }
 
-    // === 2. Verify signature ===
-    if (!verifySignature(bodyRaw, signature)) {
-      console.error("Invalid Paystack signature");
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    const isNew = await appendBillingIfNeeded({
+      db,
+      userId,
+      data: event.data,
+      metadata,
+    });
+
+    if (isNew) {
+      await applyPurchase({
+        db,
+        userId,
+        data: event.data,
+        metadata,
+      });
     }
-
-    const event = safeParse(bodyRaw);
-    if (!event?.event || !event?.data) {
-      console.error("Malformed webhook payload");
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
-
-    console.log("Processing Paystack event:", event.event);
-
-    await connectToDatabase();
-
-    // === 3. Handle Events ===
-    switch (event.event) {
-      case "charge.success": {
-        const data = event.data;
-        const userId = data.metadata?.userId;
-
-        if (!userId) {
-          console.warn("charge.success: No userId in metadata");
-          break;
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-          console.error("User not found for charge.success:", userId);
-          break;
-        }
-
-        // Idempotent billing + subscription update
-        const isNew = await addBillingEntry(userId, data, "webhook");
-        if (isNew) {
-          await updateSubscriptionPeriod(user, data);
-          console.log(`User ${user.email} upgraded via webhook`);
-
-          // Send confirmation email (non-blocking)
-          try {
-            const { sendUpgradeEmail } = await import("@/lib/email");
-            await sendUpgradeEmail({
-              to: user.email,
-              name: user.firstName || user.name || user.email.split("@")[0],
-              plan: data.metadata?.plan || "premium",
-              billingCycle: data.metadata?.billingCycle || "monthly",
-              amount: data.amount / 100,
-              currency: data.currency,
-              expiresAt: user.subscription?.currentPeriodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-              reference: data.reference,
-            });
-          } catch (emailError) {
-            console.error("Webhook failed to send upgrade email:", emailError);
-          }
-        }
-        break;
-      }
-
-      case "subscription.create":
-      case "subscription.enable": {
-        const data = event.data;
-        const userId = data.customer?.metadata?.userId;
-
-        if (!userId) break;
-
-        await User.findByIdAndUpdate(
-          userId,
-          {
-            "subscription.paystackSubscriptionCode": data.subscription_code,
-            "subscription.status": "active",
-            "subscription.autoRenew": true,
-          },
-          { runValidators: true }
-        );
-        console.log(`Subscription activated: ${data.subscription_code}`);
-        break;
-      }
-
-      case "subscription.disable":
-      case "subscription.cancel": {
-        const code = event.data.subscription_code;
-        const user = await User.findOne({
-          "subscription.paystackSubscriptionCode": code,
-        });
-
-        if (user) {
-          await User.findByIdAndUpdate(user._id, {
-            "subscription.status": "canceled",
-            "subscription.canceledAt": new Date(),
-            "subscription.autoRenew": false,
-          });
-          console.log(`Subscription canceled: ${code}`);
-        }
-        break;
-      }
-
-      case "invoice.payment_failed": {
-        const data = event.data;
-        const userId = data.customer?.metadata?.userId;
-        if (userId) {
-          await User.findByIdAndUpdate(userId, {
-            "subscription.paymentFailed": true,
-            "subscription.lastFailedAt": new Date(),
-          });
-        }
-        break;
-      }
-
-      case "invoice.update": {
-        // Handle renewal amount changes, etc.
-        break;
-      }
-
-      default:
-        console.log(`Unhandled event: ${event.event}`);
-    }
-
-    const processingTime = Date.now() - startTime;
-    console.log(`Webhook processed in ${processingTime}ms`);
 
     return NextResponse.json({ received: true, processed: true });
   } catch (error) {
-    console.error("Webhook handler crashed:", {
-      message: error.message,
-      stack: error.stack,
-    });
+    console.error("Webhook handler crashed:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
-// Optional: Health check
 export async function GET() {
   return NextResponse.json({
     status: "ok",
     webhook: "paystack",
     timestamp: new Date().toISOString(),
-    tip: "Use POST for events",
   });
 }

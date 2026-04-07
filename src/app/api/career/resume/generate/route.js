@@ -16,13 +16,13 @@ function sanitizeGithub(value) {
   return /github/i.test(text) ? text : "";
 }
 
-function normalizeResumeResponse(raw, user, fallbackRole = "") {
+function normalizeResumeResponse(raw, user, fallbackRole = "", { preferUserIdentity = true } = {}) {
   const data = raw && typeof raw === "object" ? raw : {};
   const personalInfo = data.personalInfo || {};
   const fullName =
     personalInfo.fullName ||
     personalInfo.name ||
-    `${user.firstName || ""} ${user.lastName || ""}`.trim();
+    (preferUserIdentity ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "");
   const jobTitle = personalInfo.jobTitle || personalInfo.title || fallbackRole || "";
 
   return {
@@ -31,7 +31,7 @@ function normalizeResumeResponse(raw, user, fallbackRole = "") {
       name: fullName,
       jobTitle,
       title: jobTitle,
-      email: personalInfo.email || user.email || "",
+      email: personalInfo.email || (preferUserIdentity ? user.email || "" : ""),
       phone: personalInfo.phone || "",
       location: personalInfo.location || "",
       website: personalInfo.website || "",
@@ -110,17 +110,17 @@ async function handlePost(request) {
 
     const systemPrompt = `You are a professional resume writer.
 Create a comprehensive, professional resume for a candidate${trimmedRole ? ` applying for the role: "${trimmedRole}"` : ""}.
-Use the candidate's name: "${user.firstName} ${user.lastName}".
-Email: "${user.email}".
-${trimmedResumeText ? `The user pasted this existing resume. Rebuild and improve it into a cleaner, stronger, more ATS-friendly resume while preserving truthful core details:\n"""${trimmedResumeText}"""` : ""}
+${trimmedResumeText
+  ? `The user pasted this existing resume. Rebuild and improve it into a cleaner, stronger, more ATS-friendly resume while preserving truthful core details exactly where provided. Treat the pasted resume as the primary source of truth for name, email, phone, location, links, employers, projects, dates, and education:\n"""${trimmedResumeText}"""`
+  : `If no source resume is provided, you may use the signed-in user's profile details only as a light fallback for name and email.`}
 
 Provide the output in a structured JSON format.
 
 JSON Structure:
 {
   "personalInfo": {
-     "name": "${user.firstName} ${user.lastName}",
-     "email": "${user.email}",
+     "name": "${trimmedResumeText ? "Use the pasted resume candidate name" : `${user.firstName} ${user.lastName}`}",
+     "email": "${trimmedResumeText ? "Use the pasted resume candidate email" : user.email}",
      "title": "${trimmedRole}"
   },
   "summary": "Professional summary...",
@@ -144,7 +144,8 @@ JSON Structure:
 
 Ensure the content is high-quality, ATS-optimized${trimmedRole ? `, and specifically tailored to the ${trimmedRole} position` : ""}.
 Use factual, resume-ready wording. Do not invent impossible metrics, employers, dates, degrees, or contact links.
-If the pasted resume contains useful projects, certifications, awards, or languages, include them too.`;
+If the pasted resume contains useful projects, certifications, awards, or languages, include them too.
+Never replace pasted candidate identity details with the signed-in user's account identity.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -154,7 +155,9 @@ If the pasted resume contains useful projects, certifications, awards, or langua
     });
 
     const rawData = JSON.parse(completion.choices[0].message.content);
-    const data = normalizeResumeResponse(rawData, user, trimmedRole);
+    const data = normalizeResumeResponse(rawData, user, trimmedRole, {
+      preferUserIdentity: !trimmedResumeText,
+    });
 
     await trackAPIUsage(userId, "career-resume-gen");
 

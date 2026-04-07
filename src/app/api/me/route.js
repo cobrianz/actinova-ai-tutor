@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getTrackedUsageSummary } from "@/lib/usageSummary";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
+import { syncExpiredPremiumLibraryAccess } from "@/lib/courseCommerce";
 
 async function handleGet(request) {
   const user = request.user;
   const { db } = await connectToDatabase();
   const usersCol = db.collection("users");
+  await syncExpiredPremiumLibraryAccess(db, user);
 
   const now = new Date();
 

@@ -80,10 +80,10 @@ function getFreeLimits() {
         modules: 20,         // course always has 20 modules (full structure generated)
         lessonsPerModule: 5, // each module always has 5 lessons
         totalLessons: 100,   // 20 × 5
-        freeReadableModules: 3, // free users can read modules 1–3; rest are padlocked
+        freeReadableModules: 2, // free users can read modules 1-2; rest are padlocked
         difficulties: ['beginner'],
         aiResponses: 3, // per day (ai-tutor-chat)
-        generateCourseLimit: 2, // per month (2 premium courses for free users)
+        generateCourseLimit: 2, // lifetime free-course generation cap
         quizGenerations: 2, // per month
         reportGenerations: 0, // Locked for free users as requested
         careerLimit: 2, // per month

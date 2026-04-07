@@ -2,9 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import Sidebar from "./Sidebar";
-import Generate from "./Generate";
 import Explore from "./Explore";
+import Generate from "./Generate";
 import Library from "./Library";
 import PremiumCourses from "./PremiumCourses";
 import Chat from "./Chat";
@@ -19,23 +18,37 @@ import { toast } from "sonner";
 export default function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, fetchUser } = useAuth();
+  const { fetchUser } = useAuth();
 
-  // Handle payment success/failure messages
   useEffect(() => {
     const payment = searchParams.get("payment");
     const plan = searchParams.get("plan");
+    const purchaseType = searchParams.get("purchaseType");
 
     if (payment === "success") {
-      toast.success(
-        `🎉 Payment successful! You now have ${plan || "Pro"} plan access.`
-      );
-      // Refresh user data to get updated subscription status
-      if (fetchUser) {
-        fetchUser();
+      if (purchaseType === "marketplace-course") {
+        toast.success("Marketplace course unlocked successfully.");
+      } else if (purchaseType === "premium-generation") {
+        toast.success("Payment received. Premium generation is continuing.");
+      } else if (purchaseType === "resume-export") {
+        // ResumeBuilder handles the post-payment download messaging.
+      } else {
+        toast.success(`Payment successful! You now have ${plan || "Pro"} plan access.`);
       }
-      // Remove query params
-      router.replace("/dashboard");
+
+      fetchUser?.();
+
+      if (purchaseType === "premium-generation") {
+        return;
+      }
+
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("payment");
+      nextParams.delete("plan");
+      nextParams.delete("purchaseType");
+      nextParams.delete("ref");
+      const nextUrl = `/dashboard${nextParams.toString() ? `?${nextParams.toString()}` : ""}`;
+      router.replace(nextUrl);
     } else if (payment === "failed") {
       toast.error("Payment failed. Please try again.");
       router.replace("/dashboard");
@@ -43,10 +56,10 @@ export default function DashboardContent() {
       toast.error("An error occurred during payment. Please contact support.");
       router.replace("/dashboard");
     }
-  }, [searchParams, router, fetchUser]);
+  }, [fetchUser, router, searchParams]);
 
   const activeContent = searchParams.get("tab") || "generate";
-  const isChat = activeContent === 'chat';
+  const isChat = activeContent === "chat";
 
   const setActiveContent = (tab) => {
     const params = new URLSearchParams(searchParams);
@@ -66,13 +79,15 @@ export default function DashboardContent() {
     profile: ProfileContent,
     career: CareerGrowth,
   };
-  const ContentComponent =
-    routeComponents[activeContent] || routeComponents.generate;
 
-  const ComponentWrapper = isChat ? "div" : "div"; // Keep div for now
+  const ContentComponent = routeComponents[activeContent] || routeComponents.generate;
 
   return (
-    <div className={`relative min-h-full bg-background ${isChat ? 'h-[calc(100vh-64px)] overflow-hidden' : ''}`}>
+    <div
+      className={`relative min-h-full bg-background ${
+        isChat ? "h-[calc(100vh-64px)] overflow-hidden" : ""
+      }`}
+    >
       <div
         className={
           isChat
@@ -83,9 +98,9 @@ export default function DashboardContent() {
           isChat
             ? {}
             : {
-              scrollbarWidth: "none",
-              msOverflowStyle: "none",
-            }
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }
         }
       >
         {!isChat && (

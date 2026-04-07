@@ -3,12 +3,14 @@ import { ObjectId } from 'mongodb';
 
 export async function GET(request, { params }) {
   try {
+    const resolvedParams = await params;
+    const postId = resolvedParams?.id;
     const { db } = await connectToDatabase();
     const postsCollection = db.collection('posts');
     // const commentsCollection = db.collection('comments'); // Removed comments collection
 
     // Fetch the post by ID
-    const post = await postsCollection.findOne({ _id: new ObjectId(params.id), status: 'published' });
+    const post = await postsCollection.findOne({ _id: new ObjectId(postId), status: 'published' });
 
     if (!post) {
       return new Response(JSON.stringify({ error: 'Post not found' }), {
@@ -24,7 +26,7 @@ export async function GET(request, { params }) {
     const relatedPosts = await postsCollection
       .find({
         category: post.category,
-        _id: { $ne: new ObjectId(params.id) },
+        _id: { $ne: new ObjectId(postId) },
         status: 'published'
       })
       .limit(3)

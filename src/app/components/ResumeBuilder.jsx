@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import "jspdf-autotable";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     FileText, Sparkles, CheckCircle, AlertCircle, TrendingUp,
@@ -50,6 +50,8 @@ const hasMeaningfulResumeContent = (resume) => {
         (resume.languages || []).length > 0
     );
 };
+
+const RESUME_EXPORT_PRICE_LABEL = "$2.50";
 
 const getUserIdentityDefaults = (user) => ({
     fullName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || user?.name || "",
@@ -101,6 +103,57 @@ const normalizeProfileLink = (field, value) => {
     }
 
     return text;
+};
+
+const cleanResumeTextValue = (value) => {
+    const normalized = String(value || "")
+        .replace(/\b(undefined|null)\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    if (!normalized) return "";
+    return /^(undefined|null|n\/a|na)$/i.test(normalized) ? "" : normalized;
+};
+
+const getCareerDraftStorageKey = (type, user) => {
+    const identity = user?._id || user?.id || user?.email || "anonymous";
+    return `career_draft_${identity}_${type}`;
+};
+
+const sanitizeGeneratedResumeData = (resume) => {
+    if (!resume || typeof resume !== "object") return resume;
+
+    const next = {
+        ...resume,
+        personalInfo: {
+            ...(resume.personalInfo || {}),
+        },
+    };
+
+    const personalInfo = next.personalInfo;
+    const fullName = cleanResumeTextValue(personalInfo.fullName);
+    const fallbackName = cleanResumeTextValue(personalInfo.name);
+    const jobTitle = cleanResumeTextValue(personalInfo.jobTitle);
+
+    next.personalInfo.fullName = fullName || fallbackName || "";
+    next.personalInfo.name = fallbackName || next.personalInfo.fullName || "";
+    next.personalInfo.jobTitle = jobTitle;
+
+    [
+        "email",
+        "phone",
+        "location",
+        "website",
+        "linkedin",
+        "github",
+        "summary",
+    ].forEach((field) => {
+        next.personalInfo[field] = cleanResumeTextValue(personalInfo[field]);
+    });
+
+    next.summary = cleanResumeTextValue(next.summary);
+    next.customSections = Array.isArray(next.customSections) ? next.customSections : [];
+
+    return next;
 };
 
 const hasUserEnteredResumeContent = (resume, user) => {
@@ -224,7 +277,7 @@ function FormResumePreview({ data, onUpdate }) {
     if (!data) return null;
     const { personalInfo, experience = [], education = [], skills = [], projects = [], customSections = [] } = data;
 
-    const displayName = personalInfo.fullName || personalInfo.name;
+    const displayName = cleanResumeTextValue(personalInfo.fullName) || cleanResumeTextValue(personalInfo.name);
     const hasContent = displayName || personalInfo.summary || data.summary || experience.length > 0 || education.length > 0 || skills.length > 0;
 
     const contactItems = [
@@ -269,19 +322,19 @@ function FormResumePreview({ data, onUpdate }) {
 
     const SectionTitle = ({ children, onRemove }) => (
         <div className="flex items-center gap-4 mb-4 mt-8 first:mt-0 group/sec relative">
-            <div className="h-[1px] flex-1 bg-slate-200"></div>
+            <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-700"></div>
             <div className="flex items-center gap-2">
-                <h3 className="text-base font-black tracking-[0.1em] text-slate-500 px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full">{children}</h3>
-                <button onClick={() => handleRefineText('refine', children.toString().toLowerCase())} className="p-1 px-2 rounded-full bg-green-50 text-green-500 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-green-100" title="Refine this section with AI">
+                <h3 className="text-base font-black tracking-[0.1em] text-slate-500 dark:text-slate-300 px-4 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full">{children}</h3>
+                <button onClick={() => handleRefineText('refine', children.toString().toLowerCase())} className="p-1 px-2 rounded-full bg-green-50 dark:bg-green-900/20 text-green-500 dark:text-green-400 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-green-100 dark:hover:bg-green-900/30" title="Refine this section with AI">
                     <Sparkles size={10} />
                 </button>
                 {onRemove && (
-                    <button onClick={onRemove} className="p-1 px-2 rounded-full bg-rose-50 text-rose-500 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-rose-100" title="Remove section">
+                    <button onClick={onRemove} className="p-1 px-2 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-rose-100 dark:hover:bg-rose-900/30" title="Remove section">
                         <Trash2 size={10} />
                     </button>
                 )}
             </div>
-            <div className="h-[1px] flex-1 bg-slate-200"></div>
+            <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-700"></div>
         </div>
     );
 
@@ -331,6 +384,7 @@ function FormResumePreview({ data, onUpdate }) {
             certifications: { name: "Certification Name", issuer: "Issuing Organization", date: "Date", url: "" },
             awards: { title: "Award Title", org: "Organization", date: "Date", description: "" },
             languages: { language: "Language", level: "Proficient" },
+            customSections: { title: "References", content: "Available upon request.", type: "references" },
         };
         if (!templates[type]) return;
         onUpdate(type, 'add', templates[type]);
@@ -341,7 +395,7 @@ function FormResumePreview({ data, onUpdate }) {
             id="resume-preview"
             ref={containerRef}
             onMouseUp={handleSelection}
-            className="p-8 md:p-12 bg-white min-h-[1000px] relative text-[#1a1a2e] font-serif"
+            className="p-8 md:p-12 bg-white dark:bg-slate-900 min-h-[1000px] relative text-slate-900 dark:text-slate-100 font-serif"
         >
             {tooltipPos && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -363,7 +417,7 @@ function FormResumePreview({ data, onUpdate }) {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => handleBlur('personalInfo', 'fullName', e.target.innerText)}
-                    className="text-5xl font-bold tracking-tight mb-2 outline-none focus:bg-slate-50 rounded px-2"
+                    className="text-5xl font-bold tracking-tight mb-2 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-2"
                     style={{ letterSpacing: "0.02em" }}
                 >
                     {displayName || "Your Name"}
@@ -373,7 +427,7 @@ function FormResumePreview({ data, onUpdate }) {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => handleBlur('personalInfo', 'jobTitle', e.target.innerText)}
-                    className="text-xl font-medium text-slate-600 tracking-wide italic outline-none focus:bg-slate-50 rounded px-2"
+                    className="text-xl font-medium text-slate-600 dark:text-slate-300 tracking-wide italic outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-2"
                     style={{ fontSize: "18px" }}
                 >
                     {personalInfo.jobTitle || "Job Title"}
@@ -381,13 +435,13 @@ function FormResumePreview({ data, onUpdate }) {
 
                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 max-w-2xl">
                     {contactItems.map((item, i) => (
-                        <div key={i} className={`flex items-center gap-1.5 text-[13px] text-slate-500 ${!item.value ? "opacity-30 hover:opacity-100 transition-opacity" : ""}`}>
-                            <item.icon size={10} className="text-slate-400" />
+                        <div key={i} className={`flex items-center gap-1.5 text-[13px] text-slate-500 dark:text-slate-400 ${!item.value ? "opacity-30 hover:opacity-100 transition-opacity" : ""}`}>
+                            <item.icon size={10} className="text-slate-400 dark:text-slate-500" />
                             <span
                                 contentEditable
                                 suppressContentEditableWarning
                                 onBlur={(e) => handleBlur('personalInfo', item.field, e.target.innerText)}
-                                className="outline-none focus:bg-slate-50 rounded px-1 min-w-[20px]"
+                                className="outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1 min-w-[20px]"
                             >
                                 {item.value || item.label}
                             </span>
@@ -403,8 +457,7 @@ function FormResumePreview({ data, onUpdate }) {
                         contentEditable
                         suppressContentEditableWarning
                         onBlur={(e) => handleBlur('personalInfo', 'summary', e.target.innerText)}
-                        className="text-base leading-relaxed text-justify px-2 italic outline-none focus:bg-slate-50 rounded"
-                        style={{ color: "#333" }}
+                        className="text-base leading-relaxed text-justify px-2 italic text-slate-700 dark:text-slate-300 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
                     >
                         {personalInfo.summary || data.summary}
                     </p>
@@ -427,16 +480,16 @@ function FormResumePreview({ data, onUpdate }) {
                                             contentEditable
                                             suppressContentEditableWarning
                                             onBlur={(e) => handleBlur('experience', 'title', e.target.innerText, i)}
-                                            className="text-[15px] font-bold text-slate-900 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                            className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                         >
                                             {exp.title}
                                         </h4>
-                                        <span className="text-slate-200 font-light">|</span>
+                                        <span className="text-slate-200 dark:text-slate-700 font-light">|</span>
                                         <span
                                             contentEditable
                                             suppressContentEditableWarning
                                             onBlur={(e) => handleBlur('experience', 'company', e.target.innerText, i)}
-                                            className="text-[15px] font-semibold text-slate-600 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                            className="text-[15px] font-semibold text-slate-600 dark:text-slate-300 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                         >
                                             {exp.company}
                                         </span>
@@ -445,7 +498,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('experience', 'dateRange', e.target.innerText, i)}
-                                    className="text-[13px] font-bold text-slate-500 uppercase tracking-wider outline-none focus:bg-slate-50 rounded px-1"
+                                    className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                 >
                                     {exp.dateRange || `${exp.startDate || ""}${exp.startDate || exp.endDate ? " – " : ""}${exp.endDate || ""}`}
                                 </span>
@@ -454,7 +507,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('experience', 'description', e.target.innerText, i)}
-                                    className="text-base leading-relaxed text-slate-600 whitespace-pre-line border-l-2 border-slate-50 pl-4 ml-0.5 outline-none focus:bg-slate-50 rounded"
+                                    className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line border-l-2 border-slate-50 dark:border-slate-800 pl-4 ml-0.5 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
                                 >
                                     {exp.description}
                                 </p>
@@ -480,7 +533,7 @@ function FormResumePreview({ data, onUpdate }) {
                                             contentEditable
                                             suppressContentEditableWarning
                                             onBlur={(e) => handleBlur('education', 'degree', e.target.innerText, i)}
-                                            className="text-[15px] font-bold text-slate-900 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                            className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                         >
                                             {edu.degree}
                                         </h4>
@@ -489,7 +542,7 @@ function FormResumePreview({ data, onUpdate }) {
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => handleBlur('education', 'school', e.target.innerText, i)}
-                                        className="text-[15px] font-medium text-slate-500 pl-5 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                        className="text-[15px] font-medium text-slate-500 dark:text-slate-400 pl-5 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                     >
                                         {edu.school}, {edu.location}
                                     </p>
@@ -498,7 +551,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('education', 'dateRange', e.target.innerText, i)}
-                                    className="text-[13px] font-bold text-slate-400 uppercase tracking-widest leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                    className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                 >
                                     {edu.dateRange || `${edu.startDate || ""}${edu.startDate || edu.endDate ? " – " : ""}${edu.endDate || ""}`}
                                 </span>
@@ -525,7 +578,7 @@ function FormResumePreview({ data, onUpdate }) {
                                             contentEditable
                                             suppressContentEditableWarning
                                             onBlur={(e) => handleBlur('projects', 'name', e.target.innerText, i)}
-                                            className="text-[15px] font-bold text-slate-900 leading-none outline-none focus:bg-slate-50 rounded px-1"
+                                            className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                         >
                                             {project.name}
                                         </h4>
@@ -534,7 +587,7 @@ function FormResumePreview({ data, onUpdate }) {
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => handleBlur('projects', 'technologies', e.target.innerText, i)}
-                                        className="text-[13px] font-bold text-slate-400 uppercase tracking-widest outline-none focus:bg-slate-50 rounded px-1"
+                                        className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
                                     >
                                         {project.technologies}
                                     </span>
@@ -543,7 +596,7 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('projects', 'description', e.target.innerText, i)}
-                                    className="text-base leading-relaxed text-slate-600 border-l-2 border-slate-50 pl-4 ml-0.5 outline-none focus:bg-slate-50 rounded"
+                                    className="text-base leading-relaxed text-slate-600 dark:text-slate-300 border-l-2 border-slate-50 dark:border-slate-800 pl-4 ml-0.5 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
                                 >
                                     {project.description}
                                 </p>
@@ -561,11 +614,11 @@ function FormResumePreview({ data, onUpdate }) {
                             <div key={i} className="group relative flex justify-between items-start">
                                 <button onClick={() => onUpdate('certifications', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
                                 <div>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'name', e.target.innerText)} className="text-[15px] font-bold text-slate-800 outline-none">{cert.name}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'name', e.target.innerText)} className="text-[15px] font-bold text-slate-800 dark:text-slate-100 outline-none">{cert.name}</span>
                                     <span className="mx-2 text-slate-300">·</span>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'issuer', e.target.innerText)} className="text-[14px] text-slate-500 outline-none">{cert.issuer}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'issuer', e.target.innerText)} className="text-[14px] text-slate-500 dark:text-slate-400 outline-none">{cert.issuer}</span>
                                 </div>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 outline-none whitespace-nowrap ml-2">{cert.date}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 dark:text-slate-500 outline-none whitespace-nowrap ml-2">{cert.date}</span>
                             </div>
                         ))}
                     </div>
@@ -580,11 +633,11 @@ function FormResumePreview({ data, onUpdate }) {
                             <div key={i} className="group relative flex justify-between items-start">
                                 <button onClick={() => onUpdate('awards', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
                                 <div>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'title', e.target.innerText)} className="text-[15px] font-bold text-slate-800 outline-none">{award.title}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'title', e.target.innerText)} className="text-[15px] font-bold text-slate-800 dark:text-slate-100 outline-none">{award.title}</span>
                                     <span className="mx-2 text-slate-300">·</span>
-                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'org', e.target.innerText)} className="text-[14px] text-slate-500 outline-none">{award.org}</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'org', e.target.innerText)} className="text-[14px] text-slate-500 dark:text-slate-400 outline-none">{award.org}</span>
                                 </div>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 outline-none whitespace-nowrap ml-2">{award.date}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 dark:text-slate-500 outline-none whitespace-nowrap ml-2">{award.date}</span>
                             </div>
                         ))}
                     </div>
@@ -598,9 +651,9 @@ function FormResumePreview({ data, onUpdate }) {
                         {(data.languages || []).map((lang, i) => (
                             <div key={i} className="group relative flex items-center gap-2">
                                 <button onClick={() => onUpdate('languages', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'language', e.target.innerText)} className="text-[15px] font-bold text-slate-800 outline-none">{lang.language}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'language', e.target.innerText)} className="text-[15px] font-bold text-slate-800 dark:text-slate-100 outline-none">{lang.language}</span>
                                 <span className="text-slate-200">|</span>
-                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'level', e.target.innerText)} className="text-[14px] text-slate-500 outline-none">{lang.level}</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'level', e.target.innerText)} className="text-[14px] text-slate-500 dark:text-slate-400 outline-none">{lang.level}</span>
                             </div>
                         ))}
                     </div>
@@ -612,7 +665,7 @@ function FormResumePreview({ data, onUpdate }) {
                     <SectionTitle onRemove={() => onUpdate('skills', 'remove', null, null)}>Skills</SectionTitle>
                     <div className="grid grid-cols-2 gap-x-12 gap-y-2 px-6">
                         {skills.map((skill, i) => (
-                            <div key={i} className="flex items-center justify-between text-[15px] group border-b border-slate-50 pb-1 relative">
+                            <div key={i} className="flex items-center justify-between text-[15px] group border-b border-slate-50 dark:border-slate-800 pb-1 relative">
                                 <button onClick={() => onUpdate('skills', i, 'remove')} className="absolute -left-6 p-1 rounded-full text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Trash2 size={10} />
                                 </button>
@@ -620,15 +673,35 @@ function FormResumePreview({ data, onUpdate }) {
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e) => handleBlur('skills', null, e.target.innerText, i)}
-                                    className="text-slate-700 font-medium group-hover:text-green-600 transition-colors outline-none"
+                                    className="text-slate-700 dark:text-slate-200 font-medium group-hover:text-green-600 transition-colors outline-none"
                                 >
                                     {skill}
                                 </span>
-                                <div className="flex-1 border-b border-dotted border-slate-200 mx-2 mb-1" />
-                                <Sparkles size={8} className="text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="flex-1 border-b border-dotted border-slate-200 dark:border-slate-700 mx-2 mb-1" />
+                                <Sparkles size={8} className="text-slate-200 dark:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                         ))}
                     </div>
+                </section>
+            )}
+
+            {customSections.length > 0 && (
+                <section className="mb-6">
+                    {customSections.map((section, i) => (
+                        <div key={`${section.type || 'custom'}-${i}`} className="mb-6 group relative">
+                            <SectionTitle onRemove={() => onUpdate('customSections', i, 'remove')}>
+                                {section.title || "Custom Section"}
+                            </SectionTitle>
+                            <p
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => onUpdate('customSections', i, 'content', e.target.innerText)}
+                                className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line px-2 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
+                            >
+                                {section.content || ""}
+                            </p>
+                        </div>
+                    ))}
                 </section>
             )}
 
@@ -641,8 +714,9 @@ function FormResumePreview({ data, onUpdate }) {
                     { id: 'certifications', label: 'Certifications' },
                     { id: 'awards', label: 'Awards' },
                     { id: 'languages', label: 'Languages' },
+                    { id: 'customSections', label: 'References' },
                 ].map(({ id, label }) => (
-                    <Button key={id} variant="outline" onClick={() => addSectionType(id)} className="rounded-full border-dashed border-2 px-5 text-slate-400 hover:text-green-600 hover:border-green-300 text-xs bg-white">
+                    <Button key={id} variant="outline" onClick={() => addSectionType(id)} className="rounded-full border-dashed border-2 px-5 text-slate-400 dark:text-slate-500 hover:text-green-600 hover:border-green-300 text-xs bg-white dark:bg-slate-900 dark:border-slate-700">
                         <Plus size={12} className="mr-1.5" /> {label}
                     </Button>
                 ))}
@@ -652,7 +726,9 @@ function FormResumePreview({ data, onUpdate }) {
 }
 
 const ResumeBuilder = () => {
-    const { user } = useAuth();
+    const { user, isPro, isEnterprise } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const mode = searchParams.get("mode") || "both";
     const initialRole = searchParams.get("role") || "";
@@ -689,6 +765,7 @@ const ResumeBuilder = () => {
     const [libraryLoading, setLibraryLoading] = useState(false);
     const [showMobileActions, setShowMobileActions] = useState(false);
     const libraryPickerOpen = showLibraryPicker;
+    const handledExportPaymentRef = useRef("");
 
     const [formData, setFormData] = useState(initialFormData);
     const [skillInput, setSkillInput] = useState("");
@@ -707,6 +784,18 @@ const ResumeBuilder = () => {
         applicationLetters: history.filter((item) => item.type === "application-letter"),
         portfolios: history.filter((item) => item.type === "portfolio"),
     }), [history]);
+    const currentSavedResume = useMemo(
+        () => history.find((item) => item._id === savedResumeId) || null,
+        [history, savedResumeId]
+    );
+    const currentResumeIsPaid = !!currentSavedResume?.metadata?.exportPaid;
+    const hasPaidPlanExportAccess = isPro || isEnterprise;
+    const draftStorageKey = useCallback((type) => getCareerDraftStorageKey(type, user), [user]);
+    const shouldShowPaidResumeExportLabel =
+        editorTab === "editor" && !hasPaidPlanExportAccess && !currentResumeIsPaid;
+    const hasOpenResume =
+        editorTab === "editor" &&
+        !!(savedResumeId || generatedResume || hasUserEnteredResumeContent(currentResumeData, user));
 
     const normalizedResumeForPersistence = useMemo(() => ({
         ...currentResumeData,
@@ -763,24 +852,37 @@ const ResumeBuilder = () => {
     }, [skillInput, formData.skills]);
 
     React.useEffect(() => {
-        if (user) {
-            const defaults = getUserIdentityDefaults(user);
+        if (user && !generatedResume && !resumeText.trim()) {
             setFormData(prev => {
+                const hasExistingResumeIdentity =
+                    !!prev.personalInfo.fullName ||
+                    !!prev.personalInfo.name ||
+                    !!prev.personalInfo.email ||
+                    !!prev.personalInfo.phone ||
+                    !!prev.personalInfo.location;
+
+                if (hasExistingResumeIdentity) {
+                    return prev;
+                }
+
                 return {
                     ...prev,
                     personalInfo: {
                         ...prev.personalInfo,
-                        fullName: prev.personalInfo.fullName || defaults.fullName,
                         email: prev.personalInfo.email || user.email || ""
                     }
                 };
             });
         }
-    }, [user]);
+    }, [generatedResume, resumeText, user]);
 
     React.useEffect(() => {
+        if (!user?._id && !user?.email) {
+            setHistory([]);
+            return;
+        }
         fetchHistory();
-    }, []);
+    }, [user?._id, user?.email]);
 
     // DB autosave — debounced, handles Resume, Cover Letter, and Portfolio
     // Changed to save to local storage instead of hitting the database automatically
@@ -832,14 +934,14 @@ const ResumeBuilder = () => {
                         resumeId: type === "resume" ? undefined : (savedResumeId || undefined),
                     }
                 };
-                localStorage.setItem(`career_draft_${type}`, JSON.stringify(draft));
+                localStorage.setItem(draftStorageKey(type), JSON.stringify(draft));
                 // Optional: show a small toast for local save if needed, though it might be too spammy.
             } catch (error) {
                 console.error("Local save error:", error);
             }
         }, 1500);
         return () => clearTimeout(timer);
-    }, [normalizedResumeForPersistence, coverLetter, applicationLetter, portfolioPrompts, editorTab, jobDescription, savedResumeId, savedCLId, savedALId, savedPPId]);
+    }, [normalizedResumeForPersistence, coverLetter, applicationLetter, portfolioPrompts, editorTab, jobDescription, savedResumeId, savedCLId, savedALId, savedPPId, draftStorageKey]);
 
     React.useEffect(() => {
         // Load from local storage on mount - but ONLY if there's no current in-memory content to avoid overwriting it
@@ -852,7 +954,7 @@ const ResumeBuilder = () => {
             if (isAL) type = "application-letter";
             if (isPP) type = "portfolio";
 
-            const saved = localStorage.getItem(`career_draft_${type}`);
+            const saved = localStorage.getItem(draftStorageKey(type));
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (type === "resume") {
@@ -862,8 +964,9 @@ const ResumeBuilder = () => {
                         (formData.projects || []).length > 0 || (formData.experience || []).length > 0 ||
                         (formData.education || []).length > 0 || (formData.skills || []).length > 0;
                     if (!hasCurrentContent) {
-                        setFormData(prev => ({ ...prev, ...parsed.data }));
-                        setGeneratedResume(parsed.data);
+                        const sanitizedResume = sanitizeGeneratedResumeData(parsed.data);
+                        setFormData(prev => ({ ...prev, ...sanitizedResume }));
+                        setGeneratedResume(sanitizedResume);
                         if (parsed.metadata?.documentId) setSavedResumeId(parsed.metadata.documentId);
                     }
                 } else if (type === "cover-letter") {
@@ -896,6 +999,20 @@ const ResumeBuilder = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editorTab]); // Reload local draft when tab changes — guards prevent overwrite
+
+    React.useEffect(() => {
+        setGeneratedResume(null);
+        setFormData(initialFormData);
+        setResumeText("");
+        setCoverLetter("");
+        setApplicationLetter("");
+        setPortfolioPrompts([]);
+        setSavedResumeId(null);
+        setSavedCLId(null);
+        setSavedALId(null);
+        setSavedPPId(null);
+        setHistory([]);
+    }, [user?._id, user?.email]);
 
     const saveToDatabase = async () => {
         const isResume = editorTab === 'both' || editorTab === 'editor';
@@ -998,7 +1115,7 @@ const ResumeBuilder = () => {
         }
     }, [searchParams, jobDescription, isGenerating, generatedResume]);
 
-    const persistCareerDocument = async ({ id, type, title, data }) => {
+    const persistCareerDocument = useCallback(async ({ id, type, title, data, metadata = {} }) => {
         const response = await apiClient.post("/api/career/history", {
             id,
             type,
@@ -1007,6 +1124,7 @@ const ResumeBuilder = () => {
             metadata: {
                 jobDescription,
                 resumeId: savedResumeId || undefined,
+                ...metadata,
             }
         });
 
@@ -1020,25 +1138,139 @@ const ResumeBuilder = () => {
             return [saved, ...filtered].slice(0, 20);
         });
         return saved;
-    };
+    }, [jobDescription, savedResumeId]);
+
+    const performResumeExport = useCallback(async (format, resumeOverride) => {
+        const resumeData = sanitizeGeneratedResumeData(resumeOverride || currentResumeData);
+        if (!hasMeaningfulResumeContent(resumeData)) {
+            throw new Error("No resume content to export");
+        }
+
+        const fileName = (resumeData?.personalInfo?.fullName || resumeData?.personalInfo?.name || "Resume")
+            .replace(/\s+/g, "_");
+
+        if (format === "pdf") {
+            await downloadResumeAsPDF(resumeData, fileName);
+            return;
+        }
+
+        await downloadResumeAsDOCX(resumeData, fileName);
+    }, [currentResumeData]);
+
+    const ensureResumeSavedForExport = useCallback(async () => {
+        const resumeData = normalizedResumeForPersistence;
+        if (!hasMeaningfulResumeContent(resumeData)) {
+            throw new Error("No resume content to export");
+        }
+
+        const saved = await persistCareerDocument({
+            id: savedResumeId || undefined,
+            type: "resume",
+            title: resumeData.personalInfo?.fullName || resumeData.personalInfo?.name || "Draft Resume",
+            data: resumeData,
+            metadata: currentSavedResume?.metadata || {},
+        });
+
+        setSavedResumeId(saved._id);
+        return saved;
+    }, [currentSavedResume?.metadata, normalizedResumeForPersistence, persistCareerDocument, savedResumeId]);
+
+    const beginPaidResumeExport = useCallback(async (exportFormat) => {
+        const savedResume = await ensureResumeSavedForExport();
+        const response = await apiClient.post("/api/billing/create-session", {
+            purchaseType: "resume-export",
+            historyId: savedResume._id,
+            exportFormat,
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload?.sessionUrl) {
+            throw new Error(payload?.error || "Failed to start export checkout");
+        }
+
+        window.location.href = payload.sessionUrl;
+    }, [ensureResumeSavedForExport]);
+
+    const handleResumeExport = useCallback(async (format) => {
+        if (!hasOpenResume) {
+            throw new Error("Open or generate a resume before exporting");
+        }
+
+        if (!hasPaidPlanExportAccess && !currentResumeIsPaid) {
+            await beginPaidResumeExport(format);
+            return "checkout";
+        }
+
+        await performResumeExport(format);
+        return "downloaded";
+    }, [beginPaidResumeExport, currentResumeIsPaid, hasOpenResume, hasPaidPlanExportAccess, performResumeExport]);
+
+    React.useEffect(() => {
+        const purchaseType = searchParams.get("purchaseType");
+        const payment = searchParams.get("payment");
+        const historyId = searchParams.get("historyId");
+        const exportFormat = (searchParams.get("exportFormat") || "docx").toLowerCase();
+        const ref = searchParams.get("ref") || "";
+
+        if (purchaseType !== "resume-export" || payment !== "success" || !historyId) {
+            return;
+        }
+
+        const effectKey = `${historyId}:${exportFormat}:${ref}`;
+        if (handledExportPaymentRef.current === effectKey) {
+            return;
+        }
+
+        const resumeItem = history.find((item) => item._id === historyId && item.type === "resume");
+        if (!resumeItem?.metadata?.exportPaid) {
+            return;
+        }
+
+        handledExportPaymentRef.current = effectKey;
+        setSavedResumeId(resumeItem._id);
+
+        const runExport = async () => {
+            const toastId = toast.loading("Payment confirmed. Downloading resume...");
+            try {
+                await performResumeExport(exportFormat, resumeItem.data);
+                toast.success(
+                    exportFormat === "pdf" ? "PDF downloaded!" : "Editable DOCX downloaded!",
+                    { id: toastId }
+                );
+            } catch (error) {
+                console.error("Paid resume export failed:", error);
+                toast.error("Payment succeeded but download could not start", { id: toastId });
+            } finally {
+                const nextParams = new URLSearchParams(searchParams.toString());
+                ["payment", "purchaseType", "historyId", "exportFormat", "ref"].forEach((key) => {
+                    nextParams.delete(key);
+                });
+                const nextQuery = nextParams.toString();
+                router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+            }
+        };
+
+        runExport();
+    }, [history, pathname, performResumeExport, router, searchParams]);
 
     const loadHistoryItem = (item) => {
         if (item.type === "resume") {
-            setGeneratedResume(item.data);
+            const sanitizedResume = sanitizeGeneratedResumeData(item.data);
+            setGeneratedResume(sanitizedResume);
             setFormData(prev => ({
                 ...prev,
-                ...item.data,
-                experience: Array.isArray(item.data?.experience) ? item.data.experience : [],
-                education: Array.isArray(item.data?.education) ? item.data.education : [],
-                skills: Array.isArray(item.data?.skills) ? item.data.skills : [],
-                projects: Array.isArray(item.data?.projects) ? item.data.projects : [],
-                certifications: Array.isArray(item.data?.certifications) ? item.data.certifications : [],
-                awards: Array.isArray(item.data?.awards) ? item.data.awards : [],
-                languages: Array.isArray(item.data?.languages) ? item.data.languages : [],
-                customSections: Array.isArray(item.data?.customSections) ? item.data.customSections : [],
+                ...sanitizedResume,
+                experience: Array.isArray(sanitizedResume?.experience) ? sanitizedResume.experience : [],
+                education: Array.isArray(sanitizedResume?.education) ? sanitizedResume.education : [],
+                skills: Array.isArray(sanitizedResume?.skills) ? sanitizedResume.skills : [],
+                projects: Array.isArray(sanitizedResume?.projects) ? sanitizedResume.projects : [],
+                certifications: Array.isArray(sanitizedResume?.certifications) ? sanitizedResume.certifications : [],
+                awards: Array.isArray(sanitizedResume?.awards) ? sanitizedResume.awards : [],
+                languages: Array.isArray(sanitizedResume?.languages) ? sanitizedResume.languages : [],
+                customSections: Array.isArray(sanitizedResume?.customSections) ? sanitizedResume.customSections : [],
                 personalInfo: {
                     ...prev.personalInfo,
-                    ...(item.data?.personalInfo || {}),
+                    ...(sanitizedResume?.personalInfo || {}),
                 },
             }));
             setSavedResumeId(item._id); // Track ID so saves are updates, not duplicates
@@ -1286,10 +1518,7 @@ const ResumeBuilder = () => {
                 resumeText: trimmedResumeText || undefined,
             });
             if (response.ok) {
-                const data = await response.json();
-                if (data.personalInfo && data.personalInfo.name && !data.personalInfo.fullName) {
-                    data.personalInfo.fullName = data.personalInfo.name;
-                }
+                const data = sanitizeGeneratedResumeData(await response.json());
                 setGeneratedResume(data);
                 setFormData(prev => ({ ...prev, ...data }));
                 if (trimmedResumeText) {
@@ -1415,7 +1644,7 @@ const ResumeBuilder = () => {
                 matchResult: jobMatchResult
             });
             if (response.ok) {
-                const data = await response.json();
+                const data = sanitizeGeneratedResumeData(await response.json());
                 setGeneratedResume(data);
                 setFormData(prev => ({ ...prev, ...data }));
                 setEditorTab("editor");
@@ -1440,10 +1669,7 @@ const ResumeBuilder = () => {
                 description: courseObj?.description,
             });
             if (response.ok) {
-                const data = await response.json();
-                if (data.personalInfo && data.personalInfo.name && !data.personalInfo.fullName) {
-                    data.personalInfo.fullName = data.personalInfo.name;
-                }
+                const data = sanitizeGeneratedResumeData(await response.json());
                 setGeneratedResume(data);
                 setFormData(prev => ({ ...prev, ...data }));
                 setEditorTab('editor');
@@ -1492,12 +1718,16 @@ const ResumeBuilder = () => {
                     personalInfo: resumeData?.personalInfo || {},
                 }, `${fileName}_Application_Letter`);
             } else {
-                await downloadResumeAsDOCX(resumeData, fileName);
+                const result = await handleResumeExport("docx");
+                if (result === "checkout") {
+                    toast.loading(`Redirecting to checkout (${RESUME_EXPORT_PRICE_LABEL})...`, { id: toastId });
+                    return;
+                }
             }
             toast.success("Editable DOCX downloaded!", { id: toastId });
         } catch (error) {
             console.error("Resume DOCX export error:", error);
-            toast.error("Failed to export DOCX", { id: toastId });
+            toast.error(error.message || "Failed to export DOCX", { id: toastId });
         }
     };
 
@@ -1546,11 +1776,15 @@ const ResumeBuilder = () => {
             return;
         } else {
             try {
-                await downloadResumeAsPDF(resumeData, fileName);
+                const result = await handleResumeExport("pdf");
+                if (result === "checkout") {
+                    toast.loading(`Redirecting to checkout (${RESUME_EXPORT_PRICE_LABEL})...`, { id: toastId });
+                    return;
+                }
                 toast.success("Downloaded!", { id: toastId });
             } catch (error) {
                 console.error("Resume PDF export error:", error);
-                toast.error("Failed to export PDF", { id: toastId });
+                toast.error(error.message || "Failed to export PDF", { id: toastId });
             }
             return;
         }
@@ -1756,9 +1990,17 @@ const ResumeBuilder = () => {
                 </p>
             </div>
             <div className="mt-4 pt-4 flex justify-between items-center relative z-10 text-[10px] font-black">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Saved
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Saved
+                    </div>
+                    {item.type === "resume" && item.metadata?.exportPaid && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full text-emerald-700 dark:text-emerald-300">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            paid
+                        </div>
+                    )}
                 </div>
                 <span className="text-green-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Open document <ArrowRight size={12} />
@@ -1790,7 +2032,7 @@ const ResumeBuilder = () => {
                         { id: 'portfolio', label: 'Portfolio Ideas', icon: FolderOpen }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setEditorTab(tab.id)}
-                            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-green-600" : "text-slate-500 hover:text-slate-900"}`}>
+                            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-green-600" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"}`}>
                             <tab.icon size={16} />
                             {tab.label}
                         </button>
@@ -1798,20 +2040,20 @@ const ResumeBuilder = () => {
                 </nav>
 
                 <div className="w-full max-w-4xl hidden md:flex flex-wrap items-center justify-center gap-2">
-                    <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 transition-all font-bold text-xs">
+                    <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-xs">
                         <Plus size={14} className="mr-1.5" /> {
                             editorTab === 'cover-letter' ? 'New Cover Letter' :
                                 editorTab === 'application-letter' ? 'New Application' :
                                     editorTab === 'portfolio' ? 'New Ideas' : 'New Resume'
                         }
                     </Button>
-                    <Button onClick={saveToDatabase} className="h-10 px-5 rounded-xl bg-slate-900 hover:bg-black text-white shadow-lg shadow-slate-200 transition-all font-bold text-xs">
+                    <Button onClick={saveToDatabase} className="h-10 px-5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white shadow-lg shadow-slate-200 dark:shadow-none transition-all font-bold text-xs">
                         <Save size={14} className="mr-1.5" /> Save
                     </Button>
                     <Button
                         variant="outline"
                         onClick={() => setEditorTab('insights')}
-                        className="h-10 px-4 rounded-xl bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-bold text-xs"
+                        className="h-10 px-4 rounded-xl bg-white dark:bg-slate-900 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 font-bold text-xs"
                     >
                         <TrendingUp size={14} className="mr-1.5" /> Match to Job
                     </Button>
@@ -1819,8 +2061,8 @@ const ResumeBuilder = () => {
                         <Download size={14} className="mr-1.5" /> Export PDF
                     </Button>}
                     {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
-                        <Button variant="outline" onClick={exportToDOCX} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
-                            <Download size={14} className="mr-1.5" /> Export DOCX
+                        <Button variant="outline" onClick={exportToDOCX} className="h-10 px-4 rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-xs">
+                            <Download size={14} className="mr-1.5" /> {shouldShowPaidResumeExportLabel ? "Export DOCX $2.5" : "Export DOCX"}
                         </Button>
                     )}
                 </div>
@@ -1865,7 +2107,7 @@ const ResumeBuilder = () => {
                                                             setLibraryCourses(d.items || []);
                                                         }).catch(() => { }).finally(() => setLibraryLoading(false));
                                                     }
-                                                }} className="w-full border-slate-200 py-6 rounded-2xl hover:bg-slate-50">
+                                                }} className="w-full border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200">
                                                     <FolderOpen className="mr-2 text-green-500" /> From Library
                                                 </Button>
                                                 {showLibraryPicker && (
@@ -1985,11 +2227,11 @@ const ResumeBuilder = () => {
                                     <textarea
                                         value={coverLetter}
                                         onChange={e => setCoverLetter(e.target.value)}
-                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-[#1a1a2e]"
+                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
                                     />
                                     <div
                                         id="cover-letter-export"
-                                        className="absolute top-0 left-0 w-full p-14 bg-white font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-[#1a1a2e]"
+                                        className="absolute top-0 left-0 w-full p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
                                     >
                                         {coverLetter}
                                     </div>
@@ -2027,11 +2269,11 @@ const ResumeBuilder = () => {
                                     <textarea
                                         value={applicationLetter}
                                         onChange={e => setApplicationLetter(e.target.value)}
-                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-[#1a1a2e]"
+                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
                                     />
                                     <div
                                         id="application-letter-export"
-                                        className="absolute top-0 left-0 w-full p-14 bg-white font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-[#1a1a2e]"
+                                        className="absolute top-0 left-0 w-full p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
                                     >
                                         {applicationLetter}
                                     </div>
@@ -2141,7 +2383,7 @@ const ResumeBuilder = () => {
                         </div>
                     )}
                     {editorTab === 'insights' && (
-                        <div className="p-8 min-h-[600px]">
+                    <div className="p-8 min-h-[600px] bg-transparent text-slate-900 dark:text-white">
                             {!jobMatchResult ? (
                                 <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center">
                                     <div className="w-20 h-20 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6">
@@ -2155,7 +2397,7 @@ const ResumeBuilder = () => {
                                             onChange={e => setJobMatchDescription(e.target.value)}
                                             placeholder="Paste the job description here..."
                                             rows={6}
-                                            className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 focus:border-emerald-400 focus:bg-white outline-none transition-all text-sm resize-none"
+                                            className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 focus:border-emerald-400 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-sm resize-none text-slate-900 dark:text-white"
                                         />
                                         <Button onClick={handleJobMatch} disabled={isMatchingJob || !jobMatchDescription.trim()} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-bold">
                                             {isMatchingJob ? <><Loader2 className="animate-spin mr-2" /> Analyzing...</> : <><TrendingUp className="mr-2" /> Analyze Match Score</>}
@@ -2169,7 +2411,7 @@ const ResumeBuilder = () => {
                                             <h2 className="text-2xl font-bold">ATS Match Report</h2>
                                             <p className="text-slate-500 text-sm mt-1">{jobMatchResult.summary}</p>
                                         </div>
-                                        <button onClick={() => setJobMatchResult(null)} className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500">
+                                        <button onClick={() => setJobMatchResult(null)} className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300">
                                             <X size={16} />
                                         </button>
                                     </div>
@@ -2208,7 +2450,7 @@ const ResumeBuilder = () => {
                                             {isRefining ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
                                             Refine Resume with AI
                                         </Button>
-                                        <Button onClick={() => setJobMatchResult(null)} variant="outline" className="w-full rounded-2xl py-5 border-slate-200">
+                                        <Button onClick={() => setJobMatchResult(null)} variant="outline" className="w-full rounded-2xl py-5 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
                                             Run Another Analysis
                                         </Button>
                                     </div>
@@ -2337,7 +2579,7 @@ const ResumeBuilder = () => {
                                     }
                                 </Button>
 
-                                <Button onClick={() => { saveToDatabase(); setShowMobileActions(false); }} className="w-full py-7 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-xs shadow-xl">
+                                <Button onClick={() => { saveToDatabase(); setShowMobileActions(false); }} className="w-full py-7 rounded-2xl bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white font-black text-xs shadow-xl dark:shadow-none">
                                     <Save size={16} className="mr-3" /> Save to Database
                                 </Button>
 
@@ -2363,7 +2605,7 @@ const ResumeBuilder = () => {
                                         onClick={() => { exportToDOCX(); setShowMobileActions(false); }}
                                         className="w-full py-7 rounded-2xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-[10px]"
                                     >
-                                        <Download size={16} className="mr-2" /> Export DOCX
+                                        <Download size={16} className="mr-2" /> {shouldShowPaidResumeExportLabel ? "Export DOCX $2.5" : "Export DOCX"}
                                     </Button>
                                 )}
                             </div>

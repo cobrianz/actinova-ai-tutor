@@ -1177,17 +1177,17 @@ export default function ReportEditor({ reportId }) {
     ];
 
     return (
-        <div className="flex w-full h-[calc(100vh-68px)] bg-[#1f2430] overflow-hidden font-inter">
+        <div className="flex w-full h-[calc(100vh-68px)] bg-background overflow-hidden font-inter">
 
             {/* Main Content Area */}
-            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0 bg-[#d1d5db]">
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0 bg-slate-100 dark:bg-slate-950">
 
                 {/* Document Page Wrapper */}
                 <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-8" >
                     <div className="mb-4 flex w-full max-w-[1600px] justify-end px-3 md:px-4 lg:px-10 xl:hidden">
                         <button
                             onClick={() => setShowOutline(true)}
-                            className="inline-flex items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                            className="inline-flex items-center gap-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                         >
                             <PanelRight className="h-4 w-4" />
                             <span>Outline</span>
@@ -1277,25 +1277,25 @@ export default function ReportEditor({ reportId }) {
                         </div>
                         </div>
 
-                        <aside className="hidden xl:block sticky top-16 w-[280px] border border-slate-300 bg-white shadow-sm">
-                            <div className="border-b border-slate-200 px-4 py-3 bg-slate-50">
+                        <aside className="hidden xl:block sticky top-16 w-[280px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+                            <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 bg-slate-50 dark:bg-slate-950">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <h3 className="text-sm font-semibold text-slate-900">Outline</h3>
-                                        <p className="mt-1 text-xs text-slate-500">Open sections or generate missing content.</p>
+                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Outline</h3>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Open sections or generate missing content.</p>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <button
                                             onClick={handleManualSave}
                                             disabled={saving}
-                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                                             title="Save Changes"
                                         >
                                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                         </button>
                                         <button
                                             onClick={exportAsDOCX}
-                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100"
+                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                             title="Download Word (.docx)"
                                         >
                                             <Download className="h-4 w-4" />
@@ -1303,31 +1303,31 @@ export default function ReportEditor({ reportId }) {
                                     </div>
                                 </div>
                             </div>
-                            <div className="max-h-[70vh] overflow-y-auto bg-white outline-scrollbar">
-                                <div className="border-b border-slate-200 px-4 py-4">
+                            <div className="max-h-[70vh] overflow-y-auto bg-white dark:bg-slate-900 outline-scrollbar">
+                                <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-4">
                                     <div className="space-y-3">
                                         <div>
-                                            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Custom Section</span>
-                                            <p className="mt-1 text-xs leading-5 text-slate-500">Describe the section and choose where it should appear in the outline.</p>
+                                            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">Custom Section</span>
+                                            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Describe the section and choose where it should appear in the outline.</p>
                                         </div>
                                         <input
                                             type="text"
                                             value={customSectionTitle}
                                             onChange={(e) => setCustomSectionTitle(e.target.value)}
                                             placeholder="Section title"
-                                            className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                            className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
                                         />
                                         <textarea
                                             value={customSectionDescription}
                                             onChange={(e) => setCustomSectionDescription(e.target.value)}
                                             placeholder="What should this section include?"
                                             rows={3}
-                                            className="w-full resize-none border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                            className="w-full resize-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
                                         />
                                         <select
                                             value={customSectionPlacement}
                                             onChange={(e) => setCustomSectionPlacement(e.target.value)}
-                                            className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                            className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
                                         >
                                             {customSectionPositionOptions.map((option) => (
                                                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -1338,7 +1338,7 @@ export default function ReportEditor({ reportId }) {
                                                 <button
                                                     key={pages}
                                                     onClick={() => setCustomSectionPages(pages)}
-                                                    className={`flex-1 border px-2 py-1.5 text-xs font-semibold transition-all ${customSectionPages === pages ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-emerald-50"}`}
+                                                    className={`flex-1 border px-2 py-1.5 text-xs font-semibold transition-all ${customSectionPages === pages ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"}`}
                                                 >
                                                     {pages}p
                                                 </button>
@@ -1355,15 +1355,15 @@ export default function ReportEditor({ reportId }) {
                                     </div>
                                 </div>
                                 {outlineItems.map((item, index) => (
-                                    <div key={item.id} className="border-b border-slate-200 px-4 py-4 last:border-b-0">
+                                    <div key={item.id} className="border-b border-slate-200 dark:border-slate-700 px-4 py-4 last:border-b-0">
                                         <div className="flex items-start gap-3">
                                             <div className={`mt-1 h-2.5 w-2.5 flex-shrink-0 ${item.hasContent ? "bg-emerald-500" : "bg-slate-300"}`} />
                                             <div className="min-w-0 flex-1">
                                         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
                                             {item.id === "abstract" ? "Abstract" : `Section ${index}`}
                                         </p>
-                                        <h4 className="mt-1 text-sm font-medium text-slate-900">{item.title}</h4>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">{item.description}</p>
+                                        <h4 className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{item.title}</h4>
+                                        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{item.description}</p>
                                         <div className="mt-3 flex items-center gap-2">
                                             <button
                                                 onClick={() => {
@@ -1373,7 +1373,7 @@ export default function ReportEditor({ reportId }) {
                                                     }
                                                     scrollToSection(item.id);
                                                 }}
-                                                className="border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition-all hover:bg-slate-50"
+                                                className="border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
                                             >
                                                 Open
                                             </button>
@@ -1548,7 +1548,7 @@ export default function ReportEditor({ reportId }) {
             {
                 toolbar.visible && (
                     <div
-                        className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex flex-wrap items-center gap-0.5 rounded-md bg-white border border-slate-300 shadow-xl p-1 animate-in fade-in zoom-in duration-200 max-w-[min(90vw,520px)]"
+                        className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex flex-wrap items-center gap-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xl p-1 animate-in fade-in zoom-in duration-200 max-w-[min(90vw,520px)]"
                         style={{ left: toolbar.x, top: toolbar.y }}
                     >
                         <div className="flex items-center gap-0.5">
@@ -1884,6 +1884,5 @@ export default function ReportEditor({ reportId }) {
         </div >
     );
 }
-
 
 

@@ -6,6 +6,10 @@ import { ObjectId } from "mongodb";
 
 const PIN_LIMIT = 3;
 
+function normalizeLibraryKey(value = "") {
+  return String(value).trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export async function GET(request) {
   let token = request.headers.get("authorization")?.split("Bearer ")[1];
   let userId;
@@ -186,6 +190,8 @@ export async function GET(request) {
         totalLessons: c.totalLessons || trueTotalLessons || 0,
         modules: c.totalModules || (c.courseData?.modules?.length) || 0,
         isPremium: c.isPremium || false,
+        premiumAccessExpiresAt: c.premiumAccessExpiresAt || null,
+        sourceMarketplaceCourseId: c.sourceMarketplaceCourseId?.toString() || null,
         pinned: (library?.pinned || []).includes(`course_${c._id}`),
         createdAt: c.createdAt,
         lastAccessed: c.lastAccessed,
@@ -222,9 +228,43 @@ export async function GET(request) {
         });
       });
 
-      let filtered = items;
+      const dedupedItems = Array.from(
+        items.reduce((map, item) => {
+          if (item.type !== "course") {
+            map.set(`item:${item.id}`, item);
+            return map;
+          }
+
+          const dedupeKey = item.sourceMarketplaceCourseId
+            ? `course:marketplace:${item.sourceMarketplaceCourseId}`
+            : `course:${normalizeLibraryKey(
+                item.topic || item.title
+              )}:${normalizeLibraryKey(item.difficulty || "")}`;
+
+          const existing = map.get(dedupeKey);
+          if (!existing) {
+            map.set(dedupeKey, item);
+            return map;
+          }
+
+          const existingDate = new Date(existing.lastAccessed || existing.createdAt || 0).getTime();
+          const candidateDate = new Date(item.lastAccessed || item.createdAt || 0).getTime();
+          const shouldReplace =
+            Number(Boolean(item.premiumAccessExpiresAt)) > Number(Boolean(existing.premiumAccessExpiresAt)) ||
+            item.progress > existing.progress ||
+            candidateDate > existingDate;
+
+          if (shouldReplace) {
+            map.set(dedupeKey, item);
+          }
+
+          return map;
+        }, new Map()).values()
+      );
+
+      let filtered = dedupedItems;
       if (search) {
-        filtered = items.filter(
+        filtered = dedupedItems.filter(
           (i) =>
             i.title.toLowerCase().includes(search) ||
             i.topic.toLowerCase().includes(search)
@@ -254,16 +294,16 @@ export async function GET(request) {
           pages: Math.ceil(total / limit),
         },
         stats: {
-          total: items.length,
-          courses: courses.length,
+          total: dedupedItems.length,
+          courses: dedupedItems.filter((i) => i.type === "course").length,
           flashcards: cardSets.length,
-          pinned: items.filter((i) => i.pinned).length,
-          pinnedCourses: items.filter((i) => i.type === "course" && i.pinned)
+          pinned: dedupedItems.filter((i) => i.pinned).length,
+          pinnedCourses: dedupedItems.filter((i) => i.type === "course" && i.pinned)
             .length,
-          inProgress: items.filter((i) => i.progress > 0 && i.progress < 100)
+          inProgress: dedupedItems.filter((i) => i.progress > 0 && i.progress < 100)
             .length,
-          completed: items.filter((i) => i.progress === 100).length,
-          completedCourses: items.filter(
+          completed: dedupedItems.filter((i) => i.progress === 100).length,
+          completedCourses: dedupedItems.filter(
             (i) => i.type === "course" && i.progress === 100
           ).length,
         },

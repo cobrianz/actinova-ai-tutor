@@ -1,15 +1,15 @@
 "use client";
 
-import { GraduationCap, Play, ArrowRight, BookOpen, Trophy, Star, FileText, ChevronDown, Sparkles } from "lucide-react";
+import { GraduationCap, Play, ArrowRight, BookOpen, Trophy, Star, FileText, ChevronDown, Sparkles, Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { data } from "../lib/landingData";
 import { motion } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
 
-export default function Hero({ handleGetStarted }) {
+export default function Hero({ handleGetStarted, initialNotice = null }) {
   const { user } = useAuth();
   const router = useRouter();
 
@@ -20,23 +20,24 @@ export default function Hero({ handleGetStarted }) {
   const subjects = ["Any Subject", "Math", "Science", "Coding", "Languages", "History"];
   const [subjectIdx, setSubjectIdx] = useState(0);
   const [isEnhanced, setIsEnhanced] = useState(false);
-
   // Social Proof Notifications
   const [activeNotifications, setActiveNotifications] = useState([]);
+  const notificationCounterRef = useRef(0);
   const socialMessages = useMemo(() => [
     "Grace created a Chinese course",
     "Alex just subscribed to Pro",
     "Sarah generated a Math practice quiz",
     "David created an account",
     "Emma is learning Quantum Physics",
-    "Michael shared a History study plan",
+    "Michael shared a premium course link",
     "Chris upgraded to Pro",
-    "Jessica created a Spanish course"
+    "Jessica exported a resume"
   ], []);
 
   useEffect(() => {
     const addNotification = () => {
-      const id = Date.now();
+      notificationCounterRef.current += 1;
+      const id = `hero-note-${Date.now()}-${notificationCounterRef.current}`;
       const side = Math.random() > 0.5 ? "left" : "right";
       // Position them on the far left/right edges to avoid main content
       const pos = {
@@ -116,6 +117,40 @@ export default function Hero({ handleGetStarted }) {
           animate="visible"
           className="text-center"
         >
+          {initialNotice && (
+            <motion.div
+              variants={itemVariants}
+              className="mx-auto mb-5 flex max-w-3xl items-center justify-center gap-3 rounded-full border border-white/80 bg-white/72 px-3.5 py-2 backdrop-blur-xl"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-50 border border-amber-200">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.08, 0.96, 1.04, 1],
+                      rotate: [0, -6, 4, -3, 0],
+                      y: [0, -1, 0, -1, 0],
+                      opacity: [0.7, 1, 0.55, 0.9, 0.7],
+                    }}
+                    transition={{
+                      duration: 1.8,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="flex items-center justify-center"
+                  >
+                    <Flame className="h-3.5 w-3.5 fill-current text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.45)]" />
+                  </motion.div>
+                </div>
+                <p className="truncate text-[12px] font-semibold text-[#1a1a1a]">
+                  <span className="mr-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">
+                    {initialNotice.title || "New"}
+                  </span>
+                  {initialNotice.message}
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Badge */}
           <motion.div
             variants={itemVariants}
@@ -137,8 +172,8 @@ export default function Hero({ handleGetStarted }) {
             variants={itemVariants}
             className="text-base md:text-lg text-[#1a1a1a]/60 mb-10 max-w-3xl mx-auto leading-relaxed"
           >
-            Generate courses, flashcards, quizzes, reports, premium learning tracks, AI chat sessions,
-            and career tools from one workspace built to help you learn and grow faster.
+            Generate courses, flashcards, quizzes, reports, premium marketplace tracks, AI chat sessions,
+            and career tools from one workspace built to help you learn, practice, and move faster.
           </motion.p>
 
           {/* Main Prompt Box with Animated Border */}
@@ -212,10 +247,10 @@ export default function Hero({ handleGetStarted }) {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
           >
             {[
-              { label: "Course", sub: "Create a study plan to course", icon: BookOpen, format: "course" },
+              { label: "Course", sub: "Create a full course from one prompt", icon: BookOpen, format: "course" },
               { label: "Practice Quiz", sub: "Test your knowledge with a quiz", icon: Trophy, format: "quiz" },
-              { label: "Flashcards", sub: "Explain complex topic to flashcards", icon: Sparkles, format: "flashcards" },
-              { label: "Report or Essay", sub: "Summarize textbook to report or essay", icon: FileText, format: "report" },
+              { label: "Flashcards", sub: "Turn any topic into flashcards", icon: Sparkles, format: "flashcards" },
+              { label: "Report or Essay", sub: "Draft structured writing with AI", icon: FileText, format: "report" },
             ].map((feature, i) => (
               <motion.div
                 key={i}

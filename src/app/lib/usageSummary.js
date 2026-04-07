@@ -69,6 +69,24 @@ export async function getTrackedUsageSummary(db, user) {
     return acc;
   }, {});
 
+  if (tier === TIERS.FREE) {
+    const lifetimeFreeCoursesUsed = await db.collection("library").countDocuments({
+      userId: user._id,
+      format: "course",
+      isPremium: { $ne: true },
+      sourceMarketplaceCourseId: { $exists: false },
+    });
+
+    const freeCourseLimit = limits.generateCourseLimit;
+    details.courses = {
+      used: lifetimeFreeCoursesUsed,
+      limit: freeCourseLimit,
+      remaining: Math.max(0, freeCourseLimit - lifetimeFreeCoursesUsed),
+      percent: getUsagePercent(lifetimeFreeCoursesUsed, freeCourseLimit),
+      feature: "lifetimeFreeCourses",
+    };
+  }
+
   const detailValues = Object.values(details);
   const hasUnlimited = detailValues.some((item) => item.limit === null);
   const totalUsed = detailValues.reduce((sum, item) => sum + item.used, 0);
