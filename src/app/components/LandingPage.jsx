@@ -17,10 +17,19 @@ export default function LandingPage({ initialNotice = null }) {
   const { user } = useAuth();
 
   useEffect(() => {
+    const isStandalone =
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      window.navigator?.standalone === true;
+
+    if (isStandalone) {
+      router.replace("/dashboard");
+      return;
+    }
+
     apiClient.get("/api/visitor-counter").catch(() => {
       // Ignore errors for visitor counter in production
     });
-  }, []);
+  }, [router]);
 
   const handleGetStarted = (redirectPath = "/dashboard") => {
     if (user) {

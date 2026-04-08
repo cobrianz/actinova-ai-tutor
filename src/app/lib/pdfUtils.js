@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { JETBRAINS_MONO_BASE64 } from "./jetbrains-mono-base64";
 import { tokenizeCode } from "./syntaxHighlighter";
+import { parseContentIntoBlocks } from "./contentBlocks";
 
 /**
  * Enhanced PDF Generation Utility for Actirova AI Tutor
@@ -18,6 +20,55 @@ const COLORS = {
     textLight: [107, 114, 128], // Light Gray
     divider: [229, 231, 235],   // Border color
     white: [255, 255, 255]
+};
+
+const PLACEHOLDER_PATTERNS = [
+    "content for this lesson is coming soon",
+    "lesson content is being generated",
+    "lesson content unavailable",
+];
+
+const hasGeneratedLessonContent = (lesson) => {
+    const rawContent = typeof lesson === "string" ? "" : String(lesson?.content || "").trim();
+    if (!rawContent) return false;
+    const normalized = rawContent.toLowerCase();
+    return !PLACEHOLDER_PATTERNS.some((pattern) => normalized.includes(pattern));
+};
+
+const getCourseModules = (data) => {
+    const modules = Array.isArray(data?.modules)
+        ? data.modules
+        : Array.isArray(data?.courseData?.modules)
+            ? data.courseData.modules
+            : [];
+    return modules.map((module, moduleIndex) => ({
+        ...module,
+        id: module?.id ?? moduleIndex + 1,
+        title: module?.title || `Module ${moduleIndex + 1}`,
+        lessons: Array.isArray(module?.lessons) ? module.lessons : [],
+    }));
+};
+
+const getPrintableLessons = (lessons) => {
+    const safe = Array.isArray(lessons) ? lessons : [];
+    return safe.filter((lesson) => {
+        if (!lesson || typeof lesson === "string") return false;
+        return hasGeneratedLessonContent(lesson);
+    });
+};
+
+const getModuleDisplayTitle = (title, idx) => {
+    const t = String(title || "").trim();
+    if (!t) return `Module ${idx + 1}`;
+    if (/^\s*module\s*\d+\s*[:\-]/i.test(t)) return t;
+    return `Module ${idx + 1}: ${t}`;
+};
+
+const getLessonDisplayTitle = (title, moduleIdx, lessonIdx) => {
+    const t = String(title || "").trim();
+    if (!t) return `${moduleIdx + 1}.${lessonIdx + 1} Lesson ${lessonIdx + 1}`;
+    if (/^\d+(\.\d+)*\s+/.test(t) || /^\s*lesson\s*\d+\s*[:\-]/i.test(t)) return t;
+    return `${moduleIdx + 1}.${lessonIdx + 1} ${t}`;
 };
 
 /**
@@ -213,221 +264,9 @@ const cleanLatex = (text) => {
         .trim();
 };
 
-/**
- * Shared parser to identify structural blocks (charts, tables, code, text)
- */
-export const parseContentIntoBlocks = (content) => {
-    let normalizedContent = (content || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
-    
-    // Strip outer triple backticks if they wrap the entire content
-    // e.g., ```markdown\n# Header\n... ```
-    const outerBacktickRegex = /^```(?:\w+)?\s*\n?([\s\S]+?)\n?```$/;
-    const outerMatch = normalizedContent.match(outerBacktickRegex);
-    if (outerMatch) {
-        normalizedContent = outerMatch[1].trim();
-    }
-    const blocks = [];
-    const blockRegex = /^[ \t]*```(\w+)?\s*([\s\S]*?)```[ \t]*/gm;
-    let lastIndex = 0;
-    let match;
-
-    const extractTablesFromText = (text) => {
-        const tableRegex = /((?:^|\n)\|.+(?:\|.+(?:(?:\n\|[\s\-|]+)+)(?:\n\|.+(?:\|.+)*)+))/g;
-        let tLastIndex = 0;
-        let tMatch;
-        while ((tMatch = tableRegex.exec(text)) !== null) {
-            const beforeTable = text.substring(tLastIndex, tMatch.index).trim();
-            if (beforeTable) blocks.push({ type: "text", content: beforeTable });
-            const tableContent = tMatch[0].trim();
-            const lines = tableContent.split('\n').filter(l => l.trim().startsWith('|'));
-            if (lines.length >= 3) {
-                const headers = lines[0].split('|').filter(s => s.trim()).map(s => s.trim());
-                const rows = lines.slice(2).map(line => line.split('|').filter(s => s.trim()).map(s => s.trim()));
-                if (headers.length > 0 && rows.length > 0) {
-                    blocks.push({ type: "table", headers, rows });
-                } else {
-                    blocks.push({ type: "text", content: tableContent });
-                }
-            } else {
-                blocks.push({ type: "text", content: tableContent });
-            }
-            tLastIndex = tableRegex.lastIndex;
-        }
-        const finalRemaining = text.substring(tLastIndex).trim();
-        if (finalRemaining) blocks.push({ type: "text", content: finalRemaining });
-    };
-
-    const processTikzBlock = (tikzContent, fullBlock) => {
-        try {
-            const xlabelMatch = /xlabel\s*=\s*\{([^}]*)\}/.exec(tikzContent);
-            const ylabelMatch = /ylabel\s*=\s*\{([^}]*)\}/.exec(tikzContent);
-            const coordRegex = /coordinates\s*\{\s*([\s\S]*?)\s*\}/g;
-            let cMatch;
-            const datasets = [];
-            while ((cMatch = coordRegex.exec(tikzContent)) !== null) {
-                const coordsStr = cMatch[1];
-                const pairs = coordsStr.match(/\((-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\)/g);
-                if (pairs) {
-                    const data = pairs.map(p => {
-                        const parts = p.match(/\((-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\)/);
-                        return { x: parseFloat(parts[1]), y: parseFloat(parts[2]) };
-                    });
-                    datasets.push({
-                        label: datasets.length === 0 ? (ylabelMatch ? ylabelMatch[1] : "Y-Axis") : `Plot ${datasets.length + 1}`,
-                        data: data.map(d => d.y),
-                        labels: data.map(d => d.x)
-                    });
-                }
-            }
-            if (datasets.length > 0) {
-                blocks.push({
-                    type: "chart",
-                    chartType: "line",
-                    data: {
-                        labels: datasets[0].labels,
-                        datasets: datasets.map(d => ({ label: d.label, data: d.data }))
-                    },
-                    title: xlabelMatch ? `${xlabelMatch[1]} vs ${ylabelMatch ? ylabelMatch[1] : ''}` : "Tactical Data Visualization"
-                });
-            } else {
-                blocks.push({ type: "code", lang: "latex", content: fullBlock });
-            }
-        } catch (e) {
-            blocks.push({ type: "code", lang: "latex", content: fullBlock });
-        }
-    };
-
-    const processTextAndTables = (text) => {
-        if (!text.trim()) return;
-        
-        // Can be preceded by optional "chart" keyword
-        let processedText = text;
-        const visualMatches = [];
-        
-        // We use a temporary replacement strategy to handle naked charts within text blocks
-        // But since we want to return blocks, it's better to split the text
-        
-        const tikzRegex = /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g;
-        // First, find TikZ blocks
-        let m;
-        while ((m = tikzRegex.exec(text)) !== null) {
-            visualMatches.push({ type: 'tikz', content: m[1], full: m[0], index: m.index });
-        }
-        
-        // THEN, find naked charts with nested brace support
-        const startRegex = /(?:^|\n)[ \t]*(?:chart\s*\n+)?([ \t]*\{)/g;
-        let nMatch;
-        while ((nMatch = startRegex.exec(text)) !== null) {
-            const startIndex = nMatch.index + (nMatch[0].length - nMatch[1].length);
-            let balance = 0;
-            let foundEnd = false;
-            let i = startIndex;
-            
-            for (; i < text.length; i++) {
-                if (text[i] === '{') balance++;
-                else if (text[i] === '}') {
-                    balance--;
-                    if (balance === 0) {
-                        foundEnd = true;
-                        i++; // Include the closing brace
-                        break;
-                    }
-                }
-            }
-            
-            if (foundEnd) {
-                const potentialJson = text.substring(startIndex, i).trim();
-                // Verify it looks like our chart JSON
-                if (potentialJson.includes('"type"') && (potentialJson.includes('"data"') || potentialJson.includes('"datasets"'))) {
-                    visualMatches.push({ 
-                        type: 'nakedChart', 
-                        content: potentialJson, 
-                        full: text.substring(nMatch.index, i), 
-                        index: nMatch.index 
-                    });
-                    // Move the regex index forward
-                    startRegex.lastIndex = i;
-                }
-            }
-        }
-        
-        visualMatches.sort((a, b) => a.index - b.index);
-        let lastIdx = 0;
-        visualMatches.forEach(vMatch => {
-            const beforeText = text.substring(lastIdx, vMatch.index);
-            if (beforeText.trim()) extractTablesFromText(beforeText);
-            
-            if (vMatch.type === 'tikz') {
-                processTikzBlock(vMatch.content, vMatch.full);
-            } else if (vMatch.type === 'nakedChart') {
-                try {
-                    const code = vMatch.content.trim();
-                    let cleanedCode = code;
-                    cleanedCode = cleanedCode.replace(/,\s*([\}\]])/g, '$1');
-                    const sanitizedCode = cleanedCode.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
-                    const chartData = JSON.parse(sanitizedCode);
-                    blocks.push({ 
-                        type: "chart", 
-                        chartType: chartData.type || "bar",
-                        data: chartData.data,
-                        title: chartData.title || "Interactive Data Chart"
-                    });
-                } catch (e) {
-                    blocks.push({ type: "code", lang: "chart", content: vMatch.content });
-                }
-            }
-            lastIdx = vMatch.index + vMatch.full.length;
-        });
-        const remainingText = text.substring(lastIdx);
-        if (remainingText.trim()) extractTablesFromText(remainingText);
-    };
-
-    while ((match = blockRegex.exec(normalizedContent)) !== null) {
-        const textBefore = normalizedContent.substring(lastIndex, match.index);
-        processTextAndTables(textBefore);
-        
-        const lang = (match[1] || "").toLowerCase().trim();
-        const code = match[2].trim();
-        
-        // ... (rest of the block handling remains the same)
-        if (lang === "chart") {
-            try {
-                // More robust JSON cleaning for AI-generated code blocks
-                let cleanedCode = code.trim();
-                // Handle potential trailing commas in JSON (common with AI)
-                cleanedCode = cleanedCode.replace(/,\s*([\}\]])/g, '$1');
-                // Ensure backslashes are escaped properly for JSON.parse
-                const sanitizedCode = cleanedCode.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
-                const chartData = JSON.parse(sanitizedCode);
-                blocks.push({ 
-                    type: "chart", 
-                    chartType: chartData.type || "bar",
-                    data: chartData.data,
-                    title: chartData.title || "Interactive Data Chart"
-                });
-            } catch (e) {
-                console.error("Chart JSON parse error:", e, code);
-                // Fallback to code block instead of raw text to prevent double-rendering issues
-                blocks.push({ type: "code", lang: "chart", content: code });
-            }
-        } else if (lang === "table") {
-            try {
-                const tableData = JSON.parse(code);
-                blocks.push({ type: "table", headers: tableData.headers, rows: tableData.rows, title: tableData.title });
-            } catch (e) {
-                blocks.push({ type: "code", lang: "table", content: code });
-            }
-        } else {
-            blocks.push({ type: "code", lang, content: code });
-        }
-        lastIndex = blockRegex.lastIndex;
-    }
-    processTextAndTables(normalizedContent.substring(lastIndex));
-    return blocks;
-};
-
 export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) => {
     if (!data) throw new Error("No data provided");
+    const courseModules = mode === "course" ? getCourseModules(data) : [];
 
     const pdf = new jsPDF({
         orientation: "portrait",
@@ -447,14 +286,17 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
     const pageHeight = 297;
     const margin = 20;
     const contentWidth = pageWidth - (margin * 2);
-    let y = 25;
+    const HEADER_LINE_Y = 12;
+    const CONTENT_START_Y = 20;
+    let y = CONTENT_START_Y;
+    const pageBottom = pageHeight - 22;
 
     // Header & Footer Helper
     const addPageDecoration = (pageNum, totalPages) => {
         // Header line
         pdf.setDrawColor(...COLORS.divider);
         pdf.setLineWidth(0.2);
-        pdf.line(margin, 15, pageWidth - margin, 15);
+        pdf.line(margin, HEADER_LINE_Y, pageWidth - margin, HEADER_LINE_Y);
 
         // Footer
         pdf.setDrawColor(...COLORS.divider);
@@ -464,18 +306,85 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
         pdf.setFontSize(8);
         pdf.setTextColor(...COLORS.textLight);
         pdf.text("Actirova AI Tutor - Personalized Learning", margin, pageHeight - 10);
-        pdf.text(`Copyright © Actirova AI Tutor. All rights reserved.`, pageWidth / 2, pageHeight - 10, { align: "center" });
+        pdf.text(`Copyright (c) Actirova AI Tutor. All rights reserved.`, pageWidth / 2, pageHeight - 10, { align: "center" });
         pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: "right" });
     };
 
     // Check Page Overflow
     const checkNewPage = (neededSpace) => {
-        if (y + neededSpace > pageHeight - 25) {
+        if (y + neededSpace > pageBottom) {
             pdf.addPage();
-            y = 25;
+            y = CONTENT_START_Y;
             return true;
         }
         return false;
+    };
+
+    const renderEquationBlock = (latex, { displayMode = true } = {}) => {
+        const cleaned = cleanLatex(String(latex || ""));
+        if (!cleaned.trim()) return;
+
+        const paddingX = 3;
+        const paddingY = 2.5;
+        const usableWidth = Math.max(10, contentWidth - (paddingX * 2));
+        const fontSize = displayMode ? 12 : 11;
+        const lineHeight = displayMode ? 6 : 5.5;
+
+        try {
+            pdf.setFont("JetBrainsMono", "normal");
+        } catch (_) {
+            pdf.setFont("courier", "normal");
+        }
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(...COLORS.text);
+
+        const lines = pdf.splitTextToSize(cleaned, usableWidth);
+        const blockHeight = (lines.length * lineHeight) + (paddingY * 2);
+
+        checkNewPage(blockHeight + 10);
+
+        pdf.setFillColor(247, 248, 250);
+        pdf.setDrawColor(...COLORS.divider);
+        pdf.setLineWidth(0.25);
+        pdf.rect(margin, y, contentWidth, blockHeight, "FD");
+
+        pdf.text(lines, margin + paddingX, y + paddingY + (lineHeight - 1.5));
+        y += blockHeight + 8;
+
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(11);
+        pdf.setTextColor(...COLORS.text);
+    };
+
+    const fitImageToPage = (sourceWidth, sourceHeight, maxWidth) => {
+        const safeWidth = Math.max(1, Number(sourceWidth) || 1);
+        const safeHeight = Math.max(1, Number(sourceHeight) || 1);
+        let width = maxWidth;
+        let height = (safeHeight * width) / safeWidth;
+        const maxHeight = pageBottom - y - 6;
+        if (height > maxHeight) {
+            height = Math.max(20, maxHeight);
+            width = (safeWidth * height) / safeHeight;
+        }
+        return { width, height };
+    };
+
+    const wrapCodeLine = (line, maxWidth) => {
+        const segments = [];
+        let current = "";
+
+        for (const char of String(line || "")) {
+            const next = current + char;
+            if (pdf.getTextWidth(next) > maxWidth && current) {
+                segments.push(current);
+                current = char;
+            } else {
+                current = next;
+            }
+        }
+
+        if (current || segments.length === 0) segments.push(current);
+        return segments;
     };
 
     // --- COVER PAGE ---
@@ -483,7 +392,7 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-    y = 40;
+    y = 34;
     try {
         // Add logo to cover page - letting jsPDF detect format from extension
         pdf.addImage("/logo.png", (pageWidth - 40) / 2, y, 40, 40);
@@ -564,75 +473,138 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
         pdf.setFontSize(10);
 
         const lines = text.split("\n");
+        const maxCodeWidth = contentWidth - ((Number(xPos) || margin) - margin) - 4;
 
         lines.forEach((line) => {
-            if (typeof y !== 'number' || !isFinite(y)) y = 25;
-            checkNewPage(7);
-            
-            const tokens = tokenizeCode(line, lang);
-            let currentX = Number(xPos) + 2;
+            const wrappedLines = wrapCodeLine(line, maxCodeWidth);
 
-            if (!tokens || tokens.length === 0) {
-                if (line && line.trim().length > 0) {
-                    pdf.setTextColor(50, 50, 50);
-                    pdf.text(String(line), isFinite(currentX) ? currentX : 22, isFinite(y) ? y : 25);
-                }
-            } else {
-                tokens.forEach(token => {
-                    if (!token || !token.text || typeof token.text !== 'string') return;
-                    
-                    pdf.setTextColor(...(token.color || [50, 50, 50]));
-                    const textPart = token.text;
-                    const partWidth = Number(pdf.getTextWidth(textPart)) || 0;
-                    
-                    const drawX = isFinite(currentX) ? currentX : 22;
-                    const drawY = isFinite(y) ? y : 25;
+            wrappedLines.forEach((wrappedLine) => {
+                if (typeof y !== 'number' || !isFinite(y)) y = CONTENT_START_Y;
+                checkNewPage(7);
 
-                    if (textPart.length > 0) {
-                        try {
-                            pdf.text(textPart, drawX, drawY);
-                        } catch (e) {
-                            pdf.setFont("courier", "normal");
-                            pdf.text(textPart, drawX, drawY);
-                        }
+                const tokens = tokenizeCode(wrappedLine, lang);
+                let currentX = Number(xPos) + 2;
+
+                if (!tokens || tokens.length === 0) {
+                    if (wrappedLine && wrappedLine.trim().length > 0) {
+                        pdf.setTextColor(50, 50, 50);
+                        pdf.text(
+                            String(wrappedLine),
+                            isFinite(currentX) ? currentX : 22,
+                            isFinite(y) ? y : CONTENT_START_Y
+                        );
                     }
-                    currentX = drawX + partWidth;
-                });
-            }
-            
-            y += 6;
+                } else {
+                    tokens.forEach(token => {
+                        if (!token || !token.text || typeof token.text !== 'string') return;
+
+                        pdf.setTextColor(...(token.color || [50, 50, 50]));
+                        const textPart = token.text;
+                        const partWidth = Number(pdf.getTextWidth(textPart)) || 0;
+
+                        const drawX = isFinite(currentX) ? currentX : 22;
+                        const drawY = isFinite(y) ? y : CONTENT_START_Y;
+
+                        if (textPart.length > 0) {
+                            try {
+                                pdf.text(textPart, drawX, drawY);
+                            } catch (e) {
+                                pdf.setFont("courier", "normal");
+                                pdf.text(textPart, drawX, drawY);
+                            }
+                        }
+                        currentX = drawX + partWidth;
+                    });
+                }
+
+                y += 6;
+            });
         });
         pdf.setFont("times", "normal");
         pdf.setTextColor(...COLORS.text);
     };
 
-    const processContent = (content) => {
+    const processContent = async (content, ctx = {}) => {
         if (!content) return;
-        const blocks = parseContentIntoBlocks(content);
+        // Normalize math blocks so we can detect and render them as text blocks in the PDF,
+        // even when delimiters are inline or spanning multiple lines.
+        const normalizedForMath = String(content || "")
+            .replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `\\[\n${inner}\n\\]`)
+            .replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, (_m, inner) => `$$\n${inner}\n$$`);
+        const blocks = parseContentIntoBlocks(normalizedForMath);
+
+        const courseTitleCtx = String(ctx.courseTitle || data.course || data.title || "").trim();
+        const moduleTitleCtx = String(ctx.moduleTitle || data.module || "").trim();
+        const lessonTitleCtx = String(ctx.lessonTitle || ctx.title || "").trim();
+        const courseTitleLower = courseTitleCtx.toLowerCase();
+        const moduleTitleLower = moduleTitleCtx.toLowerCase();
+        const lessonTitleLower = lessonTitleCtx.toLowerCase();
 
         let chartIdx = 0;
         let tableIdx = 0;
 
-        blocks.forEach(block => {
+        for (const block of blocks) {
             if (block.type === "chart" || block.type === "table") {
                 const targetType = block.type;
                 const targetIndex = targetType === "chart" ? chartIdx++ : tableIdx++;
 
+                if (block.type === "table") {
+                    checkNewPage(24);
+
+                    const headers = Array.isArray(block.headers)
+                        ? block.headers.map((cell) => cleanLatex(String(cell ?? "")).trim())
+                        : [];
+                    const rows = Array.isArray(block.rows)
+                        ? block.rows.map((row) =>
+                              Array.isArray(row)
+                                  ? row.map((cell) => cleanLatex(String(cell ?? "")).trim())
+                                  : []
+                          )
+                        : [];
+
+                    autoTable(pdf, {
+                        startY: y,
+                        head: headers.length ? [headers] : [],
+                        body: rows,
+                        theme: "grid",
+                        margin: { left: margin, right: margin },
+                        styles: {
+                            font: "times",
+                            fontSize: 10,
+                            cellPadding: 2.5,
+                            overflow: "linebreak",
+                            textColor: COLORS.text,
+                            lineColor: COLORS.divider,
+                            lineWidth: 0.2,
+                        },
+                        headStyles: {
+                            fillColor: COLORS.primaryLight,
+                            textColor: COLORS.primary,
+                            fontStyle: "bold",
+                        },
+                        alternateRowStyles: {
+                            fillColor: [250, 250, 252],
+                        },
+                    });
+
+                    y = (pdf.lastAutoTable?.finalY || y) + 8;
+                    continue;
+                }
+
                 const visualData = visuals.find(v => v.type === targetType && v.index === targetIndex);
                 if (visualData && visualData.image) {
-                    const imgWidth = contentWidth;
-                    const imgHeight = (visualData.height * imgWidth) / visualData.width;
-                    checkNewPage(imgHeight + 10); // Ensure space for image
+                    const fitted = fitImageToPage(visualData.width, visualData.height, contentWidth);
+                    checkNewPage(fitted.height + 10);
                     try {
-                        pdf.addImage(visualData.image, margin, y, imgWidth, imgHeight);
-                        y += imgHeight + 10;
+                        pdf.addImage(visualData.image, margin, y, fitted.width, fitted.height);
+                        y += fitted.height + 10;
                     } catch (imgErr) {
                         console.error(`Failed to add ${targetType} image to PDF:`, imgErr);
                         // Fallback fallback
                         if (block.type === "chart") {
-                            renderCodeBlock(JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2), margin + 4);
+                            renderCodeBlock(JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2), margin + 4, "json");
                         } else {
-                            renderCodeBlock(block.headers.join(" | "), margin + 4);
+                            renderCodeBlock(block.headers.join(" | "), margin + 4, "text");
                         }
                     }
                 } else {
@@ -640,22 +612,69 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                     y += 2;
                     if (block.type === "chart") {
                         const fallbackContent = block.data ? JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2) : "Chart Data Missing";
-                        renderCodeBlock(fallbackContent, margin + 4);
-                    } else if (block.type === "table") {
-                        const tableText = (block.headers?.join(" | ") || "") + "\n" + (block.rows?.map(r => r.join(" | ")).join("\n") || "");
-                        renderCodeBlock(tableText || "Table Data Missing", margin + 4);
+                        renderCodeBlock(fallbackContent, margin + 4, "json");
                     }
                 }
             } else if (block.type === "code") {
                 y += 2;
-                renderCodeBlock(block.content, block.lang, margin + 4);
+                renderCodeBlock(block.content, margin + 4, block.lang);
             } else if (block.type === "text") {
                 const lines = block.content.split('\n');
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
-                    let trimmedLine = line.trim();
+                    const rawTrimmedLine = String(line || "").trim();
 
+                    // Multi-line display math blocks:
+                    // \[ ... \] or $$ ... $$ where delimiters are on their own lines.
+                    if (rawTrimmedLine === "\\[" || rawTrimmedLine === "$$") {
+                        const endMarker = rawTrimmedLine === "\\[" ? "\\]" : "$$";
+                        const latexLines = [];
+                        let j = i + 1;
+                        for (; j < lines.length; j++) {
+                            const t = String(lines[j] || "").trim();
+                            if (t === endMarker) break;
+                            latexLines.push(lines[j]);
+                        }
+
+                        if (j < lines.length) {
+                            const latex = latexLines.join("\n").trim();
+                            if (latex) {
+                                renderEquationBlock(latex, { displayMode: true });
+                            }
+
+                            i = j;
+                            continue;
+                        }
+                    }
+
+                    // Render display-math as text blocks in PDFs.
+                    // We only handle block-style math to avoid breaking prose lines.
+                    const displayMatch =
+                        rawTrimmedLine.match(/^\\\[\s*([\s\S]+?)\s*\\\]$/) ||
+                        rawTrimmedLine.match(/^\$\$\s*([\s\S]+?)\s*\$\$$/) ||
+                        rawTrimmedLine.match(/^\\\(\s*([\s\S]+?)\s*\\\)$/);
+                    if (displayMatch) {
+                        const latex = displayMatch[1];
+                        renderEquationBlock(latex, { displayMode: true });
+                        continue;
+                    }
+
+                    // Handle single-line $...$ that actually looks like math (not currency)
+                    const dollarMath = rawTrimmedLine.match(/^\$\s*([^\$\n]+?)\s*\$$/);
+                    if (dollarMath) {
+                        const inner = dollarMath[1];
+                        const looksMath = /\\[a-zA-Z]+|\^|_|\=|\\frac|\\sqrt/.test(inner);
+                        if (looksMath) {
+                            renderEquationBlock(inner, { displayMode: true });
+                            continue;
+                        }
+                    }
+
+                    let trimmedLine = rawTrimmedLine;
                     trimmedLine = typeof cleanLatex === "function" ? cleanLatex(trimmedLine) : trimmedLine;
+
+                    const rawLine = stripMarkdown(trimmedLine).trim();
+                    const rawLower = rawLine.toLowerCase();
 
                     // Handle horizontal rule
                     if (trimmedLine.match(/^\s*[-*_]{3,}\s*$/)) {
@@ -668,18 +687,44 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                         continue;
                     }
 
+                    // Skip repeated context labels/titles that make course PDFs look messy.
+                    const headingMatch = /^#{1,6}\s+(.+)$/.exec(trimmedLine);
+                    if (headingMatch) {
+                        const headingText = stripMarkdown(headingMatch[1]).trim().toLowerCase();
+                        if (
+                            (lessonTitleLower && headingText === lessonTitleLower) ||
+                            (moduleTitleLower && headingText === moduleTitleLower) ||
+                            (courseTitleLower && headingText === courseTitleLower) ||
+                            /^((lesson|module|course|topic)\s*[:\-])/.test(headingText)
+                        ) {
+                            continue;
+                        }
+                    }
+
+                    const isLabelLine = /^(lesson|module|course|topic)\s*[:\-]/i.test(rawLine);
+                    if (isLabelLine) continue;
+
+                    // e.g. "1.1 What is Financial Literacy?" duplicated under lesson header
+                    if (lessonTitleLower && /^\d+(\.\d+)*\s+/.test(rawLine)) {
+                        const withoutNums = rawLower.replace(/^\d+(\.\d+)*\s+/, "").trim();
+                        if (withoutNums === lessonTitleLower) continue;
+                    }
+
                     const cleanLine = stripMarkdown(trimmedLine).toLowerCase().replace(/^(course|module|lesson|topic):\s*/, "").trim();
                     const isRedundant =
                         cleanLine === data.title?.toLowerCase() ||
                         (data.course && cleanLine === data.course.toLowerCase()) ||
                         (data.module && cleanLine === data.module.toLowerCase()) ||
+                        (courseTitleLower && cleanLine === courseTitleLower) ||
+                        (moduleTitleLower && cleanLine === moduleTitleLower) ||
+                        (lessonTitleLower && cleanLine === lessonTitleLower) ||
                         (data.course && cleanLine.includes(data.course.toLowerCase())) ||
                         (data.module && cleanLine.includes(data.module.toLowerCase())) ||
                         (data.title && (cleanLine.includes(data.title.toLowerCase()) || data.title.toLowerCase().includes(cleanLine))) ||
-                        trimmedLine.toLowerCase().startsWith("module:") ||
-                        trimmedLine.toLowerCase().startsWith("lesson:") ||
-                        trimmedLine.toLowerCase().startsWith("course:") ||
-                        trimmedLine.toLowerCase().startsWith("topic:");
+                        rawLower.startsWith("module:") ||
+                        rawLower.startsWith("lesson:") ||
+                        rawLower.startsWith("course:") ||
+                        rawLower.startsWith("topic:");
 
                     if (isRedundant || (trimmedLine.match(/^[-*_]{3,}$/) && y < 65)) {
                         continue;
@@ -688,11 +733,17 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                     checkNewPage(12);
 
                     if (trimmedLine.startsWith("# ")) {
+                        // In course PDFs we already print lesson headings, so skip H1 blocks from content
+                        // to avoid messy "double title" pages.
+                        if (String(ctx.renderMode || "").toLowerCase() === "course") {
+                            continue;
+                        }
                         const headerText = stripMarkdown(trimmedLine.substring(2).trim());
                         y += 2;
                         pdf.setFont("times", "bold");
-                        pdf.setFontSize(26);
                         pdf.setTextColor(...COLORS.text);
+
+                        pdf.setFontSize(26);
                         pdf.text(headerText, pageWidth / 2, y, { align: "center" });
                         y += 10;
                     } else if (trimmedLine.startsWith("## ")) {
@@ -771,11 +822,11 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                     }
                 }
             }
-        });
+        }
     };
 
     if (mode === "course") {
-        const modules = data.modules || data.courseData?.modules || [];
+        const modules = courseModules;
 
         // Add Table of Contents
         pdf.setFont("times", "bold");
@@ -789,41 +840,57 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
             pdf.setFontSize(12);
             pdf.setFont("times", "normal");
             pdf.setTextColor(...COLORS.text);
-            pdf.text(`Module ${idx + 1}: ${mod.title}`, margin, y);
+            pdf.text(getModuleDisplayTitle(mod.title, idx), margin, y);
             y += 8;
         });
 
         // Process Modules
-        modules.forEach((mod, idx) => {
+        for (let idx = 0; idx < modules.length; idx++) {
+            const mod = modules[idx];
             pdf.addPage();
             y = 30;
 
             // Module Title
             pdf.setFillColor(...COLORS.primaryLight);
-            pdf.rect(margin, y - 8, contentWidth, 15, "F");
             pdf.setFont("times", "bold");
             pdf.setFontSize(20);
             pdf.setTextColor(...COLORS.primary);
-            pdf.text(`Module ${idx + 1}: ${mod.title}`, margin + 5, y + 2);
-            y += 20;
+            const moduleTitle = getModuleDisplayTitle(mod.title, idx);
+            const moduleTitleLines = pdf.splitTextToSize(moduleTitle, contentWidth - 10);
+            const boxHeight = Math.max(15, (moduleTitleLines.length * 7) + 8);
+            pdf.rect(margin, y - 8, contentWidth, boxHeight, "F");
+            pdf.text(moduleTitleLines, margin + 5, y + 2);
+            y += boxHeight + 7;
 
-            mod.lessons?.forEach((lesson, lIdx) => {
+            const lessons = getPrintableLessons(mod.lessons);
+            for (let lIdx = 0; lIdx < lessons.length; lIdx++) {
+                const lesson = lessons[lIdx];
                 checkNewPage(20);
                 pdf.setFont("times", "bold");
                 pdf.setFontSize(16);
                 pdf.setTextColor(...COLORS.text);
-                pdf.text(`${idx + 1}.${lIdx + 1} ${lesson.title || lesson}`, margin, y);
+                pdf.text(getLessonDisplayTitle(lesson.title || lesson, idx, lIdx), margin, y);
                 y += 10;
 
-                if (lesson.content) {
-                    processContent(lesson.content);
+                if (lesson && lesson.content) {
+                    await processContent(lesson.content, {
+                        courseTitle: data.title,
+                        moduleTitle: moduleTitle,
+                        lessonTitle: lesson.title || lesson,
+                        renderMode: "course",
+                    });
                 }
                 y += 10;
-            });
-        });
+            }
+        }
     } else {
         // Mode is "notes"
-        processContent(data.content);
+        await processContent(data.content, {
+            courseTitle: data.course,
+            moduleTitle: data.module,
+            lessonTitle: data.title,
+            renderMode: "notes",
+        });
     }
 
     // --- FINAL DECORATION ---
@@ -1086,7 +1153,7 @@ export const downloadReceiptAsPDF = async (data) => {
 
     pdf.text(data.plan || "Pro Subscription", MARGIN, y);
     pdf.text(
-        data.validFrom || data.transactionDate || "—",
+        data.validFrom || data.transactionDate || "-",
         PAGE_WIDTH - MARGIN - 60,
         y
     );
@@ -1218,7 +1285,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
 
         return textValue(value)
             .split(/\r?\n/)
-            .map((item) => item.replace(/^[-*•]\s*/, "").trim())
+            .map((item) => item.replace(/^[-*]\s*/, "").trim())
             .filter(Boolean);
     };
 
@@ -1314,7 +1381,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
             pdf.setFont("times", "bold");
             pdf.setFontSize(10);
             pdf.setTextColor(...COLORS.accent);
-            pdf.text("•", MARGIN + 1, y);
+            pdf.text("-", MARGIN + 1, y);
             pdf.setFont("times", "normal");
             pdf.setFontSize(10.5);
             pdf.setTextColor(...COLORS.text);
@@ -1501,7 +1568,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
 
     if (false && data.skills.length > 0) {
         drawSectionTitle("Skills");
-        writeWrappedText(normalizeList(data.skills).join(" • "), MARGIN, CONTENT_WIDTH, {
+        writeWrappedText(normalizeList(data.skills).join(" - "), MARGIN, CONTENT_WIDTH, {
             size: 10.8,
             color: COLORS.text,
             lineHeight: BASE_LINE_HEIGHT,
@@ -1555,7 +1622,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
                 return [language, level].filter(Boolean).join(" - ");
             })
             .filter(Boolean)
-            .join(" • ");
+            .join(" - ");
 
         writeWrappedText(languageText, MARGIN, CONTENT_WIDTH, {
             size: 10.8,
@@ -1567,7 +1634,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
 
     if (data.skills.length > 0) {
         drawSectionTitle("Skills");
-        writeWrappedText(normalizeList(data.skills).join(" • "), MARGIN, CONTENT_WIDTH, {
+        writeWrappedText(normalizeList(data.skills).join(" - "), MARGIN, CONTENT_WIDTH, {
             size: 10.8,
             color: COLORS.text,
             lineHeight: BASE_LINE_HEIGHT,
@@ -1644,7 +1711,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
 
         return textValue(value)
             .split(/\r?\n/)
-            .map((item) => item.replace(/^[-*•]\s*/, "").trim())
+            .map((item) => item.replace(/^[-*]\s*/, "").trim())
             .filter(Boolean);
     };
 
@@ -1867,7 +1934,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
         content.push(sectionHeading("Skills"));
         content.push(
             new Paragraph({
-                text: normalizeList(data.skills).join(" • "),
+                text: normalizeList(data.skills).join(" - "),
                 spacing: { after: 120, line: 360 },
             })
         );
@@ -1925,7 +1992,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
                         return [textValue(item.language), textValue(item.level)].filter(Boolean).join(" - ");
                     })
                     .filter(Boolean)
-                    .join(" • "),
+                    .join(" - "),
                 spacing: { after: 120, line: 360 },
             })
         );
@@ -1935,7 +2002,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
         content.push(sectionHeading("Skills"));
         content.push(
             new Paragraph({
-                text: normalizeList(data.skills).join(" • "),
+                text: normalizeList(data.skills).join(" - "),
                 spacing: { after: 120, line: 360 },
             })
         );

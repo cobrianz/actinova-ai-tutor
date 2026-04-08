@@ -2,7 +2,7 @@
   "name": "Actirova AI Tutor",
   "short_name": "Actirova",
   "description": "Master any skill with AI-powered personalized learning paths, instant feedback, and dynamic courses.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

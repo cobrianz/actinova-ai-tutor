@@ -1,11 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // This forces a full rebuild when you have runtime errors
-  webpack: (config, { dev, isServer }) => {
-    if (dev) {
-      config.cache = false; // disables webpack cache in dev
-    }
+import withPWA from "next-pwa";
 
+const nextConfig = {
+  webpack: (config, { dev, isServer }) => {
     // Polyfill or ignore modules for client-side react-pdf
     config.resolve.alias.canvas = false;
     config.resolve.alias.encoding = false;
@@ -14,14 +11,11 @@ const nextConfig = {
   },
   serverExternalPackages: ['@react-pdf/renderer', 'puppeteer'],
   pwa: {
-    dest: 'public',
-    disable: process.env.NODE_ENV === 'development',
+    dest: "public",
+    disable: process.env.NODE_ENV === "development",
     register: true,
     skipWaiting: true,
   },
 };
 
-export default async () => {
-  const { default: withPWA } = await import('next-pwa');
-  return withPWA(nextConfig);
-};
+export default withPWA(nextConfig);

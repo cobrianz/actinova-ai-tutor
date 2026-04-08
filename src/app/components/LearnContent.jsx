@@ -20,7 +20,7 @@ import {
   Sparkles,
   X,
   CheckCircle,
-  Home,
+  LayoutDashboard,
   Pin,
   Lock,
   BarChart3,
@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "sonner";
-import { downloadCourseAsPDF, parseContentIntoBlocks } from "@/lib/pdfUtils";
+import { parseContentIntoBlocks } from "@/lib/contentBlocks";
 import { highlightToHtml } from "@/lib/syntaxHighlighter";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
@@ -104,6 +104,7 @@ export default function LearnContent() {
   const fetchInProgressRef = useRef(false); // Prevent duplicate API calls
   const lastShareUpdateRef = useRef(0); // Timestamp of last personal share toggle
   const initializedCoursesRef = useRef(new Set()); // Track initialized courses
+  const mobileSidebarHintedCoursesRef = useRef(new Set());
   const contentRef = useRef(null);
   const lastWidthRef = useRef(typeof window !== "undefined" ? window.innerWidth : 0);
   const chatContainerRef = useRef(null);
@@ -411,6 +412,20 @@ export default function LearnContent() {
     // Actually, usually users expect themes/layouts to react to resize but manual toggles to persist.
     // For now, let's just do it on mount to satisfy the "defaults" requirement.
   }, []);
+
+  useEffect(() => {
+    if (
+      !courseData?._id ||
+      typeof window === "undefined" ||
+      window.innerWidth >= 768 ||
+      mobileSidebarHintedCoursesRef.current.has(String(courseData._id))
+    ) {
+      return;
+    }
+
+    mobileSidebarHintedCoursesRef.current.add(String(courseData._id));
+    setIsSidebarOpen(true);
+  }, [courseData?._id]);
 
   const toggleModule = (moduleId) => {
     const newExpanded = new Set(expandedModules);
@@ -769,10 +784,8 @@ export default function LearnContent() {
   const handleDownloadLesson = async () => {
     if (!currentLesson?.content || lessonContentLoading) return;
 
-    const isPro = user && ((user.subscription?.plan === "pro" && user.subscription?.status === "active") || user.isPremium);
     if (!isPro) {
-      toast.error("Lesson PDF downloads are a Pro feature. Please upgrade.");
-      router.push("/pricing");
+      toast.error("Unlock this course to download lesson PDFs.");
       return;
     }
 
@@ -850,11 +863,44 @@ export default function LearnContent() {
         course: courseData?.title,
         module: activeModule?.title
       };
+      const { downloadCourseAsPDF } = await import("@/lib/pdfUtils");
       await downloadCourseAsPDF(lessonData, "notes", visuals);
       toast.success("Download started!", { id: toastId });
     } catch (error) {
       console.error("Lesson download error:", error);
       toast.error("Failed to download lesson PDF", { id: toastId });
+    }
+  };
+
+  const handleMarkCurrentLesson = async () => {
+    if (!activeLesson || !currentLesson?.content || lessonContentLoading) return;
+    const lessonId = currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+    const isCurrentlyCompleted = completedLessons.has(lessonId);
+    const action = isCurrentlyCompleted ? "incomplete" : "complete";
+    toast.loading(`Marking lesson as ${action}...`, { id: "mark-complete" });
+
+    try {
+      await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
+      toast.success(`Lesson marked as ${action}!`, { id: "mark-complete" });
+    } catch (error) {
+      toast.error(`Error: ${error.message}`, { id: "mark-complete" });
+    }
+  };
+
+  const handleDownloadCourse = async () => {
+    if (!courseData) return;
+    if (!isPro) {
+      toast.error("Unlock this course to download the generated course PDF.");
+      return;
+    }
+
+    try {
+      const { downloadCourseAsPDF } = await import("@/lib/pdfUtils");
+      await downloadCourseAsPDF(courseData, format);
+      toast.success("Course PDF download started!");
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error(error?.message || "Failed to download course PDF");
     }
   };
 
@@ -1311,19 +1357,19 @@ export default function LearnContent() {
     html = html.replace(/^[ \t]*# (?!Module|Lesson|Course|Topic)(.*)$/gm, "");
     html = html.replace(
       /^[ \t]*## (.*$)/gm,
-      '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-4 mt-8">$1</h2>'
+      '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-3 mt-3">$1</h2>'
     );
     html = html.replace(
       /^[ \t]*### (.*$)/gm,
-      '<h3 class="text-xl lg:text-3xl font-bold font-serif text-foreground/90 mb-3 mt-6">$1</h3>'
+      '<h3 class="text-xl lg:text-3xl font-bold font-serif text-foreground/90 mb-2 mt-3">$1</h3>'
     );
     html = html.replace(
       /^[ \t]*#### (.*$)/gm,
-      '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-4">$1</h4>'
+      '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-2.5">$1</h4>'
     );
     html = html.replace(
       /^[ \t]*##### (.*$)/gm,
-      '<h5 class="text-md lg:text-xl font-bold font-serif text-foreground/90 mb-1 mt-3">$1</h5>'
+      '<h5 class="text-md lg:text-xl font-bold font-serif text-foreground/90 mb-1 mt-2">$1</h5>'
     );
     html = html.replace(
       /^[ \t]*###### (.*$)/gm,
@@ -1356,6 +1402,7 @@ export default function LearnContent() {
     const lines = html.split("\n");
     let processedHtml = [];
     let listStack = [];
+    const blankSpacer = '<div class="h-1"></div>';
 
     const closeList = () => {
       if (listStack.length > 0) {
@@ -1380,7 +1427,9 @@ export default function LearnContent() {
         if (!nextIsList) {
           closeList();
         }
-        processedHtml.push('<div class="h-2"></div>');
+        if (processedHtml[processedHtml.length - 1] !== blankSpacer) {
+          processedHtml.push(blankSpacer);
+        }
         continue;
       }
 
@@ -1469,6 +1518,16 @@ export default function LearnContent() {
     totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
 
   const currentLesson = getCurrentLesson();
+  const currentLessonId =
+    currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+  const isCurrentLessonCompleted = completedLessons.has(currentLessonId);
+  const canDownloadCoursePdf = Boolean(courseData && isPro);
+  const canDownloadLessonPdf = Boolean(
+    currentLesson?.content &&
+      currentLesson.content !== "Content for this lesson is coming soon..." &&
+      !lessonContentLoading &&
+      isPro
+  );
 
   const saveNotes = async (notesContent) => {
     if (!notesContent.trim()) return;
@@ -1514,6 +1573,7 @@ export default function LearnContent() {
 
     toast.loading("Preparing your study notes PDF...", { id: "downloading-notes" });
     try {
+      const { downloadCourseAsPDF } = await import("@/lib/pdfUtils");
       await downloadCourseAsPDF(notesData, "notes");
       toast.success("Notes downloaded successfully!", { id: "downloading-notes" });
     } catch (err) {
@@ -2279,22 +2339,22 @@ export default function LearnContent() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-background font-serif overflow-hidden">
+      <div className="h-[100dvh] flex flex-col bg-background font-serif overflow-hidden">
       {/* Permanent Navbar Header */}
-      <div className="bg-card backdrop-blur-md border-b border-border p-3 sm:p-4 z-50 shadow-sm relative">
-        <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6">
+      <div className="bg-card backdrop-blur-md border-b border-border py-2 px-3 sm:py-2.5 sm:px-4 z-[80] shadow-sm relative">
+        <div className="flex items-center justify-between w-full px-0 sm:px-2 lg:px-4">
           {/* Left Group - Navigation */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Link
               href="/dashboard"
-              className="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-foreground text-background hover:opacity-90 transition-all font-bold shadow-lg"
+              className="hidden lg:flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-secondary/40 text-muted-foreground hover:bg-secondary transition-all"
+              title="Dashboard"
             >
-              <Home className="w-4 h-4" />
-              <span className="hidden md:inline">Dashboard</span>
+              <LayoutDashboard className="w-4 h-4" />
             </Link>
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isSidebarOpen
+              className={`hidden md:flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isSidebarOpen
                 ? "bg-primary/10 text-primary border-primary/20"
                 : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
                 }`}
@@ -2305,7 +2365,7 @@ export default function LearnContent() {
           </div>
 
           {/* Right Group - Controls (Always visible for easy access) */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="hidden md:flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={handleShare}
               disabled={!courseData?._id || isSharingToggle}
@@ -2326,26 +2386,13 @@ export default function LearnContent() {
               onClick={handleDownloadLesson}
               className="p-1.5 sm:p-2 rounded-lg border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
               title="Download Lesson PDF"
-              disabled={!currentLesson?.content || lessonContentLoading}
+              disabled={!canDownloadLessonPdf}
             >
               <Download className="w-4 h-4" />
             </button>
             <button
-              onClick={async () => {
-                if (!activeLesson || lessonContentLoading) return;
-                const lessonId = currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
-                const isCurrentlyCompleted = completedLessons.has(lessonId);
-                const action = isCurrentlyCompleted ? "incomplete" : "complete";
-                toast.loading(`Marking lesson as ${action}...`, { id: "mark-complete" });
-
-                try {
-                  await toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
-                  toast.success(`Lesson marked as ${action}!`, { id: "mark-complete" });
-                } catch (error) {
-                  toast.error(`Error: ${error.message}`, { id: "mark-complete" });
-                }
-              }}
-              className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-bold border ${completedLessons.has(currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
+              onClick={handleMarkCurrentLesson}
+              className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-bold border ${isCurrentLessonCompleted
                 ? "bg-green-500/10 text-green-500 border-green-500/20"
                 : "bg-primary/10 text-primary border-primary/20"
                 }`}
@@ -2353,9 +2400,7 @@ export default function LearnContent() {
             >
               <CheckCircle className="w-4 h-4" />
               <span className="hidden sm:inline">
-                {completedLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`)
-                  ? "Done"
-                  : "Complete"}
+                {isCurrentLessonCompleted ? "Done" : "Complete"}
               </span>
             </button>
             <button
@@ -2376,23 +2421,23 @@ export default function LearnContent() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Backdrops - moved outside to fix blur and hidden on large screens */}
         {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
+            <div
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
         )}
         {isRightPanelOpen && (
-          <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
-            onClick={() => setIsRightPanelOpen(false)}
-          />
+            <div
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] lg:hidden"
+              onClick={() => setIsRightPanelOpen(false)}
+            />
         )}
 
         {/* Left Sidebar - Course Navigation */}
-        <div
-          className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } w-full lg:w-80 bg-card border-r border-border flex flex-col absolute z-40 transition-transform duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar shadow-xl`}
-        >
+          <div
+            className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+              } w-full lg:w-80 bg-card border-r border-border flex flex-col absolute z-[80] transition-transform duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar shadow-xl pb-24 md:pb-0`}
+          >
 
           <div className="p-4 lg:p-6 border-b border-border">
             <div className="flex justify-between flex-wrap flex-col">
@@ -2410,56 +2455,19 @@ export default function LearnContent() {
               lessons
             </p>
             <button
-              onClick={() => {
-                const isPro =
-                  user &&
-                  ((user.subscription &&
-                    user.subscription.plan === "pro" &&
-                    user.subscription.status === "active") ||
-                    user.isPremium);
-                if (!isPro) {
-                  toast.error(
-                    "PDF downloads are a Pro feature. Please upgrade."
-                  );
-                  router.push("/pricing");
-                  return;
-                }
-                try {
-                  downloadCourseAsPDF(courseData, format);
-                  toast.success("PDF download started!");
-                } catch (error) {
-                  console.error("Error downloading PDF:", error);
-                  toast.error("Failed to download PDF");
-                }
-              }}
-              disabled={
-                !(
-                  user &&
-                  ((user.subscription &&
-                    user.subscription.plan === "pro" &&
-                    user.subscription.status === "active") ||
-                    user.isPremium)
-                )
-              }
+              onClick={handleDownloadCourse}
+              disabled={!canDownloadCoursePdf}
               className={
-                user &&
-                  ((user.subscription &&
-                    user.subscription.plan === "pro" &&
-                    user.subscription.status === "active") ||
-                    user.isPremium)
+                canDownloadCoursePdf
                   ? "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-500/20"
                   : "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               }
             >
               <Download className="w-4 h-4" />
               <span>
-                {user &&
-                  ((user.subscription &&
-                    user.subscription.plan === "pro" &&
-                    user.subscription.status === "active") ||
-                    user.isPremium)
+                {canDownloadCoursePdf
                   ? `Download ${format === "flashcards" ? "Flashcards" : "Course"} as PDF`
-                  : "Upgrade to Pro for PDF"}
+                  : "Unlock course to download PDF"}
               </span>
             </button>
             <div className="flex items-center space-x-2 mb-4">
@@ -2615,7 +2623,7 @@ export default function LearnContent() {
             ref={contentRef}
             className="flex-1 overflow-y-auto hide-scrollbar bg-background cursor-pointer lg:cursor-default"
           >
-            <div className={`mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
+            <div className={`mx-auto p-4 pb-28 sm:p-6 sm:pb-32 lg:p-8 lg:pb-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
               {generatingLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
@@ -2629,6 +2637,11 @@ export default function LearnContent() {
               ) : currentLesson?.content ? (
                 <div>
                   <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
+                    <div className="not-prose mb-3">
+                      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground border-b-2 border-slate-300 dark:border-slate-600 pb-2">
+                        {currentLesson?.title || "Lesson"}
+                      </h1>
+                    </div>
                     {/* Visualizations removed: use images or links in content */}
                     <div className="space-y-6" id="lesson-content-container">
                       {parseContentIntoBlocks(currentLesson.content).map((block, idx) => {
@@ -2706,7 +2719,7 @@ export default function LearnContent() {
         {/* Right Panel - Notes & AI Tutor */}
         <div
           className={`${isRightPanelOpen ? "translate-x-0" : "translate-x-full"
-            } w-full lg:w-80 xl:w-96 bg-card border-l border-border flex flex-col absolute z-40 transition-transform duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-full shadow-xl`}
+            } w-full lg:w-80 xl:w-96 bg-card border-l border-border flex flex-col absolute z-[80] transition-transform duration-300 max-w-[100vw] md:max-w-[400px] right-0 h-full shadow-xl pb-24 md:pb-0`}
         >
           <div className="border-b border-border relative">
             <div className="flex">
@@ -2858,6 +2871,60 @@ export default function LearnContent() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[90] border-t border-border bg-card/95 backdrop-blur-xl px-2 py-2">
+        <div className="grid grid-cols-5 gap-1">
+          <button
+            onClick={() => setIsSidebarOpen((prev) => !prev)}
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
+              isSidebarOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Menu className="w-4 h-4" />
+            <span>Modules</span>
+          </button>
+          <button
+            onClick={handleMarkCurrentLesson}
+            disabled={!currentLesson?.content || lessonContentLoading}
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
+              isCurrentLessonCompleted ? "text-green-600" : "text-muted-foreground hover:text-foreground"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <CheckCircle
+              className="w-4 h-4"
+              fill={isCurrentLessonCompleted ? "currentColor" : "none"}
+            />
+            <span>Status</span>
+          </button>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            onClick={handleDownloadCourse}
+            disabled={!canDownloadCoursePdf}
+            className="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            <span>Save</span>
+          </button>
+          <button
+            onClick={() => setIsRightPanelOpen((prev) => !prev)}
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
+              isRightPanelOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <MessageCircle
+              className="w-4 h-4"
+              fill={isRightPanelOpen ? "currentColor" : "none"}
+            />
+            <span>Tools</span>
+          </button>
         </div>
       </div>
 

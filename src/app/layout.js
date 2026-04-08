@@ -4,6 +4,7 @@ import { AuthProvider } from "./components/AuthProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
 import InstallPrompt from "./components/InstallPrompt";
+import DevServiceWorkerReset from "./components/DevServiceWorkerReset";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -80,6 +81,7 @@ export default function RootLayout({ children }) {
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
           <AuthProvider>
             {children}
+            <DevServiceWorkerReset />
             <ToasterClient />
             <InstallPrompt />
             <SpeedInsights />
