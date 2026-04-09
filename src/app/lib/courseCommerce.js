@@ -437,6 +437,42 @@ export async function savePremiumGenerationIntent({
     { upsert: true }
   );
 
+  // If the user already has this course in their library, apply the paid window immediately
+  // so the UI unlocks even before/without hitting the generate endpoint.
+  try {
+    const libraryCol = db.collection("library");
+    const existing = await libraryCol.findOne({
+      userId: new ObjectId(userId),
+      format: "course",
+      difficulty,
+      topic: topicKey,
+    });
+
+    if (existing) {
+      const existingExpiry = existing.premiumAccessExpiresAt
+        ? new Date(existing.premiumAccessExpiresAt)
+        : null;
+      const hasLiveWindow = existingExpiry && existingExpiry > now;
+
+      if (!hasLiveWindow) {
+        await libraryCol.updateOne(
+          { _id: existing._id },
+          {
+            $set: {
+              isPremium: true,
+              premiumAccessExpiresAt: accessExpiresAt,
+              premiumPaymentReference: reference || existing.premiumPaymentReference || null,
+              updatedAt: now,
+            },
+          }
+        );
+      }
+    }
+  } catch (e) {
+    // Non-blocking; generation endpoint will still apply the window.
+    console.warn("[courseCommerce] Failed to apply premium window to existing course:", e?.message || e);
+  }
+
   return { accessExpiresAt };
 }
 
@@ -446,12 +482,18 @@ export async function getPaidPremiumGenerationIntent({
   topic,
   difficulty,
 }) {
-  return db.collection("premium_generation_intents").findOne({
-    userId: new ObjectId(userId),
-    topicKey: normalizeTopicKey(topic),
-    difficulty,
-    status: "paid",
-  });
+  const now = new Date();
+  return db.collection("premium_generation_intents").findOne(
+    {
+      userId: new ObjectId(userId),
+      topicKey: normalizeTopicKey(topic),
+      difficulty,
+      status: { $in: ["paid", "consumed"] },
+      // If the access window has already expired, treat it as unpaid.
+      accessExpiresAt: { $gt: now },
+    },
+    { sort: { updatedAt: -1, createdAt: -1 } }
+  );
 }
 
 export async function consumePremiumGenerationIntent({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, useDeferredValue } from "react";
 import Link from "next/link";
 import katex from "katex";
 import "katex/dist/katex.min.css";
@@ -63,6 +63,7 @@ export default function LearnContent() {
   const actualTopic = originalTopic ? decodeURIComponent(originalTopic) : topic;
   const [activeView, setActiveView] = useState("outline");
   const [completedLessons, setCompletedLessons] = useState(new Set());
+  const completedLessonsRef = useRef(new Set());
   const [expandedModules, setExpandedModules] = useState(new Set([1]));
   // Initialize lesson from URL or default
   const [activeLesson, setActiveLesson] = useState(() => {
@@ -111,6 +112,10 @@ export default function LearnContent() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitModalData, setLimitModalData] = useState(null);
 
+  useEffect(() => {
+    completedLessonsRef.current = completedLessons;
+  }, [completedLessons]);
+
 
   const [currentNotes, setCurrentNotes] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -118,6 +123,8 @@ export default function LearnContent() {
   const [lessonQuestions, setLessonQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showQuestionResults, setShowQuestionResults] = useState(false);
+  const [typingLessonKey, setTypingLessonKey] = useState(null);
+  const deferredTypingContent = useDeferredValue(typingContent);
 
   const isPro = (() => {
     const hasOwnPremiumPlan = Boolean(
@@ -571,24 +578,148 @@ export default function LearnContent() {
       setGeneratingLessons((prev) => new Set(prev).add(lessonKey));
       setLessonContentLoading(true); // Still used for initial active lesson loading if desired, or we can use it more granularly
       setTypingContent("");
+      setTypingLessonKey(lessonKey);
 
-      const response = await apiClient.post("/api/course-agent", {
-        action: "generateLesson",
-        courseId: courseData?._id || null,
-        shareId: searchParams.get("shareId"),
-        moduleId,
-        lessonIndex,
-        lessonTitle,
-        moduleTitle,
-        courseTopic: topic,
-        difficulty,
-      });
+      const parseSseStream = async (response, { onChunk }) => {
+        const reader = response?.body?.getReader?.();
+        if (!reader) throw new Error("Streaming not supported");
 
-      if (!response.ok) {
-        throw new Error("Failed to generate lesson content");
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        let fullText = "";
+
+        const handleEvent = (evt, dataStr) => {
+          if (!dataStr) return;
+          if (evt === "chunk") {
+            try {
+              const parsed = JSON.parse(dataStr);
+              const delta = parsed?.text || "";
+              if (delta) {
+                fullText += delta;
+                onChunk?.(fullText, delta);
+              }
+            } catch (_) {
+              // ignore malformed chunk
+            }
+            return;
+          }
+
+          if (evt === "error") {
+            try {
+              const parsed = JSON.parse(dataStr);
+              const msg = parsed?.error || "stream_failed";
+              throw new Error(msg);
+            } catch (e) {
+              throw e instanceof Error ? e : new Error("stream_failed");
+            }
+          }
+        };
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse SSE frames separated by blank line
+          while (true) {
+            let idx = buffer.indexOf("\n\n");
+            let sepLen = 2;
+            const idxCrlf = buffer.indexOf("\r\n\r\n");
+            if (idxCrlf !== -1 && (idxCrlf < idx || idx === -1)) {
+              idx = idxCrlf;
+              sepLen = 4;
+            }
+
+            if (idx === -1) break;
+
+            const frame = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + sepLen);
+
+            if (!frame.trim()) continue;
+            if (frame.startsWith(":")) continue; // ping/comments
+
+            let eventName = "message";
+            const dataLines = [];
+            frame.split(/\r?\n/).forEach((line) => {
+              if (line.startsWith("event:")) {
+                eventName = line.slice(6).trim();
+              } else if (line.startsWith("data:")) {
+                dataLines.push(line.slice(5).trimStart());
+              }
+            });
+
+            const dataStr = dataLines.join("\n");
+            handleEvent(eventName, dataStr);
+          }
+        }
+
+        return { content: fullText };
+      };
+
+      let data = null;
+      try {
+        const response = await apiClient.post(
+          "/api/course-agent",
+          {
+            action: "generateLesson",
+            stream: true,
+            courseId: courseData?._id || null,
+            shareId: searchParams.get("shareId"),
+            moduleId,
+            lessonIndex,
+            lessonTitle,
+            moduleTitle,
+            courseTopic: topic,
+            difficulty,
+          },
+          { headers: { Accept: "text/event-stream", "Content-Type": "application/json" } }
+        );
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error || err.message || "Failed to generate lesson content");
+        }
+
+        // If server didn't return SSE (e.g. cached JSON), fallback to JSON parsing.
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("text/event-stream")) {
+          const { content } = await parseSseStream(response, {
+            onChunk: (fullSoFar) => {
+              // Update "typing" content progressively.
+              setTypingContent(fullSoFar);
+            },
+          });
+          data = { content };
+        } else {
+          data = await response.json();
+          if (data?.content) setTypingContent(data.content);
+        }
+      } catch (streamErr) {
+        // Fallback to non-streaming mode if anything goes wrong.
+        const response = await apiClient.post("/api/course-agent", {
+          action: "generateLesson",
+          courseId: courseData?._id || null,
+          shareId: searchParams.get("shareId"),
+          moduleId,
+          lessonIndex,
+          lessonTitle,
+          moduleTitle,
+          courseTopic: topic,
+          difficulty,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate lesson content");
+        }
+
+        data = await response.json();
+        if (data?.content) setTypingContent(data.content);
       }
 
-      const data = await response.json();
+      if (!data?.content) {
+        throw new Error("Failed to generate lesson content");
+      }
 
       // Update course data with the new content immutably
       setCourseData((prevData) => {
@@ -630,17 +761,13 @@ export default function LearnContent() {
 
       // Update local completion state using a consistent ID
       const finalLessonId = (lesson && typeof lesson !== "string" && lesson.id) || `${moduleId}-${lessonIndex}`;
-      let updatedCompletedSet;
-      setCompletedLessons((prev) => {
-        const next = new Set(prev);
-        next.add(finalLessonId);
-        updatedCompletedSet = next;
-        // Persist to localStorage
-        try {
-          localStorage.setItem(progressKey(), JSON.stringify(Array.from(next)));
-        } catch (_) {}
-        return next;
-      });
+      const nextCompletedSet = new Set(completedLessonsRef.current || completedLessons);
+      nextCompletedSet.add(finalLessonId);
+      setCompletedLessons(nextCompletedSet);
+      // Persist to localStorage
+      try {
+        localStorage.setItem(progressKey(), JSON.stringify(Array.from(nextCompletedSet)));
+      } catch (_) {}
 
       // Completion status is already handled in the previous setCourseData call
 
@@ -648,7 +775,7 @@ export default function LearnContent() {
       if (courseId) {
         try {
           const totalLessonsCnt = courseData?.totalLessons || 100;
-          const progress = Math.round((updatedCompletedSet.size / totalLessonsCnt) * 100);
+          const progress = Math.round((nextCompletedSet.size / totalLessonsCnt) * 100);
 
           await apiClient.post("/api/course-progress", {
             courseId,
@@ -698,6 +825,7 @@ export default function LearnContent() {
         return next;
       });
       setLessonContentLoading(false);
+      setTypingLessonKey((prev) => (prev === lessonKey ? null : prev));
     }
   };
 
@@ -1145,6 +1273,76 @@ export default function LearnContent() {
     // Normalize line endings to \n
     let html = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 
+    // Some streamed/cached payloads can arrive double-escaped (literal "\\n" sequences).
+    // If we detect that, convert them back into real newlines before markdown parsing,
+    // otherwise headings/lists render as raw markdown until the final payload arrives.
+    const rawNlCount = (html.match(/\n/g) || []).length;
+    const escapedNlCount = (html.match(/\\n/g) || []).length;
+    if (escapedNlCount > 3 && escapedNlCount > rawNlCount * 2) {
+      html = html
+        .replace(/\\r\\n/g, "\n")
+        .replace(/\\n/g, "\n")
+        .replace(/\\t/g, "\t");
+    }
+
+    // If the model emits an opening ``` fence but forgets to close it, everything after it
+    // can disappear or get swallowed into one giant code block. Auto-close it as safely as possible.
+    const fenceCount = (html.match(/```/g) || []).length;
+    if (fenceCount % 2 === 1) {
+      const lastOpenIdx = html.lastIndexOf("```");
+      const fenceLineEnd =
+        lastOpenIdx >= 0 ? html.indexOf("\n", lastOpenIdx) : -1;
+      const codeStartIdx =
+        fenceLineEnd === -1 ? html.length : Math.min(html.length, fenceLineEnd + 1);
+      const afterFence = html.slice(codeStartIdx);
+
+      const markerRegex = /(?:\r?\n|^)[ \t]*(#{1,6}\s+|-{3,}\s*$)/m;
+      const marker = markerRegex.exec(afterFence);
+
+      const isProbablyProseLine = (line) => {
+        if (!line) return false;
+        if (/^\s/.test(line)) return false; // indented: likely still code
+        const t = line.trim();
+        if (!t) return false;
+        if (/^```/.test(t)) return false;
+        if (/^(#{1,6}\s+|[-*]\s+|\d+\.\s+|>\s+)/.test(t)) return false;
+        if (/^(import|package|public|private|protected|class|interface|enum|return|for|while|if|else|try|catch|finally|switch)\b/i.test(t)) {
+          return false;
+        }
+        if (/^(\/\/|\/\*|\*\/|\*)/.test(t)) return false;
+        // If it contains typical code punctuation, treat it as code-ish.
+        if (/[{};=()<>[\]]/.test(t)) return false;
+        return /[A-Za-z]{3,}/.test(t);
+      };
+
+      // Prefer closing right before the first obvious non-code prose line that follows a blank line.
+      let insertAt = null;
+      {
+        const lines = afterFence.split("\n");
+        let offset = 0;
+        for (let i = 0; i < lines.length - 1; i++) {
+          const line = lines[i];
+          const next = lines[i + 1];
+          offset += line.length + 1; // start index of next line within afterFence
+          if (line.trim() === "" && isProbablyProseLine(next)) {
+            insertAt = codeStartIdx + offset;
+            break;
+          }
+        }
+      }
+
+      // Otherwise, close before the next markdown section marker (header or --- rule).
+      if (insertAt == null && marker) {
+        insertAt = codeStartIdx + marker.index;
+      }
+
+      if (insertAt != null && lastOpenIdx >= 0) {
+        html = `${html.slice(0, insertAt)}\n\`\`\`\n${html.slice(insertAt)}`;
+      } else {
+        html += "\n```";
+      }
+    }
+
     const mathCommandPattern =
       /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right|text|begin|end|overline|underline|vec|hat|bar)/i;
     const mathSymbolPattern = /(?:\^|_|=|[+\-*/]=?|[<>]=?|\\%|\\times|\\cdot|\\div|\\pm|\\mp)/;
@@ -1184,15 +1382,14 @@ export default function LearnContent() {
       return true;
     };
 
-    // First, escape any HTML that might be in the content
-    const escapeHtml = (text) => {
-      const map = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-      };
-      // Don't escape if it's already part of our formatted output
-      return text;
+    // Escape unsafe HTML in plain text so things like Java generics (<T>) don't get
+    // interpreted as HTML and stripped when rendered.
+    const escapeHtmlText = (text) => {
+      if (!text) return "";
+      return String(text)
+        .replace(/&(?!(?:[a-zA-Z]+|#\d+);)/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     };
 
     // Handle code blocks FIRST (before other replacements) - CRITICAL
@@ -1237,10 +1434,15 @@ export default function LearnContent() {
     html = html.replace(/`([^`]+)`/g, (match, code) => {
       const placeholder = `___INLINECODE_${inlineCodes.length}___`;
       inlineCodes.push(
-        `<code class="bg-muted px-2 py-0.5 rounded text-sm font-mono text-primary">${code}</code>`
+        `<code class="bg-muted px-2 py-0.5 rounded text-sm font-mono text-primary">${escapeHtmlText(
+          code
+        )}</code>`
       );
       return placeholder;
     });
+
+    // Escape remaining raw HTML in the text (code blocks and inline code have been extracted).
+    html = escapeHtmlText(html);
 
     // Handle images - ![alt text](url)
     // Use a more robust pattern that handles URLs with parentheses and special characters
@@ -1482,6 +1684,48 @@ export default function LearnContent() {
     });
 
     return html;
+  };
+
+  const renderLessonBlocks = (content, { streaming = false } = {}) => {
+    return parseContentIntoBlocks(content).flatMap((block, idx) => {
+      // While streaming, we may briefly see incomplete visual JSON inside ```chart```/```table``` blocks.
+      // Hide those fallbacks until they successfully parse into real visual blocks.
+      if (streaming && block.type === "code" && (block.lang === "chart" || block.lang === "table")) {
+        return [];
+      }
+      if (block.type === "chart") {
+        return [
+          (
+          <div key={`chart-${idx}`} id={`visual-chart-${idx}`} className="visual-block-wrapper">
+            <LessonChart type={block.chartType} data={block.data} title={block.title} />
+          </div>
+          ),
+        ];
+      }
+      if (block.type === "table") {
+        return [
+          (
+          <div key={`table-${idx}`} id={`visual-table-${idx}`} className="visual-block-wrapper">
+            <LessonTable headers={block.headers} rows={block.rows} title={block.title} />
+          </div>
+          ),
+        ];
+      }
+      return [
+        (
+        <div
+          key={`block-${idx}`}
+          dangerouslySetInnerHTML={{
+            __html: renderContent(
+              block.type === "code"
+                ? `\`\`\`${block.lang}\n${block.content}\n\`\`\``
+                : block.content
+            ),
+          }}
+        />
+        ),
+      ];
+    });
   };
 
   // Knowledge-check removed: lessons will no longer include an embedded quiz
@@ -2645,17 +2889,58 @@ export default function LearnContent() {
             className="flex-1 overflow-y-auto hide-scrollbar bg-background cursor-pointer lg:cursor-default"
           >
             <div className={`mx-auto p-4 pb-28 sm:p-6 sm:pb-32 lg:p-8 lg:pb-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
-              {generatingLessons.has(`${activeLesson.moduleId}-${activeLesson.lessonIndex}`) ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-                  <h3 className="text-lg font-medium text-foreground mb-2">
-                    Generating lesson content...
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Please wait while we create personalized content for you
-                  </p>
-                </div>
-              ) : currentLesson?.content ? (
+              {(() => {
+                const activeKey = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+                const isGeneratingActive = generatingLessons.has(activeKey);
+                const hasStreamText =
+                  typingLessonKey === activeKey && String(typingContent || "").trim().length > 0;
+
+                if (isGeneratingActive) {
+                  if (hasStreamText) {
+                    return (
+                      <div>
+                        <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
+                          <div className="not-prose mb-3">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground border-b-2 border-slate-300 dark:border-slate-600 pb-2">
+                              {currentLesson?.title || "Lesson"}
+                            </h1>
+                          </div>
+                          <div className="space-y-6" id="lesson-content-container">
+                            {renderLessonBlocks(deferredTypingContent, { streaming: true })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                      <h3 className="text-lg font-medium text-foreground mb-2">
+                        Generating lesson content...
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Please wait while we create personalized content for you
+                      </p>
+                    </div>
+                  );
+                }
+
+                if (currentLesson?.content) {
+                  return null;
+                }
+
+                return null;
+              })() ?? null}
+
+              {(() => {
+                const activeKey = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
+                const isGeneratingActive = generatingLessons.has(activeKey);
+
+                if (isGeneratingActive) return null; // streaming UI above handles this state
+
+                if (currentLesson?.content) {
+                  return (
                 <div>
                   <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
                     <div className="not-prose mb-3">
@@ -2665,34 +2950,7 @@ export default function LearnContent() {
                     </div>
                     {/* Visualizations removed: use images or links in content */}
                     <div className="space-y-6" id="lesson-content-container">
-                      {parseContentIntoBlocks(currentLesson.content).map((block, idx) => {
-                        if (block.type === "chart") {
-                          return (
-                            <div key={idx} id={`visual-chart-${idx}`} className="visual-block-wrapper">
-                              <LessonChart type={block.chartType} data={block.data} title={block.title} />
-                            </div>
-                          );
-                        }
-                        if (block.type === "table") {
-                          return (
-                            <div key={idx} id={`visual-table-${idx}`} className="visual-block-wrapper">
-                              <LessonTable headers={block.headers} rows={block.rows} title={block.title} />
-                            </div>
-                          );
-                        }
-                        return (
-                          <div
-                            key={idx}
-                            dangerouslySetInnerHTML={{
-                              __html: renderContent(
-                                block.type === "code" 
-                                  ? `\`\`\`${block.lang}\n${block.content}\n\`\`\``
-                                  : block.content
-                              ),
-                            }}
-                          />
-                        );
-                      })}
+                      {renderLessonBlocks(currentLesson.content)}
                     </div>
                     
                     {/* Next Lesson Navigation Button */}
@@ -2721,7 +2979,10 @@ export default function LearnContent() {
 
 
                 </div>
-              ) : (
+                  );
+                }
+
+                return (
                 <div className="text-center py-12">
                   <BookOpen className="w-12 h-12 text-primary mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">
@@ -2731,7 +2992,8 @@ export default function LearnContent() {
                     Choose a lesson from the sidebar to begin
                   </p>
                 </div>
-              )}
+                );
+              })()}
             </div>
             {/* Mobile controls removed as requested */}
           </div>

@@ -195,7 +195,8 @@ export const parseContentIntoBlocks = (content) => {
           title: chartData.title || "Interactive Data Chart",
         });
       } catch (e) {
-        console.error("Chart JSON parse error:", e, code);
+        // During generation/streaming, chart JSON can be incomplete. Avoid noisy console errors;
+        // callers may choose to hide these fallback blocks until the JSON is complete.
         blocks.push({ type: "code", lang: "chart", content: code });
       }
     } else if (lang === "table") {
@@ -218,4 +219,3 @@ export const parseContentIntoBlocks = (content) => {
   processTextAndTables(normalizedContent.substring(lastIndex));
   return blocks;
 };
-

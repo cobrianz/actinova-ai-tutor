@@ -115,6 +115,9 @@ export async function POST(request) {
 
     // === 1. Generate Lesson Content ===
     if (action === "generateLesson") {
+      if (body?.stream) {
+        return await handleGenerateLessonStream(body, userId, db, request);
+      }
       return await handleGenerateLesson(body, userId, db);
     }
 
@@ -262,6 +265,265 @@ Course Content Reference: ${courseContent.substring(0, 12000)}`;
     response,
     timestamp: new Date().toISOString(),
   });
+}
+
+function sseHeaders() {
+  return {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  };
+}
+
+function sseWrite(controller, encoder, { event, data }) {
+  const safeEvent = String(event || "message");
+  const payload = typeof data === "string" ? data : JSON.stringify(data ?? null);
+  controller.enqueue(encoder.encode(`event: ${safeEvent}\ndata: ${payload}\n\n`));
+}
+
+// === Handle Lesson Generation (Streaming SSE) ===
+async function handleGenerateLessonStream(body, userId, db, request) {
+  const {
+    courseId,
+    moduleId,
+    lessonIndex,
+    lessonTitle,
+    moduleTitle,
+    courseTopic,
+    difficulty = "intermediate",
+  } = body;
+
+  const mId = Number(moduleId);
+  const lIdx = Number(lessonIndex);
+
+  if (!lessonTitle || !courseTopic || isNaN(mId) || isNaN(lIdx)) {
+    return NextResponse.json(
+      {
+        error:
+          "lessonTitle, courseTopic, moduleId, and lessonIndex are required and must be valid",
+      },
+      { status: 400 }
+    );
+  }
+
+  // === Access Validation ===
+  const { shareId } = body;
+  const access = await checkCourseAccess(userId, courseId, shareId);
+  if (!access.hasAccess) {
+    return NextResponse.json(
+      { error: "Access denied", message: access.reason },
+      { status: 403 }
+    );
+  }
+
+  // === Determine Premium Status ===
+  let isPremium = false;
+  if (access.isShared || access.isEnrolled) {
+    isPremium =
+      access.fullAccess || (access.sharerTier && access.sharerTier !== "free");
+  } else if (courseId && ObjectId.isValid(courseId)) {
+    const courseDoc =
+      (await db.collection("library").findOne({ _id: new ObjectId(courseId) })) ||
+      (await db.collection("courses").findOne({ _id: new ObjectId(courseId) }));
+    if (courseDoc?.isPremium) isPremium = true;
+  }
+  if (!isPremium && !access.isShared && userId) {
+    isPremium = await getPremiumStatus(db, userId);
+  }
+
+  const wordCount = isPremium ? "2500–3000" : "1500–2000";
+
+  // === Check Cache First ===
+  if (courseId && ObjectId.isValid(courseId)) {
+    const course = await db.collection("library").findOne(
+      { _id: new ObjectId(courseId) },
+      { projection: { [`modules.${mId - 1}.lessons.${lIdx}.content`]: 1 } }
+    );
+
+    const cachedContent = course?.modules?.[mId - 1]?.lessons?.[lIdx]?.content;
+
+    if (
+      cachedContent &&
+      cachedContent.length > 500 &&
+      !cachedContent.includes("coming soon")
+    ) {
+      const stream = new ReadableStream({
+        start(controller) {
+          const encoder = new TextEncoder();
+          sseWrite(controller, encoder, {
+            event: "meta",
+            data: { cached: true, isPremium, moduleId: mId, lessonIndex: lIdx },
+          });
+          sseWrite(controller, encoder, {
+            event: "chunk",
+            data: { text: cachedContent },
+          });
+          sseWrite(controller, encoder, {
+            event: "done",
+            data: { cached: true, isPremium },
+          });
+          controller.close();
+        },
+      });
+
+      return new Response(stream, { headers: sseHeaders() });
+    }
+  }
+
+  const promptBase = `Write an EXTREMELY DETAILED, high-quality academic educational lesson in Markdown.
+The lesson MUST be exhaustive, comprehensive, and very long.
+
+Topic: ${courseTopic}
+Module: ${moduleTitle || "Core Concepts"}
+Lesson: ${lessonTitle}
+Difficulty: ${difficulty}
+Target length: ${wordCount} words (CRITICAL: Do not be concise. Dive extremely deep into every sub-topic).
+Access tier: ${isPremium ? "Premium" : "Free"}
+
+- STRUCTURE (REQUIRED): Always include these sections in this order, with headings exactly as shown:
+  1) ## Learning Objectives
+  2) ## Engaging Introduction
+  3) ## Core Concepts and Explanations
+  4) ## Industry Best Practices and Common Pitfalls
+  5) ## Practice Exercises (with solutions)
+  6) ## Key Takeaways
+  7) ## Further Reading
+  Never stop before "## Key Takeaways" and "## Further Reading".
+
+- CODE (REQUIRED): Any code must be inside fenced code blocks using triple backticks with a language tag (e.g. \`\`\`java).
+  Every code fence MUST be closed with \`\`\` on its own line.
+
+- Engaging and thorough introduction
+- Clear, specific learning objectives
+- In-depth step-by-step explanations with multiple examples
+- Industry best practices and common pitfalls
+- Detailed code examples (if relevant) with line-by-line explanations
+- CRITICAL: DO NOT use Mermaid syntax, flowchart diagrams, or process flow diagrams of any kind. DO NOT output \`\`\`flow\`\`\` blocks.
+- **Interactive Data Charts**: Use \`\`\`chart\`\`\` blocks ONLY for quantitative data (bar, line, pie, doughnut).
+  CRITICAL: The \`\`\`chart\`\`\` block MUST start with \`\`\`chart and end with \`\`\` on its own line.
+  CRITICAL: NEVER include the word "chart" outside the triple backticks if it's meant to be a visualization block.
+  Example structure:
+  \`\`\`chart
+  {
+    "type": "bar",
+    "title": "Topic Distribution",
+    "data": {
+      "labels": ["Concept A", "Concept B", "Concept C"],
+      "datasets": [{ "label": "Engagement %", "data": [65, 85, 45], "backgroundColor": "rgba(99, 102, 241, 0.8)" }]
+    }
+  }
+  \`\`\`
+- 3-5 Practice exercises with solutions. Provide clear explanations for each solution.
+- Comprehensive Key takeaways
+- A specific "Further Reading" section with suggested topics
+- CRITICAL for Math Equations: Use \\( ... \\) for INLINE math and \\[ ... \\] for BLOCK math. 
+- MEGA IMPORTANT: NEVER wrap normal English sentences, standard text, or currencies (like $5.00) in math delimiters! If you wrap text in math delimiters, it ruins the formatting by removing all spaces (e.g. 5.00islikely). Only use them for actual standalone mathematical formulas.
+- NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
+- CRITICAL: DO NOT use Mermaid syntax or flowchart diagrams of any kind.
+- Use only the following visual block types:
+  - \`\`\`chart\`\`\` for data visualizations (bar, line, pie, doughnut)
+  - \`\`\`table\`\`\` for markdown tables
+- High-level data visualizations (graphs) are encouraged; flow-based diagrams are forbidden.
+- **Python Code**: If the lesson requires Python code for explanations (e.g., a data science lesson), you can provide code, but DO NOT use Python code to generate visualizations. Use the \`\`\`chart\`\`\` block instead.
+- **Quantity constraint**: Include at least 3-5 high-quality charts using the \`\`\`chart\`\`\` block per lesson. Generous use of charts for visualizing any quantitative data, trends, or comparisons is strongly encouraged to make the course visually rich.
+Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
+CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.
+IMPORTANT: Avoid being concise. Dive deep into every sub-topic.
+SITUATIONAL VISUALS: Use \`\`\`chart\`\`\` blocks ONLY when strictly necessary for clarifying highly complex processes, comparing specific data points, or illustrating deep hierarchies. DO NOT use them for simple text or general concepts. Avoid generic titles like "Interactive Flow Diagram"; use short, formal descriptions (e.g., "Data Authentication Pipeline").`;
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+      let full = "";
+      let pingTimer = null;
+
+      const safeClose = () => {
+        try {
+          controller.close();
+        } catch (_) {}
+        if (pingTimer) clearInterval(pingTimer);
+      };
+
+      // keep-alive to reduce proxy buffering
+      pingTimer = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(`: ping\n\n`));
+        } catch (_) {}
+      }, 15000);
+
+      try {
+        sseWrite(controller, encoder, {
+          event: "meta",
+          data: {
+            cached: false,
+            isPremium,
+            moduleId: mId,
+            lessonIndex: lIdx,
+            lessonTitle,
+          },
+        });
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an elite academic educator writing exhaustive, high-value lesson content in Markdown. You never skip details.",
+            },
+            { role: "user", content: promptBase },
+          ],
+          temperature: 0.75,
+          max_tokens: isPremium ? 4000 : 3000,
+          stream: true,
+        });
+
+        for await (const part of completion) {
+          if (request?.signal?.aborted) {
+            sseWrite(controller, encoder, {
+              event: "error",
+              data: { error: "aborted" },
+            });
+            safeClose();
+            return;
+          }
+
+          const delta = part?.choices?.[0]?.delta?.content || "";
+          if (!delta) continue;
+          full += delta;
+          sseWrite(controller, encoder, { event: "chunk", data: { text: delta } });
+        }
+
+        let content = postProcessContent(full?.trim() || "");
+        if (!content) {
+          sseWrite(controller, encoder, { event: "error", data: { error: "empty" } });
+          safeClose();
+          return;
+        }
+
+        // Save to DB (if valid courseId)
+        if (courseId && ObjectId.isValid(courseId)) {
+          const updatePath = `modules.${mId - 1}.lessons.${lIdx}.content`;
+          await db.collection("library").updateOne(
+            { _id: new ObjectId(courseId) },
+            { $set: { [updatePath]: content, lastGenerated: new Date() } }
+          );
+        }
+
+        sseWrite(controller, encoder, { event: "done", data: { isPremium } });
+        safeClose();
+      } catch (err) {
+        sseWrite(controller, encoder, {
+          event: "error",
+          data: { error: err?.message || "stream_failed" },
+        });
+        safeClose();
+      }
+    },
+  });
+
+  return new Response(stream, { headers: sseHeaders() });
 }
 
 // === Handle Lesson Generation ===

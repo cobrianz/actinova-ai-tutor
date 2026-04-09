@@ -361,7 +361,10 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
         const safeHeight = Math.max(1, Number(sourceHeight) || 1);
         let width = maxWidth;
         let height = (safeHeight * width) / safeWidth;
-        const maxHeight = pageBottom - y - 6;
+
+        // Fit to a full page canvas (not the remaining page space). If the image doesn't fit the
+        // remaining space, we will page-break instead of shrinking the visual.
+        const maxHeight = pageBottom - CONTENT_START_Y - 6;
         if (height > maxHeight) {
             height = Math.max(20, maxHeight);
             width = (safeWidth * height) / safeHeight;
@@ -549,7 +552,14 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                 const targetIndex = targetType === "chart" ? chartIdx++ : tableIdx++;
 
                 if (block.type === "table") {
-                    checkNewPage(24);
+                    // If we're too close to the bottom, start the table on a fresh page so the
+                    // header + first rows aren't split awkwardly.
+                    if (y + 40 > pageBottom) {
+                        pdf.addPage();
+                        y = CONTENT_START_Y;
+                    } else {
+                        checkNewPage(24);
+                    }
 
                     const headers = Array.isArray(block.headers)
                         ? block.headers.map((cell) => cleanLatex(String(cell ?? "")).trim())
@@ -594,7 +604,12 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                 const visualData = visuals.find(v => v.type === targetType && v.index === targetIndex);
                 if (visualData && visualData.image) {
                     const fitted = fitImageToPage(visualData.width, visualData.height, contentWidth);
-                    checkNewPage(fitted.height + 10);
+                    if (y + fitted.height + 10 > pageBottom) {
+                        pdf.addPage();
+                        y = CONTENT_START_Y;
+                    } else {
+                        checkNewPage(fitted.height + 10);
+                    }
                     try {
                         pdf.addImage(visualData.image, margin, y, fitted.width, fitted.height);
                         y += fitted.height + 10;
