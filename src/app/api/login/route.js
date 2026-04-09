@@ -9,6 +9,17 @@ import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 const RATE_LIMIT = { max: 8, windowMs: 15 * 60 * 1000 }; // 8 attempts per 15 min
 const loginAttempts = new Map(); // In-memory rate limiting (or use Redis in prod)
 
+function getEffectiveSubscriptionExpiry(subscription) {
+  if (!subscription) return null;
+  return subscription.currentPeriodEnd || subscription.expiryDate || subscription.expiresAt || null;
+}
+
+function isPaidPlan(subscription) {
+  const plan = String(subscription?.plan || "").toLowerCase();
+  const tier = String(subscription?.tier || "").toLowerCase();
+  return ["pro", "premium", "enterprise"].includes(plan) || ["pro", "enterprise"].includes(tier);
+}
+
 export async function POST(request) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   const now = Date.now();
@@ -135,6 +146,48 @@ export async function POST(request) {
       );
     }
 
+    // Ensure plan expiry is validated on login (so cron isn't required for correctness).
+    // This keeps legacy fields in sync and downgrades expired subscriptions immediately.
+    try {
+      const effectiveExpiry = getEffectiveSubscriptionExpiry(user.subscription);
+      if (
+        effectiveExpiry &&
+        new Date(effectiveExpiry) < new Date() &&
+        user?.subscription?.tier &&
+        String(user.subscription.tier).toLowerCase() !== "free"
+      ) {
+        const downgradeAt = new Date();
+        await usersCol.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              "subscription.tier": "free",
+              "subscription.status": "expired",
+              "subscription.downgradedAt": downgradeAt,
+              "subscription.currentPeriodEnd": null,
+              "subscription.expiresAt": null,
+              "subscription.expiryDate": null,
+              isPremium: false,
+            },
+          }
+        );
+
+        user.subscription = {
+          ...(user.subscription || {}),
+          tier: "free",
+          status: "expired",
+          downgradedAt: downgradeAt,
+          currentPeriodEnd: null,
+          expiresAt: null,
+          expiryDate: null,
+        };
+        user.isPremium = false;
+      }
+    } catch (e) {
+      // Non-blocking: login should still succeed even if downgrade fails.
+      console.warn("[login] subscription validation failed:", e?.message || e);
+    }
+
     // Reset rate limit & lock on success
     loginAttempts.delete(ip);
     if (user.isLocked) {
@@ -228,10 +281,10 @@ export async function POST(request) {
     });
     let monthlyUsage = usageDoc ? usageDoc.count : 0;
 
-    const isPremium =
+    const isPremium = Boolean(
       user.isPremium ||
-      (user.subscription?.plan === "pro" &&
-        user.subscription?.status === "active");
+      (user.subscription?.status === "active" && isPaidPlan(user.subscription))
+    );
 
     const usageData = {
       used: monthlyUsage,

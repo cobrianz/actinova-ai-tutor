@@ -350,6 +350,68 @@ async function handlePost(request) {
         });
       }
 
+      // Scenario 1b: Course already marked premium (often from an old subscription),
+      // but user just paid for a per-course premium window. Apply the paid window
+      // so modules/downloads actually unlock.
+      if (isPremium && premiumIntent?._id) {
+        const existingExpiry = existingCourse.premiumAccessExpiresAt
+          ? new Date(existingCourse.premiumAccessExpiresAt)
+          : null;
+        const hasLiveWindow = existingExpiry && existingExpiry > new Date();
+
+        if (!hasLiveWindow) {
+          const patch = {
+            isPremium: true,
+            premiumAccessExpiresAt: premiumIntent.accessExpiresAt || null,
+            premiumPaymentReference:
+              premiumIntent.reference || existingCourse.premiumPaymentReference || null,
+            lastAccessed: new Date(),
+            updatedAt: new Date(),
+          };
+
+          await db.collection("library").updateOne(
+            { _id: existingCourse._id },
+            { $set: patch }
+          );
+
+          let publishedMarketplaceCourseId = existingCourse.sourceMarketplaceCourseId || null;
+          if (!existingCourse.sourceMarketplaceCourseId) {
+            publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
+              db,
+              userId: userId.toString(),
+              libraryCourse: { ...existingCourse, ...patch, _id: existingCourse._id },
+            });
+          }
+
+          await consumePremiumGenerationIntent({
+            db,
+            intentId: premiumIntent._id.toString(),
+            generatedCourseId: existingCourse._id.toString(),
+          });
+
+          await trackAPIUsage(userId, "generate-course");
+
+          return NextResponse.json({
+            success: true,
+            courseId: existingCourse._id.toString(),
+            content: {
+              title: existingCourse.title,
+              level: difficulty,
+              totalModules: existingCourse.totalModules,
+              totalLessons: existingCourse.totalLessons,
+              modules: existingCourse.modules,
+              isPremium: true,
+              premiumAccessExpiresAt: patch.premiumAccessExpiresAt || null,
+              sourceMarketplaceCourseId:
+                publishedMarketplaceCourseId || existingCourse.sourceMarketplaceCourseId || null,
+            },
+            isExisting: true,
+            wasUpgraded: true,
+            message: "Premium access applied to existing course.",
+          });
+        }
+      }
+
       if (premiumIntent?._id && existingCourse.isPremium) {
         await consumePremiumGenerationIntent({
           db,

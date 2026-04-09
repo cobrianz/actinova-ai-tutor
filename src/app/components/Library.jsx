@@ -21,6 +21,7 @@ import {
   Pin,
   BarChart3,
   TrendingUp,
+  Crown,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -241,6 +242,66 @@ export default function Library({ setActiveContent }) {
       (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
       user.subscription.status === "active"
     ) || !!user?.isPremium;
+
+  const isEnterprise = Boolean(
+    user?.subscription?.status === "active" &&
+      (
+        String(user?.subscription?.plan || "").toLowerCase() === "enterprise" ||
+        String(user?.subscription?.tier || "").toLowerCase() === "enterprise"
+      )
+  );
+
+  const isAtCourseUsageLimit = Boolean(
+    user?.usage?.details?.courses &&
+      user.usage.details.courses.limit !== null &&
+      Number(user.usage.details.courses.remaining ?? 0) <= 0
+  );
+
+  const handleMakePremium = async (course) => {
+    if (!course || course.format !== "course") return;
+
+    const hasActiveCourseUnlock = Boolean(
+      course.premiumAccessExpiresAt &&
+        new Date(course.premiumAccessExpiresAt) > new Date()
+    );
+    if (hasActiveCourseUnlock) {
+      toast.message("This course is already paid.");
+      return;
+    }
+
+    // If the user has an active paid plan and isn't over the monthly limit, upgrade without checkout.
+    if (isPremium && (!isAtCourseUsageLimit || isEnterprise)) {
+      const params = new URLSearchParams({
+        format: "course",
+        difficulty: course.difficulty || "beginner",
+        premiumRequested: "true",
+      });
+      window.location.href = `/learn/${encodeURIComponent(course.topic)}?${params.toString()}`;
+      return;
+    }
+
+    const toastId = toast.loading("Redirecting to checkout...");
+    try {
+      const res = await apiClient.post("/api/billing/create-session", {
+        purchaseType: "premium-generation",
+        topic: course.topic,
+        difficulty: course.difficulty || "beginner",
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Unable to start checkout");
+      }
+
+      const data = await res.json();
+      if (!data?.sessionUrl) throw new Error("Invalid checkout session");
+
+      toast.dismiss(toastId);
+      window.location.href = data.sessionUrl;
+    } catch (e) {
+      toast.error(e?.message || "Checkout failed", { id: toastId });
+    }
+  };
 
   const handleDownload = async (course) => {
     if (!isPremium) {
@@ -566,6 +627,29 @@ export default function Library({ setActiveContent }) {
                             className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`}
                           />
                         </button>
+
+                        {(() => {
+                          if (course.format !== "course") return false;
+
+                          const hasActiveCourseUnlock = Boolean(
+                            course.premiumAccessExpiresAt &&
+                              new Date(course.premiumAccessExpiresAt) > new Date()
+                          );
+                          if (hasActiveCourseUnlock) return false;
+
+                          // Show the crown when the user needs to pay to unlock premium generation:
+                          // - Free users
+                          // - Pro users that hit usage cap (Enterprise is unlimited)
+                          return !isPremium || (isAtCourseUsageLimit && !isEnterprise);
+                        })() && (
+                          <button
+                            onClick={() => handleMakePremium(course)}
+                            className="p-2 hover:bg-secondary rounded"
+                            title="Make premium ($6)"
+                          >
+                            <Crown className="w-4 h-4 text-amber-600 dark:text-amber-300" />
+                          </button>
+                        )}
 
                       </div>
                     </div>

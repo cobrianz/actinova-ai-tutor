@@ -136,8 +136,7 @@ export default function LearnContent() {
     if (hasOwnPremiumPlan) return true;
 
     const hasCoursePremiumWindow = Boolean(
-      courseData?.isPremium &&
-        courseData?.premiumAccessExpiresAt &&
+      courseData?.premiumAccessExpiresAt &&
         new Date(courseData.premiumAccessExpiresAt) > new Date()
     );
     if (hasCoursePremiumWindow) return true;
@@ -1776,9 +1775,28 @@ export default function LearnContent() {
         const existingPremiumExpiry = existingCourseData.premiumAccessExpiresAt
           ? new Date(existingCourseData.premiumAccessExpiresAt)
           : null;
-        const hasLivePremiumAccess =
-          existingCourseData.isPremium &&
-          (!existingPremiumExpiry || existingPremiumExpiry > new Date());
+
+        // Align "premium access" with the actual gating rules used elsewhere:
+        // - Paid plan users (subscription) get premium without per-course expiry.
+        // - Per-course unlock requires a future premiumAccessExpiresAt.
+        const userHasActivePlan = Boolean(
+          user &&
+            user.subscription?.status === "active" &&
+            (
+              ["pro", "enterprise", "premium"].includes(
+                String(user.subscription?.plan || "").toLowerCase()
+              ) ||
+              ["pro", "enterprise"].includes(
+                String(user.subscription?.tier || "").toLowerCase()
+              ) ||
+              user.isPremium
+            )
+        );
+
+        const hasLivePremiumAccess = Boolean(
+          (userHasActivePlan && existingCourseData.isPremium) ||
+            (existingPremiumExpiry && existingPremiumExpiry > new Date())
+        );
         const shouldUpgradeExistingCourse =
           format === "course" && premiumRequested && !hasLivePremiumAccess;
 
