@@ -8,7 +8,7 @@ import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
 async function handleGet(request) {
   const user = request.user;
   await connectToDatabase();
-  const quizzes = await Quiz.find({ createdBy: user._id });
+  const quizzes = await Quiz.find({ createdBy: user._id }).sort({ createdAt: -1 });
   return NextResponse.json(quizzes);
 }
 

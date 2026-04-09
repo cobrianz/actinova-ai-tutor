@@ -101,7 +101,8 @@ function getProLimits() {
         freeReadableModules: 20, // Pro can read all modules
         difficulties: ['beginner', 'intermediate', 'advanced'],
         aiResponses: -1, // unlimited
-        generateCourseLimit: 50, // per month
+        // Marketing/UI copy and login responses expect 15/month for Pro.
+        generateCourseLimit: 15, // per month
         quizGenerations: 20, // per month
         reportGenerations: 20, // per month
         careerLimit: 15, // per month

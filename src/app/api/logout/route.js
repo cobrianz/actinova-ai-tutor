@@ -49,14 +49,14 @@ export async function POST() {
     path: "/",
     httpOnly: true,
     secure,
-    sameSite: secure ? "strict" : "lax",
+    sameSite: "lax",
   });
 
   cookieStore.delete("refreshToken", {
     path: "/",
     httpOnly: true,
     secure,
-    sameSite: secure ? "strict" : "lax",
+    sameSite: "lax",
   });
 
   // Optional: clear any UI/session cookies
@@ -67,7 +67,7 @@ export async function POST() {
     path: "/",
     httpOnly: false,
     secure,
-    sameSite: secure ? "strict" : "lax",
+    sameSite: "lax",
   });
 
   // Clear middleware helper cookies
@@ -75,13 +75,13 @@ export async function POST() {
     path: "/",
     httpOnly: false,
     secure,
-    sameSite: secure ? "strict" : "lax",
+    sameSite: "lax",
   });
   cookieStore.delete("onboardingCompleted", {
     path: "/",
     httpOnly: false,
     secure,
-    sameSite: secure ? "strict" : "lax",
+    sameSite: "lax",
   });
 
   // === 3. Return success ===

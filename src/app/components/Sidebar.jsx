@@ -36,6 +36,10 @@ export default function Sidebar({
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
 
   const { user, logout, loading: authLoading, isPro, isEnterprise } = useAuth();
+  const courseUsage = usage?.details?.courses || null;
+  const generationUsed = courseUsage?.used ?? usage?.used ?? 0;
+  const generationLimit = courseUsage?.limit ?? usage?.limit ?? null;
+  const generationPercent = courseUsage?.percent ?? usage?.percentage ?? 0;
 
 
   const navigation = [
@@ -273,13 +277,17 @@ export default function Sidebar({
                     <div className="flex justify-between text-xs text-accent-foreground">
                       <span>Generations</span>
                       <span>
-                        {usage.used}/{usage.limit === null ? "∞" : usage.limit}
+                        {generationUsed}/{generationLimit === null ? "∞" : generationLimit}
                       </span>
                     </div>
                     <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${usage.limit === null ? 100 : usage.percentage}%` }}
+                        style={{
+                          width: `${
+                            generationLimit === null ? 100 : generationPercent
+                          }%`,
+                        }}
                       ></div>
                     </div>
                   </div>

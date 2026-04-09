@@ -40,10 +40,9 @@ export function middleware(request) {
 
   // Allow access to public routes
   if (isPublic) {
-    // If user is logged in and trying to access auth pages, redirect to dashboard
-    if (token && pathname.startsWith("/auth") && pathname !== "/auth/verify-email") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+    // Do not redirect away from auth pages solely because a `token` cookie exists.
+    // The token can be expired while the cookie is still present, which causes
+    // redirect loops and "session expired" UX. AuthProvider handles post-login redirects.
     return NextResponse.next();
   }
 

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CheckCircle, XCircle, ArrowLeft, Eye, Download } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
-import { downloadQuizAsPDF } from "@/lib/pdfUtils";
+import { downloadQuizPdfFromServer } from "@/lib/quizPdfDownload";
 import { apiClient } from "@/lib/csrfClient";
 
 const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
@@ -138,6 +138,23 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
       return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleDownloadExam = async () => {
+    const quizId = existingQuizId || quizData?._id;
+    if (!quizId) {
+      toast.error("Missing quiz id");
+      return;
+    }
+
+    try {
+      await downloadQuizPdfFromServer({
+        quizId,
+        title: quizData?.title || topic || "Assessment",
+      });
+    } catch (e) {
+      toast.error(e?.message || "Failed to download exam");
+    }
   };
 
   const handleSubmit = async () => {
@@ -478,7 +495,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                   <Button 
                     onClick={() => {
                       if (isPro || isEnterprise) {
-                        downloadQuizAsPDF(quizData);
+                        handleDownloadExam();
                       } else {
                         toast.error("Upgrade to Pro to download assessments", {
                           action: {

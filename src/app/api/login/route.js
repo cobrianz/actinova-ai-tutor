@@ -71,7 +71,7 @@ export async function POST(request) {
     const usersCol = db.collection("users");
 
     // Find user
-    const user = await usersCol.findOne({ email });
+    let user = await usersCol.findOne({ email });
     if (!user) {
       attempts.count++;
       loginAttempts.set(ip, attempts);
@@ -188,6 +188,16 @@ export async function POST(request) {
       console.warn("[login] subscription validation failed:", e?.message || e);
     }
 
+    // Ensure the plan is valid at login time (no cron dependency).
+    // This keeps the login response consistent with /api/me and middleware.
+    try {
+      const { validateSubscriptionStatus } = await import("@/lib/planMiddleware");
+      const validated = await validateSubscriptionStatus(user._id.toString());
+      if (validated) user = validated;
+    } catch (e) {
+      console.warn("[login] subscription validation failed:", e?.message || e);
+    }
+
     // Reset rate limit & lock on success
     loginAttempts.delete(ip);
     if (user.isLocked) {
@@ -233,7 +243,9 @@ export async function POST(request) {
     const cookieConfig = {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "strict" : "lax",
+      // "strict" breaks some common flows (payment callbacks, link-outs, etc).
+      // We keep "lax" for reliable session persistence.
+      sameSite: "lax",
       path: "/",
     };
 
@@ -255,7 +267,7 @@ export async function POST(request) {
     cookieStore.set("emailVerified", user.emailVerified ? "true" : "false", {
       httpOnly: false,
       secure: isProd,
-      sameSite: isProd ? "strict" : "lax",
+      sameSite: "lax",
       path: "/",
       maxAge: 30 * 24 * 60 * 60,
     });
@@ -265,7 +277,7 @@ export async function POST(request) {
       {
         httpOnly: false,
         secure: isProd,
-        sameSite: isProd ? "strict" : "lax",
+        sameSite: "lax",
         path: "/",
         maxAge: 30 * 24 * 60 * 60,
       }

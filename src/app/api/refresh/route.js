@@ -65,11 +65,7 @@ export async function POST() {
 
     if (!validToken) {
       console.warn(`[refresh] Persistent Token Mismatch/Expired for user ${decoded.id}. Token: ${refreshToken.substring(0, 10)}...`);
-      // Token was rotated over 60s ago or explicitly revoked → kill all sessions
-      await tokensCol.updateMany(
-        { userId: new ObjectId(decoded.id) },
-        { $set: { revoked: true, revokedAt: new Date() } }
-      );
+      // Don't nuke other devices/tabs. Just end this session.
       cookieStore.delete("refreshToken");
       cookieStore.delete("token");
       return NextResponse.json(
@@ -234,9 +230,12 @@ export async function POST() {
       },
     });
   } catch (error) {
+    // Do NOT clear cookies on transient server errors. Otherwise a DB hiccup
+    // looks like a logout ("session expired").
     console.error("[refresh] Error:", error);
-    cookieStore.delete("refreshToken");
-    cookieStore.delete("token");
-    return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Temporary server error. Please retry." },
+      { status: 503 }
+    );
   }
 }

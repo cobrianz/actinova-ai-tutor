@@ -113,13 +113,16 @@ export function AuthProvider({ children }) {
           }
           return true;
         } else {
-          // Mark refresh as failed so visibility-change stops retrying
-          refreshFailedRef.current = true;
+          // Only treat 401 as a definitive refresh failure. Server errors should
+          // not permanently trip the failure flag (avoids false "session expired").
+          if (res.status === 401) {
+            refreshFailedRef.current = true;
+          }
           return false;
         }
       } catch (err) {
         console.error("Token refresh failed:", err);
-        refreshFailedRef.current = true;
+        // Network/transient failures should not hard-fail the session.
         return false;
       } finally {
         refreshPromiseRef.current = null;
@@ -170,14 +173,32 @@ export function AuthProvider({ children }) {
         }
       }
 
-      // If everything failed, clear user and redirect to login
+      // Only treat auth-related statuses as a definitive "logged out" state.
+      // For transient server errors, keep the current user (if any) and show error.
       if (mounted.current) {
-        setUser(null);
-        // Only redirect if we're on a protected route (not already on auth pages)
-        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth") && window.location.pathname !== "/") {
-          const loginUrl = new URL("/auth/login", window.location.origin);
-          loginUrl.searchParams.set("reason", "session_expired");
-          router.replace(loginUrl.pathname + loginUrl.search);
+        const isAuthFailure =
+          res.status === 403 ||
+          res.status === 423 ||
+          (res.status === 401 && refreshFailedRef.current === true);
+        if (isAuthFailure) {
+          setUser(null);
+          // Only redirect if we're on a protected route (not already on auth pages)
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.startsWith("/auth") &&
+            window.location.pathname !== "/"
+          ) {
+            const loginUrl = new URL("/auth/login", window.location.origin);
+            loginUrl.searchParams.set("reason", "session_expired");
+            router.replace(loginUrl.pathname + loginUrl.search);
+          }
+        } else {
+          try {
+            const text = await res.text();
+            if (text) setError(text);
+          } catch {
+            setError("Temporary server error. Please retry.");
+          }
         }
       }
       return null;
