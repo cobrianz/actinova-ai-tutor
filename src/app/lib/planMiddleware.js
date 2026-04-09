@@ -32,8 +32,14 @@ export const TIER_LEVELS = {
  * @returns {Boolean} true if plan is valid, false if expired
  */
 export const isPlanValid = (user) => {
-    if (!user?.subscription?.expiryDate) return true; // No expiry date = indefinite (e.g. free or lifetime)
-    return new Date(user.subscription.expiryDate) > new Date();
+    const sub = user?.subscription || {};
+    const effectiveExpiry =
+        sub.currentPeriodEnd || sub.expiryDate || sub.expiresAt || null;
+
+    // No expiry date = indefinite (e.g. free tier, or legacy data missing an end date)
+    if (!effectiveExpiry) return true;
+
+    return new Date(effectiveExpiry) > new Date();
 };
 
 /**
@@ -62,17 +68,24 @@ export async function validateSubscriptionStatus(userId) {
 
         if (!user) return null;
 
+        const sub = user.subscription || {};
+        const effectiveExpiry =
+            sub.currentPeriodEnd || sub.expiryDate || sub.expiresAt || null;
+
         // If subscription has expired, downgrade to free tier automatically
         if (
-            user.subscription?.expiryDate &&
-            new Date(user.subscription.expiryDate) < new Date() &&
-            user.subscription?.tier !== TIERS.FREE
+            effectiveExpiry &&
+            new Date(effectiveExpiry) < new Date() &&
+            sub?.tier !== TIERS.FREE
         ) {
             const downgradeData = {
                 "subscription.tier": TIERS.FREE,
                 "subscription.status": "expired",
                 "subscription.downgradedAt": new Date(),
                 "subscription.expiryDate": null,
+                "subscription.expiresAt": null,
+                "subscription.currentPeriodEnd": null,
+                isPremium: false,
             };
 
             await db.collection("users").updateOne(
@@ -83,11 +96,14 @@ export async function validateSubscriptionStatus(userId) {
             return {
                 ...user,
                 subscription: {
-                    ...user.subscription,
+                    ...sub,
                     tier: TIERS.FREE,
                     status: "expired",
                     expiryDate: null,
+                    expiresAt: null,
+                    currentPeriodEnd: null,
                 },
+                isPremium: false,
             };
         }
 

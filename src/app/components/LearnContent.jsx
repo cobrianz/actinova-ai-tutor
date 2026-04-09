@@ -2353,7 +2353,10 @@ export default function LearnContent() {
               <LayoutDashboard className="w-4 h-4" />
             </Link>
             <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              onClick={() => {
+                setIsRightPanelOpen(false);
+                setIsSidebarOpen(!isSidebarOpen);
+              }}
               className={`hidden md:flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isSidebarOpen
                 ? "bg-primary/10 text-primary border-primary/20"
                 : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
@@ -2877,7 +2880,10 @@ export default function LearnContent() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-[90] border-t border-border bg-card/95 backdrop-blur-xl px-2 py-2">
         <div className="grid grid-cols-5 gap-1">
           <button
-            onClick={() => setIsSidebarOpen((prev) => !prev)}
+            onClick={() => {
+              setIsRightPanelOpen(false);
+              setIsSidebarOpen((prev) => !prev);
+            }}
             className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
               isSidebarOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
             }`}
@@ -2906,15 +2912,18 @@ export default function LearnContent() {
             <span>Dashboard</span>
           </button>
           <button
-            onClick={handleDownloadCourse}
-            disabled={!canDownloadCoursePdf}
+            onClick={handleDownloadLesson}
+            disabled={!canDownloadLessonPdf}
             className="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
             <span>Save</span>
           </button>
           <button
-            onClick={() => setIsRightPanelOpen((prev) => !prev)}
+            onClick={() => {
+              setIsSidebarOpen(false);
+              setIsRightPanelOpen((prev) => !prev);
+            }}
             className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
               isRightPanelOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
             }`}

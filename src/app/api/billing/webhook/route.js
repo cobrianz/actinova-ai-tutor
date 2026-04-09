@@ -156,7 +156,10 @@ async function applyPurchase({ db, userId, data, metadata }) {
         "subscription.status": "active",
         "subscription.billingCycle": metadata.billingCycle || "monthly",
         "subscription.currentPeriodStart": now,
+        // Keep all legacy/new expiry fields in sync so cron + middleware work reliably.
         "subscription.currentPeriodEnd": expiresAt,
+        "subscription.expiryDate": expiresAt,
+        "subscription.expiresAt": expiresAt,
         "subscription.lastPaymentDate": now,
         "subscription.paystackCustomerCode": data.customer?.customer_code,
         "subscription.paystackReference": data.reference,

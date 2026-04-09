@@ -1042,188 +1042,217 @@ export const downloadReceiptAsPDF = async (data) => {
 
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-    /* ------------------------------------------------------------------
-       LAYOUT CONSTANTS
-    ------------------------------------------------------------------ */
-    const PAGE_WIDTH = 210;
-    const MARGIN = 25;
-    const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-    let y = 20;
+    // --- Helpers (no external deps) ---
+    const PAGE_W = 210;
+    const PAGE_H = 297;
+    const M = 18; // ~1.8cm
+    const CONTENT_W = PAGE_W - (M * 2);
+    const centerX = PAGE_W / 2;
 
-    /* ------------------------------------------------------------------
-       CORPORATE THEME
-    ------------------------------------------------------------------ */
     const COLORS = {
-        text: [0, 0, 0],
-        muted: [90, 90, 90],
-        border: [200, 200, 200],
-        accent: [0, 70, 140], // conservative enterprise blue
-        success: [0, 120, 60]
+        deepGreen: [34, 139, 34],
+        muted: [70, 70, 70],
+        light: [240, 255, 240],
+        black: [0, 0, 0],
     };
 
-    const BRAND = {
-        name: "Actirova AI Tutor Ltd.",
-        website: "www.actirova.com",
-        support: "support@actirova.com"
+    const safeText = (v) => String(v ?? "").trim();
+    const formatMoney = (amount) => {
+        const n = typeof amount === "number" ? amount : Number(amount);
+        if (!isFinite(n)) return "0";
+        const isInt = Math.abs(n - Math.round(n)) < 1e-9;
+        return n.toLocaleString("en-US", {
+            minimumFractionDigits: isInt ? 0 : 2,
+            maximumFractionDigits: isInt ? 0 : 2,
+        });
     };
 
-    /* ------------------------------------------------------------------
-       HEADER (LOGO + COMPANY INFO)
-    ------------------------------------------------------------------ */
+    const loadImageAsDataUrl = async (src) => {
+        if (typeof window === "undefined" || typeof fetch === "undefined") return null;
+        try {
+            const res = await fetch(src);
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+            return typeof dataUrl === "string" ? dataUrl : null;
+        } catch (_) {
+            return null;
+        }
+    };
+
+    const setOpacity = (opacity) => {
+        try {
+            if (pdf.GState) pdf.setGState(new pdf.GState({ opacity }));
+        } catch (_) {}
+    };
+
+    // Use classic receipt/typewriter font everywhere.
+    const setTT = (style = "normal", size = 11, color = COLORS.black) => {
+        pdf.setFont("courier", style);
+        pdf.setFontSize(size);
+        pdf.setTextColor(...color);
+    };
+
+    const logoDataUrl = await loadImageAsDataUrl("/logo.png");
+    // Optional subtle logo watermark
+    if (logoDataUrl) {
+        try {
+            setOpacity(0.09);
+            const w = 110;
+            const h = 110;
+            pdf.addImage(logoDataUrl, "PNG", (PAGE_W - w) / 2, (PAGE_H - h) / 2 - 5, w, h);
+            setOpacity(1);
+        } catch (_) {
+            setOpacity(1);
+        }
+    }
+
+    let y = 18;
+
+    // Header
+    setTT("bold", 18, COLORS.deepGreen);
+    pdf.text("ACTIROVA AI TUTOR", centerX, y, { align: "center" });
+    y += 6;
+    setTT("italic", 9, COLORS.muted);
+    pdf.text("Your AI Learning Journey Begins Here", centerX, y, { align: "center" });
+    y += 9;
+    pdf.setDrawColor(...COLORS.deepGreen);
+    pdf.setLineWidth(0.6);
+    pdf.line(M + (CONTENT_W * 0.075), y, PAGE_W - M - (CONTENT_W * 0.075), y);
+    y += 8;
+
+    setTT("bold", 16, COLORS.deepGreen);
+    pdf.text("SUBSCRIPTION RECEIPT", centerX, y, { align: "center" });
+    y += 6;
+    setTT("normal", 8.5, COLORS.muted);
+    const receiptNo = safeText(data.receiptNumber || "N/A");
+    const dateShort = safeText(data.transactionDate || "");
+    pdf.text(`${receiptNo}${dateShort ? "  |  " + dateShort : ""}`, centerX, y, { align: "center" });
+    y += 12;
+
+    // Meta block (centered 2-col table)
+    const metaRows = [
+        ["Customer", safeText(data.customerName || "—")],
+        ["Email", safeText(data.customerEmail || "—")],
+        ["Payment", safeText(data.method || "—")],
+        ["Date/Time", safeText(data.timestamp || data.transactionDate || "—")],
+    ];
+
+    const tableW = 105; // centered like the LaTeX example
+    const x0 = centerX - tableW / 2;
+    const labelW = 42;
+    const valueW = tableW - labelW;
+    const rowH = 6.2;
+
+    setTT("bold", 9.5, COLORS.black);
+    for (let i = 0; i < metaRows.length; i++) {
+        const [label, value] = metaRows[i];
+        const yy = y + (i * rowH);
+        setTT("bold", 9.5, COLORS.black);
+        pdf.text(label, x0, yy);
+        setTT("normal", 9.5, COLORS.black);
+        pdf.text(value, x0 + tableW, yy, { align: "right", maxWidth: valueW });
+    }
+    y += metaRows.length * rowH + 10;
+
+    // Line item table (receipt style)
+    const items = Array.isArray(data.items) && data.items.length
+        ? data.items
+        : [{ description: safeText(data.plan || "Premium AI Tutor Subscription"), amount: data.amount }];
+
+    const descX = centerX - 52;
+    const amtX = centerX + 52;
+
+    // Table header background
+    pdf.setFillColor(...COLORS.light);
+    pdf.rect(descX, y - 5.5, (amtX - descX), 8.5, "F");
+    pdf.setDrawColor(...COLORS.deepGreen);
+    pdf.setLineWidth(0.3);
+    pdf.line(descX, y + 3, amtX, y + 3);
+
+    setTT("bold", 10, COLORS.black);
+    pdf.text("Description", descX + 2, y);
+    pdf.text(`Amount (${safeText(data.currency || "USD")})`, amtX - 2, y, { align: "right" });
+    y += 10;
+
+    setTT("normal", 10, COLORS.black);
+    for (const it of items) {
+        const desc = safeText(it?.description || "Item");
+        const amt = formatMoney(it?.amount);
+        const lines = pdf.splitTextToSize(desc, (amtX - descX) - 34);
+        pdf.text(lines, descX + 2, y);
+        pdf.text(amt, amtX - 2, y, { align: "right" });
+        y += Math.max(6.5, lines.length * 5.2);
+    }
+
+    // Total
+    pdf.setDrawColor(...COLORS.deepGreen);
+    pdf.setLineWidth(0.4);
+    pdf.line(descX, y, amtX, y);
+    y += 8;
+
+    setTT("bold", 12, COLORS.deepGreen);
+    pdf.text("TOTAL PAID", descX + 2, y);
+    setTT("bold", 12, COLORS.deepGreen);
+    pdf.text(formatMoney(data.amount), amtX - 2, y, { align: "right" });
+    y += 14;
+
+    // Reference / plan notes
+    setTT("normal", 8.5, COLORS.muted);
+    const ref = safeText(data.reference || "");
+    const validFrom = safeText(data.validFrom || "");
+    const notes = [
+        ref ? `Subscription Reference: ${ref}` : null,
+        validFrom ? `Subscription Starts: ${validFrom}` : null,
+        safeText(data.planDetails || ""),
+    ].filter(Boolean);
+    if (notes.length) {
+        for (const line of notes) {
+            pdf.text(line, centerX, y, { align: "center", maxWidth: CONTENT_W });
+            y += 5.2;
+        }
+        y += 6;
+    } else {
+        y += 6;
+    }
+
+    // QR code block (bottom center)
     try {
-        pdf.addImage("/logo.png", MARGIN, y, 22, 22);
-    } catch { }
+        const { generateQrPngDataUrl } = await import("./qrCode");
+        const qrText = safeText(data.verifyUrl || data.reference || data.receiptNumber || "actirova");
+        const qrDataUrl = await generateQrPngDataUrl(qrText, { sizePx: 260 });
+        if (qrDataUrl) {
+            const qrSize = 28;
+            const qrX = centerX - qrSize / 2;
+            pdf.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
+            y += qrSize + 6;
+            setTT("bold", 9, COLORS.black);
+            pdf.text("Scan QR to view details", centerX, y, { align: "center" });
+            y += 10;
+        }
+    } catch (_) {}
 
-    pdf.setFont("times", "bold");
-    pdf.setFontSize(14);
-    pdf.setTextColor(...COLORS.text);
-    pdf.text(BRAND.name, MARGIN + 30, y + 8);
+    // Thank you + footer rule/legal
+    setTT("italic", 12, COLORS.deepGreen);
+    pdf.text("Thank you for choosing Actirova AI Tutor!", centerX, Math.min(y, 258), { align: "center" });
+    setTT("normal", 9, COLORS.muted);
+    pdf.text("We can't wait to accelerate your learning journey.", centerX, Math.min(y + 6, 264), { align: "center" });
 
-    pdf.setFont("times", "normal");
-    pdf.setFontSize(9);
-    pdf.setTextColor(...COLORS.muted);
-    pdf.text(BRAND.website, MARGIN + 30, y + 14);
-    pdf.text(`Support: ${BRAND.support}`, MARGIN + 30, y + 19);
+    const fy = 272;
+    pdf.setDrawColor(...COLORS.deepGreen);
+    pdf.setLineWidth(0.4);
+    pdf.line(M + (CONTENT_W * 0.075), fy, PAGE_W - M - (CONTENT_W * 0.075), fy);
 
-    pdf.setFont("times", "bold");
-    pdf.setFontSize(14);
-    pdf.text("RECEIPT", PAGE_WIDTH - MARGIN, y + 10, { align: "right" });
+    setTT("normal", 7.5, COLORS.muted);
+    pdf.text("This is your official receipt. Keep for records.", centerX, fy + 10, { align: "center" });
+    pdf.text("No cash refunds. Terms & conditions apply.", centerX, fy + 14, { align: "center" });
 
-    y += 30;
-
-    /* ------------------------------------------------------------------
-       DIVIDER
-    ------------------------------------------------------------------ */
-    pdf.setDrawColor(...COLORS.border);
-    pdf.setLineWidth(0.5);
-    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-    y += 12;
-
-    /* ------------------------------------------------------------------
-       RECEIPT META (LEFT / RIGHT BLOCK)
-    ------------------------------------------------------------------ */
-    const drawMetaRow = (label, value, x, yPos) => {
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(9);
-        pdf.setTextColor(...COLORS.muted);
-        pdf.text(label, x, yPos);
-
-        pdf.setFont("times", "normal");
-        pdf.setTextColor(...COLORS.text);
-        pdf.text(String(value || "N/A"), x + 40, yPos);
-    };
-
-    const LEFT_X = MARGIN;
-    const RIGHT_X = PAGE_WIDTH / 2 + 5;
-
-    let metaY = y;
-    drawMetaRow("Receipt No.", data.receiptNumber, LEFT_X, metaY);
-    metaY += 6;
-    drawMetaRow("Transaction Date", data.transactionDate, LEFT_X, metaY);
-    metaY += 6;
-    drawMetaRow("Reference", data.reference, LEFT_X, metaY);
-
-    let metaYR = y;
-    drawMetaRow("Payment Method", data.method || "Card", RIGHT_X, metaYR);
-    metaYR += 6;
-    drawMetaRow("Account Status", data.accountStatus || "Active", RIGHT_X, metaYR);
-    metaYR += 6;
-    drawMetaRow("Auto-Renewal", data.autoRenew || "Enabled", RIGHT_X, metaYR);
-
-    y = Math.max(metaY, metaYR) + 14;
-
-    /* ------------------------------------------------------------------
-       LINE ITEM TABLE
-    ------------------------------------------------------------------ */
-    pdf.setFont("times", "bold");
-    pdf.setFontSize(10);
-    pdf.setTextColor(...COLORS.text);
-
-    pdf.text("Description", MARGIN, y);
-    pdf.text("Period", PAGE_WIDTH - MARGIN - 60, y);
-    pdf.text("Amount", PAGE_WIDTH - MARGIN, y, { align: "right" });
-
-    y += 4;
-    pdf.setDrawColor(...COLORS.border);
-    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-    y += 8;
-
-    pdf.setFont("times", "normal");
-    pdf.setFontSize(10);
-
-    pdf.text(data.plan || "Pro Subscription", MARGIN, y);
-    pdf.text(
-        data.validFrom || data.transactionDate || "-",
-        PAGE_WIDTH - MARGIN - 60,
-        y
-    );
-
-    pdf.text(
-        `$ ${data.amount || "0.00"}`,
-        PAGE_WIDTH - MARGIN,
-        y,
-        { align: "right" }
-    );
-
-    y += 12;
-
-    /* ------------------------------------------------------------------
-       TOTAL
-    ------------------------------------------------------------------ */
-    pdf.setDrawColor(...COLORS.border);
-    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-    y += 10;
-
-    pdf.setFont("times", "bold");
-    pdf.setFontSize(12);
-    pdf.text("Total Paid", PAGE_WIDTH - MARGIN - 60, y);
-    pdf.text(
-        `$ ${data.amount || "0.00"}`,
-        PAGE_WIDTH - MARGIN,
-        y,
-        { align: "right" }
-    );
-
-    y += 16;
-
-    /* ------------------------------------------------------------------
-       PAYMENT STATUS
-    ------------------------------------------------------------------ */
-    pdf.setFontSize(10);
-    pdf.setTextColor(...COLORS.success);
-    pdf.text(
-        `Payment Status: ${data.status || "SUCCESS"}`,
-        MARGIN,
-        y
-    );
-
-    y += 10;
-    pdf.setFont("times", "normal");
-    pdf.setTextColor(...COLORS.muted);
-    pdf.text(
-        `Processed on ${data.timestamp || "N/A"}`,
-        MARGIN,
-        y
-    );
-
-    /* ------------------------------------------------------------------
-       FOOTER (LEGAL / NOTICE)
-    ------------------------------------------------------------------ */
-    y = 270;
-    pdf.setDrawColor(...COLORS.border);
-    pdf.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-    y += 8;
-
-    pdf.setFontSize(8);
-    pdf.setTextColor(...COLORS.muted);
-    pdf.text(
-        "This document is electronically generated and is valid without a signature.",
-        PAGE_WIDTH / 2,
-        y,
-        { align: "center" }
-    );
-
-    pdf.save(`Actirova_Receipt_${data.receiptNumber || Date.now()}.pdf`);
+    pdf.save(`Actirova_Receipt_${receiptNo || Date.now()}.pdf`);
 };
 
 export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {

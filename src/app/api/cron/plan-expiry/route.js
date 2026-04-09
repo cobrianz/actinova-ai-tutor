@@ -22,11 +22,27 @@ async function handleCron(request) {
 
     console.log(`[CRON] Starting plan expiry check at ${now.toISOString()}`);
 
+    const expiryLtNow = {
+      $or: [
+        { "subscription.currentPeriodEnd": { $lt: now } },
+        { "subscription.expiryDate": { $lt: now } },
+        { "subscription.expiresAt": { $lt: now } },
+      ],
+    };
+
+    const expiryBetween = (from, to) => ({
+      $or: [
+        { "subscription.currentPeriodEnd": { $gte: from, $lte: to } },
+        { "subscription.expiryDate": { $gte: from, $lte: to } },
+        { "subscription.expiresAt": { $gte: from, $lte: to } },
+      ],
+    });
+
     // === 1. Find and downgrade users with expired plans ===
     const expiredUsers = await db
       .collection("users")
       .find({
-        "subscription.expiryDate": { $lt: now },
+        ...expiryLtNow,
         "subscription.tier": { $ne: "free" },
         "subscription.status": { $ne: "expired" },
       })
@@ -38,7 +54,7 @@ async function handleCron(request) {
     if (expiredUsers.length > 0) {
       const result = await db.collection("users").updateMany(
         {
-          "subscription.expiryDate": { $lt: now },
+          ...expiryLtNow,
           "subscription.tier": { $ne: "free" },
           "subscription.status": { $ne: "expired" },
         },
@@ -47,6 +63,10 @@ async function handleCron(request) {
             "subscription.tier": "free",
             "subscription.status": "expired",
             "subscription.downgradedAt": new Date(),
+            "subscription.currentPeriodEnd": null,
+            "subscription.expiresAt": null,
+            "subscription.expiryDate": null,
+            isPremium: false,
           },
         }
       );
@@ -59,10 +79,7 @@ async function handleCron(request) {
     const expiringUsers = await db
       .collection("users")
       .find({
-        "subscription.expiryDate": {
-          $gte: now,
-          $lte: sevenDaysLater,
-        },
+        ...expiryBetween(now, sevenDaysLater),
         "subscription.tier": { $ne: "free" },
         "subscription.status": "active",
         "subscription.renewalReminderSent": { $ne: true },
@@ -75,10 +92,7 @@ async function handleCron(request) {
     if (expiringUsers.length > 0) {
       await db.collection("users").updateMany(
         {
-          "subscription.expiryDate": {
-            $gte: now,
-            $lte: sevenDaysLater,
-          },
+          ...expiryBetween(now, sevenDaysLater),
           "subscription.tier": { $ne: "free" },
           "subscription.status": "active",
           "subscription.renewalReminderSent": { $ne: true },
@@ -98,13 +112,16 @@ async function handleCron(request) {
     // === 3. Clean up cancelled subscriptions (optional) ===
     const cancelledResult = await db.collection("users").updateMany(
       {
-        "subscription.status": "cancelled",
+        "subscription.status": { $in: ["cancelled", "canceled"] },
         "subscription.tier": { $ne: "free" },
       },
       {
         $set: {
           "subscription.tier": "free",
+          "subscription.currentPeriodEnd": null,
+          "subscription.expiresAt": null,
           "subscription.expiryDate": null,
+          isPremium: false,
         },
       }
     );

@@ -21,7 +21,6 @@ import {
   Pin,
   BarChart3,
   TrendingUp,
-  Share2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -42,7 +41,6 @@ export default function Library({ setActiveContent }) {
 
   const [pinnedCourses, setPinnedCourses] = useState(new Set());
   const hasLoadedOnceRef = useRef(false);
-  const lastShareUpdateRef = useRef(0); // Timestamp of last share toggle
 
   const { user, loading: authLoading, refreshToken } = useAuth();
 
@@ -90,52 +88,8 @@ export default function Library({ setActiveContent }) {
 
       const data = await res.json();
 
-      const isRecentlyUpdated = (Date.now() - lastShareUpdateRef.current) < 5000;
-
       const mappedCourses = (data.items || []).map((item) => {
         const _id = item.id.split("_")[1] || item.id;
-        
-        // If recently updated, preserve local share state for this course
-        if (isRecentlyUpdated) {
-           const existing = courses.find(c => c._id === _id);
-           if (existing) {
-              return {
-                 id: item.id,
-                 _id,
-                 title: item.title,
-                 topic: item.topic,
-                 difficulty: item.difficulty,
-                 progress: item.progress || 0,
-                 totalLessons: item.totalLessons || item.totalCards || 0,
-                 completedLessons: Math.round(
-                   (item.progress / 100) * (item.totalLessons || item.totalCards || 0)
-                 ),
-                 premiumAccessExpiresAt: item.premiumAccessExpiresAt || null,
-                 isPinned: item.pinned || false,
-                 pinned: item.pinned || false,
-                 createdAt: item.createdAt,
-                 lastAccessed: item.lastAccessed || "Just now",
-                 description: item.description || `Learn ${item.topic || item.title}`,
-                 instructor: item.instructor || "AI Tutor",
-                 rating: item.rating || 4.8,
-                 estimatedTime: item.estimatedTime || "2-4 hours",
-                 format: item.type === "questions" ? "questions" : item.type === "flashcards" ? "flashcards" : "course",
-                 courseData: {
-                   topic: item.topic,
-                   format: item.type === "questions" ? "questions" : item.type === "flashcards" ? "flashcards" : "course",
-                   difficulty: item.difficulty,
-                 },
-                 isGenerated: true,
-                 isPremium: item.isPremium || false,
-                 isEnrolled: item.isEnrolled || false,
-                 sharerName: item.sharerName || null,
-                 // Preserve local share state
-                 shareConfigs: existing.shareConfigs,
-                 isShared: existing.isShared,
-                 shareId: existing.shareId
-              };
-           }
-        }
 
         return {
           id: item.id,
@@ -166,10 +120,7 @@ export default function Library({ setActiveContent }) {
           isGenerated: true,
           isPremium: item.isPremium || false,
           isEnrolled: item.isEnrolled || false,
-          sharerName: item.sharerName || null,
-          shareId: item.shareId,
-          isShared: item.isShared,
-          shareConfigs: item.shareConfigs || []
+          sharerName: item.sharerName || null
         };
       });
 
@@ -312,86 +263,6 @@ export default function Library({ setActiveContent }) {
     } catch (err) {
       console.error("Library download error:", err);
       toast.error("Failed to generate PDF. Please try again.", { id: toastId });
-    }
-  };
-
-  const [isSharingToggle, setIsSharingToggle] = useState({});
-
-  const handleShare = async (course) => {
-    if (isSharingToggle[course.id]) return;
-
-    // Check if the current user already has an active share for this course
-    const myConfig = (course.shareConfigs || []).find(c => String(c.sharerId) === String(user?._id || user?.id));
-    const isCurrentlySharing = !!(myConfig?.isActive);
-    const willBeShared = !isCurrentlySharing;
-
-    const toastId = toast.loading(willBeShared ? "Enabling share..." : "Disabling share...");
-    
-    // Optimistic UI update
-    const previousCourses = [...courses];
-    
-    setCourses(prev => prev.map(c => 
-      c.id === course.id 
-        ? { 
-            ...c, 
-            shareConfigs: [
-              ...(c.shareConfigs || []).filter(sc => String(sc.sharerId) !== String(user?._id || user?.id)),
-              { sharerId: user?._id || user?.id, isActive: willBeShared, shareId: c.shareId || "pending" }
-            ],
-            isShared: willBeShared // Sync root prop for UI consistency
-          } 
-        : c
-    ));
-
-    try {
-      setIsSharingToggle(prev => ({ ...prev, [course.id]: true }));
-      lastShareUpdateRef.current = Date.now();
-      const res = await apiClient.post("/api/library/share", { 
-        courseId: course._id,
-        action: willBeShared ? "enable" : "disable"
-      });
-      
-      if (!res.ok) throw new Error("Failed to toggle sharing");
-      
-      const data = await res.json();
-      
-      // Update with final data from server
-      setCourses(prev => prev.map(c => 
-        c.id === course.id 
-          ? { 
-              ...c, 
-              shareConfigs: [
-                ...(c.shareConfigs || []).filter(sc => String(sc.sharerId) !== String(user?._id || user?.id)),
-                { sharerId: user?._id || user?.id, isActive: willBeShared, shareId: data.shareId, tier: user?.subscription?.plan || "free" }
-              ],
-              isShared: willBeShared,
-              shareId: data.shareId
-            } 
-          : c
-      ));
-      
-      if (willBeShared) {
-        const shareId = data.shareId;
-        const shareUrl = `${window.location.origin}/share/${shareId}`;
-        await navigator.clipboard.writeText(shareUrl);
-        
-        const isUserPremium = user?.subscription?.plan === "pro" || user?.isPremium;
-        
-        toast.success("Sharing enabled! Link copied to clipboard.", {
-          id: toastId,
-          description: `Anyone with this link can now view this course (${isUserPremium ? "Full Access" : "3-Module Preview"}).`,
-          duration: 5000,
-        });
-      } else {
-        toast.success("Sharing disabled.", { id: toastId });
-      }
-    } catch (err) {
-      console.error("Share error:", err);
-      // Revert on error
-      setCourses(previousCourses);
-      toast.error("Failed to update sharing status", { id: toastId });
-    } finally {
-      setIsSharingToggle(prev => ({ ...prev, [course.id]: false }));
     }
   };
 
@@ -686,26 +557,6 @@ export default function Library({ setActiveContent }) {
                             <Download className="w-4 h-4" />
                           </button>
                         )}
-                          {(() => {
-                            const myConfig = (course.shareConfigs || []).find(c => String(c.sharerId) === String(user?._id || user?.id));
-                            const isMyShareActive = !!(myConfig?.isActive);
-                            const isToggling = !!isSharingToggle[course.id];
-                            
-                            return (
-                              <button
-                                onClick={() => handleShare(course)}
-                                disabled={isToggling}
-                                className={`p-2 rounded-lg transition-all ${isToggling ? "opacity-50 cursor-not-allowed" : ""} ${isMyShareActive ? "bg-green-500/10 text-green-500 border border-green-500/20 shadow-sm" : "hover:bg-secondary text-muted-foreground"}`}
-                                title={isToggling ? "Updating share status..." : (isMyShareActive ? "Shared by me (Click to disable)" : (course.isShared ? "Reshare course" : "Share course"))}
-                              >
-                                {isToggling ? (
-                                  <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-green-500/10" : ""}`} />
-                                )}
-                              </button>
-                            );
-                          })()}
                         <button
                           onClick={() => handlePin(course.id)}
                           className="p-2 hover:bg-secondary rounded"
@@ -761,11 +612,6 @@ export default function Library({ setActiveContent }) {
                     </div>
 
                     <div className="flex items-center justify-between mt-3 text-[10px] sm:text-xs font-medium">
-                      {course.sharerName && (
-                        <span className="italic text-green-500/90 dark:text-green-400/90">
-                          Shared by {course.sharerName.split(' ')[0]}
-                        </span>
-                      )}
                       <span className="text-red-500/80 dark:text-red-400/80">
                         Last accessed:{" "}
                         {new Date(course.lastAccessed).toLocaleDateString()}

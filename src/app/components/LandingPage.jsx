@@ -16,11 +16,12 @@ export default function LandingPage({ initialNotice = null }) {
   const router = useRouter();
   const { user } = useAuth();
 
-  useEffect(() => {
-    const isStandalone =
-      window.matchMedia?.("(display-mode: standalone)")?.matches ||
-      window.navigator?.standalone === true;
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      window.navigator?.standalone === true);
 
+  useEffect(() => {
     if (isStandalone) {
       router.replace("/dashboard");
       return;
@@ -38,6 +39,8 @@ export default function LandingPage({ initialNotice = null }) {
       router.push(`/auth/signup?callbackUrl=${encodeURIComponent(redirectPath)}`);
     }
   };
+
+  if (isStandalone) return null;
 
   return (
     <div className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">

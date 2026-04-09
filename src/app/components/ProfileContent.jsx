@@ -290,6 +290,71 @@ export default function ProfileContent() {
     );
   };
 
+  const handleReceiptDownload = async (tx) => {
+    const id = tx?.transactionId || tx?.reference;
+    if (!id) {
+      toast.error("Receipt unavailable");
+      return;
+    }
+
+    const toastId = toast.loading("Generating receipt...");
+    try {
+      const paidDate = new Date(tx.date || tx.paidAt || tx.createdAt || Date.now());
+      const dateStr = paidDate.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      const timeStr = paidDate.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const displayAmount = tx.metadata?.usdAmount
+        ? Math.round(tx.metadata.usdAmount)
+        : tx.currency === "KES"
+          ? Math.round(tx.amount / 129)
+          : Math.round(tx.amount);
+
+      const currency = "USD";
+
+      const planName = tx.plan
+        ? tx.plan.charAt(0).toUpperCase() + tx.plan.slice(1)
+        : "Pro";
+
+      const isMobileMoney =
+        tx.metadata?.paymentMethod === "mobile_money" || tx.currency === "KES";
+      const paymentMethodDisplay = isMobileMoney
+        ? "Mobile Money (M-Pesa)"
+        : "Credit/Debit Card";
+
+      await downloadReceiptAsPDF({
+        transactionDate: dateStr,
+        receiptNumber: tx.transactionId || tx.reference || "N/A",
+        reference: tx.reference || "N/A",
+        status: tx.status || "SUCCESS",
+        method: paymentMethodDisplay,
+        plan: `${planName} Subscription`,
+        customerName: profileData?.user?.firstName
+          ? `${profileData.user.firstName} ${profileData.user.lastName || ""}`.trim()
+          : (user?.name || "—"),
+        customerEmail: profileData?.user?.email || user?.email || "—",
+        verifyUrl: `https://actirova.com/verify/${encodeURIComponent(tx.transactionId || tx.reference || "receipt")}`,
+        accountStatus: "Active",
+        autoRenew: tx.subscription?.autoRenew ? "Enabled" : "Disabled",
+        validFrom: dateStr,
+        amount: displayAmount,
+        currency,
+        timestamp: `${dateStr} at ${timeStr} EAT`,
+      });
+
+      toast.success("Receipt downloaded", { id: toastId });
+    } catch (e) {
+      toast.error("Failed to generate receipt", { id: toastId });
+      console.error(e);
+    }
+  };
+
   return (
     <>
       <div
@@ -737,105 +802,92 @@ export default function ProfileContent() {
                       <Receipt size={20} /> Billing History
                     </h3>
 
-                    <div className="overflow-hidden rounded-xl border border-border">
+                    <div className="rounded-2xl border border-border bg-card overflow-hidden">
                       {profileData?.user?.billingHistory?.length > 0 ? (
-                        <table className="w-full text-sm text-left">
-                          <thead className="text-xs uppercase bg-muted text-muted-foreground border-b border-border">
-                            <tr>
-                              <th className="px-6 py-4">Date</th>
-                              <th className="px-6 py-4">Amount</th>
-                              <th className="px-6 py-4">Status</th>
-                              <th className="px-6 py-4 text-right">Receipt</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border">
-                            {profileData.user.billingHistory.map((tx, i) => (
-                              <tr key={i} className={`hover:bg-muted/50 transition-colors`}>
-                                <td className="px-6 py-4 font-medium">
-                                  {new Date(tx.date || tx.paidAt).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 font-medium">
-                                  $ {tx.metadata?.usdAmount
-                                    ? Math.round(tx.metadata.usdAmount)
-                                    : (tx.currency === 'KES' ? Math.round(tx.amount / 129) : Math.round(tx.amount))}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tx.status === 'success' ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" :
-                                    tx.status === 'failed' ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" :
-                                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300"
-                                    }`}>
-                                    {tx.status}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                  {tx.status === 'success' && (
-                                    <button
-                                      onClick={async () => {
-                                        const id = tx.transactionId || tx.reference;
-                                        if (!id) {
-                                          toast.error("Receipt unavailable");
-                                          return;
-                                        }
+                        <>
+                          <div className="p-5 border-b border-border bg-muted/30">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <div className="text-sm font-bold text-foreground">Your Payments</div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Download receipts for successful transactions.
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                {profileData.user.billingHistory.length} records
+                              </div>
+                            </div>
+                          </div>
 
-                                        try {
-                                          const toastId = toast.loading("Generating receipt...");
+                          <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            {profileData.user.billingHistory.map((tx, i) => {
+                              const amount = tx.metadata?.usdAmount
+                                ? Math.round(tx.metadata.usdAmount)
+                                : (tx.currency === "KES" ? Math.round(tx.amount / 129) : Math.round(tx.amount));
+                              const date = new Date(tx.date || tx.paidAt || tx.createdAt || Date.now());
+                              const dateStr = date.toLocaleDateString();
+                              const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                              const status = (tx.status || "pending").toLowerCase();
+                              const planLabel = tx.plan ? `${tx.plan}` : "subscription";
+                              const isSuccess = status === "success";
 
-                                          const paidDate = new Date(tx.date || tx.paidAt);
-                                          const dateStr = paidDate.toLocaleDateString('en-GB', {
-                                            day: 'numeric',
-                                            month: 'long',
-                                            year: 'numeric',
-                                          });
-                                          const timeStr = paidDate.toLocaleTimeString('en-GB', {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                          });
+                              const badgeClass =
+                                status === "success"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                                  : status === "failed"
+                                    ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300";
 
-                                          const displayAmount = tx.metadata?.usdAmount
-                                            ? Math.round(tx.metadata.usdAmount)
-                                            : (tx.currency === 'KES' ? Math.round(tx.amount / 129) : Math.round(tx.amount));
+                              return (
+                                <div
+                                  key={i}
+                                  className="rounded-2xl border border-border bg-background p-4 sm:p-5 hover:bg-muted/30 transition-colors"
+                                >
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-black text-foreground truncate">
+                                          {planLabel.charAt(0).toUpperCase() + planLabel.slice(1)}
+                                        </span>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${badgeClass}`}>
+                                          {status}
+                                        </span>
+                                      </div>
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        {dateStr} · {timeStr}
+                                      </div>
+                                    </div>
 
-                                          const currency = 'USD';
+                                    <div className="text-right shrink-0">
+                                      <div className="text-[11px] text-muted-foreground">Amount</div>
+                                      <div className="text-base font-black text-foreground">
+                                        $ {amount}
+                                      </div>
+                                    </div>
+                                  </div>
 
-                                          const planName = tx.plan
-                                            ? tx.plan.charAt(0).toUpperCase() + tx.plan.slice(1)
-                                            : 'Pro';
+                                  <div className="mt-4 flex items-center justify-between gap-3">
+                                    <div className="text-xs text-muted-foreground truncate">
+                                      Ref: {tx.reference || tx.transactionId || "—"}
+                                    </div>
 
-                                          const isMobileMoney = tx.metadata?.paymentMethod === 'mobile_money' || tx.currency === 'KES';
-                                          const paymentMethodDisplay = isMobileMoney ? 'Mobile Money (M-Pesa)' : 'Credit/Debit Card';
-
-                                          await downloadReceiptAsPDF({
-                                            transactionDate: dateStr,
-                                            receiptNumber: tx.transactionId || tx.reference || 'N/A',
-                                            reference: tx.reference || 'N/A',
-                                            status: tx.status || 'SUCCESS',
-                                            method: paymentMethodDisplay,
-                                            plan: `${planName} Subscription`,
-                                            accountStatus: 'Active',
-                                            autoRenew: tx.subscription?.autoRenew ? 'Enabled' : 'Disabled',
-                                            validFrom: dateStr,
-                                            amount: displayAmount,
-                                            currency: currency,
-                                            timestamp: `${dateStr} at ${timeStr} EAT`
-                                          });
-
-                                          toast.dismiss(toastId);
-                                          toast.success("Receipt downloaded");
-                                        } catch (e) {
-                                          toast.error("Failed to generate receipt");
-                                          console.error(e);
-                                        }
-                                      }}
-                                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 hover:underline font-semibold text-xs"
-                                    >
-                                      <Download size={14} />
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                    {isSuccess ? (
+                                      <button
+                                        onClick={() => handleReceiptDownload(tx)}
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted/50 text-primary font-bold text-xs"
+                                      >
+                                        <Download size={14} />
+                                        <span>receipt</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">receipt unavailable</span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
                       ) : (
                         <div className="text-center py-12 text-muted-foreground">
                           <Receipt size={48} className="mx-auto mb-4 opacity-20" />
