@@ -25,7 +25,7 @@ export default function Flashcards({ cardData }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
-  const { user } = useAuth();
+  const { user, hasPurchased } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -85,6 +85,7 @@ export default function Flashcards({ cardData }) {
 
   const handleGenerateMore = async () => {
     const isPremium =
+      hasPurchased('flashcard_generation') ||
       user?.isPremium ||
       (user?.subscription?.plan === "pro" &&
         user?.subscription?.status === "active");
@@ -577,7 +578,6 @@ export default function Flashcards({ cardData }) {
                   <button
                     onClick={() => {
                       setShowUpgradeModal(false);
-                      router.push("/pricing");
                     }}
                     className="flex-1 px-6 py-3 bg-white text-green-600 rounded-xl hover:bg-gray-50 font-semibold shadow-lg transition-colors"
                   >

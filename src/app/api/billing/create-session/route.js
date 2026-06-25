@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { connectToDatabase } from "@/lib/mongodb";
 import { withErrorHandling, withAuth, combineMiddleware } from "@/lib/middleware";
 import { MARKETPLACE_PRICE_USD } from "@/lib/courseCommerce";
+import { PRODUCTS } from "@/lib/planLimits";
 
 const RESUME_EXPORT_PRICE_USD = 2.5;
 
@@ -148,6 +149,24 @@ async function resolveAmountAndMetadata({ db, body, userId }) {
     };
   }
 
+  if (purchaseType === "item") {
+    const itemType = String(body.itemType || "").trim();
+    const product = PRODUCTS.find((p) => p.id === itemType);
+    if (!product) {
+      throw new Error("Invalid item type");
+    }
+    return {
+      purchaseType: "item",
+      amountUsd: product.price,
+      name: product.name,
+      metadata: {
+        purchaseType: "item",
+        itemType: product.id,
+      },
+    };
+  }
+
+  // Legacy subscription support (deprecated, kept for existing users)
   const plan = body.plan || "pro";
   const billingCycle = String(body.billingCycle || "monthly").toLowerCase() === "yearly"
     ? "yearly"

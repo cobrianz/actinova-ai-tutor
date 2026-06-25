@@ -83,13 +83,15 @@ export async function POST(request) {
     let currentLimits;
     if (userId) {
       const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-      isPremium = user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
+      const hasPurchasedFlashcards = user?.isPremium || user?.purchasedItems?.some((p) => p.itemType === "flashcard_generation");
+      isPremium = hasPurchasedFlashcards || user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
       currentLimits = getUserPlanLimits(user);
     } else {
       currentLimits = getUserPlanLimits(null);
     }
 
-    const cardCount = additionalCards || currentLimits.flashcards;
+    // Enforce 50 flashcards per batch for paid users, use free limit otherwise
+    const cardCount = currentLimits.flashcards === -1 ? 50 : (additionalCards || currentLimits.flashcards);
 
     // ─── GENERATE FLASHCARDS ───
     const completion = await openai.chat.completions.create({

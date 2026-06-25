@@ -1,0 +1,611 @@
+Actirova AI Tutor — Complete System Documentation
+
+Repo: actinova-ai-tutor (Next.js + MongoDB + OpenAI + Paystack)
+
+NOTE: The codebase/documentation sometimes references “Actinova” and “Actirova”. In practice, they refer to the same product.
+
+============================================================
+0. Overview / Goals
+============================================================
+Actirova AI Tutor is a full-stack AI learning platform built with Next.js (App Router), React, MongoDB, OpenAI, and Paystack. The platform provides:
+- AI-generated structured courses (modules/lessons)
+- Flashcards (SRS-aware)
+- Practice quizzes
+- Long-form report generation and editing/validation
+- AI tutor chat for focused learning
+- Personalization from onboarding and usage history
+- Premium subscriptions (Paystack) and tier-based limits
+- Career tools (resume/interview/skill-gap/network/portfolio)
+- Library browsing, progress support, and share-link access
+- Cron jobs for trending refresh, plan expiry enforcement, and content generation
+
+============================================================
+1. Tech Stack
+============================================================
+1.1 Frontend
+- Next.js App Router (v16+)
+- React 19
+- Tailwind CSS
+- Framer Motion
+- Radix UI primitives
+- Sonner (toasts)
+- Lucide React icons
+
+1.2 Backend
+- Next.js route handlers under src/app/api/**/route.js
+- MongoDB (MongoDB driver usage + models under src/app/models/**)
+- JWT authentication (access + refresh token pattern via cookies)
+- CSRF protection for unsafe mutating requests
+- OpenAI (course content generation, quizzes, reports, tutor chat, career tools)
+- Nodemailer/SMTP for transactional emails
+- Paystack for checkout and billing webhooks
+
+============================================================
+2. High-Level Architecture
+============================================================
+2.1 Layering
+- UI routes & components: src/app/** and src/app/components/**
+- API endpoints: src/app/api/**
+- Shared business logic: src/app/lib/**
+- DB connection helpers/models: src/app/lib/dbConnect.js, src/app/lib/db.js, src/app/models/**
+- Cron/background logic:
+  - protected cron endpoints: src/app/api/cron/**
+  - runner: scripts/run-crons.js
+
+2.2 Request flow (typical protected mutation)
+1) middleware.js (edge/Next middleware) checks path access
+2) API route composes middleware:
+   - withAuth: verify JWT & load user + ensure account active/locked
+   - withCsrf: require valid CSRF token for unsafe methods
+   - withAPIRateLimit: enforce plan tier quotas (no automatic usage increment)
+   - withErrorHandling: standardized JSON errors
+3) Handler executes OpenAI/MongoDB work
+4) Handler stores results (library/tests/reports/etc.)
+5) Handler increments usage explicitly via trackAPIUsage where required
+
+============================================================
+3. Routing & User-Facing Areas
+============================================================
+3.1 Public marketing/legal pages
+- / (landing)
+- /about
+- /contact
+- /pricing
+- /privacy
+- /terms
+- /cookies (Cookie Policy UI)
+- /help
+- /blog and /blog/[slug]
+
+3.2 Auth and onboarding
+- /auth/login
+- /auth/signup
+- /auth/verify-email
+- /auth/forgot-password
+- /auth/reset-password
+- /onboarding
+
+3.3 Main app (protected)
+- /dashboard (app shell; feature tabs)
+- /learn/[topic] (learning experience)
+- /explore (discovery)
+- /profile
+- /quizzes
+- /reports/[id]
+- /checkout and /checkout/success
+- /share/[shareId] (shared course access)
+
+============================================================
+4. UI Features (Component-level / Experience-level)
+============================================================
+4.1 Dashboard experience
+- Primary app shell with sidebar and feature tabs.
+- Tabs include:
+  - generate
+  - chat
+  - explore
+  - library
+  - reports-library
+  - career
+  - flashcards
+  - quizzes
+  - premium-courses
+  - profile
+
+4.2 Generate experience
+Users can generate:
+- Course
+- Flashcards
+- Practice Quiz
+- Report
+
+Plan-gated behavior:
+- Free tier restricted by plan limits
+- Intermediate/advanced difficulty gated
+- Reports are Pro-only
+
+Popular topics are fetched via /api/popular-topics.
+
+4.3 Learn experience
+- Module/lesson sidebar
+- Lesson content + notes panel + AI tutor chat
+- Completion tracking
+- Module locking for free users after early modules
+- PDF export for paid users
+- Support for shared learning via shareId
+
+Rendering capabilities include:
+- prose
+- code blocks
+- charts and tables
+- KaTeX for formulas
+
+4.4 Library
+Capabilities:
+- list/search/paginate courses and flashcards
+- pinning up to 3 items
+- progress display
+- PDF downloads for paid users
+- course sharing and enrollment via share links
+
+4.5 Premium courses discovery
+- seeded premium catalog
+- trending premium for Pro users
+- personalized recommendations based on onboarding interests/goals
+- plan upsell for free users
+
+4.6 Career Growth suite
+Feature areas (mostly premium-gated):
+- Resume Builder
+- Interview Preparation
+- Skill Gap Analysis
+- Network AI
+- trending careers/skills insights
+
+4.7 Cookies policy UI page
+- Implemented in: src/app/cookies/page.jsx
+- It’s a client-rendered animated policy page.
+- It displays cookie categories (Essential, Analytics, Functional, Marketing), manages UI toggles conceptually, and provides “Save Preferences” / “Reject All Optional” buttons.
+- In the provided code, no backend persistence for cookie preferences is shown; it is primarily a policy/UX page.
+
+============================================================
+5. Security Model
+============================================================
+5.1 middleware.js (path-level protection)
+File: middleware.js (repo root)
+
+What it does:
+- Reads token cookie: request.cookies.get("token")?.value
+- If absent, checks Authorization header: Bearer <token>
+- Public routes allowed:
+  - / and auth pages
+  - /about, /contact, /pricing, /privacy, /terms
+  - /blog
+- Special bypass: paths starting with:
+  - /api/webhook
+  - /api/public
+  - /api/auth
+
+If route is protected and no token:
+- redirects to /auth/login?from=<originalPath>
+
+Loop prevention:
+- If token cookie exists but is expired, middleware does not always redirect away from auth pages to avoid redirect loops.
+- AuthProvider handles post-login redirect UX.
+
+5.2 API-level auth: src/app/lib/middleware.js (withAuth)
+withAuth(handler, options)
+- Extracts token from:
+  - cookie header parsing (cookieHeader -> cookiesMap.token)
+  - Authorization header (Bearer)
+  - next/headers() fallback
+- Verifies token via verifyToken from src/app/lib/auth.js
+- Loads and validates subscription/user status via validateSubscriptionStatus from planMiddleware.js
+- Enforces:
+  - account active (user.status === "active")
+  - account not locked (user.isLocked)
+- Sets req.user = user
+- Supports:
+  - options.optional: allow handler to run without user
+  - options.roles: role-based authorization
+
+5.3 CSRF protection: src/app/lib/withCsrf.js and/or withCsrf export in same lib file
+withCsrf(handler)
+- For safe methods: passes through (GET/HEAD/OPTIONS)
+- For unsafe methods:
+  - reads CSRF header name (CSRF_HEADER_NAME)
+  - reads CSRF cookie name (CSRF_COOKIE_NAME)
+  - validateCsrfToken(csrfHeader, csrfCookie)
+- If invalid: returns 403 with CSRF_VALIDATION_FAILED
+
+5.4 Error handling: withErrorHandling(handler)
+- Wraps handler execution
+- Catches exceptions and returns standardized JSON:
+  - error: "Internal server error"
+  - message: detailed in development, generic in production
+  - code, status, optional stack in development
+
+============================================================
+6. Plans, Authorization, and Limits
+============================================================
+6.1 Tier constants
+In src/app/lib/planMiddleware.js:
+- TIERS: free, pro, enterprise
+- TIER_LEVELS: free=0, pro=1, enterprise=2
+
+6.2 Subscription validity & auto-downgrade
+validateSubscriptionStatus(userId)
+- Loads user from MongoDB users collection
+- Determines effective expiry from:
+  - subscription.currentPeriodEnd || expiryDate || expiresAt
+- If expired and tier is not free:
+  - updates user subscription fields to FREE
+  - sets status "expired", timestamps, clears expiry dates
+  - sets isPremium=false
+- Returns downgraded user object or null on errors
+
+6.3 Plan quota enforcement
+Rate limiting/quotas middleware: withAPIRateLimit(handler, apiName)
+- Computes limit via checkAPILimit(user._id, apiName)
+- If exceeded:
+  - returns 429 JSON with:
+    - limit, used, remaining, nextReset
+- Explicit usage increments are NOT automatic here.
+  - Handlers must call trackAPIUsage() after successful expensive operations.
+
+6.4 Usage tracking
+trackAPIUsage(userId, apiName)
+- Maps API name to plan feature key via getFeatureName:
+  - generate-course -> generateCourseLimit
+  - generate-flashcards -> flashcards
+  - quiz -> quizGenerations
+  - ai-tutor-chat -> aiResponses
+  - report outline/section -> reportGenerations
+  - career routes -> careerLimit
+- Increments api_usage collection with:
+  - userId
+  - apiName(featureName)
+  - month bucket (monthStart = first day)
+
+6.5 Course access control & sharing
+checkCourseAccess(userId, courseId, shareId)
+- If shareId provided:
+  - checks library collection for matching share configs or shared course record
+  - determines sharer tier (from sharePlan/isPremium or shareConfigs matching shareId)
+  - paid sharer -> fullAccess=true
+  - free sharer -> limited access (fullAccess=false)
+- If no shareId:
+  - validates subscription first (auto-downgrade)
+  - checks if course is in library:
+    - owner access always full
+    - enrollees may receive full access depending on whether access came via a shared chain
+  - if course is not in library:
+    - if course is not premium -> public access
+    - if premium -> requires paid plan unless enrolled
+    - tierRequired and TIER_LEVELS determine access
+
+============================================================
+7. API Surface (Functional Catalog)
+============================================================
+This section summarizes endpoint groups as documented and implied by folder structure.
+
+7.1 Authentication and session
+- /api/signup
+- /api/login
+- /api/login/google
+- /api/logout
+- /api/me
+- /api/refresh
+- /api/session/start
+- /api/session/end
+- /api/verify-email
+- /api/resend-verification
+- /api/forgot-password
+- /api/reset-password
+- /api/validate-reset-token
+- /api/verify-reset-code
+- /api/change-password
+
+7.2 Profile and settings
+- /api/profile
+- /api/profile/update
+- /api/settings/update
+- /api/user/usage
+
+7.3 Learning generation
+- /api/generate-course
+- /api/generate-flashcards
+- /api/generate-report-outline
+- /api/generate-report-section
+- /api/generate-doc
+- /api/latex-converter
+- /api/rewrite-content
+- /api/course-agent
+
+7.4 Course library & study workflow
+- /api/courses and /api/courses/[id]
+- /api/courses/delete
+- /api/course-progress
+- /api/library
+- /api/library/share
+- /api/flashcards and /api/flashcards/[id]
+- /api/quizzes and /api/quizzes/[id]
+- /api/quizzes/[id]/performance
+- /api/srs/due
+- /api/srs/review
+- /api/notes
+
+7.5 Discovery and recommendations
+- /api/explore
+- /api/explore/category-courses
+- /api/explore/persisted-courses
+- /api/explore/trending-topics
+- /api/popular-topics
+- /api/premium-courses
+- /api/premium-courses/favorites
+- /api/premium-courses/personalized
+- /api/premium-courses/trending
+
+7.6 Reports management
+- /api/reports
+- /api/reports/[id]
+- /api/reports/[id]/validate
+
+7.7 Blog/content marketing
+- /api/blog
+- /api/blog/[slug]
+- /api/blog/[slug]/bookmark
+- /api/blog/generate
+- /api/posts
+- /api/posts/[id]
+- /api/newsletter
+- /api/contact
+
+7.8 Billing (Paystack)
+- /api/plans
+- /api/billing/create-session
+- /api/billing/verify-payment
+- /api/billing/webhook
+
+7.9 Misc
+- /api/visitor-counter
+- /api/send-welcome-email
+
+7.10 Cron endpoints
+- /api/cron/plan-expiry
+- /api/cron/trending-topics
+- /api/cron/trending-career
+- /api/cron/trending-premium
+- /api/cron/generate-weekly-blogs
+
+============================================================
+8. Core Feature Documentation (Key Flows)
+============================================================
+8.1 Course generation
+Endpoint: POST /api/generate-course
+
+Security:
+- requires auth + CSRF
+
+Behavior:
+- validates topic/difficulty/format
+- enforces monthly quota via planMiddleware
+- canonicalizes topic to detect duplicates
+- reuses existing course if already generated
+- creates structured course outline (commonly 20 modules / 100 lessons)
+- stores course in library
+- free users are restricted to early modules
+
+8.2 Flashcards generation
+Endpoint: POST /api/generate-flashcards
+
+Behavior:
+- generates card sets with SRS metadata
+- stores in cardSets
+- supports appending to existing set
+- avoids duplicate sets for same topic/difficulty
+
+8.3 Quizzes generation and practice
+Behavior:
+- quizzes are generated under course-gen workflow with format=quiz
+- stored in tests collection
+- supports quiz reuse for same topic/difficulty
+- performance tracked in quizzes/[id]/performance
+
+8.4 Reports / essays
+Endpoints:
+- POST /api/generate-report-outline
+- POST /api/generate-report-section
+- /api/reports management
+
+Behavior:
+- outline creates section metadata first
+- section generation produces paragraph arrays plus references
+- report editor workflow stores aggregate document state
+- report generation is Pro-only (enforced by plan limits)
+
+8.5 AI tutor chat
+Endpoint: POST /api/chat
+
+Behavior:
+- requires auth + CSRF
+- topic-scoped tutoring only (focused learning)
+- validates message/topic/history array shape
+- uses plan enforcement via withAPIRateLimit
+- increments usage via trackAPIUsage after success
+
+8.6 Tutor chat history
+Endpoints (example): src/app/api/chat/history/route.js
+- GET/POST/DELETE guarded by withAuth
+
+============================================================
+9. Premium Discovery
+============================================================
+Premium discovery endpoints:
+- /api/premium-courses
+- /api/premium-courses/personalized
+- /api/premium-courses/trending
+- /api/premium-courses/favorites
+
+Behavior:
+- returns seeded/trending/personalized premium suggestions
+- personalized generation uses onboarding interests/goals
+- caching/persistence may exist in PersonalizedDiscovery collection
+
+============================================================
+10. Career Growth Tools
+============================================================
+Career endpoints reside under src/app/api/career/**
+
+Capabilities:
+- Resume generation/refinement and matching
+- Cover letter generation
+- Interview questions and feedback
+- Skill gap analysis
+- Networking message support
+- Portfolio generation/refinement
+- Trending careers/skills
+- Career history persistence
+- AI edits/refinement actions
+
+Security:
+- mutating actions use auth + CSRF
+- plan rate limiting via withAPIRateLimit and usage tracking via trackAPIUsage
+
+============================================================
+11. Billing & Subscription Lifecycle (Paystack)
+============================================================
+Billing endpoints:
+- /api/plans: fetch plan list for UI
+- /api/billing/create-session: initiate Paystack checkout
+- /api/billing/verify-payment: verify return/callback
+- /api/billing/webhook: confirm via Paystack webhook
+
+What happens on successful payment:
+- user subscription state updated (isPremium, tier, status)
+- billing history stored
+
+Plan enforcement:
+- cron triggers plan expiry checks
+- validateSubscriptionStatus middleware enforces downgrade at request time
+
+============================================================
+12. Cron / Background Jobs
+============================================================
+Runner:
+- npm run cron executes: scripts/run-crons.js
+
+Cron responsibilities:
+- plan expiry validation & downgrades
+- refresh trending topics
+- refresh trending career insights
+- refresh trending premium courses
+- weekly blog generation
+
+Cron security:
+- endpoints require CRON_SECRET, typically via Authorization bearer or x-cron-secret
+
+============================================================
+13. Data Model Summary (Collections)
+============================================================
+Documented/used collections (high-level):
+
+Core:
+- users
+- library
+- courses
+- api_usage
+- cardSets
+- tests
+- reports
+- notes
+
+Career:
+- CareerHistory
+- TrendingCareer
+
+Discovery / Premium:
+- premium_courses
+- premium_trending_courses
+- PersonalizedDiscovery
+
+Content marketing:
+- posts
+- Newsletter
+- Contact
+- VisitorCounter
+
+Also referenced (direct collection usage):
+- refreshTokens
+- user_library (legacy/alternative library storage)
+
+============================================================
+14. Environment Variables
+============================================================
+Commonly referenced variables:
+- MONGODB_URI
+- JWT_SECRET
+- OPENAI_API_KEY
+
+Auth/session:
+- JWT_EXPIRES_IN
+- JWT_REFRESH_EXPIRES_IN
+- NEXT_PUBLIC_GOOGLE_CLIENT_ID
+
+URLs/CORS:
+- APP_URL
+- NEXT_PUBLIC_APP_URL
+- CORS_ORIGIN
+- NEXTAUTH_URL
+
+Billing:
+- PAYSTACK_SECRET_KEY
+
+Email:
+- SMTP_HOST
+- SMTP_PORT
+- SMTP_SECURE
+- SMTP_USER
+- SMTP_PASS
+- SMTP_FROM
+
+Cron:
+- CRON_SECRET
+- ENABLE_INTERNAL_CRON
+
+Runtime:
+- NODE_ENV
+- PORT
+- NEXT_RUNTIME
+
+============================================================
+15. Error Handling & Operational Notes
+============================================================
+15.1 Standard errors
+- withErrorHandling provides consistent JSON error shapes and HTTP statuses.
+
+15.2 Rate limit user experience
+- quota exceeded -> 429 with next reset hint and usage stats.
+
+15.3 Usage increment convention
+- withAPIRateLimit does quota checks only.
+- handlers increment usage manually via trackAPIUsage after successful completion.
+
+15.4 Known characteristics
+- inconsistent branding text between Actinova/Actirova
+- mixed DB access styles (models vs direct collections)
+- share access depends on nested share configurations and tiers
+
+============================================================
+16. Implementation Notes: Cookies Policy Page
+============================================================
+File: src/app/cookies/page.jsx
+- Client component.
+- Uses framer-motion for entry animations.
+- Defines cookie categories and management UI.
+- Provides contact CTA to privacy@actirova.com and link to /help.
+
+============================================================
+End of Documentation
+============================================================
+

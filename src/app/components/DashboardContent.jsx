@@ -85,7 +85,7 @@ export default function DashboardContent() {
   return (
     <div
       className={`relative min-h-full bg-background ${
-        isChat ? "h-[calc(100vh-64px)] overflow-hidden" : ""
+        isChat ? "lg:h-[calc(100vh-64px)] h-[calc(100vh-128px)] overflow-hidden" : ""
       }`}
     >
       <div

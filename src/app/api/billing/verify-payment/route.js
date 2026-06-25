@@ -44,6 +44,12 @@ function getSuccessRedirect(metadata, reference) {
     )}&ref=${encodeURIComponent(reference)}`;
   }
 
+  if (purchaseType === "item") {
+    return `/dashboard?tab=explore&payment=success&purchaseType=item&itemType=${encodeURIComponent(
+      metadata.itemType || ""
+    )}&ref=${encodeURIComponent(reference)}`;
+  }
+
   return `/checkout/success?kind=subscription&plan=${encodeURIComponent(
     metadata.plan || "pro"
   )}&cycle=${encodeURIComponent(
@@ -55,13 +61,15 @@ async function recordBillingEntry({ db, userId, data, metadata }) {
   const billingEntry = {
     type: metadata.purchaseType === "subscription" ? "subscription" : "one-time",
     description:
-      metadata.purchaseType === "marketplace-course"
-        ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
-        : metadata.purchaseType === "premium-generation"
-          ? `Premium course generation: ${metadata.topic}`
-          : metadata.purchaseType === "resume-export"
-            ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
-          : `Subscription: ${metadata.plan || "pro"}`,
+      metadata.purchaseType === "item"
+        ? `Purchase: ${metadata.itemType}`
+        : metadata.purchaseType === "marketplace-course"
+          ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
+          : metadata.purchaseType === "premium-generation"
+            ? `Premium course generation: ${metadata.topic}`
+            : metadata.purchaseType === "resume-export"
+              ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+            : `Subscription: ${metadata.plan || "pro"}`,
     plan: metadata.plan || metadata.purchaseType || "subscription",
     billingCycle: metadata.billingCycle || "monthly",
     amount: data.amount / 100,
@@ -153,6 +161,25 @@ async function applySuccessfulPayment({ db, user, data, metadata }) {
       amount: data.amount / 100,
       currency: data.currency,
     });
+    return;
+  }
+
+  if (purchaseType === "item") {
+    const itemType = metadata.itemType;
+    if (!itemType) throw new Error("Missing itemType in metadata");
+
+    await db.collection("users").updateOne(
+      { _id: user._id },
+      {
+        $push: {
+          purchasedItems: {
+            itemType,
+            purchaseDate: new Date(),
+            reference: data.reference,
+          },
+        },
+      }
+    );
     return;
   }
 

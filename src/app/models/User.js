@@ -196,6 +196,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    purchasedItems: [
+      {
+        itemType: {
+          type: String,
+          enum: ["course_generation", "report_generation", "career_tools", "exam_generation", "flashcard_generation"],
+        },
+        purchaseDate: {
+          type: Date,
+          default: Date.now,
+        },
+        reference: String,
+      },
+    ],
     billingHistory: [
       {
         type: {

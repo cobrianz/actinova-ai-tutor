@@ -1,143 +1,98 @@
-// src/app/lib/planLimits.js
-// Centralized plan limits and enforcement
-
-/**
- * Standard Tier Constants (synchronized with planMiddleware.js)
- */
 export const TIERS = {
-    FREE: "free",
-    PRO: "pro",
-    ENTERPRISE: "enterprise",
+  FREE: "free",
+  PRO: "pro",
+  ENTERPRISE: "enterprise",
 };
 
-/**
- * Get user's current plan limits
- * @param {Object} user - User object with subscription info
- * @returns {Object} Plan limits
- */
+export const PRODUCTS = [
+  { id: "course_generation", name: "Course Generation", price: 8, description: "Generate unlimited courses" },
+  { id: "report_generation", name: "Report Generation", price: 5, description: "Generate unlimited reports & essays" },
+  { id: "career_tools", name: "Career Tools", price: 5, description: "CV, cover letter, applications & job matching" },
+  { id: "exam_generation", name: "Exam Generation", price: 5, description: "Generate unlimited exams (50 quizzes each)" },
+  { id: "flashcard_generation", name: "Flashcard Generation", price: 5, description: "Generate unlimited flashcards (50 per batch)" },
+];
+
 export function getUserPlanLimits(user) {
-    if (!user) {
-        return getFreeLimits();
-    }
+  if (!user) return getFreeLimits();
 
-    const subscription = user.subscription;
-    const tier = subscription?.tier || (user.isPremium ? TIERS.PRO : TIERS.FREE);
+  const hasPurchased = (type) =>
+    user.isPremium || user.purchasedItems?.some((p) => p.itemType === type);
 
-    if (tier === TIERS.ENTERPRISE) {
-        return getEnterpriseLimits();
-    }
+  const free = getFreeLimits();
+  const limits = { ...free };
 
-    if (tier === TIERS.PRO) {
-        return getProLimits();
-    }
+  if (hasPurchased("course_generation")) {
+    limits.courses = -1;
+    limits.generateCourseLimit = -1;
+    limits.difficulties = ["beginner", "intermediate", "advanced"];
+    limits.freeReadableModules = 20;
+    limits.modules = 20;
+  }
 
-    return getFreeLimits();
+  if (hasPurchased("report_generation")) {
+    limits.reportGenerations = -1;
+  }
+
+  if (hasPurchased("career_tools")) {
+    limits.careerLimit = -1;
+  }
+
+  if (hasPurchased("exam_generation")) {
+    limits.quizzes = -1;
+    limits.quizGenerations = -1;
+  }
+
+  if (hasPurchased("flashcard_generation")) {
+    limits.flashcards = -1;
+  }
+
+  return limits;
 }
 
-/**
- * Check if user has reached their limit for a specific feature
- */
 export function checkLimit(user, feature, currentUsage) {
-    const limits = getUserPlanLimits(user);
-    const limit = limits[feature];
+  const limits = getUserPlanLimits(user);
+  const limit = limits[feature];
 
-    // -1 means unlimited
-    if (limit === -1) {
-        return {
-            allowed: true,
-            limit: -1,
-            remaining: -1,
-            isUnlimited: true,
-        };
-    }
+  if (limit === -1) {
+    return { allowed: true, limit: -1, remaining: -1, isUnlimited: true };
+  }
 
-    const remaining = Math.max(0, limit - currentUsage);
-    const allowed = currentUsage < limit;
+  const remaining = Math.max(0, limit - currentUsage);
+  const allowed = currentUsage < limit;
 
-    return {
-        allowed,
-        limit,
-        remaining,
-        isUnlimited: false,
-    };
+  return { allowed, limit, remaining, isUnlimited: false };
 }
 
-/**
- * Get plan name from user
- */
 export function getUserPlanName(user) {
-    if (!user) return 'Free';
-    const tier = user.subscription?.tier || (user.isPremium ? TIERS.PRO : TIERS.FREE);
-    return tier.charAt(0).toUpperCase() + tier.slice(1);
+  if (!user) return "Free";
+  if (user.isPremium) return "Pro";
+  if (user.purchasedItems?.length > 0) return "Premium";
+  return "Free";
 }
 
-// Plan limit definitions
 function getFreeLimits() {
-    return {
-        courses: 2,          // max premium courses free user can generate
-        quizzes: 1,
-        flashcards: 8,
-        modules: 20,         // course always has 20 modules (full structure generated)
-        lessonsPerModule: 5, // each module always has 5 lessons
-        totalLessons: 100,   // 20 × 5
-        freeReadableModules: 2, // free users can read modules 1-2; rest are padlocked
-        difficulties: ['beginner'],
-        aiResponses: 3, // per day (ai-tutor-chat)
-        generateCourseLimit: 2, // lifetime free-course generation cap
-        quizGenerations: 2, // per month
-        reportGenerations: 0, // Locked for free users as requested
-        careerLimit: 2, // per month
-    };
+  return {
+    courses: 2,
+    quizzes: 1,
+    flashcards: 8,
+    modules: 20,
+    lessonsPerModule: 5,
+    totalLessons: 100,
+    freeReadableModules: 2,
+    difficulties: ["beginner"],
+    aiResponses: 3,
+    generateCourseLimit: 2,
+    quizGenerations: 2,
+    reportGenerations: 0,
+    careerLimit: 2,
+  };
 }
 
-function getProLimits() {
-    return {
-        courses: 15,
-        quizzes: 20,
-        flashcards: 40,
-        modules: 20,
-        lessonsPerModule: 5,
-        totalLessons: 100,
-        freeReadableModules: 20, // Pro can read all modules
-        difficulties: ['beginner', 'intermediate', 'advanced'],
-        aiResponses: -1, // unlimited
-        // Marketing/UI copy and login responses expect 15/month for Pro.
-        generateCourseLimit: 15, // per month
-        quizGenerations: 20, // per month
-        reportGenerations: 20, // per month
-        careerLimit: 15, // per month
-    };
-}
-
-function getEnterpriseLimits() {
-    return {
-        courses: -1, // unlimited
-        quizzes: -1, // unlimited
-        flashcards: -1, // unlimited
-        modules: 20,
-        lessonsPerModule: 5,
-        totalLessons: 100,
-        freeReadableModules: 20, // Enterprise can read all modules
-        difficulties: ['beginner', 'intermediate', 'advanced'],
-        aiResponses: -1, // unlimited
-        generateCourseLimit: -1, // unlimited
-        reportGenerations: -1, // unlimited
-        careerLimit: -1, // unlimited
-    };
-}
-
-/**
- * Format limit for display
- */
 export function formatLimit(limit) {
-    return limit === -1 ? 'Unlimited' : limit.toString();
+  return limit === -1 ? "Unlimited" : limit.toString();
 }
 
-/**
- * Check if user can access difficulty level
- */
 export function canAccessDifficulty(user, difficulty) {
-    const limits = getUserPlanLimits(user);
-    return limits.difficulties.includes(difficulty.toLowerCase());
+  const limits = getUserPlanLimits(user);
+  return limits.difficulties.includes(difficulty.toLowerCase());
 }
-

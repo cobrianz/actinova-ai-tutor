@@ -12,6 +12,8 @@ import {
   Search,
   Sparkles,
   Share2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -26,6 +28,8 @@ export default function PremiumCourses() {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [busyCourseId, setBusyCourseId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 9;
 
   useEffect(() => {
     let mounted = true;
@@ -94,6 +98,25 @@ export default function PremiumCourses() {
       );
     });
   }, [courses, searchQuery]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+  const paginatedCourses = useMemo(() => {
+    const start = (currentPage - 1) * coursesPerPage;
+    const end = start + coursesPerPage;
+    return filteredCourses.slice(start, end);
+  }, [filteredCourses, currentPage]);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const getBadgeIcon = (badge) => {
     switch (badge) {
@@ -411,12 +434,13 @@ export default function PremiumCourses() {
           </p>
         </div>
       ) : (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {filteredCourses.map((course, index) => {
+        <>
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {paginatedCourses.map((course, index) => {
             const { daysLeft, progress } = getCourseExpiryInfo(course);
             const actionLabel = course.access?.hasAccess
               ? course.hasGenerated
@@ -533,10 +557,44 @@ export default function PremiumCourses() {
                     </p>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-10">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => handlePageChange(i + 1)}
+                  className={`px-3 py-1 rounded border transition-colors ${
+                    currentPage === i + 1
+                      ? "bg-[#1a1a1a] text-white border-[#1a1a1a]"
+                      : "bg-card text-foreground hover:bg-secondary border-border"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

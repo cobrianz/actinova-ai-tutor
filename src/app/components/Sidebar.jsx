@@ -5,7 +5,6 @@ import {
   BookOpen,
   Star,
   Search,
-  CreditCard,
   Plus,
   MessageCircle,
   FileText,
@@ -35,7 +34,7 @@ export default function Sidebar({
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
 
-  const { user, logout, loading: authLoading, isPro, isEnterprise } = useAuth();
+  const { user, logout, loading: authLoading, isPro, isEnterprise, hasPurchased, purchasedItems } = useAuth();
   const courseUsage = usage?.details?.courses || null;
   const generationUsed = courseUsage?.used ?? usage?.used ?? 0;
   const generationLimit = courseUsage?.limit ?? usage?.limit ?? null;
@@ -52,9 +51,14 @@ export default function Sidebar({
     { name: "Flashcards", id: "flashcards", icon: FileText },
     { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
     { name: "Premium", id: "premium-courses", icon: Star, premium: true, showLock: false },
-    // Only show upgrade when auth has finished loading and user is not pro
-    !authLoading && !isPro && { name: "Upgrade", id: "upgrade", icon: CreditCard },
   ].filter(Boolean);
+
+  // On mobile (< lg), hide items already shown in the bottom nav
+  const isMobile = screenSize === "small" || screenSize === "medium";
+  const bottomNavIds = ["generate", "chat", "explore", "library"];
+  const visibleNav = isMobile
+    ? navigation.filter(item => !bottomNavIds.includes(item.id))
+    : navigation;
 
   useEffect(() => {
     const handleResize = () => {
@@ -104,11 +108,11 @@ export default function Sidebar({
 
   const handleItemClick = (id) => {
     if (id === "upgrade") {
-      router.push("/pricing");
+      router.push("/dashboard");
       return;
     }
 
-    const item = navigation.find(n => n.id === id);
+    const item = visibleNav.find(n => n.id === id) || navigation.find(n => n.id === id);
     // Allow navigation but keep locks as indicators
 
     setActiveItem(id);
@@ -197,7 +201,7 @@ export default function Sidebar({
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">Menu</h3>
               </div>
               <ul className="space-y-4">
-                {navigation.map((item, index) => {
+                {visibleNav.map((item, index) => {
                   const Icon = item.icon;
                   const isActive = activeItem === item.id;
 
@@ -218,14 +222,14 @@ export default function Sidebar({
                       >
                         <div className="relative">
                           <Icon className="w-5 h-5" />
-                          {item.premium && item.showLock !== false && !isPro && (
+                          {item.premium && item.showLock !== false && !hasPurchased('course_generation') && (
                             <div className="absolute -top-1 -right-1 bg-lime-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
                               <Lock size={8} className="text-lime-950" />
                             </div>
                           )}
                         </div>
                         <span className="flex-1 text-left">{item.name}</span>
-                        {item.premium && item.showLock !== false && !isPro && (
+                        {item.premium && item.showLock !== false && !hasPurchased('course_generation') && (
                           <Lock size={12} className="text-muted-foreground/40" />
                         )}
                       </button>
@@ -270,7 +274,7 @@ export default function Sidebar({
                       </span>
                     </div>
                     <span className="text-xs text-green-700 dark:text-green-300">
-                      {isEnterprise ? "Enterprise" : (isPro ? "Pro" : "Free")}
+                      {isEnterprise ? "Enterprise" : isPro ? "Pro" : purchasedItems?.length > 0 ? "Member" : "Free"}
                     </span>
                   </div>
                   <div className="space-y-2">

@@ -786,7 +786,7 @@ export default function ProfileContent() {
                       <div className="flex flex-wrap gap-4">
                         {!profileData?.usage?.isPremium && (
                           <button
-                            onClick={() => router.push("/pricing")}
+                            onClick={() => router.push("/dashboard")}
                             className="px-8 py-3 bg-[#1a1a1a] text-white rounded-xl font-bold hover:bg-black"
                           >
                             Upgrade to Pro

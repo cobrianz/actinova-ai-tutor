@@ -44,7 +44,7 @@ export default function Generate({ setActiveContent }) {
   const [premiumRequested, setPremiumRequested] = useState(premiumRequestedFromQuery);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const router = useRouter();
-  const { user, loading, refreshToken, isPro } = useAuth();
+  const { user, loading, refreshToken, isPro, hasPurchased } = useAuth();
 
   // Sync state with URL params for reactivity
   React.useEffect(() => {
@@ -133,7 +133,7 @@ export default function Generate({ setActiveContent }) {
 
   // Strict check for Premium access (Pro or Enterprise)
   // Check tier (set by billing) and ensure status is active.
-  const isPremium = isPro || !!user?.isPremium;
+  const isPremium = hasPurchased('course_generation') || !!user?.isPremium || isPro;
 
   // Per-format limit checks from live usage data
   const formatLimit = (formatKey) => {
@@ -350,7 +350,7 @@ export default function Generate({ setActiveContent }) {
     if (format === "report") {
       if (!isPremium) {
         toast.error("Report generation is a Pro feature. Please upgrade to continue.");
-        router.push("/pricing");
+        setShowPremiumModal(true);
         return;
       }
       setShowLoader(true);
@@ -567,7 +567,7 @@ export default function Generate({ setActiveContent }) {
               {format === "course" && `Course limit reached (${courseLimitInfo.used}/${courseLimitInfo.limit}).`}
               {format === "flashcards" && `Flashcard limit reached (${flashcardsLimitInfo.used}/${flashcardsLimitInfo.limit}).`}
               {format === "quiz" && `Quiz limit reached (${quizzesLimitInfo.used}/${quizzesLimitInfo.limit}).`}
-              {" "}<button onClick={() => router.push("/pricing")} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
+              {" "}<button onClick={() => setShowPremiumModal(true)} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
             </motion.div>
           )}
         </div>
@@ -632,7 +632,7 @@ export default function Generate({ setActiveContent }) {
                       const selectedDifficulty = e.target.value;
                       if (!isPremium && selectedDifficulty !== "beginner") {
                         toast.error("Pro subscription required for higher levels.");
-                        router.push("/pricing");
+                        setShowPremiumModal(true);
                         return;
                       }
                       setDifficulty(selectedDifficulty);
@@ -692,7 +692,7 @@ export default function Generate({ setActiveContent }) {
               onClick={() => {
                 if (f.pro && !isPremium) {
                   toast.error("Pro subscription required.");
-                  router.push("/pricing");
+                  setShowPremiumModal(true);
                   return;
                 }
                 setFormat(f.id);

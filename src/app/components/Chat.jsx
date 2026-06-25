@@ -159,7 +159,7 @@ export default function Chat({ topic: propTopic }) {
     finally { setShowDeleteModal(false); setTopicToDelete(null); }
   };
 
-  const isPro = user && ((user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") || user.isPremium);
+  const isPro = user && (user.isPremium || user.purchasedItems?.length > 0 || ((user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") || user.isPremium));
 
   if (authLoading) return <ActirovaLoader />;
   if (!user) return null;

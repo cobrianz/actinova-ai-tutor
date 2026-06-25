@@ -48,6 +48,7 @@ async function handleGet(request) {
     onboardingCompleted: user.onboardingCompleted || false,
     isPremium,
     subscription: user.subscription,
+    purchasedItems: user.purchasedItems || [],
     usage,
   };
 

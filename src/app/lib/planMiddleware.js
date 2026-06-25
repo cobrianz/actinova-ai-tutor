@@ -26,29 +26,45 @@ export const TIER_LEVELS = {
     [TIERS.ENTERPRISE]: 2,
 };
 
+export function hasPurchasedItem(user, itemType) {
+    if (!user) return false;
+    if (user.isPremium) return true;
+    return user.purchasedItems?.some((p) => p.itemType === itemType);
+}
+
 /**
  * Check if user's subscription has expired
  * @param {Object} user - User object with subscription data
  * @returns {Boolean} true if plan is valid, false if expired
  */
 export const isPlanValid = (user) => {
+    if (hasPurchasedItem(user, "course_generation")) return true;
+    if (hasPurchasedItem(user, "report_generation")) return true;
+    if (hasPurchasedItem(user, "career_tools")) return true;
+    if (hasPurchasedItem(user, "exam_generation")) return true;
+    if (hasPurchasedItem(user, "flashcard_generation")) return true;
+    if (user?.isPremium) return true;
+
     const sub = user?.subscription || {};
     const effectiveExpiry =
         sub.currentPeriodEnd || sub.expiryDate || sub.expiresAt || null;
 
-    // No expiry date = indefinite (e.g. free tier, or legacy data missing an end date)
     if (!effectiveExpiry) return true;
-
     return new Date(effectiveExpiry) > new Date();
 };
 
 /**
- * Check if user has active subscription for paid tier
- * @param {String} tier - Subscription tier
- * @returns {Boolean} true if user has a paid tier (pro or enterprise)
+ * Check if user has active access to paid features
+ * @param {Object} user - User object
+ * @returns {Boolean} true if user has purchases or active subscription
  */
-export const hasPaidPlan = (tier) => {
-    return tier === TIERS.PRO || tier === TIERS.ENTERPRISE;
+export const hasPaidPlan = (user) => {
+    if (!user) return false;
+    if (user.isPremium) return true;
+    if (user.purchasedItems?.length > 0) return true;
+    const tier = user.subscription?.tier || user.subscription?.plan;
+    return (tier === TIERS.PRO || tier === TIERS.ENTERPRISE) &&
+        user.subscription?.status === "active";
 };
 
 /**
@@ -73,7 +89,13 @@ export async function validateSubscriptionStatus(userId) {
             sub.currentPeriodEnd || sub.expiryDate || sub.expiresAt || null;
 
         // If subscription has expired, downgrade to free tier automatically
+        // (but only if user has no purchased items - those are permanent)
         if (
+            !hasPurchasedItem(user, "course_generation") &&
+            !hasPurchasedItem(user, "report_generation") &&
+            !hasPurchasedItem(user, "career_tools") &&
+            !hasPurchasedItem(user, "exam_generation") &&
+            !hasPurchasedItem(user, "flashcard_generation") &&
             effectiveExpiry &&
             new Date(effectiveExpiry) < new Date() &&
             sub?.tier !== TIERS.FREE
@@ -169,8 +191,8 @@ export async function checkCourseAccess(userId, courseId, shareId = null) {
         if (libCourse) {
             const isOwner = libCourse.userId.toString() === userId.toString();
             
-            // Owners and Pro/Enterprise users always get full access
-            if (isOwner || hasPaidPlan(user.subscription?.tier || user.subscription?.plan)) {
+            // Owners and users who purchased course generation always get full access
+            if (isOwner || hasPurchasedItem(user, "course_generation") || hasPaidPlan(user)) {
                 return { hasAccess: true, isShared: false, fullAccess: true };
             }
 
@@ -212,8 +234,8 @@ export async function checkCourseAccess(userId, courseId, shareId = null) {
             return { hasAccess: true };
         }
 
-        // Premium courses require a paid plan, UNLESS the user is already enrolled
-        const userTier = user.subscription?.tier || TIERS.FREE;
+        // Premium courses require purchased course_generation, UNLESS the user is already enrolled
+        const hasCourseGen = hasPurchasedItem(user, "course_generation");
         
         // Check if user is already "enrolled" (exists in their courses array)
         const isEnrolled = user.courses?.some(c => 
@@ -224,26 +246,15 @@ export async function checkCourseAccess(userId, courseId, shareId = null) {
             return { hasAccess: true };
         }
 
-        if (!hasPaidPlan(userTier)) {
+        if (!hasCourseGen && !hasPaidPlan(user)) {
             return {
                 hasAccess: false,
-                reason: "Premium subscription required",
+                reason: "Course generation purchase required",
                 requiredTier: TIERS.PRO,
             };
         }
 
-        // Check if user's tier meets the specific course requirement
-        const requiredTier = course.tierRequired || TIERS.PRO;
-        if (TIER_LEVELS[userTier] >= TIER_LEVELS[requiredTier]) {
-            return { hasAccess: true };
-        }
-
-        return {
-            hasAccess: false,
-            reason: "Insufficient plan tier",
-            requiredTier,
-            userTier,
-        };
+        return { hasAccess: true };
     } catch (error) {
         console.error("Error checking course access:", error);
         return { hasAccess: false, reason: "Internal server error" };

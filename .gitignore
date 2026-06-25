@@ -17,7 +17,7 @@
 /.next/
 .next/
 out/
-
+/actirova
 # production builds
 /build
 /dist

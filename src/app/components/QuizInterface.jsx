@@ -13,7 +13,7 @@ import { downloadQuizPdfFromServer } from "@/lib/quizPdfDownload";
 import { apiClient } from "@/lib/csrfClient";
 
 const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
-  const { user, loading: authLoading, isPro, isEnterprise } = useAuth();
+  const { user, loading: authLoading, isPro, isEnterprise, hasPurchased } = useAuth();
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
@@ -494,13 +494,13 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                   </Button>
                   <Button 
                     onClick={() => {
-                      if (isPro || isEnterprise) {
+                      if (hasPurchased('exam_generation')) {
                         handleDownloadExam();
                       } else {
                         toast.error("Upgrade to Pro to download assessments", {
                           action: {
                             label: "Upgrade",
-                            onClick: () => window.location.href = "/pricing"
+                            onClick: () => router.push("/dashboard")
                           }
                         });
                       }

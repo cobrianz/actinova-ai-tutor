@@ -24,7 +24,7 @@ const stripHtmlText = (value = "") =>
         .trim();
 
 export default function ReportEditor({ reportId }) {
-    const { user, isPro, isEnterprise } = useAuth();
+    const { user, isPro, isEnterprise, hasPurchased } = useAuth();
     const loggedInUserName =
         user?.name ||
         [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -1048,7 +1048,7 @@ export default function ReportEditor({ reportId }) {
         if (!editorRef.current) return;
 
         // Premium Gating
-        if (!isPro && !isEnterprise) {
+        if (!hasPurchased('report_generation')) {
             setShowUpgradeModal(true);
             return;
         }

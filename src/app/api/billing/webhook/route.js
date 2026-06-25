@@ -50,13 +50,15 @@ async function appendBillingIfNeeded({ db, userId, data, metadata }) {
           gateway: "paystack",
           paidAt: data.paid_at ? new Date(data.paid_at) : new Date(),
           description:
-            metadata.purchaseType === "marketplace-course"
-              ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
-              : metadata.purchaseType === "premium-generation"
-                ? `Premium course generation: ${metadata.topic}`
-                : metadata.purchaseType === "resume-export"
-                  ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
-                  : `Subscription: ${metadata.plan || "pro"}`,
+            metadata.purchaseType === "item"
+              ? `Purchase: ${metadata.itemType}`
+              : metadata.purchaseType === "marketplace-course"
+                ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
+                : metadata.purchaseType === "premium-generation"
+                  ? `Premium course generation: ${metadata.topic}`
+                  : metadata.purchaseType === "resume-export"
+                    ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+                    : `Subscription: ${metadata.plan || "pro"}`,
           metadata,
         },
       },
@@ -97,6 +99,25 @@ async function markResumeExportPaid({ db, userId, historyId, reference, amount, 
 
 async function applyPurchase({ db, userId, data, metadata }) {
   const purchaseType = metadata.purchaseType || "subscription";
+
+  if (purchaseType === "item") {
+    const itemType = metadata.itemType;
+    if (!itemType) throw new Error("Missing itemType in metadata");
+
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $push: {
+          purchasedItems: {
+            itemType,
+            purchaseDate: new Date(),
+            reference: data.reference,
+          },
+        },
+      }
+    );
+    return;
+  }
 
   if (purchaseType === "marketplace-course") {
     await grantMarketplaceCourseAccess({
@@ -156,7 +177,6 @@ async function applyPurchase({ db, userId, data, metadata }) {
         "subscription.status": "active",
         "subscription.billingCycle": metadata.billingCycle || "monthly",
         "subscription.currentPeriodStart": now,
-        // Keep all legacy/new expiry fields in sync so cron + middleware work reliably.
         "subscription.currentPeriodEnd": expiresAt,
         "subscription.expiryDate": expiresAt,
         "subscription.expiresAt": expiresAt,

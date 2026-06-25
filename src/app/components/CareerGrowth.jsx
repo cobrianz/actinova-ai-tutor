@@ -86,8 +86,9 @@ const CareerGrowth = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const subTab = searchParams.get("tool") || "overview";
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, hasPurchased } = useAuth();
     const isPro = !authLoading && user && (
+        hasPurchased('career_tools') ||
         (user.subscription &&
             (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
             user.subscription.status === "active") ||

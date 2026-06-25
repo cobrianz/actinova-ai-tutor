@@ -11,13 +11,6 @@ import Link from "next/link";
 import { useTheme } from "./ThemeProvider";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import {
-  User,
-  LogOut,
-  Settings,
-  CreditCard
-} from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiClient } from "@/lib/csrfClient";
 
@@ -54,7 +47,7 @@ export default function Navbar({ toggleSidebar }) {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={toggleSidebar}
-              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
+              className="hidden lg:inline-flex p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -113,46 +106,17 @@ export default function Navbar({ toggleSidebar }) {
                 </Link>
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="focus:outline-none">
-                    <Avatar className="w-8 h-8 cursor-pointer border border-border hover:opacity-80 transition-opacity">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                        {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
-                      <p className="text-xs leading-none text-muted-foreground truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/dashboard?tab=profile")}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/pricing")}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Subscription</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/dashboard?tab=settings")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Link
+                href="/dashboard?tab=profile"
+                className="p-1 rounded-lg hover:opacity-80 transition-opacity"
+              >
+                <Avatar className="w-8 h-8 border border-border">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                    {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
             )}
           </div>
         </div>

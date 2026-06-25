@@ -186,7 +186,7 @@ function CheckoutContent() {
       <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
         <div className="text-center">
           <p className="text-xl mb-4 text-muted-foreground">No plans available at the moment.</p>
-          <Link href="/pricing" className="text-green-600 hover:underline">Return to Pricing</Link>
+          <Link href="/dashboard" className="text-green-600 hover:underline">Return to Dashboard</Link>
         </div>
       </div>
     );
@@ -213,11 +213,11 @@ function CheckoutContent() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-10">
         <Link
-          href="/pricing"
+          href="/dashboard"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-xs sm:text-sm font-medium">Back to Pricing</span>
+          <span className="text-xs sm:text-sm font-medium">Back to Dashboard</span>
         </Link>
 
         <div className="text-center mb-8 md:mb-12">

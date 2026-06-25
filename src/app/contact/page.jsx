@@ -414,11 +414,11 @@ export default function ContactPage() {
               </div>
             </Link>
             
-            <Link href="/pricing" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-green-300 transition-colors group">
+            <Link href="/dashboard" className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:border-green-300 transition-colors group">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-slate-900 dark:text-white">View Pricing</p>
-                  <p className="text-sm text-slate-500">Plans for every need</p>
+                  <p className="font-semibold text-slate-900 dark:text-white">Go to Dashboard</p>
+                  <p className="text-sm text-slate-500">Access your learning dashboard</p>
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
               </div>

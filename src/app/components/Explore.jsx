@@ -833,7 +833,7 @@ const getButtonColorStyles = () => {
 
 export default function Explore() {
   const router = useRouter();
-  const { user, refreshToken } = useAuth();
+  const { user, refreshToken, hasPurchased } = useAuth();
   const [usageData, setUsageData] = useState(null);
   const [trendingTopics, setTrendingTopics] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -858,6 +858,7 @@ export default function Explore() {
 
   // Check if user is premium using consistent logic - use tier (set by billing)
   const userIsPremium =
+    hasPurchased('course_generation') ||
     !!(
       (user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise") &&
       user?.subscription?.status === "active"
@@ -1061,7 +1062,7 @@ export default function Explore() {
     const topicDifficulty = (topic.difficulty || "beginner").toLowerCase();
     if (!userIsPremium && (topicDifficulty === "intermediate" || topicDifficulty === "advanced")) {
       toast.error("Intermediate and Advanced levels require a Pro subscription. Redirecting to upgrade...");
-      setTimeout(() => router.push("/pricing"), 2000);
+      setTimeout(() => router.push("/dashboard"), 2000);
       return;
     }
 

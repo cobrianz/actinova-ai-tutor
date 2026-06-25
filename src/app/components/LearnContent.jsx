@@ -46,7 +46,7 @@ export default function LearnContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, refreshToken, fetchUser, loading } = useAuth();
+  const { user, refreshToken, fetchUser, loading, hasPurchased } = useAuth();
 
   const shareId = searchParams.get("shareId") || params.shareId;
   // Retrieve topic from either path params or query params
@@ -127,6 +127,8 @@ export default function LearnContent() {
   const deferredTypingContent = useDeferredValue(typingContent);
 
   const isPro = (() => {
+    if (hasPurchased('course_generation')) return true;
+
     const hasOwnPremiumPlan = Boolean(
       user &&
         user.subscription?.status === "active" &&
@@ -465,7 +467,7 @@ export default function LearnContent() {
         toast.error("Next modules are locked. Upgrade to Pro to continue.", {
           action: {
             label: "Upgrade",
-            onClick: () => router.push("/pricing"),
+            onClick: () => router.push("/dashboard"),
           },
         });
         return;
@@ -484,7 +486,7 @@ export default function LearnContent() {
       toast.error(" This module is locked. Upgrade to Pro to unlock all 20 modules.", {
         action: {
           label: "Upgrade",
-          onClick: () => router.push("/pricing"),
+          onClick: () => router.push("/dashboard"),
         },
       });
       return;
@@ -2224,7 +2226,7 @@ export default function LearnContent() {
       toast.error(
         "Intermediate and Advanced levels require Pro subscription. Redirecting to upgrade..."
       );
-      router.push("/pricing");
+      router.push("/dashboard");
       console.log(
         "✅ Free user trying non-beginner difficulty, setting isLoading to false and redirecting"
       );
@@ -2763,7 +2765,7 @@ export default function LearnContent() {
                         toast.error("Upgrade to Pro to unlock all 20 modules.", {
                           action: {
                             label: "Upgrade",
-                            onClick: () => router.push("/pricing"),
+                            onClick: () => router.push("/dashboard"),
                           },
                         });
                         return;
@@ -2874,7 +2876,7 @@ export default function LearnContent() {
                 You can read modules 1-2 for free. Upgrade to Pro or unlock this course to access all 20 modules.
               </p>
               <button
-                onClick={() => router.push("/pricing")}
+                onClick={() => router.push("/dashboard")}
                 className="w-full py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-opacity"
               >
                 Upgrade to Pro
@@ -3058,7 +3060,7 @@ export default function LearnContent() {
                     onClick={() => {
                       if (!isPro) {
                         toast.error("Notes PDF export is a Pro feature. Please upgrade.");
-                        router.push("/pricing");
+                        router.push("/dashboard");
                         return;
                       }
                       handleDownloadNotes();
@@ -3266,7 +3268,7 @@ export default function LearnContent() {
                   onClick={() => {
                     setShowLimitModal(false);
                     setLimitModalData(null);
-                    router.push("/pricing");
+                    router.push("/dashboard");
                   }}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >

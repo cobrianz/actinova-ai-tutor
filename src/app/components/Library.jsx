@@ -43,7 +43,7 @@ export default function Library({ setActiveContent }) {
   const [pinnedCourses, setPinnedCourses] = useState(new Set());
   const hasLoadedOnceRef = useRef(false);
 
-  const { user, loading: authLoading, refreshToken } = useAuth();
+  const { user, loading: authLoading, refreshToken, hasPurchased } = useAuth();
 
   const coursesPerPage = 12;
 
@@ -237,6 +237,7 @@ export default function Library({ setActiveContent }) {
 
 
   const isPremium =
+    hasPurchased('course_generation') ||
     !!(
       user?.subscription &&
       (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&

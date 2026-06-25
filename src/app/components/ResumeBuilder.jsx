@@ -726,7 +726,7 @@ function FormResumePreview({ data, onUpdate }) {
 }
 
 const ResumeBuilder = () => {
-    const { user, isPro, isEnterprise } = useAuth();
+    const { user, isPro, isEnterprise, hasPurchased } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -789,7 +789,7 @@ const ResumeBuilder = () => {
         [history, savedResumeId]
     );
     const currentResumeIsPaid = !!currentSavedResume?.metadata?.exportPaid;
-    const hasPaidPlanExportAccess = isPro || isEnterprise;
+    const hasPaidPlanExportAccess = hasPurchased('career_tools') || isPro || isEnterprise;
     const draftStorageKey = useCallback((type) => getCareerDraftStorageKey(type, user), [user]);
     const shouldShowPaidResumeExportLabel =
         editorTab === "editor" && !hasPaidPlanExportAccess && !currentResumeIsPaid;

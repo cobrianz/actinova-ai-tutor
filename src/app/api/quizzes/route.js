@@ -17,7 +17,16 @@ async function handlePost(request) {
   const body = await request.json();
   await connectToDatabase();
 
-  const newQuiz = new Quiz({ ...body, createdBy: user._id });
+  // Enforce exactly 50 questions per exam
+  const questions = body.questions || [];
+  if (questions.length !== 50) {
+    return NextResponse.json(
+      { error: "Each exam must contain exactly 50 questions" },
+      { status: 400 }
+    );
+  }
+
+  const newQuiz = new Quiz({ ...body, questions, createdBy: user._id });
   await newQuiz.save();
 
   // Increment API Usage

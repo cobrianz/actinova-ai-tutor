@@ -38,9 +38,10 @@ const SkillGapAnalysis = () => {
     const [error, setError] = useState(null);
     const [persistentHistory, setPersistentHistory] = useState([]);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, hasPurchased } = useAuth();
 
     const isPro = !authLoading && user && (
+        hasPurchased('career_tools') ||
         (user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") ||
         user.isPremium
     );

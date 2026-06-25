@@ -25,10 +25,11 @@ export default function FlashcardsLibrary({ setActiveContent }) {
   const [bookmarkedFlashcards, setBookmarkedFlashcards] = useState(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [flashcardToDelete, setFlashcardToDelete] = useState(null);
-  const { user, refreshToken } = useAuth();
+  const { user, refreshToken, hasPurchased } = useAuth();
   const isPro =
     user &&
-    ((user.subscription &&
+    (hasPurchased('flashcard_generation') ||
+    (user.subscription &&
       user.subscription.plan === "pro" &&
       user.subscription.status === "active") ||
       user.isPremium);

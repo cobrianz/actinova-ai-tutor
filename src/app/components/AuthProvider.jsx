@@ -478,12 +478,23 @@ export function AuthProvider({ children }) {
   const tier = user?.subscription?.tier;
   const plan = user?.subscription?.plan?.toLowerCase();
   
+  const purchasedItems = user?.purchasedItems || [];
+  
+  const hasPurchased = (itemType) => {
+    if (!user) return false;
+    if (user.isPremium) return true;
+    return purchasedItems.some((p) => p.itemType === itemType);
+  };
+  
   const isPro =
+    !!user?.isPremium ||
+    purchasedItems.length > 0 ||
     !!(tier === "pro" || tier === "enterprise" || 
        plan === "pro" || plan === "enterprise" || plan === "premium" || plan === "team") &&
     user?.subscription?.status === "active";
     
   const isEnterprise =
+    !!user?.isPremium ||
     (tier === "enterprise" || plan === "enterprise") &&
     user?.subscription?.status === "active";
 
@@ -506,6 +517,8 @@ export function AuthProvider({ children }) {
         clearError,
         isPro,
         isEnterprise,
+        hasPurchased,
+        purchasedItems,
       }}
     >
       {children}
