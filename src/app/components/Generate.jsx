@@ -147,7 +147,8 @@ export default function Generate({ setActiveContent }) {
   };
   const formatProductId = formatProductMap[format] || 'course_generation';
   const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
-  const canGenerate = hasPurchased(formatProductId) || !!(user?.credits >= (formatProduct?.creditCost || 0));
+  const hasUnlimitedAccess = hasPurchased(formatProductId) || !!(user?.credits >= (formatProduct?.creditCost || 0));
+  const canGenerate = hasUnlimitedAccess || !currentFormatAtLimit();
 
   // Per-format limit checks from live usage data
   const formatLimit = (formatKey) => {

@@ -38,6 +38,7 @@ import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
+import { PRODUCTS } from "@/lib/planLimits";
 import LessonChart from "./LessonChart";
 import LessonTable from "./LessonTable";
 import html2canvas from "html2canvas";
@@ -188,6 +189,16 @@ export default function LearnContent() {
 
     return false;
   })();
+  // Format product lookup for credit/access checks
+  const formatProductMap = {
+    course: 'course_generation',
+    report: 'report_generation',
+    flashcards: 'flashcard_generation',
+    quiz: 'exam_generation',
+  };
+  const formatProductId = formatProductMap[format] || 'course_generation';
+  const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
+
   // Free users can read modules 1-2; remaining modules are padlocked unless they have premium access for this course.
   const FREE_READABLE_MODULES = 2;
   const freeReadableModules = isPro ? Infinity : FREE_READABLE_MODULES;
@@ -2247,7 +2258,18 @@ export default function LearnContent() {
       return;
     }
 
-    // Course not in library - generate new one
+    // Course not in library - check access before generating
+    if (!hasPurchased(formatProductId) && !(user?.credits >= (formatProduct?.creditCost || 0))) {
+      setShowLimitModal(true);
+      setLimitModalData({ used: 0, limit: 2 });
+      setIsLoading(false);
+      fetchInProgressRef.current = false;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("actirova:loading-done"));
+      }
+      return;
+    }
+
     if (!actualTopic) {
       console.error("Course not found in library and no topic provided for generation.");
       setError({ message: "Course not found. Please check your link or try searching for the topic.", type: "general" });
