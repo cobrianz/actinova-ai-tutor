@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 import Flashcards from "./Flashcards";
+import { PRODUCTS } from "@/lib/planLimits";
 import {
   Trash2,
   Plus,
@@ -26,9 +27,11 @@ export default function FlashcardsLibrary({ setActiveContent }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [flashcardToDelete, setFlashcardToDelete] = useState(null);
   const { user, refreshToken, hasPurchased } = useAuth();
+  const flashcardProduct = PRODUCTS.find(p => p.id === 'flashcard_generation');
   const isPro =
     user &&
     (hasPurchased('flashcard_generation') ||
+    !!(user?.credits >= (flashcardProduct?.creditCost || 25)) ||
     (user.subscription &&
       user.subscription.plan === "pro" &&
       user.subscription.status === "active") ||

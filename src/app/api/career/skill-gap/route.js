@@ -76,7 +76,7 @@ Career Goals: ${careerGoals || "Advancement in field"}`;
     });
     await history.save();
 
-    await trackAPIUsage(userId, "career-skill-gap");
+    await trackAPIUsage(userId, "career-skill-gap", { itemType: "career_tools", creditCost: 25 });
 
     return NextResponse.json(analysis);
   } catch (error) {

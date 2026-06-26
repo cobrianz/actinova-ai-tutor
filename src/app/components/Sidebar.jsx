@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Briefcase,
   Brain,
-  Lock
+  Coins
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -34,7 +34,7 @@ export default function Sidebar({
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
 
-  const { user, logout, loading: authLoading, isPro, isEnterprise, hasPurchased, purchasedItems } = useAuth();
+  const { user, logout, loading: authLoading, isPro, isEnterprise, hasPurchased, purchasedItems, credits } = useAuth();
   const courseUsage = usage?.details?.courses || null;
   const generationUsed = courseUsage?.used ?? usage?.used ?? 0;
   const generationLimit = courseUsage?.limit ?? usage?.limit ?? null;
@@ -220,18 +220,8 @@ export default function Sidebar({
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                           }`}
                       >
-                        <div className="relative">
-                          <Icon className="w-5 h-5" />
-                          {item.premium && item.showLock !== false && !hasPurchased('course_generation') && (
-                            <div className="absolute -top-1 -right-1 bg-lime-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
-                              <Lock size={8} className="text-lime-950" />
-                            </div>
-                          )}
-                        </div>
+                        <Icon className="w-5 h-5" />
                         <span className="flex-1 text-left">{item.name}</span>
-                        {item.premium && item.showLock !== false && !hasPurchased('course_generation') && (
-                          <Lock size={12} className="text-muted-foreground/40" />
-                        )}
                       </button>
                     </motion.li>
                   );
@@ -295,6 +285,12 @@ export default function Sidebar({
                       ></div>
                     </div>
                   </div>
+                  {(credits || 0) > 0 && (
+                    <div className="flex items-center gap-2 pt-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                      <Coins size={14} />
+                      <span>{credits} credits</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

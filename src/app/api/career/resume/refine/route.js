@@ -189,7 +189,7 @@ Provide the output in a structured JSON format matching this structure:
         const rawData = JSON.parse(completion.choices[0].message.content);
         const data = normalizeResumeResponse(rawData, resume);
 
-        await trackAPIUsage(userId, "career-resume-refine");
+        await trackAPIUsage(userId, "career-resume-refine", { itemType: "career_tools", creditCost: 25 });
 
         return NextResponse.json(data);
     } catch (error) {

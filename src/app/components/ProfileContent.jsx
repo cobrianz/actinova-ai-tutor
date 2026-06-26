@@ -37,6 +37,7 @@ import {
   FileText,
   Sparkles,
   Brain,
+  Coins,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "./AuthProvider";
@@ -44,6 +45,7 @@ import { useTheme } from "./ThemeProvider";
 import { toast } from "sonner";
 import { downloadReceiptAsPDF } from "../lib/pdfUtils";
 import { apiClient } from "@/lib/csrfClient";
+import { CREDIT_PACKS } from "@/lib/planLimits";
 
 const defaultSettings = {
   difficulty: "adaptive",
@@ -793,6 +795,63 @@ export default function ProfileContent() {
                           </button>
                         )}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Credits Section */}
+                  <div className="p-6 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Coins size={24} className="text-amber-600 dark:text-amber-400" />
+                        <h3 className="font-bold text-lg text-amber-900 dark:text-amber-200">Credits</h3>
+                      </div>
+                      <span className="text-2xl font-black text-amber-700 dark:text-amber-300">
+                        {(profileData?.user?.credits || 0)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-4">
+                      Use credits to generate content without purchasing individual features.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {CREDIT_PACKS.map((pack) => (
+                        <button
+                          key={pack.id}
+                          onClick={async () => {
+                            try {
+                              const res = await apiClient.post("/api/billing/create-session", {
+                                purchaseType: "credit-purchase",
+                                packId: pack.id,
+                                paymentMethod: "card",
+                              });
+                              const data = await res.json();
+                              if (res.ok && data.sessionUrl) {
+                                window.location.href = data.sessionUrl;
+                              }
+                            } catch (err) {
+                              console.error("Credit purchase error:", err);
+                            }
+                          }}
+                          className={`relative p-4 rounded-xl border text-center transition-all hover:scale-[1.02] active:scale-95 ${pack.popular
+                            ? "border-amber-500 bg-amber-100 dark:bg-amber-900/50 shadow-lg shadow-amber-500/20"
+                            : "border-amber-200 dark:border-amber-700 bg-white dark:bg-amber-950/50"
+                            }`}
+                        >
+                          {pack.popular && (
+                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                              Popular
+                            </span>
+                          )}
+                          <div className="text-xl font-black text-amber-800 dark:text-amber-200 mt-1">
+                            {pack.credits}
+                          </div>
+                          <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                            Credits
+                          </div>
+                          <div className="mt-2 text-sm font-bold text-amber-900 dark:text-amber-100">
+                            ${pack.price}
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
 

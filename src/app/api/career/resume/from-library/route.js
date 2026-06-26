@@ -89,7 +89,7 @@ Return ONLY a valid JSON object in this format:
     });
     await history.save();
 
-    await trackAPIUsage(userId, "career-resume-gen");
+    await trackAPIUsage(userId, "career-resume-gen", { itemType: "career_tools", creditCost: 25 });
 
     return NextResponse.json(data);
   } catch (error) {

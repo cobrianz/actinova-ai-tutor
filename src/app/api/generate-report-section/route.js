@@ -135,7 +135,7 @@ Return the refined JSON in the same structure:
         const refinedData = JSON.parse(refinement.choices[0].message.content);
 
         // Track usage AFTER successful generation (per-section, shared reportGenerations limit)
-        await trackAPIUsage(userId, "generate-report-section");
+        await trackAPIUsage(userId, "generate-report-section", { itemType: "report_generation", creditCost: 25 });
 
         return NextResponse.json({
             success: true,

@@ -48,7 +48,7 @@ JSON Structure:
 
         const data = JSON.parse(completion.choices[0].message.content);
 
-        await trackAPIUsage(userId, "career-interview");
+        await trackAPIUsage(userId, "career-interview", { itemType: "career_tools", creditCost: 25 });
 
         return NextResponse.json(data);
     } catch (error) {

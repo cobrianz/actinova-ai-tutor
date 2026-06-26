@@ -47,7 +47,7 @@ Return ONLY a valid JSON object in this exact format, and DO NOT use any emojis 
         });
 
         const data = JSON.parse(completion.choices[0].message.content);
-        await trackAPIUsage(userId, "career-job-match");
+        await trackAPIUsage(userId, "career-job-match", { itemType: "career_tools", creditCost: 25 });
         return NextResponse.json(data);
     } catch (error) {
         console.error("Job match error:", error);

@@ -14,11 +14,13 @@ import {
     Zap,
     Crown,
     ArrowRight,
-    X
+    X,
+    Coins
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/csrfClient";
-import { PRODUCTS } from "@/lib/planLimits";
+import { PRODUCTS, CREDIT_PACKS } from "@/lib/planLimits";
+import { useAuth } from "./AuthProvider";
 
 const featureToProduct = {
     course: "course_generation",
@@ -30,17 +32,21 @@ const featureToProduct = {
 
 const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) => {
     const router = useRouter();
+    const { credits, hasPurchased, fetchUser } = useAuth();
     const [processing, setProcessing] = useState(null);
 
     const productId = featureToProduct[featureName?.toLowerCase()] || "course_generation";
     const product = PRODUCTS.find((p) => p.id === productId) || PRODUCTS[0];
+    const hasItem = hasPurchased(productId);
+    const userCredits = credits || 0;
+    const canUseCredits = !hasItem && product.creditCost && userCredits >= product.creditCost;
 
-    const handleBuy = async () => {
-        setProcessing(product.id);
+    const handleBuy = async (purchaseType, extra = {}) => {
+        setProcessing(purchaseType);
         try {
             const response = await apiClient.post("/api/billing/create-session", {
-                purchaseType: "item",
-                itemType: product.id,
+                purchaseType,
+                ...extra,
                 paymentMethod: "card",
             });
             const data = await response.json();
@@ -51,6 +57,26 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
             }
         } catch (error) {
             console.error("Payment error:", error);
+            setProcessing(null);
+        }
+    };
+
+    const handleUseCredits = async () => {
+        if (!canUseCredits) return;
+        setProcessing("credits");
+        try {
+            const response = await apiClient.post("/api/billing/use-credits", {
+                itemType: product.id,
+            });
+            const data = await response.json();
+            if (response.ok && data.success) {
+                await fetchUser();
+                onClose();
+            } else {
+                setProcessing(null);
+            }
+        } catch (error) {
+            console.error("Credit usage error:", error);
             setProcessing(null);
         }
     };
@@ -104,6 +130,20 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                         </DialogDescription>
                     </DialogHeader>
 
+                    {userCredits > 0 && (
+                        <div className="flex items-center justify-center gap-2 mb-4 py-2 px-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                            <Coins size={16} className="text-amber-600 dark:text-amber-400" />
+                            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                                {userCredits} credits available
+                            </span>
+                            {product.creditCost && (
+                                <span className="text-xs text-amber-500 dark:text-amber-400">
+                                    ({product.creditCost} needed)
+                                </span>
+                            )}
+                        </div>
+                    )}
+
                     <div className="space-y-2.5 mb-6">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">What you get</p>
                         {benefits.slice(0, 4).map((benefit, i) => (
@@ -123,17 +163,41 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                     </div>
 
                     <div className="flex flex-col gap-3">
+                        {canUseCredits && (
+                            <button
+                                onClick={handleUseCredits}
+                                disabled={processing === "credits"}
+                                className="group relative h-13 w-full bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl overflow-hidden shadow-xl shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+                            >
+                                <Coins size={18} />
+                                <span className="uppercase tracking-widest text-[11px]">
+                                    {processing === "credits" ? "Processing..." : `Use ${product.creditCost} Credits`}
+                                </span>
+                                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        )}
+
                         <button
-                            onClick={handleBuy}
+                            onClick={() => handleBuy("item", { itemType: product.id })}
                             disabled={processing === product.id}
                             className="group relative h-13 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black rounded-xl overflow-hidden shadow-xl shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
                         >
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                             <Crown size={18} className="fill-current text-lime-500" />
                             <span className="uppercase tracking-widest text-[11px]">
-                                {processing === product.id ? "Processing..." : `Buy ${product.name} $${product.price}`}
+                                {processing === product.id ? "Processing..." : `Buy for $${product.price}`}
                             </span>
                             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                const popular = CREDIT_PACKS.find(p => p.popular) || CREDIT_PACKS[1] || CREDIT_PACKS[0];
+                                handleBuy("credit-purchase", { packId: popular.id });
+                            }}
+                            className="text-[11px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline underline-offset-2 transition-colors cursor-pointer"
+                        >
+                            Buy credits instead
                         </button>
 
                         <button
@@ -148,7 +212,7 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-2">
                     <div className="flex -space-x-1">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-950 bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                            <div key={i} className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-950 bg-slate-200 dark:border-slate-800 overflow-hidden">
                                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 40}`} alt="User" className="w-full h-full object-cover" />
                             </div>
                         ))}

@@ -159,7 +159,7 @@ Never replace pasted candidate identity details with the signed-in user's accoun
       preferUserIdentity: !trimmedResumeText,
     });
 
-    await trackAPIUsage(userId, "career-resume-gen");
+    await trackAPIUsage(userId, "career-resume-gen", { itemType: "career_tools", creditCost: 25 });
 
     return NextResponse.json(data);
   } catch (error) {

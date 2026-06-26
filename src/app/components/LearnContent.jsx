@@ -2011,13 +2011,23 @@ export default function LearnContent() {
         }
       }
 
-      if (
-        existingCourse &&
-        ((existingCourse.modules && existingCourse.modules.length > 0) ||
-          (existingCourse.courseData?.modules &&
-            existingCourse.courseData.modules.length > 0))
-      ) {
+      if (existingCourse) {
         const existingCourseData = existingCourse.courseData || existingCourse;
+
+        if (
+          !existingCourseData.modules ||
+          existingCourseData.modules.length === 0
+        ) {
+          setCourseData(existingCourseData);
+          setIsLoading(false);
+          fetchInProgressRef.current = false;
+          initializedCoursesRef.current.add(courseKey);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("actirova:loading-done"));
+          }
+          clearTimeout(globalSafetyTimeout);
+          return;
+        }
         const existingPremiumExpiry = existingCourseData.premiumAccessExpiresAt
           ? new Date(existingCourseData.premiumAccessExpiresAt)
           : null;
@@ -2707,6 +2717,8 @@ export default function LearnContent() {
           >
 
           <div className="p-4 lg:p-6 border-b border-border">
+            {courseData ? (
+              <>
             <div className="flex justify-between flex-wrap flex-col">
               <h2 className="font-bold text-lg text-foreground mb-1">
                 {courseData.title}
@@ -2718,9 +2730,13 @@ export default function LearnContent() {
               )}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              {courseData.totalModules} modules • {courseData.totalLessons}{" "}
+              {courseData.totalModules || 0} modules • {courseData.totalLessons || 0}{" "}
               lessons
             </p>
+            </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading course...</p>
+            )}
             <button
               onClick={handleDownloadCourse}
               disabled={!canDownloadCoursePdf}
@@ -2737,6 +2753,8 @@ export default function LearnContent() {
                   : "Unlock course to download PDF"}
               </span>
             </button>
+            {courseData && (
+              <>
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center text-sm font-semibold">
                 {Math.round(progressPercentage)}%
@@ -2751,9 +2769,11 @@ export default function LearnContent() {
                 style={{ width: `${progressPercentage}%` }}
               ></div>
             </div>
+            </>
+            )}
           </div>
           <div className="flex-1">
-            {Array.isArray(courseData.modules) &&
+            {courseData && Array.isArray(courseData.modules) &&
               courseData.modules.map((module, moduleIndex) => (
                 <div
                   key={module?.id ?? moduleIndex}
@@ -2864,12 +2884,12 @@ export default function LearnContent() {
           </div>
 
           {/* Free user upgrade CTA at the bottom of the sidebar */}
-          {!isPro && (
+          {!isPro && courseData && (
             <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-green-500/5">
               <div className="flex items-center space-x-2 mb-2">
                 <Lock className="w-4 h-4 text-primary" />
                 <span className="text-xs font-bold text-foreground">
-                  {courseData.totalModules - FREE_READABLE_MODULES} modules locked
+                  {(courseData.totalModules || 0) - FREE_READABLE_MODULES} modules locked
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
@@ -2959,7 +2979,7 @@ export default function LearnContent() {
                     <div className="mt-12 pt-8 border-t border-border flex justify-between items-center">
                       <div className="text-sm text-muted-foreground">
                         Lesson {activeLesson.lessonIndex + 1} of {
-                          courseData.modules.find(m => m.id === activeLesson.moduleId)?.lessons.length || 0
+                          courseData?.modules?.find(m => m.id === activeLesson.moduleId)?.lessons?.length || 0
                         }
                       </div>
                       <button

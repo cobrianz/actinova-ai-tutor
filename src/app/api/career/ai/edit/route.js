@@ -35,7 +35,7 @@ Keep the improved text concise, professional and impactful. Do not add filler ph
         });
 
         const data = JSON.parse(completion.choices[0].message.content);
-        await trackAPIUsage(userId, "career-ai-edit");
+        await trackAPIUsage(userId, "career-ai-edit", { itemType: "career_tools", creditCost: 25 });
         return NextResponse.json(data);
     } catch (error) {
         console.error("AI edit error:", error);

@@ -56,9 +56,11 @@ async function appendBillingIfNeeded({ db, userId, data, metadata }) {
                 ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
                 : metadata.purchaseType === "premium-generation"
                   ? `Premium course generation: ${metadata.topic}`
-                  : metadata.purchaseType === "resume-export"
-                    ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
-                    : `Subscription: ${metadata.plan || "pro"}`,
+              : metadata.purchaseType === "resume-export"
+                ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+                : metadata.purchaseType === "credit-purchase"
+                  ? `Credit purchase: ${metadata.credits} credits`
+                  : `Subscription: ${metadata.plan || "pro"}`,
           metadata,
         },
       },
@@ -141,6 +143,17 @@ async function applyPurchase({ db, userId, data, metadata }) {
       amount: data.amount / 100,
       currency: data.currency,
     });
+    return;
+  }
+
+  if (purchaseType === "credit-purchase") {
+    const credits = Number(metadata.credits) || 0;
+    if (credits <= 0) throw new Error("Invalid credit amount in metadata");
+
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(userId) },
+      { $inc: { credits } }
+    );
     return;
   }
 

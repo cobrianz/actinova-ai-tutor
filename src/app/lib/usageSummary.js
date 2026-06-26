@@ -78,10 +78,11 @@ export async function getTrackedUsageSummary(db, user) {
     });
 
     const freeCourseLimit = limits.generateCourseLimit;
+    const isUnlimited = freeCourseLimit === -1;
     details.courses = {
       used: lifetimeFreeCoursesUsed,
-      limit: freeCourseLimit,
-      remaining: Math.max(0, freeCourseLimit - lifetimeFreeCoursesUsed),
+      limit: isUnlimited ? null : freeCourseLimit,
+      remaining: isUnlimited ? null : Math.max(0, freeCourseLimit - lifetimeFreeCoursesUsed),
       percent: getUsagePercent(lifetimeFreeCoursesUsed, freeCourseLimit),
       feature: "lifetimeFreeCourses",
     };

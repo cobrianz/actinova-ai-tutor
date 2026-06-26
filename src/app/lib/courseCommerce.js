@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-export const MARKETPLACE_PRICE_USD = 6;
+export const MARKETPLACE_PRICE_USD = 8;
 export const COURSE_ACCESS_DAYS = 30;
 
 export const MARKETPLACE_SEED_COURSES = [

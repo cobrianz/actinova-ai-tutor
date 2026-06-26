@@ -4,24 +4,48 @@ export const TIERS = {
   ENTERPRISE: "enterprise",
 };
 
-export const PRODUCTS = [
-  { id: "course_generation", name: "Course Generation", price: 8, description: "Generate unlimited courses" },
-  { id: "report_generation", name: "Report Generation", price: 5, description: "Generate unlimited reports & essays" },
-  { id: "career_tools", name: "Career Tools", price: 5, description: "CV, cover letter, applications & job matching" },
-  { id: "exam_generation", name: "Exam Generation", price: 5, description: "Generate unlimited exams (50 quizzes each)" },
-  { id: "flashcard_generation", name: "Flashcard Generation", price: 5, description: "Generate unlimited flashcards (50 per batch)" },
+export const CREDIT_RATE = 0.2; // $1 = 5 credits, so $10 = 50 credits
+
+export const CREDIT_PACKS = [
+  { id: "credits_25", credits: 25, price: 5 },
+  { id: "credits_50", credits: 50, price: 10, popular: true },
+  { id: "credits_120", credits: 120, price: 20 },
 ];
+
+export const PRODUCTS = [
+  { id: "course_generation", name: "Course Generation", price: 8, creditCost: 40, description: "Generate unlimited courses" },
+  { id: "report_generation", name: "Report Generation", price: 5, creditCost: 25, description: "Generate unlimited reports & essays" },
+  { id: "career_tools", name: "Career Tools", price: 5, creditCost: 25, description: "CV, cover letter, applications & job matching" },
+  { id: "exam_generation", name: "Exam Generation", price: 5, creditCost: 25, description: "Generate unlimited exams (50 quizzes each)" },
+  { id: "flashcard_generation", name: "Flashcard Generation", price: 5, creditCost: 25, description: "Generate unlimited flashcards (50 per batch)" },
+];
+
+export function hasItem(user, itemType) {
+  if (!user) return false;
+  if (user.isPremium) return true;
+  return user.purchasedItems?.some((p) => p.itemType === itemType);
+}
+
+export function hasCredits(user, itemType) {
+  if (!user) return false;
+  const product = PRODUCTS.find((p) => p.id === itemType);
+  if (!product) return false;
+  return (user.credits || 0) >= product.creditCost;
+}
+
+export function canAccess(user, itemType) {
+  return hasItem(user, itemType) || hasCredits(user, itemType);
+}
 
 export function getUserPlanLimits(user) {
   if (!user) return getFreeLimits();
 
-  const hasPurchased = (type) =>
-    user.isPremium || user.purchasedItems?.some((p) => p.itemType === type);
+  const hasPurchased = (type) => hasItem(user, type);
 
   const free = getFreeLimits();
   const limits = { ...free };
 
-  if (hasPurchased("course_generation")) {
+  if (hasPurchased("course_generation") || hasCredits(user, "course_generation")) {
     limits.courses = -1;
     limits.generateCourseLimit = -1;
     limits.difficulties = ["beginner", "intermediate", "advanced"];
@@ -29,20 +53,20 @@ export function getUserPlanLimits(user) {
     limits.modules = 20;
   }
 
-  if (hasPurchased("report_generation")) {
+  if (hasPurchased("report_generation") || hasCredits(user, "report_generation")) {
     limits.reportGenerations = -1;
   }
 
-  if (hasPurchased("career_tools")) {
+  if (hasPurchased("career_tools") || hasCredits(user, "career_tools")) {
     limits.careerLimit = -1;
   }
 
-  if (hasPurchased("exam_generation")) {
+  if (hasPurchased("exam_generation") || hasCredits(user, "exam_generation")) {
     limits.quizzes = -1;
     limits.quizGenerations = -1;
   }
 
-  if (hasPurchased("flashcard_generation")) {
+  if (hasPurchased("flashcard_generation") || hasCredits(user, "flashcard_generation")) {
     limits.flashcards = -1;
   }
 

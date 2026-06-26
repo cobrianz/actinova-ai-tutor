@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 import UpgradeModal from "./UpgradeModal";
+import { PRODUCTS } from "@/lib/planLimits";
 
 const staticCategories = [
   {
@@ -857,8 +858,10 @@ export default function Explore() {
   const coursesPerPage = 12;
 
   // Check if user is premium using consistent logic - use tier (set by billing)
+  const courseProduct = PRODUCTS.find(p => p.id === 'course_generation');
   const userIsPremium =
     hasPurchased('course_generation') ||
+    !!(user?.credits >= (courseProduct?.creditCost || 40)) ||
     !!(
       (user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise") &&
       user?.subscription?.status === "active"
@@ -884,7 +887,8 @@ export default function Explore() {
 
   const courseUsed = usageData?.details?.courses?.used ?? 0;
   const courseLimit = usageData?.details?.courses?.limit ?? 2;
-  const atLimit = !!(usageData && !usageData.isEnterprise && courseUsed >= courseLimit);
+  const courseUnlimited = courseLimit === -1 || courseLimit === null;
+  const atLimit = !!(usageData && !usageData.isEnterprise && !courseUnlimited && courseUsed >= courseLimit);
 
   // Filtered categories based on search query
   const filteredCategories = useMemo(() => {

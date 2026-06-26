@@ -93,7 +93,7 @@ JSON Structure:
         });
 
         if (userId !== "global") {
-            await trackAPIUsage(userId, "career-trending");
+            await trackAPIUsage(userId, "career-trending", { itemType: "career_tools", creditCost: 25 });
         }
         return newRecord;
     } catch (saveError) {

@@ -10,6 +10,7 @@ import {
   useRef,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { PRODUCTS } from "@/lib/planLimits";
 
 const AuthContext = createContext();
 
@@ -479,11 +480,15 @@ export function AuthProvider({ children }) {
   const plan = user?.subscription?.plan?.toLowerCase();
   
   const purchasedItems = user?.purchasedItems || [];
+  const credits = user?.credits || 0;
   
   const hasPurchased = (itemType) => {
     if (!user) return false;
     if (user.isPremium) return true;
-    return purchasedItems.some((p) => p.itemType === itemType);
+    if (purchasedItems.some((p) => p.itemType === itemType)) return true;
+    const product = PRODUCTS.find((p) => p.id === itemType);
+    if (product && (user.credits || 0) >= product.creditCost) return true;
+    return false;
   };
   
   const isPro =
@@ -519,6 +524,7 @@ export function AuthProvider({ children }) {
         isEnterprise,
         hasPurchased,
         purchasedItems,
+        credits,
       }}
     >
       {children}

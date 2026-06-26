@@ -64,7 +64,7 @@ Candidate Answer: ${answer}`;
         });
         await history.save();
 
-        await trackAPIUsage(userId, "career-interview");
+        await trackAPIUsage(userId, "career-interview", { itemType: "career_tools", creditCost: 25 });
 
         return NextResponse.json(feedback);
     } catch (error) {

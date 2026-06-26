@@ -3,7 +3,7 @@
 import {
   Search, BookOpen, Plus, MessageCircle, MoreHorizontal,
   FileText, ScrollText, Briefcase, HelpCircle, Star,
-  User, LogOut, X, TrendingUp
+  User, LogOut, X, TrendingUp, Coins
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -26,7 +26,7 @@ const secondaryItems = [
 export default function MobileBottomNav() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, logout, isPro, isEnterprise, hasPurchased, purchasedItems } = useAuth();
+  const { user, logout, isPro, isEnterprise, hasPurchased, purchasedItems, credits } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
   const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
   const menuRef = useRef(null);
@@ -137,6 +137,12 @@ export default function MobileBottomNav() {
                       />
                     </div>
                   </div>
+                  {(credits || 0) > 0 && (
+                    <div className="flex items-center gap-2 pt-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                      <Coins size={14} />
+                      <span>{credits} credits</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -328,7 +328,7 @@ async function handlePost(request) {
         }
 
         // Increment usage after successful upgrade
-        await trackAPIUsage(userId, "generate-course");
+        await trackAPIUsage(userId, "generate-course", { itemType: "course_generation", creditCost: 40 });
 
         return NextResponse.json({
           success: true,
@@ -389,7 +389,7 @@ async function handlePost(request) {
             generatedCourseId: existingCourse._id.toString(),
           });
 
-          await trackAPIUsage(userId, "generate-course");
+          await trackAPIUsage(userId, "generate-course", { itemType: "course_generation", creditCost: 40 });
 
           return NextResponse.json({
             success: true,
@@ -596,7 +596,7 @@ async function handlePost(request) {
     }
 
     // Increment usage after successful generation
-    await trackAPIUsage(userId, "generate-course");
+    await trackAPIUsage(userId, "generate-course", { itemType: "course_generation", creditCost: 40 });
 
     return NextResponse.json({
       success: true,

@@ -102,7 +102,7 @@ Rules:
 
         // Track API Usage for Reports
         const { trackAPIUsage } = await import("@/lib/planMiddleware");
-        await trackAPIUsage(user._id, "generate-report-outline");
+        await trackAPIUsage(user._id, "generate-report-outline", { itemType: "report_generation", creditCost: 25 });
 
         return NextResponse.json({
             success: true,

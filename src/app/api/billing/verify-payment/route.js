@@ -50,6 +50,10 @@ function getSuccessRedirect(metadata, reference) {
     )}&ref=${encodeURIComponent(reference)}`;
   }
 
+  if (purchaseType === "credit-purchase") {
+    return `/dashboard?tab=profile&payment=success&purchaseType=credit-purchase&ref=${encodeURIComponent(reference)}`;
+  }
+
   return `/checkout/success?kind=subscription&plan=${encodeURIComponent(
     metadata.plan || "pro"
   )}&cycle=${encodeURIComponent(
@@ -67,8 +71,10 @@ async function recordBillingEntry({ db, userId, data, metadata }) {
           ? `Marketplace course unlock: ${metadata.courseTitle || metadata.courseId}`
           : metadata.purchaseType === "premium-generation"
             ? `Premium course generation: ${metadata.topic}`
-            : metadata.purchaseType === "resume-export"
-              ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+              : metadata.purchaseType === "resume-export"
+                ? `Resume export: ${metadata.resumeTitle || metadata.historyId}`
+            : metadata.purchaseType === "credit-purchase"
+              ? `Credit purchase: ${metadata.credits} credits`
             : `Subscription: ${metadata.plan || "pro"}`,
     plan: metadata.plan || metadata.purchaseType || "subscription",
     billingCycle: metadata.billingCycle || "monthly",
@@ -179,6 +185,17 @@ async function applySuccessfulPayment({ db, user, data, metadata }) {
           },
         },
       }
+    );
+    return;
+  }
+
+  if (purchaseType === "credit-purchase") {
+    const credits = Number(metadata.credits) || 0;
+    if (credits <= 0) throw new Error("Invalid credit amount in metadata");
+
+    await db.collection("users").updateOne(
+      { _id: user._id },
+      { $inc: { credits } }
     );
     return;
   }

@@ -296,7 +296,7 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
 
       // Increment usage after successful AI generation
       if (userId) {
-        await trackAPIUsage(userId, "generate-flashcards");
+        await trackAPIUsage(userId, "generate-flashcards", { itemType: "flashcard_generation", creditCost: 25 });
         usageStatus.used += 1;
       }
 

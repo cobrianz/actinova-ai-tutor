@@ -49,6 +49,7 @@ async function handleGet(request) {
     isPremium,
     subscription: user.subscription,
     purchasedItems: user.purchasedItems || [],
+    credits: user.credits || 0,
     usage,
   };
 

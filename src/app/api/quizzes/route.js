@@ -30,7 +30,7 @@ async function handlePost(request) {
   await newQuiz.save();
 
   // Increment API Usage
-  await trackAPIUsage(user._id, "quiz");
+  await trackAPIUsage(user._id, "quiz", { itemType: "exam_generation", creditCost: 25 });
 
   return NextResponse.json(newQuiz, { status: 201 });
 }

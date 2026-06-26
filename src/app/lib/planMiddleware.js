@@ -275,9 +275,13 @@ function getFeatureName(apiName) {
 }
 
 /**
- * Track API usage for rate limiting by plan tier
+ * Track API usage for rate limiting by plan tier.
+ * Optionally deduct credits when user doesn't own the item type.
+ * @param {string} userId
+ * @param {string} apiName
+ * @param {{ itemType: string, creditCost: number } | null} creditsConfig - if provided, deduct credits when user doesn't own the item
  */
-export async function trackAPIUsage(userId, apiName) {
+export async function trackAPIUsage(userId, apiName, creditsConfig = null) {
     try {
         const { db } = await connectToDatabase();
         const now = new Date();
@@ -296,6 +300,24 @@ export async function trackAPIUsage(userId, apiName) {
             },
             { upsert: true, returnDocument: "after" }
         );
+
+        if (creditsConfig) {
+            const { itemType, creditCost } = creditsConfig;
+            const user = await db.collection("users").findOne(
+                { _id: new ObjectId(userId) },
+                { projection: { credits: 1, isPremium: 1, purchasedItems: 1 } }
+            );
+
+            if (user && !user.isPremium && !user.purchasedItems?.some(p => p.itemType === itemType)) {
+                const available = user.credits || 0;
+                if (available >= creditCost) {
+                    await db.collection("users").updateOne(
+                        { _id: new ObjectId(userId), credits: { $gte: creditCost } },
+                        { $inc: { credits: -creditCost } }
+                    );
+                }
+            }
+        }
 
         return result?.count || 1;
     } catch (error) {

@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
+import { PRODUCTS } from "@/lib/planLimits";
 
 const TrendsSkeleton = () => (
     <div className="space-y-10 sm:space-y-12">
@@ -87,8 +88,10 @@ const CareerGrowth = () => {
     const searchParams = useSearchParams();
     const subTab = searchParams.get("tool") || "overview";
     const { user, loading: authLoading, hasPurchased } = useAuth();
+    const careerProduct = PRODUCTS.find(p => p.id === 'career_tools');
     const isPro = !authLoading && user && (
         hasPurchased('career_tools') ||
+        !!(user?.credits >= (careerProduct?.creditCost || 25)) ||
         (user.subscription &&
             (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
             user.subscription.status === "active") ||
@@ -138,7 +141,8 @@ const CareerGrowth = () => {
 
     const courseUsed = usageData?.details?.courses?.used ?? 0;
     const courseLimit = usageData?.details?.courses?.limit ?? 2;
-    const liveAtLimit = !!(usageData && !usageData.isEnterprise && courseUsed >= courseLimit);
+    const courseUnlimited = courseLimit === -1 || courseLimit === null;
+    const liveAtLimit = !!(usageData && !usageData.isEnterprise && !courseUnlimited && courseUsed >= courseLimit);
 
     const handleGenerateCourse = async (topicTitle) => {
         if (generatingCourse) return;

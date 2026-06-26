@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import { connectToDatabase } from "@/lib/mongodb";
 import { withErrorHandling, withAuth, combineMiddleware } from "@/lib/middleware";
 import { MARKETPLACE_PRICE_USD } from "@/lib/courseCommerce";
-import { PRODUCTS } from "@/lib/planLimits";
+import { PRODUCTS, CREDIT_PACKS } from "@/lib/planLimits";
 
 const RESUME_EXPORT_PRICE_USD = 2.5;
 
@@ -162,6 +162,24 @@ async function resolveAmountAndMetadata({ db, body, userId }) {
       metadata: {
         purchaseType: "item",
         itemType: product.id,
+      },
+    };
+  }
+
+  if (purchaseType === "credit-purchase") {
+    const packId = String(body.packId || "").trim();
+    const pack = CREDIT_PACKS.find((p) => p.id === packId);
+    if (!pack) {
+      throw new Error("Invalid credit pack");
+    }
+    return {
+      purchaseType: "credit-purchase",
+      amountUsd: pack.price,
+      name: `${pack.credits} Credits`,
+      metadata: {
+        purchaseType: "credit-purchase",
+        packId: pack.id,
+        credits: pack.credits,
       },
     };
   }

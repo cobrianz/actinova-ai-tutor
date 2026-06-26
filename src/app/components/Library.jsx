@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { downloadCourseAsPDF } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
+import { PRODUCTS } from "@/lib/planLimits";
 
 export default function Library({ setActiveContent }) {
   const [viewMode, setViewMode] = useState("grid");
@@ -236,8 +237,10 @@ export default function Library({ setActiveContent }) {
 
 
 
+  const courseProduct = PRODUCTS.find(p => p.id === 'course_generation');
   const isPremium =
     hasPurchased('course_generation') ||
+    !!(user?.credits >= (courseProduct?.creditCost || 40)) ||
     !!(
       user?.subscription &&
       (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&

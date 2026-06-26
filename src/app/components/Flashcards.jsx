@@ -18,6 +18,7 @@ import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+import { PRODUCTS } from "@/lib/planLimits";
 
 export default function Flashcards({ cardData }) {
   const [flipped, setFlipped] = useState({});
@@ -84,8 +85,10 @@ export default function Flashcards({ cardData }) {
   };
 
   const handleGenerateMore = async () => {
+    const flashcardProduct = PRODUCTS.find(p => p.id === 'flashcard_generation');
     const isPremium =
       hasPurchased('flashcard_generation') ||
+      !!(user?.credits >= (flashcardProduct?.creditCost || 25)) ||
       user?.isPremium ||
       (user?.subscription?.plan === "pro" &&
         user?.subscription?.status === "active");

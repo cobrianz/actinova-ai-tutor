@@ -98,7 +98,7 @@ Career Goals: ${careerGoals}`;
     });
     await history.save();
 
-    await trackAPIUsage(userId, "career");
+    await trackAPIUsage(userId, "career", { itemType: "career_tools", creditCost: 25 });
 
     return NextResponse.json(result);
   } catch (error) {

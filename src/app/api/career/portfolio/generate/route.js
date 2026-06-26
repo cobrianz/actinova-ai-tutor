@@ -42,7 +42,7 @@ Resume Data: ${JSON.stringify(resume)}.`;
 
         const data = JSON.parse(completion.choices[0].message.content);
 
-        await trackAPIUsage(userId, "career-portfolio-gen");
+        await trackAPIUsage(userId, "career-portfolio-gen", { itemType: "career_tools", creditCost: 25 });
 
         return NextResponse.json(data);
     } catch (error) {
