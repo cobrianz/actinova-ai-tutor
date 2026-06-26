@@ -188,7 +188,7 @@ export async function GET(request) {
         difficulty: c.difficulty || c.level,
         progress: calculatedProgress,
         totalLessons: c.totalLessons || trueTotalLessons || 0,
-        modules: c.totalModules || (c.courseData?.modules?.length) || 0,
+        modules: c.totalModules || (c.modules?.length) || (c.courseData?.modules?.length) || 0,
         isPremium: c.isPremium || false,
         premiumAccessExpiresAt: c.premiumAccessExpiresAt || null,
         sourceMarketplaceCourseId: c.sourceMarketplaceCourseId?.toString() || null,

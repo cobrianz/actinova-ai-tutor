@@ -92,6 +92,7 @@ export default function Library({ setActiveContent }) {
 
       const mappedCourses = (data.items || []).map((item) => {
         const _id = item.id.split("_")[1] || item.id;
+        const hasModules = (item.modules || 0) > 0;
 
         return {
           id: item.id,
@@ -119,7 +120,7 @@ export default function Library({ setActiveContent }) {
             format: item.type === "questions" ? "questions" : item.type === "flashcards" ? "flashcards" : "course",
             difficulty: item.difficulty,
           },
-          isGenerated: true,
+          isGenerated: hasModules,
           isPremium: item.isPremium || false,
           isEnrolled: item.isEnrolled || false,
           sharerName: item.sharerName || null
@@ -686,17 +687,19 @@ export default function Library({ setActiveContent }) {
                         </div>
                       </div>
 
-                      <Link
-                        href={
-                          course.isGenerated
-                            ? `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`
-                            : `/learn/${course.id}`
-                        }
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-black text-sm font-medium whitespace-nowrap shadow-md"
-                      >
-                        <Play className="w-4 h-4" />
-                        {course.progress === 100 ? "Review" : "Continue"}
-                      </Link>
+                      {!isPremium && !course.isGenerated ? (
+                        <span className="flex items-center justify-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg text-sm font-medium whitespace-nowrap cursor-not-allowed">
+                          Not available
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-black text-sm font-medium whitespace-nowrap shadow-md"
+                        >
+                          <Play className="w-4 h-4" />
+                          {course.progress === 100 ? "Review" : "Continue"}
+                        </Link>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between mt-3 text-[10px] sm:text-xs font-medium">
@@ -713,7 +716,7 @@ export default function Library({ setActiveContent }) {
       )}
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
+      {pagination.pages > 1 && (
         <div className="flex justify-center gap-2 mt-10">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
@@ -722,7 +725,7 @@ export default function Library({ setActiveContent }) {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          {[...Array(pagination.totalPages)].map((_, i) => (
+          {[...Array(pagination.pages)].map((_, i) => (
             <button
               key={i + 1}
               onClick={() => handlePageChange(i + 1)}
@@ -733,7 +736,7 @@ export default function Library({ setActiveContent }) {
           ))}
           <button
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === pagination.totalPages}
+            disabled={currentPage === pagination.pages}
             className="p-2 border rounded disabled:opacity-50"
           >
             <ChevronRight className="w-5 h-5" />

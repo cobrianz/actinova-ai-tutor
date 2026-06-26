@@ -1,42 +1,34 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useEffect, useLayoutEffect, useCallback, useRef, useDeferredValue } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import katex from "katex";
-import "katex/dist/katex.min.css";
+
 import {
-  BookOpen,
-  Play,
-  ChevronDown,
-  ChevronUp,
   Send,
   Bot,
   FileText,
   MessageCircle,
   Download,
-  Award,
-  Menu,
-  Sparkles,
   X,
   CheckCircle,
-  LayoutDashboard,
-  Pin,
   Lock,
-  BarChart3,
-  TrendingUp,
-  Share2,
 } from "lucide-react";
 
 import { toast } from "sonner";
 import { parseContentIntoBlocks } from "@/lib/contentBlocks";
-import { highlightToHtml } from "@/lib/syntaxHighlighter";
+import { renderContent, renderLessonBlocks } from "@/lib/contentRenderer";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 // D3 visualizations removed per policy: no interactive D3 visuals
 import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
+import CourseToolbar from "./CourseToolbar";
+import CourseSidebar from "./CourseSidebar";
+import LessonContentPanel from "./LessonContentPanel";
+import MobileBottomNav from "./MobileBottomNav";
+import LimitModal from "./LimitModal";
 import { apiClient } from "@/lib/csrfClient";
 import { PRODUCTS } from "@/lib/planLimits";
 import LessonChart from "./LessonChart";
@@ -125,8 +117,6 @@ export default function LearnContent() {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showQuestionResults, setShowQuestionResults] = useState(false);
   const [typingLessonKey, setTypingLessonKey] = useState(null);
-  const deferredTypingContent = useDeferredValue(typingContent);
-
   const isPro = (() => {
     if (hasPurchased('course_generation')) return true;
 
@@ -1167,7 +1157,6 @@ export default function LearnContent() {
     });
 
     try {
-      // Step 1: Check if question is relevant to the course
       const allCourseContent =
         courseData?.modules
           ?.flatMap(
@@ -1184,48 +1173,10 @@ export default function LearnContent() {
           )
           .join("\n\n---\n\n") || "";
 
-      const relevanceCheck = await apiClient.post("/api/course-agent", {
-        action: "checkRelevance",
-        question: userMessage.message,
-        messages: chatMessages, // Include history
-        courseContent: allCourseContent,
-        lessonTitle: currentLesson?.title || "",
-        context: `Course: ${courseData?.title || ""
-          }, Level: ${courseData?.level || ""}, Topic: ${topic}. Module: ${courseData?.modules?.find((m) => m.id === activeLesson.moduleId)
-            ?.title || ""
-          }`,
-      });
-
-      if (!relevanceCheck.ok) {
-        throw new Error("Failed to check question relevance");
-      }
-
-      const relevanceData = await relevanceCheck.json();
-
-      if (!relevanceData.relevant) {
-        // Question is not related to the course
-        const courseTitle = courseData?.title || "this course";
-        setChatMessages((prev) => {
-          const withoutLoading = prev.filter((msg) => !msg.isLoading);
-          const next = [
-            ...withoutLoading,
-            {
-              type: "ai",
-              message: `I'm here to help with this course on **${courseTitle}**. What would you like to know about it?`,
-              timestamp: new Date(),
-            },
-          ];
-          saveConversation(next);
-          return next;
-        });
-        return;
-      }
-
-      // Step 2: Question is relevant, get the answer
       const response = await apiClient.post("/api/course-agent", {
         action: "answer",
         question: userMessage.message,
-        messages: chatMessages, // Include history
+        messages: chatMessages,
         courseContent: allCourseContent,
         lessonTitle: currentLesson?.title || "",
         context: `Course: ${courseData?.title || ""
@@ -1243,13 +1194,11 @@ export default function LearnContent() {
       // Remove loading message and add real response (agent instructed to <=50 words)
       setChatMessages((prev) => {
         const withoutLoading = prev.filter((msg) => !msg.isLoading);
-        const formattedHtml = renderContent(data.response || "");
         const next = [
           ...withoutLoading,
           {
             type: "ai",
-            message: formattedHtml,
-            html: true,
+            message: data.response || "",
             timestamp: new Date(),
           },
         ];
@@ -1280,466 +1229,6 @@ export default function LearnContent() {
   // images or links to externally hosted diagrams.
 
 
-  const renderContent = (content) => {
-    if (!content) return "";
-    
-    // Normalize line endings to \n
-    let html = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
-
-    // Some streamed/cached payloads can arrive double-escaped (literal "\\n" sequences).
-    // If we detect that, convert them back into real newlines before markdown parsing,
-    // otherwise headings/lists render as raw markdown until the final payload arrives.
-    const rawNlCount = (html.match(/\n/g) || []).length;
-    const escapedNlCount = (html.match(/\\n/g) || []).length;
-    if (escapedNlCount > 3 && escapedNlCount > rawNlCount * 2) {
-      html = html
-        .replace(/\\r\\n/g, "\n")
-        .replace(/\\n/g, "\n")
-        .replace(/\\t/g, "\t");
-    }
-
-    // If the model emits an opening ``` fence but forgets to close it, everything after it
-    // can disappear or get swallowed into one giant code block. Auto-close it as safely as possible.
-    const fenceCount = (html.match(/```/g) || []).length;
-    if (fenceCount % 2 === 1) {
-      const lastOpenIdx = html.lastIndexOf("```");
-      const fenceLineEnd =
-        lastOpenIdx >= 0 ? html.indexOf("\n", lastOpenIdx) : -1;
-      const codeStartIdx =
-        fenceLineEnd === -1 ? html.length : Math.min(html.length, fenceLineEnd + 1);
-      const afterFence = html.slice(codeStartIdx);
-
-      const markerRegex = /(?:\r?\n|^)[ \t]*(#{1,6}\s+|-{3,}\s*$)/m;
-      const marker = markerRegex.exec(afterFence);
-
-      const isProbablyProseLine = (line) => {
-        if (!line) return false;
-        if (/^\s/.test(line)) return false; // indented: likely still code
-        const t = line.trim();
-        if (!t) return false;
-        if (/^```/.test(t)) return false;
-        if (/^(#{1,6}\s+|[-*]\s+|\d+\.\s+|>\s+)/.test(t)) return false;
-        if (/^(import|package|public|private|protected|class|interface|enum|return|for|while|if|else|try|catch|finally|switch)\b/i.test(t)) {
-          return false;
-        }
-        if (/^(\/\/|\/\*|\*\/|\*)/.test(t)) return false;
-        // If it contains typical code punctuation, treat it as code-ish.
-        if (/[{};=()<>[\]]/.test(t)) return false;
-        return /[A-Za-z]{3,}/.test(t);
-      };
-
-      // Prefer closing right before the first obvious non-code prose line that follows a blank line.
-      let insertAt = null;
-      {
-        const lines = afterFence.split("\n");
-        let offset = 0;
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i];
-          const next = lines[i + 1];
-          offset += line.length + 1; // start index of next line within afterFence
-          if (line.trim() === "" && isProbablyProseLine(next)) {
-            insertAt = codeStartIdx + offset;
-            break;
-          }
-        }
-      }
-
-      // Otherwise, close before the next markdown section marker (header or --- rule).
-      if (insertAt == null && marker) {
-        insertAt = codeStartIdx + marker.index;
-      }
-
-      if (insertAt != null && lastOpenIdx >= 0) {
-        html = `${html.slice(0, insertAt)}\n\`\`\`\n${html.slice(insertAt)}`;
-      } else {
-        html += "\n```";
-      }
-    }
-
-    const mathCommandPattern =
-      /\\(?:frac|sum|int|lim|alpha|beta|gamma|delta|pi|theta|phi|omega|sqrt|cdot|times|le|ge|approx|neq|pm|mp|infty|partial|left|right|text|begin|end|overline|underline|vec|hat|bar)/i;
-    const mathSymbolPattern = /(?:\^|_|=|[+\-*/]=?|[<>]=?|\\%|\\times|\\cdot|\\div|\\pm|\\mp)/;
-    const plainSentencePattern = /[A-Za-z]{3,}\s+[A-Za-z]{3,}/;
-    const currencyLikePattern = /(?:^|[\s,(])\d{1,3}(?:,\d{3})+(?:\.\d+)?(?:[\s,.)]|$)/;
-
-    const shouldRenderAsMath = (equation, { displayMode = false } = {}) => {
-      const trimmed = equation.trim();
-      if (!trimmed) return false;
-
-      const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
-      const hasMathCommands = mathCommandPattern.test(trimmed);
-      const hasMathSymbols = mathSymbolPattern.test(trimmed);
-      const hasStructuredMath =
-        /[{}[\]]/.test(trimmed) ||
-        /(?:^|[^A-Za-z])\d+\s*(?:[+\-*/=<>^_]|\\times|\\cdot|\\div)/.test(trimmed) ||
-        /(?:[+\-*/=<>^_]|\\times|\\cdot|\\div)\s*\d+/.test(trimmed);
-      const looksLikeSentence = plainSentencePattern.test(trimmed);
-      const isMostlyWords = !/\d/.test(trimmed) && wordCount > 2;
-      const isCurrencyOrNumberPhrase =
-        currencyLikePattern.test(trimmed) && !hasMathCommands && !hasMathSymbols;
-
-      if (hasMathCommands) return true;
-
-      if (!hasMathSymbols && !hasStructuredMath) {
-        return false;
-      }
-
-      if (!displayMode && looksLikeSentence && wordCount > 3 && !hasMathCommands) {
-        return false;
-      }
-
-      if (isMostlyWords || isCurrencyOrNumberPhrase) {
-        return false;
-      }
-
-      return true;
-    };
-
-    // Escape unsafe HTML in plain text so things like Java generics (<T>) don't get
-    // interpreted as HTML and stripped when rendered.
-    const escapeHtmlText = (text) => {
-      if (!text) return "";
-      return String(text)
-        .replace(/&(?!(?:[a-zA-Z]+|#\d+);)/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    };
-
-    // Handle code blocks FIRST (before other replacements) - CRITICAL
-    const codeBlocks = [];
-    html = html.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
-      // If the code block is explicitly marked as math or latex, render with KaTeX
-      if (lang === "math" || lang === "latex" || lang === "tex") {
-        try {
-          const rendered = katex.renderToString(code.trim(), {
-            displayMode: true,
-            throwOnError: false,
-            output: "html"
-          });
-          return `<div class="my-6 p-4 text-foreground overflow-x-auto font-sans">${rendered}</div>`;
-        } catch (e) {
-          return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${code.trim()}</div>`;
-        }
-      }
-      
-      const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
-      const pureCode = code.trim();
-      // UTF-8 safe base64 encoding
-      const encodedCode = btoa(encodeURIComponent(pureCode).replace(/%([0-9A-F]{2})/g, 
-        (match, p1) => String.fromCharCode('0x' + p1)));
-        
-      const highlightedCode = highlightToHtml(pureCode, lang || "javascript");
-      codeBlocks.push(
-        `<div class="relative group my-6">
-           <div class="absolute right-3 top-3 z-10">
-             <button class="copy-code-btn p-1.5 rounded-md bg-white/80 dark:bg-slate-800/80 border border-border shadow-sm hover:bg-white dark:hover:bg-slate-700 transition-colors" data-code="${encodedCode}" title="Copy code">
-               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-             </button>
-           </div>
-           <pre class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg overflow-x-auto border border-border font-mono m-0"><code class="text-sm font-mono language-${lang || "plaintext"}">${highlightedCode}</code></pre>
-         </div>`
-      );
-      return placeholder;
-    });
-
-    // Handle inline code
-    const inlineCodes = [];
-    html = html.replace(/`([^`]+)`/g, (match, code) => {
-      const placeholder = `___INLINECODE_${inlineCodes.length}___`;
-      inlineCodes.push(
-        `<code class="bg-muted px-2 py-0.5 rounded text-sm font-mono text-primary">${escapeHtmlText(
-          code
-        )}</code>`
-      );
-      return placeholder;
-    });
-
-    // Escape remaining raw HTML in the text (code blocks and inline code have been extracted).
-    html = escapeHtmlText(html);
-
-    // Handle images - ![alt text](url)
-    // Use a more robust pattern that handles URLs with parentheses and special characters
-    html = html.replace(
-      /!\[([^\]]*)\]\(([^)\s]+(?:\([^)]*\)[^)\s]*)*)\)/g,
-      (match, alt, url) => {
-        // Decode URL if it contains encoded characters
-        const cleanUrl = url.trim();
-        return `<div class="my-4 flex justify-center"><img src="${cleanUrl}" alt="${alt}" class="max-w-full h-auto rounded-lg shadow-md" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"text-destructive p-4 bg-destructive/10 rounded-lg\\">Failed to load image: ${alt}</div>'" /></div>`;
-      }
-    );
-
-    // Handle LaTeX with \\[ \\] delimiters (display mode)
-    html = html.replace(
-      /\\\[([\s\S]*?)\\\]/g,
-      (match, equation) => {
-        const trimmed = equation.trim();
-        
-        if (!shouldRenderAsMath(trimmed, { displayMode: true })) {
-          const plainText = trimmed.replace(/\\\$/g, '$');
-          return `<div class="my-4 font-serif text-lg leading-relaxed">${plainText}</div>`;
-        }
-        try {
-          const rendered = katex.renderToString(trimmed, {
-            displayMode: true,
-            throwOnError: false,
-            output: 'html'
-          });
-          return `<div class="my-6 p-4 text-foreground overflow-x-auto font-sans">${rendered}</div>`;
-        } catch (e) {
-          return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${equation}</div>`;
-        }
-      }
-    );
-
-    // Handle LaTeX with \\( \\) delimiters (inline mode)
-    html = html.replace(
-      /\\\(([\s\S]*?)\\\)/g,
-      (match, equation) => {
-        const trimmed = equation.trim();
-        
-        if (!shouldRenderAsMath(trimmed)) {
-          const plainText = trimmed.replace(/\\\$/g, '$');
-          return `<span>${plainText}</span>`;
-        }
-        try {
-          const rendered = katex.renderToString(trimmed, {
-            displayMode: false,
-            throwOnError: false,
-            output: 'html',
-            strict: false
-          });
-          return `<span class="inline-block align-middle mx-1">${rendered}</span>`;
-        } catch (e) {
-          return `<span class="text-destructive text-xs">LaTeX Error: ${equation}</span>`;
-        }
-      }
-    );
-
-    // Handle equations - display mode $$...$$
-    html = html.replace(
-      /\$\$([\s\S]*?)\$\$/g,
-      (match, equation) => {
-        const trimmed = equation.trim();
-        if (!shouldRenderAsMath(trimmed, { displayMode: true })) {
-          const plainText = trimmed.replace(/\\\$/g, "$");
-          return `<div class="my-4 font-serif text-lg leading-relaxed">${plainText}</div>`;
-        }
-        try {
-          const rendered = katex.renderToString(trimmed, {
-            displayMode: true,
-            throwOnError: false,
-            output: 'html'
-          });
-          return `<div class="my-6 p-4 text-foreground overflow-x-auto font-sans">${rendered}</div>`;
-        } catch (e) {
-          return `<div class="my-4 p-4 bg-destructive/10 rounded-lg text-destructive">LaTeX Error: ${equation}</div>`;
-        }
-      }
-    );
-
-    // Handle equations - inline mode $...$
-    html = html.replace(
-      /\$([^\$\n]+?)\$/g,
-      (match, equation) => {
-        const trimmed = equation.trim();
-        if (/^\d+(?:\.\d{2})?$/.test(trimmed)) {
-          return match;
-        }
-        if (!shouldRenderAsMath(trimmed)) {
-          return match;
-        }
-        try {
-          const rendered = katex.renderToString(trimmed, {
-            displayMode: false,
-            throwOnError: false,
-            output: 'html',
-            strict: false
-          });
-          return `<span class="inline-block align-middle mx-1">${rendered}</span>`;
-        } catch (e) {
-          return `<span class="text-destructive text-xs">LaTeX Error: ${equation}</span>`;
-        }
-      }
-    );
-
-    // Remove Module and Lesson labels early and more aggressively
-    html = html.replace(/^\s*#+ (?:Module|Lesson|Course|Topic):\s*.*$/gim, "");
-    html = html.replace(/^\s*(?:Module|Lesson|Course|Topic):\s*.*$/gim, "");
-
-    // Handle headers (removed main title as per user request)
-    // EXTREME ROBUSTNESS: Allow optional leading whitespace and ensure we match even if line endings are weird
-    html = html.replace(/^[ \t]*# (?!Module|Lesson|Course|Topic)(.*)$/gm, "");
-    html = html.replace(
-      /^[ \t]*## (.*$)/gm,
-      '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-3 mt-3">$1</h2>'
-    );
-    html = html.replace(
-      /^[ \t]*### (.*$)/gm,
-      '<h3 class="text-xl lg:text-3xl font-bold font-serif text-foreground/90 mb-2 mt-3">$1</h3>'
-    );
-    html = html.replace(
-      /^[ \t]*#### (.*$)/gm,
-      '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-2.5">$1</h4>'
-    );
-    html = html.replace(
-      /^[ \t]*##### (.*$)/gm,
-      '<h5 class="text-md lg:text-xl font-bold font-serif text-foreground/90 mb-1 mt-2">$1</h5>'
-    );
-    html = html.replace(
-      /^[ \t]*###### (.*$)/gm,
-      '<h6 class="text-sm lg:text-lg font-bold font-serif text-foreground/80 mb-1 mt-2">$1</h6>'
-    );
-
-    // Handle blockquotes
-    html = html.replace(
-      /^> (.*$)/gm,
-      '<blockquote class="border-l-4 border-primary pl-4 py-2 my-6 bg-secondary font-serif italic rounded-r text-foreground/80 lg:text-xl">$1</blockquote>'
-    );
-
-    // Handle bold - must come before italics
-    html = html.replace(
-      /\*\*([\s\S]+?)\*\*/g,
-      '<strong class="font-bold font-serif text-foreground">$1</strong>'
-    );
-    html = html.replace(
-      /<b>([\s\S]+?)<\/b>/g,
-      '<b class="font-bold font-serif text-foreground">$1</b>'
-    );
-
-    // Handle italics
-    html = html.replace(
-      /\*([^\*\n\s][^\*\n]*?)\*/g,
-      '<em class="italic font-serif text-foreground/90">$1</em>'
-    );
-
-    // Handle lists and paragraphs in a single pass to avoid mid-list resets
-    const lines = html.split("\n");
-    let processedHtml = [];
-    let listStack = [];
-    const blankSpacer = '<div class="h-1"></div>';
-
-    const closeList = () => {
-      if (listStack.length > 0) {
-        const type = listStack.pop();
-        processedHtml.push(type === 'ol' ? '</ol>' : '</ul>');
-      }
-    };
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      if (!line) {
-        // Check if next meaningful line is a list item to preserve state
-        let nextMeaningfulLine = "";
-        for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].trim()) {
-            nextMeaningfulLine = lines[j].trim();
-            break;
-          }
-        }
-        const nextIsList = /^(\d+\.\s+|[-•*]\s+)/.test(nextMeaningfulLine);
-        if (!nextIsList) {
-          closeList();
-        }
-        if (processedHtml[processedHtml.length - 1] !== blankSpacer) {
-          processedHtml.push(blankSpacer);
-        }
-        continue;
-      }
-
-      // List regexes
-      const olMatch = line.match(/^(\d+)\.\s+(.*)$/);
-      const ulMatch = line.match(/^([-•*])\s+(.*)$/);
-
-      if (olMatch) {
-        if (listStack[listStack.length - 1] !== 'ol') {
-          closeList();
-          processedHtml.push('<ol class="list-decimal list-outside mb-6 space-y-4 font-serif text-[1.05rem] lg:text-xl text-foreground/80 ml-10">');
-          listStack.push('ol');
-        }
-        processedHtml.push(`<li class="pl-3">${olMatch[2]}</li>`);
-      } else if (ulMatch) {
-        if (listStack[listStack.length - 1] !== 'ul') {
-          closeList();
-          processedHtml.push('<ul class="list-disc list-outside mb-6 space-y-3 font-serif text-[1.05rem] lg:text-xl text-foreground/80 ml-10">');
-          listStack.push('ul');
-        }
-        processedHtml.push(`<li class="pl-3">${ulMatch[2]}</li>`);
-      } else {
-        // Not a list item prefix
-        if (line.match(/^\s*[-*_]{3,}\s*$/)) {
-          // Horizontal rule handling - clean it up before list/paragraph wrapping
-          closeList();
-          processedHtml.push('<hr class="my-8 border-t-2 border-primary/20 hidden" />');
-        } else if (listStack.length > 0) {
-          // Continuation of a list item
-          processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] lg:text-lg leading-relaxed">${line}</div>`);
-        } else if (line.startsWith('<h') || line.startsWith('<blockquote') || line.startsWith('<hr')) {
-          // Structural HTML elements that don't need paragraph wrapping
-          processedHtml.push(line);
-        } else {
-          // Regular paragraph or formatted text starting with <strong or <em or <code
-          processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed font-serif text-[1.05rem] lg:text-xl lg:leading-loose">${line}</p>`);
-        }
-      }
-    }
-    closeList();
-    html = processedHtml.join("\n");
-
-    // Restore code blocks
-    codeBlocks.forEach((block, i) => {
-      html = html.replace(`___CODEBLOCK_${i}___`, block);
-    });
-
-    // Restore inline codes
-    inlineCodes.forEach((code, i) => {
-      html = html.replace(`___INLINECODE_${i}___`, code);
-    });
-
-    return html;
-  };
-
-  const renderLessonBlocks = (content, { streaming = false } = {}) => {
-    return parseContentIntoBlocks(content).flatMap((block, idx) => {
-      // While streaming, we may briefly see incomplete visual JSON inside ```chart```/```table``` blocks.
-      // Hide those fallbacks until they successfully parse into real visual blocks.
-      if (streaming && block.type === "code" && (block.lang === "chart" || block.lang === "table")) {
-        return [];
-      }
-      if (block.type === "chart") {
-        return [
-          (
-          <div key={`chart-${idx}`} id={`visual-chart-${idx}`} className="visual-block-wrapper">
-            <LessonChart type={block.chartType} data={block.data} title={block.title} />
-          </div>
-          ),
-        ];
-      }
-      if (block.type === "table") {
-        return [
-          (
-          <div key={`table-${idx}`} id={`visual-table-${idx}`} className="visual-block-wrapper">
-            <LessonTable headers={block.headers} rows={block.rows} title={block.title} />
-          </div>
-          ),
-        ];
-      }
-      return [
-        (
-        <div
-          key={`block-${idx}`}
-          dangerouslySetInnerHTML={{
-            __html: renderContent(
-              block.type === "code"
-                ? `\`\`\`${block.lang}\n${block.content}\n\`\`\``
-                : block.content
-            ),
-          }}
-        />
-        ),
-      ];
-    });
-  };
 
   // Knowledge-check removed: lessons will no longer include an embedded quiz
 
@@ -1926,7 +1415,7 @@ export default function LearnContent() {
       let existingCourse = null;
 
       // 1. ALWAYS check library as primary source (even if shareId is present)
-      const libraryResponse = await apiClient.get("/api/library", {
+      const libraryResponse = await apiClient.get("/api/library?limit=50", {
         headers: {
           "x-user-id": user?._id || user?.id || user?.idString || "",
         },
@@ -1985,7 +1474,7 @@ export default function LearnContent() {
         console.log("Enrollment success, courseId:", enrollData.courseId);
 
         // Refresh library to get the newly enrolled course data
-        const refreshResponse = await apiClient.get("/api/library", {
+        const refreshResponse = await apiClient.get("/api/library?limit=50", {
           headers: {
             "x-user-id": user?._id || user?.id || user?.idString || "",
           },
@@ -2548,7 +2037,8 @@ export default function LearnContent() {
   // No knowledge-check parsing: nothing to do when content changes
 
   // Show loading state only if no course data yet and no limit modal
-  if (isLoading && !courseData && !showLimitModal) {
+  const hasNoCreditsForGeneration = !hasPurchased(formatProductId) && !(user?.credits >= (formatProduct?.creditCost || 0));
+  if (isLoading && !courseData && !showLimitModal && !hasNoCreditsForGeneration) {
     return (
       <ActirovaLoader
         text={
@@ -2636,85 +2126,22 @@ export default function LearnContent() {
 
   return (
       <div className="h-[100dvh] flex flex-col bg-background font-serif overflow-hidden">
-      {/* Permanent Navbar Header */}
-      <div className="bg-card backdrop-blur-md border-b border-border py-2 px-3 sm:py-2.5 sm:px-4 z-[80] shadow-sm relative">
-        <div className="flex items-center justify-between w-full px-0 sm:px-2 lg:px-4">
-          {/* Left Group - Navigation */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <Link
-              href="/dashboard"
-              className="hidden lg:flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-secondary/40 text-muted-foreground hover:bg-secondary transition-all"
-              title="Dashboard"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-            </Link>
-            <button
-              onClick={() => {
-                setIsRightPanelOpen(false);
-                setIsSidebarOpen(!isSidebarOpen);
-              }}
-              className={`hidden md:flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isSidebarOpen
-                ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
-                }`}
-            >
-              <Menu className="w-4 h-4" />
-              <span className="hidden md:inline">Modules</span>
-            </button>
-          </div>
-
-          {/* Right Group - Controls (Always visible for easy access) */}
-          <div className="hidden md:flex items-center space-x-2 sm:space-x-3">
-            <button
-              onClick={handleShare}
-              disabled={!courseData?._id || isSharingToggle}
-              className={`p-1.5 sm:p-2 rounded-lg border transition-all ${isSharingToggle ? "opacity-50 cursor-not-allowed" : ""} ${
-                isMyShareActive 
-                  ? "bg-green-500/10 text-green-500 border-green-500/20 shadow-sm" 
-                  : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
-              }`}
-              title={isSharingToggle ? "Updating share status..." : (isMyShareActive ? "Shared by me (Click to disable)" : (courseData?.isShared ? "Reshare course" : "Share course"))}
-            >
-              {isSharingToggle ? (
-                <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Share2 className={`w-4 h-4 ${isMyShareActive ? "fill-green-500/10" : ""}`} />
-              )}
-            </button>
-            <button
-              onClick={handleDownloadLesson}
-              className="p-1.5 sm:p-2 rounded-lg border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
-              title="Download Lesson PDF"
-              disabled={!canDownloadLessonPdf}
-            >
-              <Download className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleMarkCurrentLesson}
-              className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-bold border ${isCurrentLessonCompleted
-                ? "bg-green-500/10 text-green-500 border-green-500/20"
-                : "bg-primary/10 text-primary border-primary/20"
-                }`}
-              disabled={!currentLesson?.content || lessonContentLoading}
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {isCurrentLessonCompleted ? "Done" : "Complete"}
-              </span>
-            </button>
-            <button
-              onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-              className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isRightPanelOpen
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-secondary/50 text-muted-foreground border-border"
-                }`}
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Tutor</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      <CourseToolbar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        isRightPanelOpen={isRightPanelOpen}
+        setIsRightPanelOpen={setIsRightPanelOpen}
+        isMyShareActive={isMyShareActive}
+        isSharingToggle={isSharingToggle}
+        canDownloadLessonPdf={canDownloadLessonPdf}
+        isCurrentLessonCompleted={isCurrentLessonCompleted}
+        currentLesson={currentLesson}
+        lessonContentLoading={lessonContentLoading}
+        handleShare={handleShare}
+        handleDownloadLesson={handleDownloadLesson}
+        handleMarkCurrentLesson={handleMarkCurrentLesson}
+        courseData={courseData}
+      />
 
       {/* Main Layout Area below navbar */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -2732,316 +2159,40 @@ export default function LearnContent() {
             />
         )}
 
-        {/* Left Sidebar - Course Navigation */}
-          <div
-            className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-              } w-full lg:w-80 bg-card border-r border-border flex flex-col absolute z-[80] transition-transform duration-300 max-w-[90vw] md:max-w-[400px] h-full overflow-y-auto hide-scrollbar shadow-xl pb-24 md:pb-0`}
-          >
+        <CourseSidebar
+          isSidebarOpen={isSidebarOpen}
+          courseData={courseData}
+          isPro={isPro}
+          FREE_READABLE_MODULES={FREE_READABLE_MODULES}
+          expandedModules={expandedModules}
+          toggleModule={toggleModule}
+          activeLesson={activeLesson}
+          selectLesson={selectLesson}
+          completedLessons={completedLessons}
+          generatingLessons={generatingLessons}
+          progressPercentage={progressPercentage}
+          canDownloadCoursePdf={canDownloadCoursePdf}
+          handleDownloadCourse={handleDownloadCourse}
+          isMyShareActive={isMyShareActive}
+          isSharingToggle={isSharingToggle}
+          handleShare={handleShare}
+          format={format}
+        />
 
-          <div className="p-4 lg:p-6 border-b border-border">
-            {courseData ? (
-              <>
-            <div className="flex justify-between flex-wrap flex-col">
-              <h2 className="font-bold text-lg text-foreground mb-1">
-                {courseData.title}
-              </h2>
-              {courseData.sharerName && (
-                <p className="text-[11px] text-primary font-medium italic mb-2">
-                  Shared by {courseData.sharerName.split(' ')[0]}
-                </p>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              {courseData.totalModules || 0} modules • {courseData.totalLessons || 0}{" "}
-              lessons
-            </p>
-            </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Loading course...</p>
-            )}
-            <button
-              onClick={handleDownloadCourse}
-              disabled={!canDownloadCoursePdf}
-              className={
-                canDownloadCoursePdf
-                  ? "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-500/20"
-                  : "w-full mb-4 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-              }
-            >
-              <Download className="w-4 h-4" />
-              <span>
-                {canDownloadCoursePdf
-                  ? `Download ${format === "flashcards" ? "Flashcards" : "Course"} as PDF`
-                  : "Unlock course to download PDF"}
-              </span>
-            </button>
-            {courseData && (
-              <>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center text-sm font-semibold">
-                {Math.round(progressPercentage)}%
-              </div>
-              <span className="text-sm text-muted-foreground">
-                Completed
-              </span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2">
-              <div
-                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercentage}%` }}
-              ></div>
-            </div>
-            </>
-            )}
-          </div>
-          <div className="flex-1">
-            {courseData && Array.isArray(courseData.modules) &&
-              courseData.modules.map((module, moduleIndex) => (
-                <div
-                  key={module?.id ?? moduleIndex}
-                  className="border-b border-border last:border-b-0"
-                >
-                  <button
-                    onClick={() => {
-                      if (!isPro && moduleIndex >= FREE_READABLE_MODULES) {
-                        toast.error("Upgrade to Pro to unlock all 20 modules.", {
-                          action: {
-                            label: "Upgrade",
-                            onClick: () => router.push("/dashboard"),
-                          },
-                        });
-                        return;
-                      }
-                      toggleModule(module.id);
-                    }}
-                    className={`w-full p-4 flex items-center justify-between transition-colors ${
-                      !isPro && moduleIndex >= FREE_READABLE_MODULES
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-secondary/50"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        !isPro && moduleIndex >= FREE_READABLE_MODULES
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-green-500/10 text-green-600"
-                      }`}>
-                        {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
-                          <Lock className="w-4 h-4" />
-                        ) : (
-                          moduleIndex + 1
-                        )}
-                      </div>
-                      <span className={`text-sm font-medium text-left ${
-                        !isPro && moduleIndex >= FREE_READABLE_MODULES
-                          ? "text-muted-foreground"
-                          : "text-foreground"
-                      }`}>
-                        {module.title}
-                      </span>
-                    </div>
-                    {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
-                      <Lock className="w-3.5 h-3.5 text-muted-foreground/50" />
-                    ) : expandedModules.has(module.id) ? (
-                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-                  {expandedModules.has(module.id) && (
-                    <div className="bg-secondary/30">
-                      {module.lessons.map((lesson, lessonIndex) => {
-                        const lessonTitle =
-                          typeof lesson === "string" ? lesson : lesson.title;
-                        const lessonId =
-                          (typeof lesson !== "string" && lesson.id) ||
-                          `${module.id}-${lessonIndex}`;
-                        const spinnerKey = `${module.id}-${lessonIndex}`;
-                        const isCompleted = completedLessons.has(lessonId) || 
-                          (typeof lesson !== "string" && (lesson.completed || (lesson.content && lesson.content.length > 100)));
-                        const isActive =
-                          activeLesson.moduleId === module.id &&
-                          activeLesson.lessonIndex === lessonIndex;
-                        return (
-                          <button
-                            key={lessonIndex}
-                            id={`sidebar-lesson-${module.id}-${lessonIndex}`}
-                            onClick={() => selectLesson(module.id, lessonIndex)}
-                            className={`w-full p-3 pl-12 flex items-center justify-between hover:bg-secondary/20 transition-colors ${isActive
-                              ? "bg-primary/5 border-r-2 border-primary"
-                              : ""
-                              }`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div
-                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium ${isCompleted
-                                  ? "bg-green-500 border-green-500 text-white"
-                                  : "border-border text-muted-foreground"
-                                  }`}
-                              >
-                                {isCompleted ? "✓" : lessonIndex + 1}
-                              </div>
-                              <span
-                                className={`text-sm text-left flex-1 ${isActive
-                                  ? "text-primary font-medium"
-                                  : "text-foreground/80"
-                                  }`}
-                              >
-                                {lessonTitle}
-                              </span>
-                              {generatingLessons.has(spinnerKey) && (
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 ml-2"></div>
-                              )}
-                            </div>
-                            {!isCompleted && !generatingLessons.has(spinnerKey) && (
-                              <Play className="w-4 h-4 text-muted-foreground" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
-          </div>
-
-          {/* Free user upgrade CTA at the bottom of the sidebar */}
-          {!isPro && courseData && (
-            <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-green-500/5">
-              <div className="flex items-center space-x-2 mb-2">
-                <Lock className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-foreground">
-                  {(courseData.totalModules || 0) - FREE_READABLE_MODULES} modules locked
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-                You can read modules 1-2 for free. Upgrade to Pro or unlock this course to access all 20 modules.
-              </p>
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="w-full py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Upgrade to Pro
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div
-            ref={contentRef}
-            className="flex-1 overflow-y-auto hide-scrollbar bg-background cursor-pointer lg:cursor-default"
-          >
-            <div className={`mx-auto p-4 pb-28 sm:p-6 sm:pb-32 lg:p-8 lg:pb-8 transition-all duration-300 ${isRightPanelOpen && isSidebarOpen ? "max-w-4xl" : "max-w-5xl"}`}>
-              {(() => {
-                const activeKey = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
-                const isGeneratingActive = generatingLessons.has(activeKey);
-                const hasStreamText =
-                  typingLessonKey === activeKey && String(typingContent || "").trim().length > 0;
-
-                if (isGeneratingActive) {
-                  if (hasStreamText) {
-                    return (
-                      <div>
-                        <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
-                          <div className="not-prose mb-3">
-                            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground border-b-2 border-slate-300 dark:border-slate-600 pb-2">
-                              {currentLesson?.title || "Lesson"}
-                            </h1>
-                          </div>
-                          <div className="space-y-6" id="lesson-content-container">
-                            {renderLessonBlocks(deferredTypingContent, { streaming: true })}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-                      <h3 className="text-lg font-medium text-foreground mb-2">
-                        Generating lesson content...
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Please wait while we create personalized content for you
-                      </p>
-                    </div>
-                  );
-                }
-
-                if (currentLesson?.content) {
-                  return null;
-                }
-
-                return null;
-              })() ?? null}
-
-              {(() => {
-                const activeKey = `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
-                const isGeneratingActive = generatingLessons.has(activeKey);
-
-                if (isGeneratingActive) return null; // streaming UI above handles this state
-
-                if (currentLesson?.content) {
-                  return (
-                <div>
-                  <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
-                    <div className="not-prose mb-3">
-                      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground border-b-2 border-slate-300 dark:border-slate-600 pb-2">
-                        {currentLesson?.title || "Lesson"}
-                      </h1>
-                    </div>
-                    {/* Visualizations removed: use images or links in content */}
-                    <div className="space-y-6" id="lesson-content-container">
-                      {renderLessonBlocks(currentLesson.content)}
-                    </div>
-                    
-                    {/* Next Lesson Navigation Button */}
-                    <div className="mt-12 pt-8 border-t border-border flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        Lesson {activeLesson.lessonIndex + 1} of {
-                          courseData?.modules?.find(m => m.id === activeLesson.moduleId)?.lessons?.length || 0
-                        }
-                      </div>
-                      <button
-                        onClick={() => {
-                          // Mark current as complete if not already
-                          const lessonId = currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
-                          if (!completedLessons.has(lessonId)) {
-                             toggleLessonCompletion(activeLesson.moduleId, activeLesson.lessonIndex);
-                          }
-                          goToNextLesson();
-                        }}
-                        className="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
-                      >
-                        <span>Next Lesson</span>
-                        <Play className="w-4 h-4 fill-current" />
-                      </button>
-                    </div>
-                  </div>
-
-
-                </div>
-                  );
-                }
-
-                return (
-                <div className="text-center py-12">
-                  <BookOpen className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">
-                    Select a lesson to start learning
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Choose a lesson from the sidebar to begin
-                  </p>
-                </div>
-                );
-              })()}
-            </div>
-            {/* Mobile controls removed as requested */}
-          </div>
-        </div>
+        <LessonContentPanel
+          contentRef={contentRef}
+          isRightPanelOpen={isRightPanelOpen}
+          isSidebarOpen={isSidebarOpen}
+          activeLesson={activeLesson}
+          generatingLessons={generatingLessons}
+          typingLessonKey={typingLessonKey}
+          typingContent={typingContent}
+          currentLesson={currentLesson}
+          completedLessons={completedLessons}
+          toggleLessonCompletion={toggleLessonCompletion}
+          goToNextLesson={goToNextLesson}
+          courseData={courseData}
+        />
 
         {/* Right Panel - Notes & AI Tutor */}
         <div
@@ -3150,8 +2301,8 @@ export default function LearnContent() {
 
                     return (
                       <div key={index} className={`flex ${isUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2`}>
-                        <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm border ${isUser
-                          ? "bg-primary text-primary-foreground border-primary shadow-primary/20 rounded-tr-none"
+                        <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm border ${isUser
+                          ? "bg-green-500 text-white border-green-500 rounded-tr-none"
                           : "bg-card text-foreground border-border rounded-tl-none"
                           }`}>
                           {!isUser && (
@@ -3160,7 +2311,7 @@ export default function LearnContent() {
                               <span className="text-[10px] font-black uppercase tracking-wider">AI Assistant</span>
                             </div>
                           )}
-                          <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: renderContent(message.message) }} />
+                          <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed text-inherit" dangerouslySetInnerHTML={{ __html: message.html ? message.message : renderContent(message.message) }} />
                           <div className="text-[10px] mt-2 flex justify-end items-center space-x-1 opacity-50">
                             <span>{time}</span>
                             {isUser && <CheckCircle size={10} className="text-primary-foreground" />}
@@ -3201,99 +2352,26 @@ export default function LearnContent() {
         </div>
       </div>
 
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[90] border-t border-border bg-card/95 backdrop-blur-xl px-2 py-2">
-        <div className="grid grid-cols-5 gap-1">
-          <button
-            onClick={() => {
-              setIsRightPanelOpen(false);
-              setIsSidebarOpen((prev) => !prev);
-            }}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
-              isSidebarOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Menu className="w-4 h-4" />
-            <span>Modules</span>
-          </button>
-          <button
-            onClick={handleMarkCurrentLesson}
-            disabled={!currentLesson?.content || lessonContentLoading}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
-              isCurrentLessonCompleted ? "text-green-600" : "text-muted-foreground hover:text-foreground"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <CheckCircle
-              className="w-4 h-4"
-              fill={isCurrentLessonCompleted ? "currentColor" : "none"}
-            />
-            <span>Status</span>
-          </button>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span>Dashboard</span>
-          </button>
-          <button
-            onClick={handleDownloadLesson}
-            disabled={!canDownloadLessonPdf}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-4 h-4" />
-            <span>Save</span>
-          </button>
-          <button
-            onClick={() => {
-              setIsSidebarOpen(false);
-              setIsRightPanelOpen((prev) => !prev);
-            }}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors bg-transparent ${
-              isRightPanelOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <MessageCircle
-              className="w-4 h-4"
-              fill={isRightPanelOpen ? "currentColor" : "none"}
-            />
-            <span>Tools</span>
-          </button>
-        </div>
-      </div>
+      <MobileBottomNav
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        isRightPanelOpen={isRightPanelOpen}
+        setIsRightPanelOpen={setIsRightPanelOpen}
+        currentLesson={currentLesson}
+        lessonContentLoading={lessonContentLoading}
+        isCurrentLessonCompleted={isCurrentLessonCompleted}
+        handleMarkCurrentLesson={handleMarkCurrentLesson}
+        handleDownloadLesson={handleDownloadLesson}
+        canDownloadLessonPdf={canDownloadLessonPdf}
+      />
 
-      {showLimitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">
-              Monthly Limit Reached
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              You've used your free limit. Generate new content from the Explore page.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setShowLimitModal(false);
-                  setLimitModalData(null);
-                }}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setShowLimitModal(false);
-                  setLimitModalData(null);
-                  router.push("/generate");
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Go to Generate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LimitModal
+        isOpen={showLimitModal}
+        onClose={() => {
+          setShowLimitModal(false);
+          setLimitModalData(null);
+        }}
+      />
     </div>
   );
 }
