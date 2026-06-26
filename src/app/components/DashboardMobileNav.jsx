@@ -189,9 +189,8 @@ export default function DashboardMobileNav() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-        <div className="mx-3 mb-3">
-          <nav className="flex items-center justify-around h-16 px-1 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-center justify-around h-16 px-1">
             {primaryItems.map((item) => (
               <NavBtn
                 key={item.id}
@@ -223,8 +222,6 @@ export default function DashboardMobileNav() {
               onClick={() => setMoreOpen((prev) => !prev)}
             />
           </nav>
-        </div>
-      </div>
     </>
   );
 }
