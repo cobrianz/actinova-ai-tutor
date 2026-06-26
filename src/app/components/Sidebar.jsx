@@ -53,7 +53,7 @@ export default function Sidebar({
     { name: "Premium", id: "premium-courses", icon: Star, premium: true, showLock: false },
   ].filter(Boolean);
 
-  // On mobile (< lg), hide items already shown in the bottom nav
+  // On mobile (< md), hide items already shown in the bottom nav
   const isMobile = screenSize === "small" || screenSize === "medium";
   const bottomNavIds = ["generate", "chat", "explore", "library"];
   const visibleNav = isMobile

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Search, Book, MessageCircle, Mail, Phone, HelpCircle, ChevronDown, ChevronUp, Zap, Shield, Sparkles, ArrowRight, FileText, Users, CreditCard, Download, Award, Clock, Bot, User, LayoutDashboard, Smartphone, MapPin, Target, BotMessageSquare, StickyNote, TrendingUp, BadgeCheck, Layers, ClipboardCheck, Wallet, RefreshCw, XCircle, Building2 } from "lucide-react"
+import { Search, Book, MessageCircle, Mail, Phone, HelpCircle, ChevronDown, ChevronUp, Zap, Shield, Sparkles, ArrowRight, FileText, Users, CreditCard, Award, Clock, Bot, User, LayoutDashboard, Smartphone, MapPin, Target, BotMessageSquare, StickyNote, TrendingUp, BadgeCheck, Layers, ClipboardCheck, Wallet, RefreshCw, XCircle, Building2 } from "lucide-react"
 import Link from "next/link"
 import HeroNavbar from "../components/heroNavbar"
 
@@ -38,7 +38,7 @@ export default function HelpPage() {
     },
     {
       question: "Is there a mobile app?",
-      answer: "Yes, our mobile app is available for both iOS and Android. You can access all your courses, track progress, and use the AI tutor on the go. Download from the App Store or Google Play Store.",
+      answer: "Yes, our mobile app is available for both iOS and Android. You can access all your courses, track progress, and use the AI tutor on the go. Download from the <a href=\"https://apps.apple.com/app/actirova-ai-tutor\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-violet-600 dark:text-violet-400 underline\">App Store</a> or <a href=\"https://play.google.com/store/apps/details?id=com.actirova.actirova\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-violet-600 dark:text-violet-400 underline\">Google Play Store</a>.",
     },
     {
       question: "How do I contact support?",
@@ -78,7 +78,7 @@ export default function HelpPage() {
         {
           title: "Mobile app setup",
           icon: Smartphone,
-          content: "Download the Actirova app from the App Store (iOS) or Google Play Store (Android). Open the app and log in with your existing credentials. The mobile app mirrors your web experience with: Offline access to downloaded courses, Push notifications for reminders and updates, Progress syncing across devices, Camera access for document scanning, Voice input for AI tutor conversations. To enable offline mode, go to Downloads in the app and select courses to save for offline use.",
+          content: `Download the Actirova app from the <a href="https://apps.apple.com/app/actirova-ai-tutor" target="_blank" rel="noopener noreferrer" class="text-violet-600 dark:text-violet-400 underline">App Store (iOS)</a> or <a href="https://play.google.com/store/apps/details?id=com.actirova.actirova" target="_blank" rel="noopener noreferrer" class="text-violet-600 dark:text-violet-400 underline">Google Play Store (Android)</a>. Open the app and log in with your existing credentials. The mobile app mirrors your web experience with: Offline access to downloaded courses, Push notifications for reminders and updates, Progress syncing across devices, Camera access for document scanning, Voice input for AI tutor conversations. To enable offline mode, go to Downloads in the app and select courses to save for offline use.`,
         },
         {
           title: "Navigating course content",
@@ -277,7 +277,7 @@ export default function HelpPage() {
                             </div>
                             <div className="flex-1">
                               <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">{article.title}</h4>
-                              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{article.content}</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.content }} />
                             </div>
                           </div>
                         </div>
@@ -333,7 +333,7 @@ export default function HelpPage() {
                 </button>
                 {expandedFaq === index && (
                   <div className="px-5 pb-5">
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{faq.answer}</p>
+                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed" dangerouslySetInnerHTML={{ __html: faq.answer }} />
                   </div>
                 )}
               </div>

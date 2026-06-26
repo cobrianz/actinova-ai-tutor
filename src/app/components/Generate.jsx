@@ -10,7 +10,7 @@ import {
   Lightbulb,
   AlertTriangle,
   ScrollText,
-  HelpCircle,
+
   Lock,
   GraduationCap,
   ArrowRight,
@@ -35,7 +35,7 @@ export default function Generate({ setActiveContent }) {
   const [localTopic, setLocalTopic] = useState(initialTopic);
   const [format, setFormat] = useState(searchParams.get("format") || "course");
   const [difficulty, setDifficulty] = useState("beginner");
-  const [questionsCount, setQuestionsCount] = useState(10);
+
   const [reportType, setReportType] = useState("report");
   const [reportLength, setReportLength] = useState("medium");
   const [citationStyle, setCitationStyle] = useState("APA");
@@ -148,7 +148,6 @@ export default function Generate({ setActiveContent }) {
   const formatProductId = formatProductMap[format] || 'course_generation';
   const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
   const hasUnlimitedAccess = hasPurchased(formatProductId) || !!(user?.credits >= (formatProduct?.creditCost || 0));
-  const canGenerate = hasUnlimitedAccess || !currentFormatAtLimit();
 
   // Per-format limit checks from live usage data
   const formatLimit = (formatKey) => {
@@ -173,6 +172,7 @@ export default function Generate({ setActiveContent }) {
   };
 
   const atLimit = currentFormatAtLimit();
+  const canGenerate = hasUnlimitedAccess || !atLimit;
 
   const friendlyName =
     !loading && user ? user.firstName || user.name || "" : "";
@@ -317,7 +317,7 @@ export default function Generate({ setActiveContent }) {
           topic: subject,
           difficulty,
           format: "quiz",
-          questions: questionsCount,
+          questions: 50,
         });
 
         if (!response.ok) {
@@ -359,11 +359,6 @@ export default function Generate({ setActiveContent }) {
 
     // Handle report generation directly
     if (format === "report") {
-      if (!isPremium) {
-        setUpgradeModalFeature("report");
-        setShowUpgradeModal(true);
-        return;
-      }
       setShowLoader(true);
       setIsSubmitting(true);
 
@@ -528,7 +523,8 @@ export default function Generate({ setActiveContent }) {
               {format === "course" && `Course limit reached (${courseLimitInfo.used}/${courseLimitInfo.limit}).`}
               {format === "flashcards" && `Flashcard limit reached (${flashcardsLimitInfo.used}/${flashcardsLimitInfo.limit}).`}
               {format === "quiz" && `Quiz limit reached (${quizzesLimitInfo.used}/${quizzesLimitInfo.limit}).`}
-              {" "}<button onClick={() => setShowPremiumModal(true)} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
+              {format === "report" && `Report limit reached (${reportsLimitInfo.used}/${reportsLimitInfo.limit}).`}
+              {" "}<button onClick={() => setShowUpgradeModal(true)} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
             </motion.div>
           )}
         </div>
@@ -593,7 +589,7 @@ export default function Generate({ setActiveContent }) {
                       const selectedDifficulty = e.target.value;
                       if (!isPremium && selectedDifficulty !== "beginner") {
                         toast.error("Pro subscription required for higher levels.");
-                        setShowPremiumModal(true);
+                        setShowUpgradeModal(true);
                         return;
                       }
                       setDifficulty(selectedDifficulty);
@@ -607,25 +603,14 @@ export default function Generate({ setActiveContent }) {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none opacity-50" />
                 </div>
 
-                {/* Extra Settings (Format Specific) */}
-                {format === "quiz" && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-white/40 dark:bg-white/5 rounded-full border border-white/60 dark:border-white/10">
-                    <HelpCircle className="w-3.5 h-3.5 text-foreground/40" />
-                    <input
-                      type="number"
-                      value={questionsCount}
-                      onChange={(e) => setQuestionsCount(Math.min(50, parseInt(e.target.value) || 10))}
-                      className="w-8 bg-transparent text-[13px] font-bold text-foreground focus:outline-none"
-                    />
-                  </div>
-                )}
+
               </div>
 
               {/* Circular Generate Button */}
               <div className="flex items-center gap-3 ml-auto">
                 <button 
                   onClick={handleGenerate}
-                  disabled={!topic.trim() || atLimit || isSubmitting}
+                  disabled={!topic.trim() || isSubmitting}
                   className={`w-11 h-11 flex items-center justify-center rounded-full transition-all border border-[#D2D7F8]/60 ${topic.trim().length > 0 ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-[#1a1a1a] dark:bg-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-white/90 text-white'}`}
                 >
                   {isSubmitting ? (
@@ -650,14 +635,7 @@ export default function Generate({ setActiveContent }) {
             <motion.div
               key={f.id}
               whileHover={{ y: -5 }}
-              onClick={() => {
-                if (f.pro && !isPremium) {
-                  toast.error("Pro subscription required.");
-                  setShowPremiumModal(true);
-                  return;
-                }
-                setFormat(f.id);
-              }}
+              onClick={() => setFormat(f.id)}
               className={`backdrop-blur-lg border-2 p-4.5 rounded-2xl text-left transition-all cursor-pointer group relative overflow-hidden ${format === f.id 
                 ? "bg-green-50/70 dark:bg-green-500/10 border-green-600/30" 
                 : "bg-white/20 dark:bg-white/5 border-[#D2D7F8]/60 hover:bg-green-50/70 dark:hover:bg-white/10"}`}

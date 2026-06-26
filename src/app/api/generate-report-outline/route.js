@@ -99,15 +99,165 @@ Rules:
         };
 
         const result = await db.collection("reports").insertOne(newReport);
+        const reportId = result.insertedId.toString();
 
         // Track API Usage for Reports
         const { trackAPIUsage } = await import("@/lib/planMiddleware");
         await trackAPIUsage(user._id, "generate-report-outline", { itemType: "report_generation", creditCost: 25 });
 
+        // ─── Generate full content for each section ───
+        const reportSections = {};
+        const allReferences = [];
+        const contentParts = [];
+
+        // Generate abstract content
+        if (outlineData.abstract) {
+            const abstractCompletion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                temperature: 0.7,
+                response_format: { type: "json_object" },
+                messages: [{
+                    role: "system",
+                    content: `Generate an abstract for a ${type} titled "${outlineData.title}" on "${topic}".
+
+Rules:
+- Academic Level: ${academicLevel || "Undergraduate"}.
+- Citation Style: ${citationStyle || "APA 7"}.
+- Tone: Formal, objective academic tone.
+- No markdown, no bullets, no numbering.
+- The abstract should be 150-250 words summarizing the key points.
+
+OUTPUT FORMAT: JSON only.
+{
+  "paragraphs": ["Abstract paragraph text..."],
+  "references": []
+}`
+                }],
+            });
+            const abstractData = JSON.parse(abstractCompletion.choices[0].message.content);
+            reportSections.abstract = abstractData;
+            contentParts.push(...abstractData.paragraphs || []);
+        }
+
+        // Generate content for each outline section
+        for (const section of outlineData.outline) {
+            if (section.isCover) {
+                reportSections[section.id] = { heading: section.heading, paragraphs: [section.title], references: [] };
+                contentParts.push(`<h2>${section.heading}</h2><p>${section.title}</p>`);
+                continue;
+            }
+
+            const sectionPrompt = `🎯 ROLE
+You are an academic writing engine specialized in producing high-quality, structured content.
+
+📐 TASK
+Write the "${section.heading}" section of a ${type} on the topic: "${topic}".
+
+Section description: ${section.description}
+Target word count: ${section.targetWords || 500} words.
+
+Rules:
+- Academic Level: ${academicLevel || "Undergraduate"}.
+- Critical Depth: ${criticalDepth || "Moderate"}.
+- Citation Style: ${citationStyle || "APA 7"}.
+- Tone: Formal, objective academic tone.
+- No markdown, no bullets, no numbering.
+- Each paragraph must be a coherent block of 3-6 sentences.
+- Include REAL in-text citations from Google Scholar, PubMed, arXiv, or major academic publishers.
+- DO NOT hallucinate titles, authors, or DOIs.
+- Paraphrase conceptual explanations.
+
+OUTPUT FORMAT: JSON only.
+{
+  "heading": "${section.heading}",
+  "paragraphs": ["Paragraph text...", "Paragraph text..."],
+  "references": ["Reference 1 (APA/MLA style string)", "Reference 2"]
+}`;
+
+            try {
+                const sectionCompletion = await openai.chat.completions.create({
+                    model: "gpt-4o",
+                    temperature: 0.7,
+                    response_format: { type: "json_object" },
+                    messages: [{ role: "system", content: sectionPrompt }],
+                });
+                const sectionData = JSON.parse(sectionCompletion.choices[0].message.content);
+
+                // Quality refinement pass
+                const refinementPrompt = `Review the following academic section for a ${type} report.
+Topic: ${topic}
+Heading: ${section.heading}
+
+Tasks:
+- Ensure NO markdown, NO bullets, and NO numbering.
+- Improve logical flow and transitions between paragraphs.
+- Strengthen academic tone and terminology accuracy.
+- VERIFY that in-text citations are present and match the references list.
+- Check that all references look like real academic citations.
+
+Data:
+${JSON.stringify(sectionData, null, 2)}
+
+Return the refined JSON in the same structure:
+{
+  "heading": "${section.heading}",
+  "paragraphs": ["Refined paragraph 1", "..."],
+  "references": ["Ref 1", "Ref 2"]
+}`;
+
+                const refinement = await openai.chat.completions.create({
+                    model: "gpt-4o",
+                    temperature: 0.3,
+                    response_format: { type: "json_object" },
+                    messages: [{ role: "system", content: refinementPrompt }],
+                });
+
+                const refinedData = JSON.parse(refinement.choices[0].message.content);
+                reportSections[section.id] = refinedData;
+
+                if (refinedData.paragraphs) {
+                    contentParts.push(`<h2>${refinedData.heading || section.heading}</h2>`);
+                    for (const para of refinedData.paragraphs) {
+                        contentParts.push(`<p>${para}</p>`);
+                    }
+                }
+                if (refinedData.references) {
+                    allReferences.push(...refinedData.references);
+                }
+            } catch (sectionError) {
+                console.error(`Failed to generate section ${section.id}:`, sectionError);
+                reportSections[section.id] = { heading: section.heading, paragraphs: [], references: [] };
+            }
+        }
+
+        // Add references section
+        if (allReferences.length > 0) {
+            const uniqueRefs = [...new Set(allReferences)];
+            contentParts.push(`<h2>References</h2>`);
+            for (const ref of uniqueRefs) {
+                contentParts.push(`<p>${ref}</p>`);
+            }
+        }
+
+        // Update report with generated content
+        await db.collection("reports").updateOne(
+            { _id: new ObjectId(reportId) },
+            {
+                $set: {
+                    sections: reportSections,
+                    fullContent: contentParts.join("\n"),
+                    abstract: outlineData.abstract || "",
+                    references: allReferences,
+                    updatedAt: new Date(),
+                }
+            }
+        );
+
         return NextResponse.json({
             success: true,
-            reportId: result.insertedId.toString(),
-            outline: outlineData.outline
+            reportId,
+            outline: outlineData.outline,
+            fullContent: contentParts.join("\n"),
         });
 
     } catch (error) {

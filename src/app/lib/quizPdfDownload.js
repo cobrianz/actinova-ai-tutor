@@ -1,6 +1,7 @@
 "use client";
 
 import download from "downloadjs";
+import { isFlutterApp, downloadViaFlutter } from "./appBridge";
 
 export async function downloadQuizPdfFromServer({ quizId, title }) {
   const res = await fetch(`/api/quizzes/${encodeURIComponent(quizId)}/pdf`, {
@@ -29,6 +30,12 @@ export async function downloadQuizPdfFromServer({ quizId, title }) {
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
   const filename = `assessment_${safe || "exam"}.pdf`;
-  download(blob, filename, "application/pdf");
-}
 
+  if (isFlutterApp()) {
+    const reader = new FileReader();
+    reader.onloadend = () => downloadViaFlutter(reader.result, filename);
+    reader.readAsDataURL(blob);
+  } else {
+    download(blob, filename, "application/pdf");
+  }
+}

@@ -4,7 +4,8 @@ import React from "react";
 import { useState } from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import MobileBottomNav from "./MobileBottomNav";
+import DashboardMobileNav from "./DashboardMobileNav";
+
 import { ThemeProvider } from "./ThemeProvider";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -33,13 +34,13 @@ export default function DashboardLayout({
                 activeContent={activeContent}
               />
             </div>
-            <main className="flex-1 overflow-auto pb-16 lg:pb-0">
+            <main className="flex-1 overflow-auto pb-16 md:pb-0">
               {React.Children.map(children, (child) =>
                 React.cloneElement(child, { sidebarOpen, setSidebarOpen })
               )}
             </main>
           </div>
-          <MobileBottomNav />
+          <DashboardMobileNav />
         </div>
       </ThemeProvider>
     </ProtectedRoute>

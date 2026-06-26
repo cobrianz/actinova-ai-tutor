@@ -70,6 +70,14 @@ export default function ReportEditor({ reportId }) {
     const router = useRouter();
 
     const saveBlob = useCallback(async (blob, fileName) => {
+        if (typeof window !== 'undefined' && window.FlutterDownload) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                window.FlutterDownload.postMessage(JSON.stringify({ url: reader.result, filename: fileName }));
+            };
+            reader.readAsDataURL(blob);
+            return;
+        }
         const fileSaverModule = await import("file-saver");
         const saveFile =
             fileSaverModule.saveAs ||

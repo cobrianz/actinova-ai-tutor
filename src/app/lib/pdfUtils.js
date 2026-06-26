@@ -3,6 +3,15 @@ import autoTable from "jspdf-autotable";
 import { JETBRAINS_MONO_BASE64 } from "./jetbrains-mono-base64";
 import { tokenizeCode } from "./syntaxHighlighter";
 import { parseContentIntoBlocks } from "./contentBlocks";
+import { isFlutterApp, downloadViaFlutter, saveBlobViaFlutter } from "./appBridge";
+
+function savePdf(pdf, filename) {
+  if (isFlutterApp()) {
+    downloadViaFlutter(pdf.output('datauristring'), filename);
+  } else {
+    pdf.save(filename);
+  }
+}
 
 /**
  * Enhanced PDF Generation Utility for Actirova AI Tutor
@@ -917,7 +926,7 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
 
     const title = data.title || data.topic || "Actirova_Study";
     const fileName = `${title.replace(/\s+/g, "_").toLowerCase()}.pdf`;
-    pdf.save(fileName);
+    savePdf(pdf, fileName);
 };
 
 
@@ -1045,7 +1054,7 @@ export const downloadQuizAsPDF = async (data) => {
     }
 
     const fileName = `assessment_${data.title?.replace(/\s+/g, "_").toLowerCase() || "exam"}.pdf`;
-    pdf.save(fileName);
+    savePdf(pdf, fileName);
 };
 
 /**
@@ -1267,7 +1276,7 @@ export const downloadReceiptAsPDF = async (data) => {
     pdf.text("This is your official receipt. Keep for records.", centerX, fy + 10, { align: "center" });
     pdf.text("No cash refunds. Terms & conditions apply.", centerX, fy + 14, { align: "center" });
 
-    pdf.save(`Actirova_Receipt_${receiptNo || Date.now()}.pdf`);
+    savePdf(pdf, `Actirova_Receipt_${receiptNo || Date.now()}.pdf`);
 };
 
 export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
@@ -1710,7 +1719,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
         });
     }
 
-    pdf.save(`${fileName}.pdf`);
+    savePdf(pdf, `${fileName}.pdf`);
 };
 
 export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
@@ -2070,7 +2079,11 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
     });
 
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `${fileName}.docx`);
+    if (isFlutterApp()) {
+        await saveBlobViaFlutter(blob, `${fileName}.docx`);
+    } else {
+        saveAs(blob, `${fileName}.docx`);
+    }
 };
 
 const resolveSaveAs = async () => {
@@ -2255,7 +2268,7 @@ export const downloadLetterAsPDF = async (
         });
     }
 
-    pdf.save(`${fileName}.pdf`);
+    savePdf(pdf, `${fileName}.pdf`);
 };
 
 export const downloadLetterAsDOCX = async (
@@ -2344,5 +2357,9 @@ export const downloadLetterAsDOCX = async (
     });
 
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `${fileName}.docx`);
+    if (isFlutterApp()) {
+        await saveBlobViaFlutter(blob, `${fileName}.docx`);
+    } else {
+        saveAs(blob, `${fileName}.docx`);
+    }
 };

@@ -637,7 +637,7 @@ export const POST = combineMiddleware(
 
 
 async function generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits) {
-  const questionsCount = questions || 10;
+  const questionsCount = 50;
   const apiName = "quiz"; // Match planLimits feature name
 
   try {

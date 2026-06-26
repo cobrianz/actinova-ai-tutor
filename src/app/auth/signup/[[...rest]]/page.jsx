@@ -47,12 +47,12 @@ export default function SignupPage() {
       const result = await loginWithGoogle(tokenResponse);
       if (result.success) {
         toast.success("Welcome aboard!");
+        router.push("/dashboard");
       } else {
         toast.error(result.error || "Google login failed");
       }
     },
     onError: () => toast.error("Google login failed"),
-    use_fedcm_for_prompt: true,
   });
 
   const handleChange = (e) => {

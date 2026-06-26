@@ -36,12 +36,13 @@ export default function LoginPage() {
       const result = await loginWithGoogle(tokenResponse);
       if (result.success) {
         toast.success("Welcome back!");
+        const redirect = searchParams.get("redirect") || "/dashboard";
+        router.push(redirect);
       } else {
         toast.error(result.error || "Google login failed");
       }
     },
     onError: () => toast.error("Google login failed"),
-    use_fedcm_for_prompt: true,
   });
 
   const handleEmailLogin = async (e) => {

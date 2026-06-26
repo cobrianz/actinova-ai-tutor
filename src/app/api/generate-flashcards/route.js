@@ -90,8 +90,8 @@ export async function POST(request) {
       currentLimits = getUserPlanLimits(null);
     }
 
-    // Enforce 50 flashcards per batch for paid users, use free limit otherwise
-    const cardCount = currentLimits.flashcards === -1 ? 50 : (additionalCards || currentLimits.flashcards);
+    // Enforce 40 flashcards per batch
+    const cardCount = 40;
 
     // ─── GENERATE FLASHCARDS ───
     const completion = await openai.chat.completions.create({
