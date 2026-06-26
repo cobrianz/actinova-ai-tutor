@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
+import UpgradeModal from "./UpgradeModal";
 import { apiClient } from "@/lib/csrfClient";
 import LessonChart from "./LessonChart";
 import LessonTable from "./LessonTable";
@@ -3239,66 +3240,18 @@ export default function LearnContent() {
         </div>
       </div>
 
-      {/* Limit Reached Modal */}
-      {showLimitModal && limitModalData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-lime-100 dark:bg-lime-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-lime-600 dark:text-lime-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                Monthly Limit Reached
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                You've used {limitModalData.used} of {limitModalData.limit} free{" "}
-                {format === "flashcards" ? "flashcard sets" : "courses"} this
-                month.
-              </p>
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mb-6">
-                <p className="text-sm text-green-800 dark:text-green-200">
-                  Upgrade to Pro for unlimited{" "}
-                  {format === "flashcards" ? "flashcards" : "courses"} and
-                  premium features!
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowLimitModal(false);
-                    setLimitModalData(null);
-                  }}
-                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Maybe Later
-                </button>
-                <button
-                  onClick={() => {
-                    setShowLimitModal(false);
-                    setLimitModalData(null);
-                    router.push("/dashboard");
-                  }}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Upgrade to Pro
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <UpgradeModal
+        isOpen={showLimitModal}
+        onClose={() => {
+          setShowLimitModal(false);
+          setLimitModalData(null);
+        }}
+        featureName={format === "flashcards" ? "flashcard" : "course"}
+        limitData={limitModalData ? {
+          used: limitModalData.used,
+          limit: limitModalData.limit,
+        } : undefined}
+      />
     </div>
   );
 }

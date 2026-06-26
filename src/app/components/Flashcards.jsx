@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 import { PRODUCTS } from "@/lib/planLimits";
+import UpgradeModal from "./UpgradeModal";
 
 export default function Flashcards({ cardData }) {
   const [flipped, setFlipped] = useState({});
@@ -547,50 +548,11 @@ export default function Flashcards({ cardData }) {
           </div>
         </div>
 
-        {/* Upgrade Modal */}
-        {showUpgradeModal && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-green-600 to-teal-600 rounded-2xl w-full max-w-2xl h-1/2 flex flex-col shadow-2xl">
-              <div className="flex justify-between items-center p-6 border-b border-white/20">
-                <h3 className="text-2xl font-bold text-white">
-                  Upgrade to Pro
-                </h3>
-                <button
-                  onClick={() => setShowUpgradeModal(false)}
-                  className="text-white/70 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <Crown size={64} className="text-white mb-6" />
-                <h4 className="text-xl font-semibold text-white mb-4">
-                  Unlock Unlimited Flashcards
-                </h4>
-                <p className="text-white/90 mb-8 max-w-md">
-                  Generate unlimited flashcards, access advanced features, and
-                  improve your learning experience with premium tools.
-                </p>
-                <div className="flex gap-4 w-full max-w-sm">
-                  <button
-                    onClick={() => setShowUpgradeModal(false)}
-                    className="flex-1 px-6 py-3 border border-white/30 text-white rounded-xl hover:bg-white/10 font-medium transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowUpgradeModal(false);
-                    }}
-                    className="flex-1 px-6 py-3 bg-white text-green-600 rounded-xl hover:bg-gray-50 font-semibold shadow-lg transition-colors"
-                  >
-                    Upgrade Now
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          featureName="flashcard"
+        />
       </div>
     </section>
   );

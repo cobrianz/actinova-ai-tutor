@@ -22,6 +22,7 @@ import ActirovaLoader from "./ActirovaLoader";
 import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
 import { motion } from "framer-motion";
+import UpgradeModal from "./UpgradeModal";
 
 export default function Generate({ setActiveContent }) {
   const searchParams = useSearchParams();
@@ -43,6 +44,8 @@ export default function Generate({ setActiveContent }) {
   const [usageData, setUsageData] = useState(null);
   const [premiumRequested, setPremiumRequested] = useState(premiumRequestedFromQuery);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalFeature, setUpgradeModalFeature] = useState(null);
   const router = useRouter();
   const { user, loading, refreshToken, isPro, hasPurchased } = useAuth();
 
@@ -203,12 +206,8 @@ export default function Generate({ setActiveContent }) {
 
     // Per-format limit enforcement before generating
     if (currentFormatAtLimit()) {
-      const formatLabel = format === "course" ? "course" : format === "flashcards" ? "flashcard set" : format === "quiz" ? "quiz" : "report";
-      toast.error(
-        isPremium
-          ? `You have reached your monthly ${formatLabel} limit. It resets at the start of next month.`
-          : `You've reached your free ${formatLabel} limit — upgrade to Pro for more.`
-      );
+      setUpgradeModalFeature(format);
+      setShowUpgradeModal(true);
       return;
     }
 
@@ -349,8 +348,8 @@ export default function Generate({ setActiveContent }) {
     // Handle report generation directly
     if (format === "report") {
       if (!isPremium) {
-        toast.error("Report generation is a Pro feature. Please upgrade to continue.");
-        setShowPremiumModal(true);
+        setUpgradeModalFeature("report");
+        setShowUpgradeModal(true);
         return;
       }
       setShowLoader(true);
@@ -463,6 +462,15 @@ export default function Generate({ setActiveContent }) {
 
   return (
     <div className="relative min-h-screen">
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => {
+          setShowUpgradeModal(false);
+          setUpgradeModalFeature(null);
+        }}
+        featureName={upgradeModalFeature}
+      />
+
       {showPremiumModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-3xl border border-[#D2D7F8]/40 bg-white p-6 shadow-2xl dark:bg-[#020617]">
