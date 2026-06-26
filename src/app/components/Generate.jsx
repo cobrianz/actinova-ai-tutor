@@ -23,6 +23,7 @@ import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
 import { motion } from "framer-motion";
 import UpgradeModal from "./UpgradeModal";
+import { PRODUCTS } from "@/lib/planLimits";
 
 export default function Generate({ setActiveContent }) {
   const searchParams = useSearchParams();
@@ -43,7 +44,6 @@ export default function Generate({ setActiveContent }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usageData, setUsageData] = useState(null);
   const [premiumRequested, setPremiumRequested] = useState(premiumRequestedFromQuery);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalFeature, setUpgradeModalFeature] = useState(null);
   const router = useRouter();
@@ -137,6 +137,17 @@ export default function Generate({ setActiveContent }) {
   // Strict check for Premium access (Pro or Enterprise)
   // Check tier (set by billing) and ensure status is active.
   const isPremium = hasPurchased('course_generation') || !!user?.isPremium || isPro;
+
+  // Format → product ID mapping for credit/access checks
+  const formatProductMap = {
+    course: 'course_generation',
+    report: 'report_generation',
+    flashcards: 'flashcard_generation',
+    quiz: 'exam_generation',
+  };
+  const formatProductId = formatProductMap[format] || 'course_generation';
+  const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
+  const canGenerate = hasPurchased(formatProductId) || !!(user?.credits >= (formatProduct?.creditCost || 0));
 
   // Per-format limit checks from live usage data
   const formatLimit = (formatKey) => {
@@ -429,12 +440,10 @@ export default function Generate({ setActiveContent }) {
       premiumRequested &&
       searchParams.get("payment") === "success";
 
-    if (
-      format === "course" &&
-      !isPremium &&
-      !shouldContinuePaidPremiumGeneration
-    ) {
-      setShowPremiumModal(true);
+    // Check credit/purchase access for this format before generating
+    if (!canGenerate && !shouldContinuePaidPremiumGeneration) {
+      setUpgradeModalFeature(format);
+      setShowUpgradeModal(true);
       return;
     }
 
@@ -471,63 +480,6 @@ export default function Generate({ setActiveContent }) {
         featureName={upgradeModalFeature}
       />
 
-      {showPremiumModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl border border-[#D2D7F8]/40 bg-white p-6 shadow-2xl dark:bg-[#020617]">
-            <div className="mb-5 flex items-start gap-3">
-              <div className="rounded-2xl bg-green-100 p-3 text-green-700 dark:bg-green-500/15 dark:text-green-400">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">
-                  Make this generated course premium for $6
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  After successful checkout, generation continues automatically and the course is saved as a premium item in your dashboard.
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-6 rounded-2xl border border-[#D2D7F8]/40 bg-green-50/70 p-4 dark:bg-white/5">
-              <p className="text-sm font-medium text-foreground">
-                Topic:
-                <span className="ml-2 font-bold">{topic.trim() || "Untitled course"}</span>
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPremiumModal(false);
-                  continueGeneration({ premium: false });
-                }}
-                className="flex-1 rounded-2xl border border-[#D2D7F8]/60 px-4 py-3 text-sm font-bold text-foreground transition hover:bg-secondary/50"
-              >
-                Continue Free
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPremiumModal(false);
-                  continueGeneration({ premium: true });
-                }}
-                className="flex-1 rounded-2xl bg-green-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-700"
-              >
-                Upgrade for $6
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowPremiumModal(false)}
-              className="mt-3 w-full text-center text-sm font-medium text-muted-foreground transition hover:text-foreground"
-            >
-              Maybe later
-            </button>
-          </div>
-        </div>
-      )}
       {showLoader && (
         <div data-actirova-loader-overlay="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <ActirovaLoader text={format} />
