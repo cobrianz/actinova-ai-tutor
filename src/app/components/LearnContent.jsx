@@ -37,7 +37,6 @@ import { useRouter } from "next/navigation";
 import ActirovaLoader from "./ActirovaLoader";
 import Flashcards from "./Flashcards";
 import QuizInterface from "./QuizInterface";
-import UpgradeModal from "./UpgradeModal";
 import { apiClient } from "@/lib/csrfClient";
 import LessonChart from "./LessonChart";
 import LessonTable from "./LessonTable";
@@ -3240,18 +3239,39 @@ export default function LearnContent() {
         </div>
       </div>
 
-      <UpgradeModal
-        isOpen={showLimitModal}
-        onClose={() => {
-          setShowLimitModal(false);
-          setLimitModalData(null);
-        }}
-        featureName={format === "flashcards" ? "flashcard" : "course"}
-        limitData={limitModalData ? {
-          used: limitModalData.used,
-          limit: limitModalData.limit,
-        } : undefined}
-      />
+      {showLimitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">
+              Monthly Limit Reached
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              You've used your free limit. Generate new content from the Explore page.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setShowLimitModal(false);
+                  setLimitModalData(null);
+                }}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowLimitModal(false);
+                  setLimitModalData(null);
+                  router.push("/generate");
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Go to Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

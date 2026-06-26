@@ -313,7 +313,10 @@ export async function trackAPIUsage(userId, apiName, creditsConfig = null) {
                 if (available >= creditCost) {
                     await db.collection("users").updateOne(
                         { _id: new ObjectId(userId), credits: { $gte: creditCost } },
-                        { $inc: { credits: -creditCost } }
+                        {
+                            $inc: { credits: -creditCost },
+                            $push: { purchasedItems: { itemType, purchaseDate: new Date(), reference: "credits" } },
+                        }
                     );
                 }
             }
