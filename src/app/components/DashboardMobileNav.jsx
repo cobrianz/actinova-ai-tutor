@@ -221,7 +221,8 @@ export default function DashboardMobileNav() {
               isActive={moreOpen}
               onClick={() => setMoreOpen((prev) => !prev)}
             />
-          </nav>
+          </div>
+        </nav>
     </>
   );
 }
