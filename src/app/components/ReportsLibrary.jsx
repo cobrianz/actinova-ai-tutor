@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, ScrollText, ExternalLink, Trash2, Filter, FileText, Clock } from "lucide-react";
+import { Search, Plus, ScrollText, ExternalLink, Filter, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
@@ -33,15 +33,6 @@ export default function ReportsLibrary({ setActiveContent }) {
             }
         } catch (error) { console.error("Failed to fetch reports:", error); }
         finally { setLoading(false); }
-    };
-
-    const deleteReport = async (e, id) => {
-        e.stopPropagation();
-        if (!confirm("Delete this document?")) return;
-        try {
-            const res = await apiClient.delete(`/api/reports/${id}`);
-            if (res.ok) { setReports(p => p.filter(r => r._id !== id)); toast.success("Deleted"); }
-        } catch { toast.error("Failed to delete"); }
     };
 
     const filtered = reports.filter(r => {
@@ -108,15 +99,11 @@ export default function ReportsLibrary({ setActiveContent }) {
                                     <div className="absolute top-0 right-0 w-28 h-28 bg-green-500/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-green-500/10 transition-colors" />
 
                                     <div className="relative z-10">
-                                        {/* Icon + delete */}
+                                        {/* Icon */}
                                         <div className="flex items-start justify-between mb-5">
                                             <div className={`w-12 h-12 ${colors.bg} rounded-2xl flex items-center justify-center`}>
                                                 <ScrollText size={22} className={colors.text} />
                                             </div>
-                                            <button onClick={e => deleteReport(e, report._id)}
-                                                className="opacity-100 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all">
-                                                <Trash2 size={14} />
-                                            </button>
                                         </div>
 
                                         <h3 className="font-bold text-lg text-slate-900 dark:text-white line-clamp-2 leading-snug mb-2 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
