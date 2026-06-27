@@ -264,10 +264,11 @@ async function handlePost(request) {
 
   const isCoursePurchase =
     purchaseType === "marketplace-course" || purchaseType === "premium-generation";
+  const isCreditPurchase = purchaseType === "credit-purchase";
   const requestedPaymentMethod = String(body.paymentMethod || "").toLowerCase();
   const useKenyanMobileCheckout = shouldUseKenyanMobileCheckout({ request, user, body });
   const paymentMethod =
-    requestedPaymentMethod || (useKenyanMobileCheckout ? "mobile_money" : isCoursePurchase ? "multi_channel" : "card");
+    requestedPaymentMethod || (useKenyanMobileCheckout ? "mobile_money" : (isCoursePurchase || isCreditPurchase) ? "multi_channel" : "card");
 
   let currency = "USD";
   let amount = Math.round(amountUsd * 100);
@@ -279,7 +280,7 @@ async function handlePost(request) {
     channels = ["mobile_money", "card", "bank_transfer", "ussd"];
     kesAmount = await convertUsdToKes(amountUsd);
     amount = kesAmount * 100;
-  } else if (isCoursePurchase) {
+  } else if (paymentMethod === "multi_channel") {
     channels = ["card", "mobile_money", "bank_transfer", "ussd"];
   }
 

@@ -45,7 +45,6 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
             const response = await apiClient.post("/api/billing/create-session", {
                 purchaseType: "credit-purchase",
                 packId,
-                paymentMethod: "card",
             });
             const data = await response.json();
             if (response.ok && data.sessionUrl) {
