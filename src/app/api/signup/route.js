@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { hashPassword } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+import { SIGNUP_CREDITS } from "@/lib/planLimits";
 import crypto from 'crypto';
 
 export async function POST(request) {
@@ -108,14 +109,10 @@ export async function POST(request) {
       emailVerificationToken: verificationToken,
       emailVerificationCode: verificationCode,
       emailVerificationExpires: verificationExpires,
-      monthlyUsage: 0,
-      usageResetDate: new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() + 1,
-        1
-      ),
       streak: 0,
       totalLearningTime: 0,
+      credits: SIGNUP_CREDITS,
+      purchasedItems: [],
       achievements: [],
       createdAt: new Date(),
       lastActive: new Date(),

@@ -1,14 +1,4 @@
-const DEFAULT_SITE_NOTICES = [
-  {
-    key: "premium-course-and-resume-launch",
-    title: "New",
-    message: "Get a premium personalised course for $6 or export your resume for $2.5.",
-    variant: "promo",
-    icon: "flame",
-    active: true,
-    priority: 100,
-  },
-];
+const DEFAULT_SITE_NOTICES = [];
 
 export async function ensureSiteNotices(db) {
   const collection = db.collection("site_notices");

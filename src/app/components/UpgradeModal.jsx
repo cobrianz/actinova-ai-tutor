@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
     Dialog,
     DialogContent,
@@ -11,10 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import {
     Check,
-    Zap,
     Crown,
     ArrowRight,
-    X,
     Coins
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -32,21 +30,21 @@ const featureToProduct = {
 
 const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) => {
     const router = useRouter();
-    const { credits, hasPurchased, fetchUser } = useAuth();
+    const { credits, fetchUser } = useAuth();
     const [processing, setProcessing] = useState(null);
 
     const productId = featureToProduct[featureName?.toLowerCase()] || "course_generation";
     const product = PRODUCTS.find((p) => p.id === productId) || PRODUCTS[0];
-    const hasItem = hasPurchased(productId);
+    const creditCost = limitData?.creditCost || product.creditCost;
     const userCredits = credits || 0;
-    const canUseCredits = !hasItem && product.creditCost && userCredits >= product.creditCost;
+    const canUseCredits = userCredits >= creditCost;
 
-    const handleBuy = async (purchaseType, extra = {}) => {
-        setProcessing(purchaseType);
+    const handleBuy = async (packId) => {
+        setProcessing(packId);
         try {
             const response = await apiClient.post("/api/billing/create-session", {
-                purchaseType,
-                ...extra,
+                purchaseType: "credit-purchase",
+                packId,
                 paymentMethod: "card",
             });
             const data = await response.json();
@@ -82,8 +80,8 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
     };
 
     const defaultBenefits = [
-        `${product.name} — unlimited access`,
-        "No recurring fees, pay once",
+        `${product.name} — pay per use with credits`,
+        "No subscription required",
         "Access on all your devices",
         "Priority processing",
     ];
@@ -106,11 +104,11 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                             className="w-14 h-14 rounded-2xl bg-gradient-to-br from-lime-400 via-lime-500 to-lime-600 p-[2px] shadow-[0_0_28px_rgba(245,158,11,0.3)] mb-3"
                         >
                             <div className="w-full h-full rounded-[1rem] bg-slate-900 flex items-center justify-center">
-                                <Crown className="w-7 h-7 text-lime-500 fill-lime-500/20" />
+                                <Coins className="w-7 h-7 text-lime-500" />
                             </div>
                         </motion.div>
                         <h2 className="text-lg font-black text-white uppercase tracking-[0.18em] mb-1">
-                            {limitData ? "Limit Reached" : "Unlock Feature"}
+                            {canUseCredits ? "Unlock Feature" : "Insufficient Credits"}
                         </h2>
                         <div className="h-1 w-10 bg-gradient-to-r from-lime-400 to-lime-500 rounded-full" />
                     </div>
@@ -119,13 +117,13 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                 <div className="relative p-6 pt-5">
                     <DialogHeader className="p-0 text-center mb-6">
                         <DialogTitle className="text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight leading-tight">
-                            {limitData ? `Unlock ${product.name}` : `Master ${featureName || "Premium Features"}`}
+                            {product.name}
                         </DialogTitle>
                         <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                             {limitData ? (
-                                <>You've used <span className="text-primary font-bold">{limitData.used || 0} out of {limitData.limit || "your"}</span> free uses. Purchase once and own it forever.</>
+                                <>This requires <span className="text-primary font-bold">{creditCost} credits</span>. {userCredits > 0 ? `You have ${userCredits} credits.` : "Purchase a credit pack to continue."}</>
                             ) : (
-                                description || `Unlock ${product.name} with a one-time purchase. No subscription needed.`
+                                description || `Use ${creditCost} credits to generate ${product.name.toLowerCase()}.`
                             )}
                         </DialogDescription>
                     </DialogHeader>
@@ -136,12 +134,24 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                             <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
                                 {userCredits} credits available
                             </span>
-                            {product.creditCost && (
-                                <span className="text-xs text-amber-500 dark:text-amber-400">
-                                    ({product.creditCost} needed)
-                                </span>
-                            )}
+                            <span className="text-xs text-amber-500 dark:text-amber-400">
+                                ({creditCost} needed)
+                            </span>
                         </div>
+                    )}
+
+                    {canUseCredits && (
+                        <button
+                            onClick={handleUseCredits}
+                            disabled={processing === "credits"}
+                            className="w-full mb-4 group relative h-13 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl overflow-hidden shadow-xl shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+                        >
+                            <Coins size={18} />
+                            <span className="uppercase tracking-widest text-[11px]">
+                                {processing === "credits" ? "Processing..." : `Use ${creditCost} Credits`}
+                            </span>
+                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
                     )}
 
                     <div className="space-y-2.5 mb-6">
@@ -162,62 +172,41 @@ const UpgradeModal = ({ isOpen, onClose, featureName, description, limitData }) 
                         ))}
                     </div>
 
-                    <div className="flex flex-col gap-3">
-                        {canUseCredits && (
-                            <button
-                                onClick={handleUseCredits}
-                                disabled={processing === "credits"}
-                                className="group relative h-13 w-full bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl overflow-hidden shadow-xl shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
-                            >
-                                <Coins size={18} />
-                                <span className="uppercase tracking-widest text-[11px]">
-                                    {processing === "credits" ? "Processing..." : `Use ${product.creditCost} Credits`}
-                                </span>
-                                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-                        )}
+                    <div className="flex flex-col gap-2.5">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 text-center">Buy Credits</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            {CREDIT_PACKS.map((pack) => (
+                                <button
+                                    key={pack.id}
+                                    onClick={() => handleBuy(pack.id)}
+                                    disabled={processing === pack.id}
+                                    className={`group relative py-3 px-2 rounded-xl font-black overflow-hidden shadow-lg transition-all hover:scale-[1.03] active:scale-95 flex flex-col items-center gap-0.5 cursor-pointer disabled:opacity-60 ${pack.popular
+                                        ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-amber-500/30 ring-2 ring-amber-400"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+                                    }`}
+                                >
+                                    <span className="text-[9px] uppercase tracking-wider opacity-80">
+                                        {pack.credits} credits
+                                    </span>
+                                    <span className="text-base">${pack.price}</span>
+                                    {pack.popular && (
+                                        <span className="text-[7px] uppercase tracking-widest bg-white/20 px-1.5 rounded-full mt-0.5">
+                                            Best value
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                        <button
-                            onClick={() => handleBuy("item", { itemType: product.id })}
-                            disabled={processing === product.id}
-                            className="group relative h-13 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black rounded-xl overflow-hidden shadow-xl shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                            <Crown size={18} className="fill-current text-lime-500" />
-                            <span className="uppercase tracking-widest text-[11px]">
-                                {processing === product.id ? "Processing..." : `Buy for $${product.price}`}
-                            </span>
-                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                const popular = CREDIT_PACKS.find(p => p.popular) || CREDIT_PACKS[1] || CREDIT_PACKS[0];
-                                handleBuy("credit-purchase", { packId: popular.id });
-                            }}
-                            className="text-[11px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline underline-offset-2 transition-colors cursor-pointer"
-                        >
-                            Buy credits instead
-                        </button>
-
+                    <div className="flex flex-col gap-1.5 mt-4">
                         <button
                             onClick={onClose}
-                            className="h-10 w-full text-[11px] font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 uppercase tracking-widest transition-colors cursor-pointer"
+                            className="h-9 w-full text-[11px] font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 uppercase tracking-widest transition-colors cursor-pointer"
                         >
-                            Return to Explore
+                            Return
                         </button>
                     </div>
-                </div>
-
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-2">
-                    <div className="flex -space-x-1">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-950 bg-slate-200 dark:border-slate-800 overflow-hidden">
-                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 40}`} alt="User" className="w-full h-full object-cover" />
-                            </div>
-                        ))}
-                    </div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-2">One-time payment, own it forever</span>
                 </div>
             </DialogContent>
         </Dialog>

@@ -243,7 +243,7 @@ export default function PremiumCourses() {
     ? featured?.hasGenerated
       ? "Continue Learning"
       : "Start Learning"
-    : featured?.access?.actionLabel || `Unlock for $${featured?.price || 6}`;
+    : featured?.access?.actionLabel || `Unlock for $${featured?.price || 8}`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
@@ -334,7 +334,7 @@ export default function PremiumCourses() {
                         ? getCourseAccessLabel(featured)
                         : featured.access?.hasAccess
                         ? `${featured.access.daysLeft} days left in your current access window.`
-                        : "Unlock this course for $6 and start learning immediately."}
+                        : "Unlock this course for $8 and start learning immediately."}
                     </span>
                   </p>
                 </div>
@@ -362,7 +362,7 @@ export default function PremiumCourses() {
 
                 <div className="flex items-baseline space-x-3 mb-8">
                   <span className="text-3xl font-black text-foreground">
-                    ${featured.price || 6}
+                    ${featured.price || 8}
                   </span>
                   <span className="text-sm text-muted-foreground">per unlock / renew</span>
                 </div>
@@ -446,7 +446,7 @@ export default function PremiumCourses() {
               ? course.hasGenerated
                 ? "Continue Learning"
                 : "Start Learning"
-              : course.access?.actionLabel || `Unlock for $${course.price || 6}`;
+              : course.access?.actionLabel || `Unlock for $${course.price || 8}`;
 
             return (
               <motion.div
@@ -553,7 +553,7 @@ export default function PremiumCourses() {
                     <p className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-[0.1em]">
                       {course.access?.hasAccess
                         ? getCourseAccessLabel(course)
-                        : `Unlock for $${course.price || 6}`}
+                        : `Unlock for $${course.price || 8}`}
                     </p>
                   </div>
                 </div>

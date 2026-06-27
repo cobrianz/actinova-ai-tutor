@@ -12,7 +12,6 @@ import {
   HelpCircle,
   User,
   LogOut,
-  TrendingUp,
   Briefcase,
   Brain,
   Coins
@@ -21,7 +20,6 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
-import { apiClient } from "@/lib/csrfClient";
 
 export default function Sidebar({
   setActiveContent,
@@ -32,13 +30,10 @@ export default function Sidebar({
   const router = useRouter();
   const [screenSize, setScreenSize] = useState("large");
   const [activeItem, setActiveItem] = useState(activeContent || "generate");
-  const [usage, setUsage] = useState({ used: 0, limit: 5, percentage: 0 });
-
-  const { user, logout, loading: authLoading, isPro, isEnterprise, hasPurchased, purchasedItems, credits } = useAuth();
-  const courseUsage = usage?.details?.courses || null;
-  const generationUsed = courseUsage?.used ?? usage?.used ?? 0;
-  const generationLimit = courseUsage?.limit ?? usage?.limit ?? null;
-  const generationPercent = courseUsage?.percent ?? usage?.percentage ?? 0;
+  const { user, logout, loading: authLoading, isEnterprise, credits } = useAuth();
+  const activeSub = user?.subscription?.status === "active";
+  const planTier = user?.subscription?.tier;
+  const planLabel = isEnterprise ? "Enterprise" : activeSub && (planTier === "pro" || planTier === "enterprise") ? "Pro" : "Free";
 
 
   const navigation = [
@@ -85,27 +80,6 @@ export default function Sidebar({
     if (activeContent) setActiveItem(activeContent);
   }, [activeContent]);
 
-  useEffect(() => {
-    if (user) {
-      fetchUsage();
-    }
-  }, [user]);
-
-  // Listen for global usage updates (e.g., after course generation)
-  useEffect(() => {
-    const handler = () => {
-      fetchUsage();
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("usageUpdated", handler);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("usageUpdated", handler);
-      }
-    };
-  }, []);
-
   const handleItemClick = (id) => {
     if (id === "upgrade") {
       router.push("/dashboard");
@@ -133,18 +107,6 @@ export default function Sidebar({
       await logout();
     } catch (error) {
       console.error("Logout error:", error);
-    }
-  };
-
-  const fetchUsage = async () => {
-    try {
-      const res = await apiClient.get("/api/user/usage");
-      if (res.ok) {
-        const data = await res.json();
-        setUsage(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch usage:", error);
     }
   };
 
@@ -253,44 +215,30 @@ export default function Sidebar({
                 </div>
               </div>
 
-              {/* Usage Section */}
+              {/* Credits Section */}
               <div className="p-4 bg-accent/30 rounded-lg border border-border">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <TrendingUp className="w-4 h-4 text-green-700 dark:text-green-300" />
-                      <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                        Usage
+                      <Coins className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                        Credits
                       </span>
                     </div>
                     <span className="text-xs text-green-700 dark:text-green-300">
-                      {isEnterprise ? "Enterprise" : isPro ? "Pro" : purchasedItems?.length > 0 ? "Member" : "Free"}
+                      {planLabel}
                     </span>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-accent-foreground">
-                      <span>Generations</span>
-                      <span>
-                        {generationUsed}/{generationLimit === null ? "∞" : generationLimit}
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${
-                            generationLimit === null ? 100 : generationPercent
-                          }%`,
-                        }}
-                      ></div>
-                    </div>
+                  <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <span>{credits}</span>
+                    <span className="text-xs text-muted-foreground font-normal">available</span>
                   </div>
-                  {(credits || 0) > 0 && (
-                    <div className="flex items-center gap-2 pt-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
-                      <Coins size={14} />
-                      <span>{credits} credits</span>
-                    </div>
-                  )}
+                  <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, (credits / 120) * 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>

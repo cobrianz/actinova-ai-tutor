@@ -283,28 +283,10 @@ export async function POST(request) {
       }
     );
 
-    // Calculate monthly usage from api_usage
-    const nowDate = new Date();
-    const monthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
-    const usageDoc = await db.collection("api_usage").findOne({
-      userId: user._id,
-      month: monthStart,
-      apiName: "generateCourseLimit"
-    });
-    let monthlyUsage = usageDoc ? usageDoc.count : 0;
-
     const isPremium = Boolean(
       user.isPremium ||
       (user.subscription?.status === "active" && isPaidPlan(user.subscription))
     );
-
-    const usageData = {
-      used: monthlyUsage,
-      limit: isPremium ? 15 : 2,
-      remaining: Math.max(0, (isPremium ? 15 : 2) - monthlyUsage),
-      percentage: Math.round((monthlyUsage / (isPremium ? 15 : 2)) * 100),
-      isPremium,
-    };
 
     // Final user data (safe)
     const safeUser = sanitizeUser({
@@ -313,6 +295,7 @@ export async function POST(request) {
       email: user.email,
       avatar: user.avatar,
       isPremium,
+      credits: user.credits || 0,
       streak: user.streak || 0,
       totalLearningTime: user.totalLearningTime || 0,
       achievements: user.achievements || [],
@@ -329,7 +312,7 @@ export async function POST(request) {
       message: "Welcome back!",
       user: {
         ...safeUser,
-        usage: usageData,
+        usage: { used: 0, isPremium },
       },
     });
   } catch (error) {

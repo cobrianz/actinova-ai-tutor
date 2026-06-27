@@ -497,7 +497,7 @@ export default function Generate({ setActiveContent }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-3xl md:text-5xl font-bold text-foreground mb-4 tracking-tight"
-            style={{ fontFamily: "'Outfit', sans-serif" }}
+            style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
           >
             {friendlyName
               ? `Welcome back, ${friendlyName}`

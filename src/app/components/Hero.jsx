@@ -1,15 +1,12 @@
 "use client";
 
-import { GraduationCap, Play, ArrowRight, BookOpen, Trophy, Star, FileText, ChevronDown, Sparkles, Flame } from "lucide-react";
+import { GraduationCap, ArrowRight, BookOpen, Trophy, FileText, ChevronDown, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
-import { data } from "../lib/landingData";
 import { motion } from "framer-motion";
-import { useState, useEffect, useMemo, useRef } from "react";
-import { toast } from "sonner";
-import { AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
-export default function Hero({ handleGetStarted, initialNotice = null }) {
+export default function Hero({ handleGetStarted }) {
   const { user } = useAuth();
   const router = useRouter();
 
@@ -20,48 +17,7 @@ export default function Hero({ handleGetStarted, initialNotice = null }) {
   const subjects = ["Any Subject", "Math", "Science", "Coding", "Languages", "History"];
   const [subjectIdx, setSubjectIdx] = useState(0);
   const [isEnhanced, setIsEnhanced] = useState(false);
-  // Social Proof Notifications
-  const [activeNotifications, setActiveNotifications] = useState([]);
-  const notificationCounterRef = useRef(0);
-  const socialMessages = useMemo(() => [
-    "Grace created a Chinese course",
-    "Alex just subscribed to Pro",
-    "Sarah generated a Math practice quiz",
-    "David created an account",
-    "Emma is learning Quantum Physics",
-    "Michael shared a premium course link",
-    "Chris upgraded to Pro",
-    "Jessica exported a resume"
-  ], []);
 
-  useEffect(() => {
-    const addNotification = () => {
-      notificationCounterRef.current += 1;
-      const id = `hero-note-${Date.now()}-${notificationCounterRef.current}`;
-      const side = Math.random() > 0.5 ? "left" : "right";
-      // Position them on the far left/right edges to avoid main content
-      const pos = {
-        top: `${10 + Math.random() * 70}%`,
-        [side]: `${1 + Math.random() * 4}%`,
-      };
-      const msg = socialMessages[Math.floor(Math.random() * socialMessages.length)];
-      
-      setActiveNotifications(prev => [...prev.slice(-2), { id, msg, pos }]);
-      
-      setTimeout(() => {
-        setActiveNotifications(prev => prev.filter(n => n.id !== id));
-      }, 6000);
-    };
-
-    // Initial delay then random interval
-    const timeout = setTimeout(() => {
-      const interval = setInterval(addNotification, 7000);
-      addNotification(); // Show first one
-      return () => clearInterval(interval);
-    }, 1500);
-
-    return () => clearTimeout(timeout);
-  }, [socialMessages]);
 
   const handleCTAClick = (e, forcedFormat = null) => {
     e?.preventDefault();
@@ -117,40 +73,6 @@ export default function Hero({ handleGetStarted, initialNotice = null }) {
           animate="visible"
           className="text-center"
         >
-          {initialNotice && (
-            <motion.div
-              variants={itemVariants}
-              className="mx-auto mb-5 flex max-w-3xl items-center justify-center gap-3 rounded-full border border-white/80 bg-white/72 px-3.5 py-2 backdrop-blur-xl"
-            >
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-50 border border-amber-200">
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.08, 0.96, 1.04, 1],
-                      rotate: [0, -6, 4, -3, 0],
-                      y: [0, -1, 0, -1, 0],
-                      opacity: [0.7, 1, 0.55, 0.9, 0.7],
-                    }}
-                    transition={{
-                      duration: 1.8,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    className="flex items-center justify-center"
-                  >
-                    <Flame className="h-3.5 w-3.5 fill-current text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.45)]" />
-                  </motion.div>
-                </div>
-                <p className="truncate text-[12px] font-semibold text-[#1a1a1a]">
-                  <span className="mr-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">
-                    {initialNotice.title || "New"}
-                  </span>
-                  {initialNotice.message}
-                </p>
-              </div>
-            </motion.div>
-          )}
-
           {/* Badge */}
           <motion.div
             variants={itemVariants}
@@ -274,30 +196,7 @@ export default function Hero({ handleGetStarted, initialNotice = null }) {
         </motion.div>
       </div>
 
-      {/* Floating Social Proof Notifications */}
-      <div className="absolute inset-0 pointer-events-none z-20">
-        <AnimatePresence>
-          {activeNotifications.map((n) => (
-            <motion.div
-              key={n.id}
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: -10 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{
-                position: "absolute",
-                ...n.pos,
-              }}
-              className="bg-white/80 backdrop-blur-md border border-white px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 whitespace-nowrap"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[10px] sm:text-[11px] font-bold text-gray-800 tracking-tight">
-                {n.msg}
-              </span>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+
     </section>
   );
 }

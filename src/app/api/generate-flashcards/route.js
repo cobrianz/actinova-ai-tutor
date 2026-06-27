@@ -15,7 +15,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 //   premium: { cards: 40, monthlyGenerations: 20 },
 // };
 
-import { getUserPlanLimits } from "@/lib/planLimits";
+import { getFeatureLimits } from "@/lib/planLimits";
 import { checkAPILimit, trackAPIUsage } from "@/lib/planMiddleware";
 
 export async function POST(request) {
@@ -57,23 +57,17 @@ export async function POST(request) {
 
     const { db } = await connectToDatabase();
 
-    // ─── USER & MONTHLY LIMITS (planMiddleware) ───
-    let usageStatus = { used: 0, limit: 5, resetsOn: new Date().toLocaleDateString() };
+    // ─── USER CREDIT CHECK (planMiddleware) ───
     if (userId) {
       const limitCheck = await checkAPILimit(userId, "generate-flashcards");
-      usageStatus = {
-        used: limitCheck.currentUsage,
-        limit: limitCheck.limit,
-        resetsOn: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
-      };
 
-      if (!limitCheck.withinLimit && limitCheck.limit !== -1) {
+      if (!limitCheck.withinLimit) {
         return NextResponse.json(
           {
-            error: "API rate limit exceeded",
-            message: `You have reached your monthly limit of ${limitCheck.limit} flashcard generations`,
-            remaining: 0,
-            resetDate: usageStatus.resetsOn,
+            error: "Insufficient credits",
+            message: `You need ${limitCheck.creditCost} credits to generate flashcards. You have ${limitCheck.credits} credits.`,
+            credits: limitCheck.credits,
+            creditCost: limitCheck.creditCost,
           },
           { status: 429 }
         );
@@ -85,9 +79,9 @@ export async function POST(request) {
       const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
       const hasPurchasedFlashcards = user?.isPremium || user?.purchasedItems?.some((p) => p.itemType === "flashcard_generation");
       isPremium = hasPurchasedFlashcards || user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
-      currentLimits = getUserPlanLimits(user);
+      currentLimits = getFeatureLimits(user);
     } else {
-      currentLimits = getUserPlanLimits(null);
+      currentLimits = getFeatureLimits(null);
     }
 
     // Enforce 40 flashcards per batch
@@ -242,18 +236,13 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
           isPremium,
           canExportToAnki: true,
           canExportToAnki: true,
-          monthly: {
-            used: usageStatus.used,
-            limit: usageStatus.limit,
-            resetsOn: usageStatus.resetsOn,
-          },
+
           features: [
             "Spaced Repetition (SM-2)",
             "Review History",
             "Anki Export",
             "Shareable Link",
             "Bookmark & Progress",
-            "Auto-reset Monthly Limits",
           ],
           duplicate: true,
           existing: true,
@@ -297,7 +286,6 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
       // Increment usage after successful AI generation
       if (userId) {
         await trackAPIUsage(userId, "generate-flashcards", { itemType: "flashcard_generation", creditCost: 25 });
-        usageStatus.used += 1;
       }
 
       // Enforce per-user card set limits (free: 1, premium: 20) in background or check before?
@@ -335,18 +323,12 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
       isPremium,
       canExportToAnki: true,
       cards: existingCardSetId ? newCards : undefined, // Return new cards when adding to existing set
-      monthly: {
-        used: usageStatus.used,
-        limit: usageStatus.limit,
-        resetsOn: usageStatus.resetsOn,
-      },
       features: [
         "Spaced Repetition (SM-2)",
         "Review History",
         "Anki Export",
         "Shareable Link",
         "Bookmark & Progress",
-        "Auto-reset Monthly Limits",
       ],
     });
   } catch (error) {

@@ -1,10 +1,10 @@
 "use client";
 
-import download from "downloadjs";
-import { isFlutterApp, downloadViaFlutter } from "./appBridge";
+import { isFlutterApp, saveBlobViaFlutter } from "./appBridge";
+import { downloadQuizAsPDF } from "./pdfUtils";
 
 export async function downloadQuizPdfFromServer({ quizId, title }) {
-  const res = await fetch(`/api/quizzes/${encodeURIComponent(quizId)}/pdf`, {
+  const res = await fetch(`/api/quizzes/${encodeURIComponent(quizId)}`, {
     method: "GET",
     credentials: "include",
   });
@@ -23,19 +23,9 @@ export async function downloadQuizPdfFromServer({ quizId, title }) {
     throw new Error(msg);
   }
 
-  const blob = await res.blob();
-  const safe = String(title || "assessment")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  const filename = `assessment_${safe || "exam"}.pdf`;
-
-  if (isFlutterApp()) {
-    const reader = new FileReader();
-    reader.onloadend = () => downloadViaFlutter(reader.result, filename);
-    reader.readAsDataURL(blob);
-  } else {
-    download(blob, filename, "application/pdf");
-  }
+  const quiz = await res.json();
+  await downloadQuizAsPDF({
+    ...quiz,
+    title: title || quiz.title || "Assessment",
+  });
 }

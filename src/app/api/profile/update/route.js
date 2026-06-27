@@ -5,38 +5,8 @@ import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 
-async function calculateUsage(user, db) {
-  const isPremium =
-    user.isPremium ||
-    (user.subscription?.plan === "pro" &&
-      user.subscription?.status === "active");
-
-  const limit = isPremium ? 15 : 2;
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const usageDoc = await db.collection("api_usage").findOne({
-    userId: user._id,
-    month: monthStart,
-    apiName: "generateCourseLimit"
-  });
-  const monthlyUsage = usageDoc ? usageDoc.count : 0;
-
-  return {
-    used: monthlyUsage,
-    limit,
-    remaining: Math.max(0, limit - monthlyUsage),
-    percentage: limit > 0 ? Math.round((monthlyUsage / limit) * 100) : 0,
-    isNearLimit: monthlyUsage >= (isPremium ? 4 : 1),
-    isAtLimit: monthlyUsage >= limit,
-    isPremium,
-  };
-}
-
 async function handleGet(request) {
   const user = request.user;
-  const { db } = await connectToDatabase();
-  const usage = await calculateUsage(user, db);
 
   return NextResponse.json({
     success: true,
@@ -61,9 +31,9 @@ async function handleGet(request) {
       emailVerified: user.emailVerified || false,
       status: user.status,
       onboardingCompleted: !!user.onboardingCompleted,
-      isPremium: usage.isPremium,
+      isPremium: user.isPremium || false,
       createdAt: user.createdAt,
-      usage,
+      usage: { used: 0, isPremium: user.isPremium || false },
     },
   });
 }

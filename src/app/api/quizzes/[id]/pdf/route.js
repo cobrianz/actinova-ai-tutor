@@ -35,12 +35,6 @@ function hasPaidAccess(user) {
 
 async function handleGet(request, context) {
   const user = request.user;
-  if (!hasPaidAccess(user)) {
-    return NextResponse.json(
-      { error: "Premium subscription required to download assessments" },
-      { status: 403 }
-    );
-  }
 
   const params = await context.params;
   const quizId = params?.id;
@@ -66,15 +60,25 @@ async function handleGet(request, context) {
   const dateStr = new Date().toLocaleDateString("en-GB"); // dd/mm/yyyy
   const footerLine = `Actirova AI Tutor - Assessment: ${quiz?.title || quiz?.course || "Assessment"} ${dateStr} | ${user?.name || user?.email || ""}`.trim();
 
-  const browser = await puppeteer.launch({
-    headless: "new",
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--font-render-hinting=none",
-    ],
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--font-render-hinting=none",
+      ],
+    });
+  } catch (e) {
+    console.error("Puppeteer launch failed:", e);
+    return NextResponse.json(
+      { error: "PDF generation unavailable. Try downloading from a desktop browser." },
+      { status: 501 }
+    );
+  }
 
   try {
     const page = await browser.newPage();

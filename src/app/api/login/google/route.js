@@ -6,6 +6,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { generateTokenPair, sanitizeUser } from "@/lib/auth";
 import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 import { ObjectId } from "mongodb";
+import { SIGNUP_CREDITS } from "@/lib/planLimits";
 
 const client = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
@@ -67,12 +68,12 @@ export async function POST(request) {
         isPremium: false,
         streak: 0,
         totalLearningTime: 0,
+        credits: SIGNUP_CREDITS,
+        purchasedItems: [],
         achievements: [],
         createdAt: new Date(),
         lastLogin: new Date(),
         loginCount: 1,
-        monthlyUsage: 0,
-        usageResetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
         subscription: {
            tier: "free",
            status: "none"
@@ -173,20 +174,6 @@ export async function POST(request) {
 
     // Calculate usage for UI
     const isPremium = user.isPremium || (user.subscription?.plan === "pro" && user.subscription?.status === "active");
-    const nowDate = new Date();
-    const monthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
-    const usageDoc = await db.collection("api_usage").findOne({
-      userId: user._id,
-      month: monthStart,
-      apiName: "generateCourseLimit"
-    });
-    const monthlyUsage = usageDoc ? usageDoc.count : 0;
-
-    const usageData = {
-      used: monthlyUsage,
-      limit: isPremium ? 15 : 2,
-      isPremium,
-    };
 
     const safeUser = sanitizeUser({
       ...user,
@@ -197,10 +184,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       message: "Successfully authenticated with Google",
-      user: {
-        ...safeUser,
-        usage: usageData,
-      },
+      user: safeUser,
     });
 
   } catch (error) {

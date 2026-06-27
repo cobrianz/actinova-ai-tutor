@@ -94,7 +94,7 @@ export async function GET(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const usage = await getTrackedUsageSummary(db, user);
+    const usage = await getTrackedUsageSummary(db, user, { lifetime: true });
 
     return NextResponse.json({
       success: true,
@@ -133,6 +133,8 @@ export async function GET(request) {
         loginCount: user.loginCount || 0,
         settings: user.settings || {},
         billingHistory: user.billingHistory || [],
+        credits: user.credits || 0,
+        purchasedItems: user.purchasedItems || [],
         avatar: user.avatar || null,
       },
     });
@@ -260,7 +262,7 @@ export async function PUT(request) {
         timeCommitment: updatedUser.timeCommitment,
         onboardingCompleted: updatedUser.onboardingCompleted || false,
         subscription: updatedUser.subscription,
-        usage: await getTrackedUsageSummary(db, updatedUser),
+        usage: await getTrackedUsageSummary(db, updatedUser, { lifetime: true }),
       },
     });
   } catch (error) {

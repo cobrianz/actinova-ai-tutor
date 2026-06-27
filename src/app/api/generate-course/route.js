@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { getUserPlanLimits } from "@/lib/planLimits";
+import { getFeatureLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 import { withAPIRateLimit, trackAPIUsage, checkAPILimit } from "@/lib/planMiddleware";
@@ -48,7 +48,7 @@ async function handlePost(request) {
       );
 
     const { db } = await connectToDatabase();
-    const planLimits = getUserPlanLimits(user);
+    const planLimits = getFeatureLimits(user);
     const subscriptionTier = String(
       user?.subscription?.tier || user?.subscription?.plan || ""
     ).toLowerCase();
@@ -103,23 +103,18 @@ async function handlePost(request) {
     ) {
         return NextResponse.json(
             {
-                error: "API rate limit exceeded",
-                message: `You have reached your monthly limit of ${limitCheck.limit} calls for ${apiFeatureName}.`,
-                details: "Please upgrade your plan to continue using this feature.",
-                used: limitCheck.currentUsage,
-                limit: limitCheck.limit,
+                error: "Insufficient credits",
+                message: `You need ${limitCheck.creditCost} credits to generate this. You have ${limitCheck.credits} credits.`,
+                credits: limitCheck.credits,
+                creditCost: limitCheck.creditCost,
                 isPremium: limitCheck.tier !== "free",
-                resetsOn: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString(),
             },
             { status: 429 }
         );
     }
 
     if (format === "quiz") {
-      const now = new Date();
-      const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      const monthlyUsage = user?.monthlyUsage || 0;
-      return generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits);
+      return generateQuiz(topic, difficulty, questions, userId, db);
     }
 
     // ─── STEP 1: CANONICALIZE TOPIC & CHECK FOR EXISTING (SMART) ───
@@ -178,34 +173,6 @@ async function handlePost(request) {
     }
 
     const existingCourse = await db.collection("library").findOne(existingCourseQuery);
-
-    if (
-      format === "course" &&
-      !hasActiveSubscription &&
-      !premiumRequested &&
-      !hasUnlockedMarketplaceAccess &&
-      !existingCourse
-    ) {
-      const lifetimeFreeCoursesUsed = await db.collection("library").countDocuments({
-        userId: new ObjectId(userId),
-        format: "course",
-        isPremium: { $ne: true },
-        sourceMarketplaceCourseId: { $exists: false },
-      });
-
-      if (lifetimeFreeCoursesUsed >= planLimits.generateCourseLimit) {
-        return NextResponse.json(
-          {
-            error: "Free lifetime course limit reached",
-            message: `You have already generated your ${planLimits.generateCourseLimit} free courses.`,
-            used: lifetimeFreeCoursesUsed,
-            limit: planLimits.generateCourseLimit,
-            isPremium: false,
-          },
-          { status: 429 }
-        );
-      }
-    }
 
     if (existingCourse && !forceRegenerate) {
       // Scenario 1: Course exists, user is premium, but course is NOT premium. Upgrade it.
@@ -636,7 +603,7 @@ export const POST = combineMiddleware(
 )(handlePost);
 
 
-async function generateQuiz(topic, difficulty, questions, userId, db, monthlyUsage, resetDate, isPremium, planLimits) {
+async function generateQuiz(topic, difficulty, questions, userId, db) {
   const questionsCount = 50;
   const apiName = "quiz"; // Match planLimits feature name
 
@@ -753,11 +720,6 @@ QUESTION REQUIREMENTS:
       success: true,
       quizId: result.insertedId.toString(),
       content: quiz,
-      monthly: {
-        used: (monthlyUsage || 0) + 1,
-        limit: planLimits.quizzes,
-        resetsOn: resetDate ? resetDate.toLocaleDateString() : new Date().toLocaleDateString(),
-      },
     });
   } catch (error) {
     console.error("Quiz generation failed:", error);

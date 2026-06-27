@@ -153,14 +153,8 @@ export async function POST(request) {
       (user.subscription?.plan === "pro" &&
         user.subscription?.status === "active");
 
-    const limit = isPremium ? 15 : 2;
-    const used = user.monthlyUsage || 0;
-
     const usage = {
-      used,
-      limit,
-      remaining: Math.max(0, limit - used),
-      percentage: limit > 0 ? Math.round((used / limit) * 100) : 0,
+      used: 0,
       isPremium,
     };
 

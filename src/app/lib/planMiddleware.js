@@ -270,16 +270,15 @@ function getFeatureName(apiName) {
     if (apiName === "quiz") return "quizGenerations";
     if (apiName === "ai-tutor-chat") return "aiResponses";
     if (apiName === "generate-report-outline" || apiName === "generate-report-section") return "reportGenerations";
-    if (apiName === "career" || apiName === "career-skill-gap" || apiName === "career-interview" || apiName === "career-network" || apiName === "career-cover-letter") return "careerLimit";
+    if (apiName === "career" || apiName.startsWith("career-")) return "careerLimit";
     return apiName;
 }
 
 /**
- * Track API usage for rate limiting by plan tier.
- * Optionally deduct credits when user doesn't own the item type.
+ * Track API usage for analytics and deduct credits.
  * @param {string} userId
  * @param {string} apiName
- * @param {{ itemType: string, creditCost: number } | null} creditsConfig - if provided, deduct credits when user doesn't own the item
+ * @param {{ itemType: string, creditCost: number } | null} creditsConfig - deduct credits when user doesn't own the item
  */
 export async function trackAPIUsage(userId, apiName, creditsConfig = null) {
     try {
@@ -303,22 +302,17 @@ export async function trackAPIUsage(userId, apiName, creditsConfig = null) {
 
         if (creditsConfig) {
             const { itemType, creditCost } = creditsConfig;
+            const { hasItem } = await import("./planLimits");
             const user = await db.collection("users").findOne(
                 { _id: new ObjectId(userId) },
                 { projection: { credits: 1, isPremium: 1, purchasedItems: 1 } }
             );
 
-            if (user && !user.isPremium && !user.purchasedItems?.some(p => p.itemType === itemType)) {
-                const available = user.credits || 0;
-                if (available >= creditCost) {
-                    await db.collection("users").updateOne(
-                        { _id: new ObjectId(userId), credits: { $gte: creditCost } },
-                        {
-                            $inc: { credits: -creditCost },
-                            $push: { purchasedItems: { itemType, purchaseDate: new Date(), reference: "credits" } },
-                        }
-                    );
-                }
+            if (user && !user.isPremium && !hasItem(user, itemType)) {
+                await db.collection("users").updateOne(
+                    { _id: new ObjectId(userId), credits: { $gte: creditCost } },
+                    { $inc: { credits: -creditCost } }
+                );
             }
         }
 
@@ -330,42 +324,23 @@ export async function trackAPIUsage(userId, apiName, creditsConfig = null) {
 }
 
 /**
- * Check if user has exceeded API limit
+ * Check if user can afford a feature via credits or purchase
  */
 export async function checkAPILimit(userId, apiName) {
     try {
         const user = await validateSubscriptionStatus(userId);
         if (!user) return { withinLimit: false, reason: "User not found" };
 
-        const userTier = user.subscription?.tier || TIERS.FREE;
-
-        const { db } = await connectToDatabase();
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        // Map apiName to feature name in planLimits FIRST
-        const featureName = getFeatureName(apiName);
-
-        const usageDoc = await db.collection("api_usage").findOne({
-            userId: new ObjectId(userId),
-            apiName: featureName,
-            month: monthStart,
-        });
-
-        const currentUsage = usageDoc?.count || 0;
-
-        // Get limits from central planLimits.js for consistency
-        const { getUserPlanLimits } = await import("./planLimits");
-        const planLimits = getUserPlanLimits(user);
-
-        const tierLimit = planLimits[featureName] || planLimits[apiName] || 5;
+        const itemType = getItemType(apiName);
+        const { PRODUCTS, hasItem } = await import("./planLimits");
+        const product = PRODUCTS.find(p => p.id === itemType);
+        const hasAccess = hasItem(user, itemType) || (user.credits || 0) >= (product?.creditCost || Infinity);
 
         return {
-            withinLimit: tierLimit === -1 || currentUsage < tierLimit,
-            currentUsage,
-            limit: tierLimit,
-            remaining: tierLimit === -1 ? Infinity : Math.max(0, tierLimit - currentUsage),
-            tier: userTier,
+            withinLimit: hasAccess || !!user?.isPremium,
+            credits: user.credits || 0,
+            creditCost: product?.creditCost || 0,
+            tier: user.subscription?.tier || TIERS.FREE,
         };
     } catch (error) {
         console.error("Error checking API limit:", error);
@@ -373,50 +348,25 @@ export async function checkAPILimit(userId, apiName) {
     }
 }
 
+function getItemType(apiName) {
+    if (apiName === "generate-course") return "course_generation";
+    if (apiName === "generate-flashcards") return "flashcard_generation";
+    if (apiName === "quiz") return "exam_generation";
+    if (apiName === "generate-report-outline" || apiName === "generate-report-section") return "report_generation";
+    if (apiName === "career" || apiName.startsWith("career-")) return "career_tools";
+    return null;
+}
+
 /**
- * Middleware wrapper for validating API limits
+ * Middleware wrapper — passes through; credits are checked and deducted in handlers via trackAPIUsage
  */
 export function withAPIRateLimit(handler, apiName) {
     return async (request, context) => {
         try {
-            const user = request.user;
-            if (!user) {
-                // If auth is optional, allow request to pass without rate limiting
-                return handler(request, context);
-            }
-
-            const limitCheck = await checkAPILimit(user._id, apiName);
-
-            if (!limitCheck.withinLimit && limitCheck.limit !== -1) {
-                return NextResponse.json(
-                    {
-                        error: "API rate limit exceeded",
-                        message: `You have reached your monthly limit of ${limitCheck.limit} calls for ${apiName}.`,
-                        tier: limitCheck.tier,
-                        nextReset: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString(),
-                        used: limitCheck.currentUsage,
-                        limit: limitCheck.limit,
-                    },
-                    { status: 429 }
-                );
-            }
-
-            // NOTE: Automatic increment removed. Handlers MUST call trackAPIUsage or incrementAPIUsage manually
-            // only on successful completion of the expensive operation.
-
-            const response = await handler(request, context);
-
-            // Add usage headers (using current check-only status)
-            if (response && response instanceof NextResponse) {
-                response.headers.set("X-RateLimit-Limit", limitCheck.limit.toString());
-                response.headers.set("X-RateLimit-Remaining", (limitCheck.remaining).toString());
-                response.headers.set("X-RateLimit-Used", limitCheck.currentUsage.toString());
-            }
-
-            return response;
+            return handler(request, context);
         } catch (error) {
             console.error(`Rate limit error in ${apiName}:`, error);
-            throw error; // Re-throw the error instead of trying to call handler again
+            throw error;
         }
     };
 }

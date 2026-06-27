@@ -3,113 +3,50 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  User,
   X,
-  Sun,
-  Moon,
-  Menu,
-  XIcon,
-  CreditCard,
   Calendar,
-  DollarSign,
-  Save,
   Loader2,
   AlertCircle,
   CheckCircle,
-  Bell,
-  Shield,
-  Palette,
-  Globe,
-  BookOpen,
   Clock,
-  Target,
-  Eye,
-  EyeOff,
-  Trash2,
-  Download,
-  Settings as SettingsIcon,
-  ChevronRight,
-  Crown,
-  Star,
-  Zap,
-  Receipt,
-  MessageSquare,
-  FileText,
-  Sparkles,
-  Brain,
   Coins,
+  Award,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "./AuthProvider";
-import { useTheme } from "./ThemeProvider";
 import { toast } from "sonner";
-import { downloadReceiptAsPDF } from "../lib/pdfUtils";
 import { apiClient } from "@/lib/csrfClient";
 import { CREDIT_PACKS } from "@/lib/planLimits";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
 
-const defaultSettings = {
-  difficulty: "adaptive",
-  studyGoal: "balanced",
-  sessionLength: 25,
-  breakLength: 5,
-};
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip);
 
 export default function ProfileContent() {
   const router = useRouter();
   const { user, refreshToken } = useAuth();
-  const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState("my-profile");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [editData, setEditData] = useState({ firstName: "", lastName: "" });
-  const [passwordData, setPasswordData] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  });
-  const [passwordErrors, setPasswordErrors] = useState([]);
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
-  const [userData, setUserData] = useState(null);
-  const [settings, setSettings] = useState({
-    ...defaultSettings,
-    emailNotifications: true,
-  });
-
 
   useEffect(() => {
     fetchProfileData();
   }, []);
 
-  useEffect(() => {
-    if (profileData?.user?.settings) {
-      const { preferences, notifications } = profileData.user.settings;
-      setSettings((prev) => ({
-        ...prev,
-        difficulty: preferences?.difficulty || defaultSettings.difficulty,
-        // studyGoal: preferences?.studyGoal || defaultSettings.studyGoal, 
-        sessionLength: preferences?.dailyGoal || defaultSettings.sessionLength,
-        theme: preferences?.theme || "system",
-        language: preferences?.language || "en",
-
-        emailNotifications: notifications?.email ?? true,
-        marketingEmails: notifications?.marketing ?? true,
-        studyReminders: notifications?.courseUpdates ?? true,
-      }));
-    }
-  }, [profileData]);
-
   const fetchProfileData = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get("/api/profile");
-
       if (response.ok) {
         const data = await response.json();
         setProfileData(data);
@@ -127,20 +64,15 @@ export default function ProfileContent() {
     try {
       setUpdating(true);
       setError(null);
-
       const formData = new FormData();
       formData.append("firstName", editData.firstName);
       formData.append("lastName", editData.lastName);
-      // bio and location removed from profile updates
-
       const response = await apiClient.put("/api/profile", formData);
-
       if (response.ok) {
         const data = await response.json();
         setProfileData(data);
         setShowUserInfoModal(false);
         toast.success("Profile updated successfully!");
-        // Refresh user data in auth context
         await refreshToken();
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -156,133 +88,14 @@ export default function ProfileContent() {
     }
   };
 
-  const getPasswordErrors = (pwd) => {
-    const errors = [];
-    if (pwd.length < 8) errors.push("Must be at least 8 characters");
-    if (!/[A-Z]/.test(pwd)) errors.push("Must contain an uppercase letter");
-    if (!/[a-z]/.test(pwd)) errors.push("Must contain a lowercase letter");
-    if (!/[0-9]/.test(pwd)) errors.push("Must contain a number");
-    if (!/[@$!%*?&]/.test(pwd))
-      errors.push("Must contain a special character (@$!%*?&)");
-    if (pwd.toLowerCase().includes("password"))
-      errors.push("Cannot contain the word 'password'");
-    return errors;
-  };
-
-  const handlePasswordChange = async () => {
-    if (passwordData.new !== passwordData.confirm) {
-      setPasswordErrors(["Passwords do not match"]);
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    const clientErrors = getPasswordErrors(passwordData.new);
-    if (clientErrors.length) {
-      setPasswordErrors(clientErrors);
-      toast.error(clientErrors.join("; "));
-      return;
-    }
-
-    try {
-      setUpdating(true);
-
-      const response = await apiClient.post("/api/change-password", {
-        currentPassword: passwordData.current,
-        newPassword: passwordData.new,
-        confirmPassword: passwordData.confirm,
-      });
-
-      if (response.ok) {
-        setPasswordData({ current: "", new: "", confirm: "" });
-        setPasswordErrors([]);
-        toast.success("Password changed successfully!");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        const serverDetails = Array.isArray(errorData?.details)
-          ? errorData.details.map((d) => d.message).filter(Boolean)
-          : [];
-        const messages = serverDetails.length
-          ? serverDetails
-          : [errorData.error || "Failed to change password"];
-        setPasswordErrors(messages);
-        toast.error(messages.join("; "));
-      }
-    } catch (err) {
-      toast.error("Failed to change password");
-      console.error("Password change error:", err);
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-
-  const handleSaveUserInfo = () => {
-    setUserData(editData);
-    setShowUserInfoModal(false);
-  };
-
-  const tabItems = [
-    { id: "my-profile", label: "Overview", icon: User },
-    { id: "password", label: "Security", icon: Shield },
-    { id: "settings", label: "Preferences", icon: SettingsIcon },
-    { id: "billing", label: "Billing & Plan", icon: CreditCard },
-  ];
-
-  const handleSaveSettings = async () => {
-    try {
-      setUpdating(true);
-      const payload = {
-        notifications: {
-          email: !!settings.emailNotifications,
-          marketing: !!settings.marketingEmails,
-          courseUpdates: !!settings.studyReminders,
-          push: false,
-        },
-        preferences: {
-          theme: settings.theme || "system",
-          language: settings.language || "en",
-          difficulty: settings.difficulty || "adaptive",
-          dailyGoal: Number(settings.sessionLength) || 25,
-        },
-        privacy: {
-          profileVisible: true,
-          progressVisible: false,
-          achievementsVisible: false,
-        },
-      };
-
-      const response = await apiClient.post("/api/settings/update", payload);
-
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(data.message || "Settings saved successfully");
-      } else {
-        const err = await response.json().catch(() => ({}));
-        toast.error(err.error || "Failed to save settings");
-      }
-    } catch (e) {
-      console.error("Save settings error:", e);
-      toast.error("Failed to save settings");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
   const ModalOverlay = ({ isOpen, onClose, children, title }) => {
     if (!isOpen) return null;
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div
-          className="bg-card border border-border rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
-        >
-          <div
-            className="sticky top-0 flex items-center justify-between p-6 border-b border-border bg-card"
-          >
+        <div className="bg-card border border-border rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="sticky top-0 flex items-center justify-between p-6 border-b border-border bg-card">
             <h2 className="text-xl font-bold text-foreground">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg transition-colors hover:bg-secondary text-muted-foreground"
-            >
+            <button onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-secondary text-muted-foreground">
               <X size={20} />
             </button>
           </div>
@@ -292,687 +105,329 @@ export default function ProfileContent() {
     );
   };
 
-  const handleReceiptDownload = async (tx) => {
-    const id = tx?.transactionId || tx?.reference;
-    if (!id) {
-      toast.error("Receipt unavailable");
-      return;
-    }
-
-    const toastId = toast.loading("Generating receipt...");
-    try {
-      const paidDate = new Date(tx.date || tx.paidAt || tx.createdAt || Date.now());
-      const dateStr = paidDate.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-      const timeStr = paidDate.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      const displayAmount = tx.metadata?.usdAmount
-        ? Math.round(tx.metadata.usdAmount)
-        : tx.currency === "KES"
-          ? Math.round(tx.amount / 129)
-          : Math.round(tx.amount);
-
-      const currency = "USD";
-
-      const planName = tx.plan
-        ? tx.plan.charAt(0).toUpperCase() + tx.plan.slice(1)
-        : "Pro";
-
-      const isMobileMoney =
-        tx.metadata?.paymentMethod === "mobile_money" || tx.currency === "KES";
-      const paymentMethodDisplay = isMobileMoney
-        ? "Mobile Money (M-Pesa)"
-        : "Credit/Debit Card";
-
-      await downloadReceiptAsPDF({
-        transactionDate: dateStr,
-        receiptNumber: tx.transactionId || tx.reference || "N/A",
-        reference: tx.reference || "N/A",
-        status: tx.status || "SUCCESS",
-        method: paymentMethodDisplay,
-        plan: `${planName} Subscription`,
-        customerName: profileData?.user?.firstName
-          ? `${profileData.user.firstName} ${profileData.user.lastName || ""}`.trim()
-          : (user?.name || "—"),
-        customerEmail: profileData?.user?.email || user?.email || "—",
-        verifyUrl: `https://actirova.com/verify/${encodeURIComponent(tx.transactionId || tx.reference || "receipt")}`,
-        accountStatus: "Active",
-        autoRenew: tx.subscription?.autoRenew ? "Enabled" : "Disabled",
-        validFrom: dateStr,
-        amount: displayAmount,
-        currency,
-        timestamp: `${dateStr} at ${timeStr} EAT`,
-      });
-
-      toast.success("Receipt downloaded", { id: toastId });
-    } catch (e) {
-      toast.error("Failed to generate receipt", { id: toastId });
-      console.error(e);
-    }
-  };
-
   return (
-    <>
-      <div
-        className="min-h-full transition-colors duration-300 bg-background text-foreground"
-      >
-        <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Professional Profile Header */}
-            <div className="mb-8 p-6 rounded-2xl bg-card text-foreground border border-border">
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                {/* Avatar */}
-                <Avatar className="w-24 h-24 cursor-default border-2 border-green-500/20 bg-green-500/5">
-                  <AvatarImage src={profileData?.user?.avatar || user?.avatar} alt={profileData?.user?.firstName || user?.name} />
-                  <AvatarFallback className="bg-green-100 text-green-700 text-3xl font-bold">
-                    {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
+    <div className="min-h-full bg-background text-foreground">
+      <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto space-y-8">
 
-                {/* Info */}
-                <div className="flex-1 text-center md:text-left">
-                  <h1 className="text-3xl font-bold mb-1">
-                    {profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "User")}
-                  </h1>
-                  <p className="text-sm mb-4 text-muted-foreground">
-                    {profileData?.user?.email || user?.email}
-                  </p>
-
-                  <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${profileData?.usage?.isPremium
-                      ? "bg-gradient-to-r from-lime-200 to-yellow-400 text-yellow-900"
-                      : "bg-secondary text-muted-foreground"
-                      }`}>
-                      {profileData?.usage?.isPremium ? <Crown size={12} /> : <Star size={12} />}
-                      {profileData?.user?.subscription?.plan === 'enterprise'
-                        ? "Enterprise Member"
-                        : profileData?.usage?.isPremium ? "Pro Member" : "Free Plan"}
-                    </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 bg-secondary text-muted-foreground">
-                      <Calendar size={12} />
-                      Member since {new Date(user?.createdAt || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
+          {/* ── Premium Profile Header ── */}
+          <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-green-500/[0.03] p-8">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
+              <Avatar className="w-24 h-24 ring-4 ring-green-500/20 ring-offset-2 ring-offset-background">
+                <AvatarImage src={profileData?.user?.avatar || user?.avatar} alt={profileData?.user?.firstName || user?.name} />
+                <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-3xl font-bold">
+                  {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-3xl font-bold mb-1">
+                  {profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "User")}
+                </h1>
+                <p className="text-sm text-muted-foreground mb-4">{profileData?.user?.email || user?.email}</p>
+                <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-500/10 to-emerald-500/10 text-green-600 border border-green-500/20">
+                    <Award size={12} />
+                    Active Member
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
+                    <Calendar size={12} />
+                    Joined {new Date(user?.createdAt || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                    <Coins size={12} />
+                    {(profileData?.user?.credits || 0)} credits
+                  </span>
                 </div>
-
-                {/* Quick Stats */}
-                <div className="flex gap-6 px-6 py-4 rounded-xl bg-muted/50">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{profileData?.usage?.used || 0}</div>
-                    <div className="text-xs text-muted-foreground">Generations</div>
-                  </div>
-                  <div className="w-px bg-border"></div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{profileData?.usage?.details?.courses?.used || 0}</div>
-                    <div className="text-xs text-muted-foreground">Courses</div>
-                  </div>
+              </div>
+              <div className="flex gap-6 px-6 py-4 rounded-xl bg-muted/50 border border-border/50">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{profileData?.usage?.used || 0}</div>
+                  <div className="text-xs text-muted-foreground">Generations</div>
+                </div>
+                <div className="w-px bg-border" />
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
+                  <div className="text-xs text-muted-foreground">Courses</div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Modern Tab Navigation */}
-            <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-              {tabItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${isActive
-                      ? "bg-[#1a1a1a] text-white"
-                      : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
-                      }`}
-                  >
-                    <Icon size={16} />
-                    {item.label}
-                  </button>
-                );
-              })}
+          {/* ── Loading / Error ── */}
+          {loading ? (
+            <div className="flex items-center justify-center py-16 rounded-2xl border border-border/50 bg-card">
+              <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+              <span className="ml-3 text-muted-foreground">Loading profile...</span>
             </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-16 rounded-2xl border border-border/50 bg-card">
+              <AlertCircle className="w-6 h-6 text-destructive mr-2" />
+              <span className="text-destructive">{error}</span>
+              <button onClick={fetchProfileData} className="ml-4 px-5 py-2 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors">Retry</button>
+            </div>
+          ) : (
+            <div className="space-y-8">
 
-            {/* Tab Content */}
-            <div className="p-6 rounded-2xl bg-card text-foreground border border-border">
-              {activeTab === "my-profile" && (
-                <div className="space-y-10">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                      <span className="ml-2">Loading profile...</span>
+              {/* ── Personal Info ── */}
+              <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">Personal Info</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Your account details</p>
+                  </div>
+                  <button
+                    onClick={() => { setEditData({ firstName: profileData?.user?.firstName || "", lastName: profileData?.user?.lastName || "" }); setShowUserInfoModal(true); }}
+                    className="px-4 py-2 text-sm font-semibold rounded-xl bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-muted/30">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">First Name</span>
+                    <p className="mt-1 font-medium text-foreground">{profileData?.user?.firstName || user?.firstName || "—"}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-muted/30">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Last Name</span>
+                    <p className="mt-1 font-medium text-foreground">{profileData?.user?.lastName || user?.lastName || "—"}</p>
+                  </div>
+                  <div className="md:col-span-2 p-4 rounded-xl bg-muted/30">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Email</span>
+                    <p className="mt-1 font-medium text-foreground">{profileData?.user?.email || user?.email || "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Usage Analytics (All-Time) ── */}
+              <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">Usage Analytics</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Your all-time activity breakdown</p>
+                  </div>
+                </div>
+                <div className="h-72">
+                  <Bar
+                    data={{
+                      labels: ["Courses", "Reports", "Chat", "Flashcards", "Quizzes", "Career"],
+                      datasets: [{
+                        label: "All-Time Usage",
+                        data: [
+                          profileData?.usage?.details?.courses?.used || 0,
+                          profileData?.usage?.details?.reports?.used || 0,
+                          profileData?.usage?.details?.chat?.used || 0,
+                          profileData?.usage?.details?.flashcards?.used || 0,
+                          profileData?.usage?.details?.quizzes?.used || 0,
+                          profileData?.usage?.details?.career?.used || 0,
+                        ],
+                        backgroundColor: [
+                          "rgba(34,197,94,0.8)",
+                          "rgba(34,197,94,0.65)",
+                          "rgba(34,197,94,0.5)",
+                          "rgba(34,197,94,0.4)",
+                          "rgba(34,197,94,0.35)",
+                          "rgba(34,197,94,0.25)",
+                        ],
+                        borderColor: "rgba(34,197,94,1)",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      animation: {
+                        duration: 1000,
+                        easing: "easeOutQuart",
+                      },
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          backgroundColor: "hsl(222.2 84% 4.9%)",
+                          titleColor: "hsl(210 40% 98%)",
+                          bodyColor: "hsl(210 40% 98%)",
+                          cornerRadius: 8,
+                          padding: 12,
+                          callbacks: {
+                            label: function(context) {
+                              return `${context.parsed.y} total uses`;
+                            },
+                          },
+                        },
+                      },
+                      scales: {
+                        x: {
+                          grid: { display: false },
+                          ticks: { color: "hsl(215.4 16.3% 46.9%)" },
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: { color: "hsl(215.4 16.3% 46.9% / 0.15)" },
+                          ticks: {
+                            color: "hsl(215.4 16.3% 46.9%)",
+                            precision: 0,
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* ── Credits & Billing ── */}
+              <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8 space-y-8">
+                {/* Credits */}
+                <div className="rounded-xl bg-gradient-to-br from-amber-50/50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10 p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-lg bg-amber-500/10">
+                        <Coins size={20} className="text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-amber-900 dark:text-amber-200">Credits</h3>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">Use credits to generate content</p>
+                      </div>
                     </div>
-                  ) : error ? (
-                    <div className="flex items-center justify-center py-12">
-                      <AlertCircle className="w-8 h-8 text-destructive mr-2" />
-                      <span className="text-destructive">{error}</span>
-                      <button onClick={fetchProfileData} className="ml-4 px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-black">Retry</button>
+                    <span className="text-3xl font-black text-amber-700 dark:text-amber-300">{profileData?.user?.credits || 0}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {CREDIT_PACKS.map((pack) => (
+                      <button
+                        key={pack.id}
+                        onClick={async () => {
+                          try {
+                            const res = await apiClient.post("/api/billing/create-session", {
+                              purchaseType: "credit-purchase",
+                              packId: pack.id,
+                              paymentMethod: "card",
+                            });
+                            const data = await res.json();
+                            if (res.ok && data.sessionUrl) {
+                              window.location.href = data.sessionUrl;
+                            }
+                          } catch (err) {
+                            console.error("Credit purchase error:", err);
+                          }
+                        }}
+                        className={`relative p-4 rounded-xl border text-center transition-all hover:scale-[1.02] active:scale-95 ${
+                          pack.popular
+                            ? "border-amber-500 bg-amber-100 dark:bg-amber-900/40 shadow-lg shadow-amber-500/20"
+                            : "border-amber-200/50 dark:border-amber-700/30 bg-white/50 dark:bg-amber-950/30"
+                        }`}
+                      >
+                        {pack.popular && (
+                          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                            Popular
+                          </span>
+                        )}
+                        <div className="text-xl font-black text-amber-800 dark:text-amber-200 mt-1">{pack.credits}</div>
+                        <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Credits</div>
+                        <div className="mt-2 text-sm font-bold text-amber-900 dark:text-amber-100">${pack.price}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Billing History */}
+                <div>
+                  <h3 className="font-bold flex items-center gap-2 mb-4 text-foreground">
+                    <Clock size={18} /> Billing History
+                  </h3>
+                  {profileData?.user?.billingHistory?.length > 0 ? (
+                    <div className="space-y-3">
+                      {[...profileData.user.billingHistory].reverse().map((entry, i) => {
+                        const date = entry.paidAt || entry.date;
+                        return (
+                          <div
+                            key={entry.reference || i}
+                            className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
+                          >
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className={`p-2 rounded-lg shrink-0 ${
+                                entry.status === "success"
+                                  ? "bg-green-500/10 text-green-600"
+                                  : entry.status === "failed"
+                                    ? "bg-destructive/10 text-destructive"
+                                    : "bg-amber-500/10 text-amber-600"
+                              }`}>
+                                {entry.status === "success"
+                                  ? <CheckCircle size={16} />
+                                  : entry.status === "failed"
+                                    ? <AlertCircle size={16} />
+                                    : <Clock size={16} />
+                                }
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-foreground truncate">{entry.description || entry.plan || "Transaction"}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {date ? new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}
+                                  {entry.paymentMethod ? ` · ${entry.paymentMethod}` : ""}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0 ml-4">
+                              <p className={`font-bold ${entry.status === "success" ? "text-foreground" : entry.status === "failed" ? "text-destructive" : "text-amber-600"}`}>
+                                {entry.currency || "NGN"} {entry.amount?.toLocaleString() || "—"}
+                              </p>
+                              <p className={`text-[10px] font-semibold uppercase tracking-wider ${
+                                entry.status === "success" ? "text-green-600" : entry.status === "failed" ? "text-destructive" : "text-amber-600"
+                              }`}>
+                                {entry.status || "unknown"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
-                    <>
-                      <div>
-                        <h2 className="text-xl font-bold mb-2 text-foreground">Personal Info</h2>
-                        <p className="text-sm mb-6 text-muted-foreground">
-                          Your account details and interests
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">First Name</label>
-                            <div className="px-4 py-2 rounded-lg border bg-muted/50 border-border text-foreground">
-                              {profileData?.user?.firstName || user?.firstName || "N/A"}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Last Name</label>
-                            <div className="px-4 py-2 rounded-lg border bg-muted/50 border-border text-foreground">
-                              {profileData?.user?.lastName || user?.lastName || "N/A"}
-                            </div>
-                          </div>
-                          <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Email Address</label>
-                            <div className="px-4 py-2 rounded-lg border bg-muted/50 border-border text-foreground">
-                              {profileData?.user?.email || user?.email || "N/A"}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-6 border-t border-border">
-                        <div className="flex items-center justify-between mb-8">
-                          <div>
-                            <h2 className="text-2xl font-black text-foreground">Usage Analytics</h2>
-                            <p className="text-sm text-muted-foreground">Detailed breakdown of your AI-powered activities</p>
-                          </div>
-                          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/5 border border-green-500/10">
-                            <Clock size={16} className="text-green-600" />
-                            <span className="text-xs font-bold text-green-600">Resets in {Math.max(1, 30 - new Date().getDate())} days</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {/* Course Generation Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-green-500/5 to-fuchsia-500/5 border border-green-500/10 hover:border-green-500/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-green-500/10 text-green-600">
-                                <BookOpen size={24} />
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
-                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Courses Created</div>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-xs font-bold">
-                                <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-green-600">
-                                  {profileData?.usage?.details?.courses?.limit === null || profileData?.usage?.details?.courses?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.courses?.limit}
-                                </span>
-                              </div>
-                              <div className="h-2 w-full bg-green-500/10 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-green-600 to-fuchsia-600 rounded-full transition-all duration-1000 ease-out"
-                                  style={{ width: `${profileData?.usage?.details?.courses?.limit === null || profileData?.usage?.details?.courses?.limit === Infinity ? 100 : profileData?.usage?.details?.courses?.percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Report Generation Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-green-500/5 to-emerald-500/5 border border-green-500/10 hover:border-green-500/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-green-500/10 text-green-600">
-                                <FileText size={24} />
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.reports?.used || 0}</div>
-                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Reports & Essays</div>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-xs font-bold">
-                                <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-green-600">
-                                  {profileData?.usage?.details?.reports?.limit === null || profileData?.usage?.details?.reports?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.reports?.limit}
-                                </span>
-                              </div>
-                              <div className="h-2 w-full bg-green-500/10 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-green-600 to-emerald-600 rounded-full transition-all duration-1000 ease-out"
-                                  style={{ width: `${profileData?.usage?.details?.reports?.limit === null || profileData?.usage?.details?.reports?.limit === Infinity ? 100 : profileData?.usage?.details?.reports?.percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Chat Messages Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600">
-                                <MessageSquare size={24} />
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.chat?.used || 0}</div>
-                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Chat Context</div>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-xs font-bold">
-                                <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-emerald-600">
-                                  {profileData?.usage?.details?.chat?.limit === null || profileData?.usage?.details?.chat?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.chat?.limit}
-                                </span>
-                              </div>
-                              <div className="h-2 w-full bg-emerald-500/10 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full transition-all duration-1000 ease-out"
-                                  style={{ width: `${profileData?.usage?.details?.chat?.limit === null || profileData?.usage?.details?.chat?.limit === Infinity ? 100 : profileData?.usage?.details?.chat?.percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Flashcard Sets Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-lime-500/5 to-yellow-500/5 border border-lime-500/10 hover:border-lime-500/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-lime-500/10 text-lime-600">
-                                <Sparkles size={24} />
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.flashcards?.used || 0}</div>
-                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Flashcard Sets</div>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-xs font-bold">
-                                <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-lime-600">
-                                  {profileData?.usage?.details?.flashcards?.limit === null || profileData?.usage?.details?.flashcards?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.flashcards?.limit}
-                                </span>
-                              </div>
-                              <div className="h-2 w-full bg-lime-500/10 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-lime-600 to-yellow-600 rounded-full transition-all duration-1000 ease-out"
-                                  style={{ width: `${profileData?.usage?.details?.flashcards?.limit === null || profileData?.usage?.details?.flashcards?.limit === Infinity ? 100 : profileData?.usage?.details?.flashcards?.percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Quiz Sets Usage */}
-                          <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600">
-                                <Target size={24} />
-                              </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-black text-foreground">{profileData?.usage?.details?.quizzes?.used || 0}</div>
-                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Assessments</div>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-xs font-bold">
-                                <span className="text-muted-foreground">Monthly Limit</span>
-                                <span className="text-emerald-600">
-                                  {profileData?.usage?.details?.quizzes?.limit === null || profileData?.usage?.details?.quizzes?.limit === Infinity ? "Unlimited" : profileData?.usage?.details?.quizzes?.limit}
-                                </span>
-                              </div>
-                              <div className="h-2 w-full bg-emerald-500/10 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full transition-all duration-1000 ease-out"
-                                  style={{ width: `${profileData?.usage?.details?.quizzes?.limit === null || profileData?.usage?.details?.quizzes?.limit === Infinity ? 100 : profileData?.usage?.details?.quizzes?.percent || 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-green-500/5 to-green-500/10 border border-green-500/20 flex flex-col md:flex-row items-center gap-6">
-                          <div className="p-4 rounded-full bg-green-500/10 text-green-600">
-                            <Zap size={32} className="animate-pulse" />
-                          </div>
-                          <div className="flex-1 text-center md:text-left">
-                            <h4 className="text-lg font-bold text-foreground mb-1">
-                              {profileData?.usage?.isPremium ? "You're a Power Learner!" : "Unlock Unlimited Potential"}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {profileData?.usage?.isPremium
-                                ? "Your usage limits have been vastly expanded. Keep pushing your boundaries with AI."
-                                : "You're currently on a free plan. Pro members enjoy 10x higher limits, priority generations, and exclusive tools."}
-                            </p>
-                          </div>
-                          {!profileData?.usage?.isPremium && (
-                            <button
-                              onClick={() => setActiveTab("billing")}
-                              className="px-8 py-3 bg-[#1a1a1a] text-white rounded-xl font-black hover:scale-[1.02] transition-transform"
-                            >
-                              Upgrade Now
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </>
+                    <p className="text-sm text-muted-foreground py-4 text-center">No billing history yet.</p>
                   )}
                 </div>
-              )}
+              </div>
 
-              {activeTab === "password" && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="text-xl font-bold mb-2 text-foreground">Security Settings</h2>
-                    <p className="text-sm mb-6 text-muted-foreground">
-                      Maintain your account security by updating your password
-                    </p>
-                  </div>
-                  <div className="space-y-6 max-w-md">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Current Password</label>
-                      <input
-                        type="password"
-                        value={passwordData.current}
-                        onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">New Password</label>
-                      <input
-                        type="password"
-                        value={passwordData.new}
-                        onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Confirm New Password</label>
-                      <input
-                        type="password"
-                        value={passwordData.confirm}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <button
-                      onClick={handlePasswordChange}
-                      disabled={updating}
-                      className="px-6 py-2.5 bg-[#1a1a1a] text-white rounded-xl font-semibold hover:bg-black transition-all flex items-center gap-2"
-                    >
-                      {updating && <Loader2 size={16} className="animate-spin" />}
-                      Update Password
-                    </button>
-                  </div>
-                </div>
-              )}
+            </div>
+          )}
+        </div>
 
-              {activeTab === "settings" && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="text-xl font-bold mb-2 text-foreground">App Preferences</h2>
-                    <p className="text-sm mb-6 text-muted-foreground">
-                      Personalize your experience with Actirova
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <BookOpen size={18} /> Learning
-                      </h3>
-                      <div className="space-y-3">
-                        <label className="block text-sm font-medium">Difficulty Level</label>
-                        <select
-                          value={settings.difficulty}
-                          onChange={(e) => setSettings({ ...settings, difficulty: e.target.value })}
-                          className="w-full px-4 py-2 rounded-lg border bg-background border-border text-foreground"
-                        >
-                          <option value="beginner">Beginner</option>
-                          <option value="intermediate">Intermediate</option>
-                          <option value="adaptive">Adaptive</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <Bell size={18} /> Notifications
-                      </h3>
-                      <div className="flex items-center justify-between p-3 rounded-lg border border-border">
-                        <span className="text-sm">Email Reminders</span>
-                        <input
-                          type="checkbox"
-                          checked={settings.emailNotifications}
-                          onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-                          className="w-5 h-5 accent-primary"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-6 border-t border-border flex justify-end">
-                    <button
-                      onClick={handleSaveSettings}
-                      disabled={updating}
-                      className="px-8 py-2.5 bg-[#1a1a1a] text-white rounded-xl font-semibold transition-all hover:bg-black"
-                    >
-                      {updating ? "Saving..." : "Save Preferences"}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "billing" && (
-                <div className="space-y-8">
-                  <div className={`p-6 rounded-2xl relative overflow-hidden ${profileData?.usage?.isPremium ? "bg-gradient-to-br from-green-600 to-green-400 text-white" : "bg-muted border border-border"}`}>
-                    <div className="relative z-10">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <span className={`px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${profileData?.usage?.isPremium ? "bg-white/20 text-white" : "bg-primary/20 text-primary"}`}>Current Plan</span>
-                          <h2 className="text-2xl font-black mt-4">
-                            {profileData?.user?.subscription?.plan === 'enterprise'
-                              ? "ENTERPRISE PLAN"
-                              : profileData?.usage?.isPremium ? "PRO PLAN" : "FREE PLAN"}
-                          </h2>
-                        </div>
-                        {profileData?.usage?.isPremium ? <Crown className="text-lime-300" size={32} /> : <Star className="text-primary" size={32} />}
-                      </div>
-
-                      <p className={`max-w-md text-xs mb-4 ${profileData?.usage?.isPremium ? "text-white/90" : "text-muted-foreground"}`}>
-                        {profileData?.usage?.isPremium
-                          ? "You have full access to all premium features, high-resolution PDF exports, and priority AI generation."
-                          : "You are currently on the free plan with limited generations. Upgrade to unlock the full potential of AI-powered learning."}
-                      </p>
-
-                      <div className="flex flex-wrap gap-4">
-                        {!profileData?.usage?.isPremium && (
-                          <button
-                            onClick={() => router.push("/dashboard")}
-                            className="px-8 py-3 bg-[#1a1a1a] text-white rounded-xl font-bold hover:bg-black"
-                          >
-                            Upgrade to Pro
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Credits Section */}
-                  <div className="p-6 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <Coins size={24} className="text-amber-600 dark:text-amber-400" />
-                        <h3 className="font-bold text-lg text-amber-900 dark:text-amber-200">Credits</h3>
-                      </div>
-                      <span className="text-2xl font-black text-amber-700 dark:text-amber-300">
-                        {(profileData?.user?.credits || 0)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-4">
-                      Use credits to generate content without purchasing individual features.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {CREDIT_PACKS.map((pack) => (
-                        <button
-                          key={pack.id}
-                          onClick={async () => {
-                            try {
-                              const res = await apiClient.post("/api/billing/create-session", {
-                                purchaseType: "credit-purchase",
-                                packId: pack.id,
-                                paymentMethod: "card",
-                              });
-                              const data = await res.json();
-                              if (res.ok && data.sessionUrl) {
-                                window.location.href = data.sessionUrl;
-                              }
-                            } catch (err) {
-                              console.error("Credit purchase error:", err);
-                            }
-                          }}
-                          className={`relative p-4 rounded-xl border text-center transition-all hover:scale-[1.02] active:scale-95 ${pack.popular
-                            ? "border-amber-500 bg-amber-100 dark:bg-amber-900/50 shadow-lg shadow-amber-500/20"
-                            : "border-amber-200 dark:border-amber-700 bg-white dark:bg-amber-950/50"
-                            }`}
-                        >
-                          {pack.popular && (
-                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                              Popular
-                            </span>
-                          )}
-                          <div className="text-xl font-black text-amber-800 dark:text-amber-200 mt-1">
-                            {pack.credits}
-                          </div>
-                          <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                            Credits
-                          </div>
-                          <div className="mt-2 text-sm font-bold text-amber-900 dark:text-amber-100">
-                            ${pack.price}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Billing History Section */}
-                  <div className="space-y-6">
-                    <h3 className="font-bold flex items-center gap-2 text-lg text-foreground">
-                      <Receipt size={20} /> Billing History
-                    </h3>
-
-                    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                      {profileData?.user?.billingHistory?.length > 0 ? (
-                        <>
-                          <div className="p-5 border-b border-border bg-muted/30">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <div className="text-sm font-bold text-foreground">Your Payments</div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  Download receipts for successful transactions.
-                                </div>
-                              </div>
-                              <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                {profileData.user.billingHistory.length} records
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3">
-                            {profileData.user.billingHistory.map((tx, i) => {
-                              const amount = tx.metadata?.usdAmount
-                                ? Math.round(tx.metadata.usdAmount)
-                                : (tx.currency === "KES" ? Math.round(tx.amount / 129) : Math.round(tx.amount));
-                              const date = new Date(tx.date || tx.paidAt || tx.createdAt || Date.now());
-                              const dateStr = date.toLocaleDateString();
-                              const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                              const status = (tx.status || "pending").toLowerCase();
-                              const planLabel = tx.plan ? `${tx.plan}` : "subscription";
-                              const isSuccess = status === "success";
-
-                              const badgeClass =
-                                status === "success"
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-                                  : status === "failed"
-                                    ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300";
-
-                              return (
-                                <div
-                                  key={i}
-                                  className="rounded-2xl border border-border bg-background p-4 sm:p-5 hover:bg-muted/30 transition-colors"
-                                >
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm font-black text-foreground truncate">
-                                          {planLabel.charAt(0).toUpperCase() + planLabel.slice(1)}
-                                        </span>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${badgeClass}`}>
-                                          {status}
-                                        </span>
-                                      </div>
-                                      <div className="text-xs text-muted-foreground mt-1">
-                                        {dateStr} · {timeStr}
-                                      </div>
-                                    </div>
-
-                                    <div className="text-right shrink-0">
-                                      <div className="text-[11px] text-muted-foreground">Amount</div>
-                                      <div className="text-base font-black text-foreground">
-                                        $ {amount}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="mt-4 flex items-center justify-between gap-3">
-                                    <div className="text-xs text-muted-foreground truncate">
-                                      Ref: {tx.reference || tx.transactionId || "—"}
-                                    </div>
-
-                                    {isSuccess ? (
-                                      <button
-                                        onClick={() => handleReceiptDownload(tx)}
-                                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted/50 text-primary font-bold text-xs"
-                                      >
-                                        <Download size={14} />
-                                        <span>receipt</span>
-                                      </button>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">receipt unavailable</span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <Receipt size={48} className="mx-auto mb-4 opacity-20" />
-                          <p>No billing history available yet.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-6 rounded-2xl border border-border bg-muted/50">
-                    <h3 className="font-bold flex items-center gap-2 mb-4 text-foreground">
-                      <Zap size={18} /> Pro Benefits
-                    </h3>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-                      <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> 1000+ words lesson detail</li>
-                      <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Branded PDF Exports</li>
-                      <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Advanced Quiz Generation</li>
-                      <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Priority Support</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
+        {/* Edit Profile Modal */}
+        <ModalOverlay isOpen={showUserInfoModal} onClose={() => setShowUserInfoModal(false)} title="Edit Profile">
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-foreground">First Name</label>
+              <input
+                type="text"
+                value={editData.firstName}
+                onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-border/50 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-green-500/30"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2 text-foreground">Last Name</label>
+              <input
+                type="text"
+                value={editData.lastName}
+                onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-border/50 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-green-500/30"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowUserInfoModal(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-border/50 text-muted-foreground hover:text-foreground transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleProfileUpdate}
+                disabled={updating}
+                className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-all disabled:opacity-50"
+              >
+                {updating ? "Saving..." : "Save"}
+              </button>
             </div>
           </div>
-        </main>
-      </div>
-    </>
+        </ModalOverlay>
+      </main>
+    </div>
   );
 }

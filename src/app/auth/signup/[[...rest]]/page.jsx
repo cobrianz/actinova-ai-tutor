@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
 import GoogleIcon from "@/components/GoogleIcon";
+import { isFlutterApp } from "@/lib/appBridge";
 import {
   Mail,
   Lock,
@@ -54,6 +55,14 @@ export default function SignupPage() {
     },
     onError: () => toast.error("Google login failed"),
   });
+
+  const handleGoogleSignup = () => {
+    if (isFlutterApp()) {
+      window.location.href = "/api/auth/google-redirect";
+    } else {
+      googleLogin();
+    }
+  };
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -264,7 +273,7 @@ export default function SignupPage() {
               <Button
                 variant="outline"
                 type="button"
-                onClick={() => googleLogin()}
+                onClick={() => handleGoogleSignup()}
                 className="w-full h-10 bg-white border-slate-200 hover:bg-slate-50 text-gray-700 font-bold rounded-lg transition-all flex items-center justify-center gap-3 border shadow-none"
                 disabled={loading}
               >

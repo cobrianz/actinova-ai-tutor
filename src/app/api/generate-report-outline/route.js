@@ -21,7 +21,7 @@ async function handlePost(request) {
             return NextResponse.json({ error: "Topic is required" }, { status: 400 });
         }
 
-        const { getUserPlanLimits, canAccessDifficulty } = await import("@/lib/planLimits");
+        const { canAccessDifficulty } = await import("@/lib/planLimits");
 
         if (difficulty && !canAccessDifficulty(user, difficulty)) {
             return NextResponse.json(

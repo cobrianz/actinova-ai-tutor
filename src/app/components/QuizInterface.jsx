@@ -493,18 +493,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                     Retake Test
                   </Button>
                   <Button 
-                    onClick={() => {
-                      if (hasPurchased('exam_generation')) {
-                        handleDownloadExam();
-                      } else {
-                        toast.error("Upgrade to Pro to download assessments", {
-                          action: {
-                            label: "Upgrade",
-                            onClick: () => router.push("/dashboard")
-                          }
-                        });
-                      }
-                    }} 
+                    onClick={handleDownloadExam}
                     variant="secondary" 
                     className="bg-emerald-600 hover:bg-emerald-700 text-white border-none transition-all shadow-md hover:shadow-lg"
                   >
