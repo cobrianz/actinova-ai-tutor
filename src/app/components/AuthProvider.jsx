@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { PRODUCTS } from "@/lib/planLimits";
+import { isFlutterApp } from "@/lib/appBridge";
 
 const AuthContext = createContext();
 
@@ -209,7 +210,7 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [refreshToken]);
+  }, [refreshToken, router]);
 
   // Initial user fetch
   useEffect(() => {
@@ -392,7 +393,7 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       setError(null);
-      router.push("/");
+      router.push(isFlutterApp() ? "/auth/login" : "/");
     }
   };
 
