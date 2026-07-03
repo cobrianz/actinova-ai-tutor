@@ -234,15 +234,6 @@ function ResetPasswordForm() {
       {/* Centered Form */}
       <div className="relative z-10 flex items-center justify-center w-full px-6 py-12 md:py-0 overflow-y-auto">
         <div className="max-w-md w-full flex flex-col bg-white/30 backdrop-blur-2xl rounded-2xl border-2 border-white p-6">
-          <div className="text-center mb-6">
-            <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden p-1.5">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <span className="font-bricolage">Actirova AI</span>
-            </Link>
-          </div>
-
           <div className="text-left mb-6">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-6">
               <Lock className="w-6 h-6 text-primary" />

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, ArrowLeft, Key, Loader2, User, Zap, Sparkles } from "lucide-react";
+import { Lock, ArrowLeft, Key, Loader2, User, Zap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../components/AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
@@ -140,18 +140,9 @@ function VerifyEmailContent() {
       {/* Main Form Container */}
       <div className="relative z-10 flex flex-col items-center justify-center w-full px-6 py-12 md:py-0">
         <div className="w-full max-w-sm space-y-4 py-6 bg-white/30 backdrop-blur-2xl rounded-2xl border-2 border-white p-6">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex justify-center mb-6">
-             <Link href="/" className="inline-flex items-center space-x-2 text-2xl font-bold text-gray-900 group">
-              <div className="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-105">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-            </Link>
-          </div>
-
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 mb-4">
-               <Mail className="w-8 h-8 text-green-600" />
+               <Lock className="w-8 h-8 text-green-600" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2 tracking-tight">Verify your email</h2>
             <p className="text-gray-600 font-medium">We've sent a 6-digit code to <span className="font-bold text-gray-900">{userEmail || "your email"}</span>.</p>
