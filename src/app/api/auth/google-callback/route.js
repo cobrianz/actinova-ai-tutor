@@ -18,7 +18,7 @@ export async function GET(request) {
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || "https://actirova.com"}/api/auth/google-callback`;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXTAUTH_URL || "https://actirova.com"}/api/auth/google-callback`;
 
     const client = new OAuth2Client(clientId, clientSecret, redirectUri);
 
