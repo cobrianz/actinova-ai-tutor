@@ -9,6 +9,7 @@ import {
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "./ThemeProvider";
+import { isFlutterApp } from "@/lib/appBridge";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,11 +54,13 @@ export default function Navbar({ toggleSidebar }) {
               <Menu className="w-5 h-5" />
             </button>
             
-            <Link href="/" className="flex items-center group/logo hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-lg bg-white border border-[#D2D7F8]/30 flex items-center justify-center overflow-hidden p-1 shadow-none">
-                <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
-              </div>
-            </Link>
+            {!isFlutterApp() && (
+              <Link href="/" className="flex items-center group/logo hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 rounded-lg bg-white border border-[#D2D7F8]/30 flex items-center justify-center overflow-hidden p-1 shadow-none">
+                  <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
+                </div>
+              </Link>
+            )}
 
             <nav className="hidden sm:flex items-center space-x-3 md:space-x-4">
               <Link
