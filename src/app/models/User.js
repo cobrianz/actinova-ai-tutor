@@ -269,7 +269,16 @@ const userSchema = new mongoose.Schema(
         requestedAmount: Number,
       },
     ],
-    // Explicit settings object to match API expectations
+    pushSubscriptions: [
+      {
+        endpoint: { type: String, required: true },
+        keys: {
+          p256dh: { type: String, required: true },
+          auth: { type: String, required: true },
+        },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     settings: {
       notifications: {
         email: { type: Boolean, default: true },

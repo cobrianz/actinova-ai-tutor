@@ -3,13 +3,19 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
-import webpush from "web-push";
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+let webpush = null;
+function getWebpush() {
+  if (webpush) return webpush;
+  webpush = require("web-push");
+  const subject = process.env.VAPID_SUBJECT;
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (subject && publicKey && privateKey) {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+  }
+  return webpush;
+}
 
 export async function POST(request) {
   try {
@@ -34,12 +40,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "No subscriptions found" }, { status: 404 });
     }
 
+    const wp = getWebpush();
+    if (!wp) {
+      return NextResponse.json({ error: "Push notifications not configured" }, { status: 501 });
+    }
+
     const payload = JSON.stringify({ title, body, url: url || "/dashboard" });
     const results = [];
 
     for (const sub of subs) {
       try {
-        await webpush.sendNotification(sub.subscription, payload);
+        await wp.sendNotification(sub.subscription, payload);
         results.push({ endpoint: sub.subscription.endpoint, status: "sent" });
       } catch (err) {
         if (err.statusCode === 410 || err.statusCode === 404) {
