@@ -117,68 +117,7 @@ export default function LearnContent() {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showQuestionResults, setShowQuestionResults] = useState(false);
   const [typingLessonKey, setTypingLessonKey] = useState(null);
-  const isPro = (() => {
-    if (hasPurchased('course_generation')) return true;
-
-    const hasOwnPremiumPlan = Boolean(
-      user &&
-        user.subscription?.status === "active" &&
-        (
-          ["pro", "enterprise", "premium"].includes(
-            String(user.subscription?.plan || "").toLowerCase()
-          ) ||
-          ["pro", "enterprise"].includes(
-            String(user.subscription?.tier || "").toLowerCase()
-          ) ||
-          user.isPremium
-        )
-    );
-    if (hasOwnPremiumPlan) return true;
-
-    const hasCoursePremiumWindow = Boolean(
-      courseData?.premiumAccessExpiresAt &&
-        new Date(courseData.premiumAccessExpiresAt) > new Date()
-    );
-    if (hasCoursePremiumWindow) return true;
-
-    if (user && Array.isArray(courseData?.enrolled)) {
-      const myEnrollment = courseData.enrolled.find(
-        (e) => String(e.userId || e) === String(user._id || user.id)
-      );
-      if (myEnrollment) {
-        if (myEnrollment.invitedByShareId && Array.isArray(courseData.shareConfigs)) {
-          const config = courseData.shareConfigs.find(
-            (c) => c.shareId === myEnrollment.invitedByShareId
-          );
-          if (config && config.isActive && config.tier !== "free") return true;
-        }
-
-        if (
-          courseData.isShared &&
-          courseData.sharerTier &&
-          courseData.sharerTier !== "free"
-        ) {
-          return true;
-        }
-      }
-    }
-
-    if (shareId) {
-      if (Array.isArray(courseData?.shareConfigs)) {
-        const config = courseData.shareConfigs.find((c) => c.shareId === shareId);
-        if (config && config.isActive && config.tier !== "free") return true;
-      }
-      if (
-        courseData?.isShared &&
-        ((courseData?.sharerTier && courseData.sharerTier !== "free") ||
-          (courseData?.sharePlan && courseData.sharePlan !== "free"))
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  })();
+  const hasCourseAccess = hasPurchased('course_generation');
   // Format product lookup for credit/access checks
   const formatProductMap = {
     course: 'course_generation',
@@ -189,9 +128,7 @@ export default function LearnContent() {
   const formatProductId = formatProductMap[format] || 'course_generation';
   const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
 
-  // Free users can read modules 1-2; remaining modules are padlocked unless they have premium access for this course.
-  const FREE_READABLE_MODULES = 2;
-  const freeReadableModules = isPro ? Infinity : FREE_READABLE_MODULES;
+
 
   const myShareConfig = Array.isArray(courseData?.shareConfigs)
     ? courseData.shareConfigs.find(c => String(c.sharerId) === String(user?._id || user?.id))
@@ -450,29 +387,21 @@ export default function LearnContent() {
     if (!courseData || !activeLesson) return;
 
     const { moduleId, lessonIndex } = activeLesson;
-    const currentModuleIndex = courseData.modules.findIndex(m => m.id === moduleId);
+    const modules = courseData.modules || courseData.courseData?.modules || [];
+    const currentModuleIndex = modules.findIndex(m => m.id === moduleId);
     if (currentModuleIndex === -1) return;
 
-    const currentModule = courseData.modules[currentModuleIndex];
+    const currentModule = modules[currentModuleIndex];
+    if (!currentModule) return;
+    const currentLessons = currentModule.lessons || [];
     
     // Check if there's another lesson in the current module
-    if (lessonIndex + 1 < currentModule.lessons.length) {
+    if (lessonIndex + 1 < currentLessons.length) {
       selectLesson(moduleId, lessonIndex + 1);
     } 
     // Otherwise, try to go to the first lesson of the next module
-    else if (currentModuleIndex + 1 < courseData.modules.length) {
-      const nextModule = courseData.modules[currentModuleIndex + 1];
-      
-      // Check if next module is locked for free users
-      if (!isPro && currentModuleIndex + 1 >= FREE_READABLE_MODULES) {
-        toast.error("Next modules are locked. Upgrade to Pro to continue.", {
-          action: {
-            label: "Upgrade",
-            onClick: () => router.push("/dashboard"),
-          },
-        });
-        return;
-      }
+    else if (currentModuleIndex + 1 < modules.length) {
+      const nextModule = modules[currentModuleIndex + 1];
       
       toggleModule(nextModule.id); // Ensure it's expanded
       selectLesson(nextModule.id, 0);
@@ -482,17 +411,6 @@ export default function LearnContent() {
   };
 
   const selectLesson = async (moduleId, lessonIndex) => {
-    // Check if module is locked for free users (moduleId is 1-based)
-    if (!isPro && moduleId > FREE_READABLE_MODULES) {
-      toast.error(" This module is locked. Upgrade to Pro to unlock all 20 modules.", {
-        action: {
-          label: "Upgrade",
-          onClick: () => router.push("/dashboard"),
-        },
-      });
-      return;
-    }
-
     setActiveLesson({ moduleId, lessonIndex });
 
     // Only auto-close sidebar on smaller screens
@@ -548,15 +466,29 @@ export default function LearnContent() {
       return;
     }
 
-    // Only fetch if content doesn't exist or is empty
-    if (
+    // Check if lesson content already exists in course data
+    const hasExistingContent =
       lesson &&
-      (!lesson.content ||
-        lesson.content.trim() === "" ||
-        lesson.content ===
-        "Content will be generated when you start the lesson.")
-    ) {
-      // Trigger background generation without blocking navigation
+      lesson.content &&
+      lesson.content.trim() !== "" &&
+      !lesson.content.includes("coming soon") &&
+      lesson.content !== "Content will be generated when you start the lesson.";
+
+    if (hasExistingContent) {
+      // Mark lesson as completed since content exists
+      const lessonId = (typeof lesson === "object" && lesson?.id) || `${moduleId}-${lessonIndex}`;
+      setCompletedLessons((prev) => {
+        const next = new Set(prev);
+        if (!next.has(lessonId)) {
+          next.add(lessonId);
+          try {
+            localStorage.setItem(progressKey(), JSON.stringify(Array.from(next)));
+          } catch (_) {}
+        }
+        return next;
+      });
+    } else if (lesson) {
+      // Only fetch if content doesn't exist or is empty
       fetchLessonContent(
         moduleId,
         lessonIndex,
@@ -757,7 +689,8 @@ export default function LearnContent() {
       }
 
       // Auto-mark lesson as completed now that content has been generated
-      const currentModule = (courseData?.modules || []).find(m => m.id === moduleId);
+      const courseModules = courseData?.modules || courseData?.courseData?.modules || [];
+      const currentModule = courseModules.find(m => m.id === moduleId);
       const lesson = currentModule?.lessons?.[lessonIndex];
       const lessonId = (lesson && typeof lesson !== "string" && lesson.id) || `${moduleId}-${lessonIndex}`;
       const courseId = courseData?._id ? String(courseData._id) : null;
@@ -833,7 +766,8 @@ export default function LearnContent() {
   };
 
   const toggleLessonCompletion = async (moduleId, lessonIndex) => {
-    const mod = courseData?.modules?.find(m => m.id === moduleId);
+    const courseModules = courseData?.modules || courseData?.courseData?.modules || [];
+    const mod = courseModules.find(m => m.id === moduleId);
     const lesson = mod?.lessons?.[lessonIndex];
     const lessonId = lesson?.id || `${moduleId}-${lessonIndex}`;
     const newCompleted = new Set(completedLessons);
@@ -914,7 +848,7 @@ export default function LearnContent() {
   const handleDownloadLesson = async () => {
     if (!currentLesson?.content || lessonContentLoading) return;
 
-    if (!isPro) {
+    if (!hasPurchased('course_generation')) {
       toast.error("Unlock this course to download lesson PDFs.");
       return;
     }
@@ -1019,7 +953,7 @@ export default function LearnContent() {
 
   const handleDownloadCourse = async () => {
     if (!courseData) return;
-    if (!isPro) {
+    if (!hasPurchased('course_generation')) {
       toast.error("Unlock this course to download the generated course PDF.");
       return;
     }
@@ -1091,7 +1025,7 @@ export default function LearnContent() {
         await navigator.clipboard.writeText(shareUrl);
         toast.success("Sharing enabled! Link copied to clipboard.", {
           id: toastId,
-          description: `Anyone with this link can now view this course (${isPro ? "Full Access" : "3-Module Preview"}).`,
+          description: `Anyone with this link can now view this course (Full Access).`,
           duration: 5000,
         });
       } else {
@@ -1110,14 +1044,7 @@ export default function LearnContent() {
 
     // Ask backend to classify relevance to the course before generating
 
-    const isPro =
-      !!(
-        user?.subscription &&
-        (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
-        user.subscription.status === "active"
-      ) || !!user?.isPremium;
-
-    if (!isPro) {
+    if (!hasPurchased('course_generation')) {
       const key = `ai_responses_${new Date().toDateString()}`;
       const used = parseInt(localStorage.getItem(key) || "0", 10);
       if (used >= 3) {
@@ -1233,12 +1160,14 @@ export default function LearnContent() {
   // Knowledge-check removed: lessons will no longer include an embedded quiz
 
   const getCurrentLesson = () => {
-    if (!courseData || !courseData.modules) return null;
+    const modules = courseData?.modules || courseData?.courseData?.modules;
+    if (!modules) return null;
 
-    const currentModule = courseData.modules.find(
+    const currentModule = modules.find(
       (m) => m.id === activeLesson.moduleId
     );
     if (!currentModule) return null;
+    if (!Array.isArray(currentModule.lessons)) return null;
 
     const lesson = currentModule.lessons[activeLesson.lessonIndex];
     if (typeof lesson === "string") {
@@ -1252,9 +1181,9 @@ export default function LearnContent() {
   };
 
   const totalLessons =
-    courseData && courseData.modules
-      ? courseData.modules.reduce(
-        (acc, module) => acc + module.lessons.length,
+    courseData && (courseData.modules || courseData.courseData?.modules)
+      ? (courseData.modules || courseData.courseData?.modules).reduce(
+        (acc, module) => acc + (module.lessons?.length || 0),
         0
       )
       : 0;
@@ -1266,12 +1195,12 @@ export default function LearnContent() {
   const currentLessonId =
     currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
   const isCurrentLessonCompleted = completedLessons.has(currentLessonId);
-  const canDownloadCoursePdf = Boolean(courseData && isPro);
+  const canDownloadCoursePdf = Boolean(courseData && hasPurchased('course_generation'));
   const canDownloadLessonPdf = Boolean(
     currentLesson?.content &&
       currentLesson.content !== "Content for this lesson is coming soon..." &&
       !lessonContentLoading &&
-      isPro
+      hasPurchased('course_generation')
   );
 
   const saveNotes = async (notesContent) => {
@@ -1312,7 +1241,7 @@ export default function LearnContent() {
       title: currentLesson?.title || "Lesson Notes",
       content: notes,
       date: new Date().toLocaleDateString(),
-      course: courseData.title,
+      course: courseData?.title || "Untitled Course",
       tags: ["Learning", courseData?.level || "General"],
     };
 
@@ -1599,8 +1528,8 @@ export default function LearnContent() {
 
         // Restore completed lessons from database/library first
         const completedLessonsFromDB = new Set();
-        if (courseData.modules) {
-          courseData.modules.forEach((module) => {
+        if (Array.isArray(courseData.modules || courseData.courseData?.modules)) {
+          (courseData.modules || courseData.courseData?.modules).forEach((module) => {
             if (module.lessons) {
               module.lessons.forEach((lesson, lessonIndex) => {
                 if (lesson.completed || (lesson.content && lesson.content.length > 100)) {
@@ -1612,10 +1541,9 @@ export default function LearnContent() {
           });
         }
 
-        // Then check user profile for matching course progress (Per-user progress storage)
-        const userCourseItem = user?.courses?.find(c => String(c.courseId) === String(courseData._id));
-        if (userCourseItem?.completedLessons) {
-          userCourseItem.completedLessons.forEach(lId => completedLessonsFromDB.add(lId));
+        // Then merge user's saved progress from the API (fetched by library endpoint)
+        if (Array.isArray(courseData._completedLessons)) {
+          courseData._completedLessons.forEach(lId => completedLessonsFromDB.add(lId));
         }
 
         // Then check localStorage for any additional progress
@@ -1732,7 +1660,7 @@ export default function LearnContent() {
       }
     }
 
-    if (!isPro && difficulty !== "beginner") {
+    if (!hasPurchased('course_generation') && difficulty !== "beginner") {
       toast.error(
         "Intermediate and Advanced levels require Pro subscription. Redirecting to upgrade..."
       );
@@ -1776,7 +1704,7 @@ export default function LearnContent() {
       requestBody = {
         topic: actualTopic,
         format: "quiz",
-        difficulty: isPro ? difficulty : "beginner",
+        difficulty,
         questions: parseInt(searchParams.get("questions")) || 10,
       };
     } else if (format === "flashcards") {
@@ -1784,7 +1712,7 @@ export default function LearnContent() {
       requestBody = {
         topic: actualTopic,
         format,
-        difficulty: isPro ? difficulty : "beginner",
+        difficulty,
       };
     } else {
       // Course generation
@@ -1793,12 +1721,12 @@ export default function LearnContent() {
           format === "guide"
             ? {
              topic: actualTopic,
-              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+              difficulty: difficulty.toLowerCase(),
             }
             : {
              topic: actualTopic,
               format,
-              difficulty: (isPro ? difficulty : "beginner").toLowerCase(),
+              difficulty: difficulty.toLowerCase(),
              premiumRequested,
              forceRegenerate,
              marketplaceCourseId,
@@ -1950,7 +1878,7 @@ export default function LearnContent() {
         }
       }
     }, 30000); // 30 seconds timeout
-  }, [actualTopic, format, difficulty, user?._id, user?.id, loading, searchParams.get("shareId"), searchParams.get("questions"), params.shareId, isPro, existingQuizId, router, courseData, fetchUser, courseKey]);
+  }, [actualTopic, format, difficulty, user?._id, user?.id, loading, searchParams.get("shareId"), searchParams.get("questions"), params.shareId, hasCourseAccess, existingQuizId, router, courseData, fetchUser, courseKey]);
 
   const prevParamsRef = useRef({ actualTopic, format, difficulty, shareId: searchParams.get("shareId") || params.shareId });
 
@@ -1989,6 +1917,36 @@ export default function LearnContent() {
     if (!courseData) return;
 
     const modules = courseData.modules || courseData.courseData?.modules || [];
+
+    // Find any lesson that has real content but isn't yet marked completed
+    const contentLessonIds = new Set();
+    modules.forEach((module) => {
+      (module.lessons || []).forEach((lesson, index) => {
+        const lessonId = lesson.id || `${module.id}-${index}`;
+        if (
+          lesson.content &&
+          String(lesson.content).trim().length > 0 &&
+          !String(lesson.content).toLowerCase().includes("coming soon")
+        ) {
+          contentLessonIds.add(lessonId);
+        }
+      });
+    });
+
+    const currentCompleted = new Set(completedLessons);
+    let changed = false;
+    contentLessonIds.forEach((id) => {
+      if (!currentCompleted.has(id)) {
+        currentCompleted.add(id);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setCompletedLessons(currentCompleted);
+      return;
+    }
+
     let totalLessons = 0;
     let completedCount = 0;
 
@@ -2007,19 +1965,7 @@ export default function LearnContent() {
     const progressPercentage = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
 
     if (progressPercentage === 100 && completedCount > 0) {
-      const achievement = {
-        id: Date.now(),
-        title: courseData.title,
-        recipient: "Student Name",
-        date: new Date().toLocaleDateString(),
-        level: courseData.level,
-        score: "95%",
-        skills: ["TypeScript", "JavaScript", "Programming", "Problem Solving"],
-        status: "completed",
-        courseProgress: 100,
-      };
-
-      toast.success("🎉 Congratulations! You've completed the course!");
+      toast.success("Congratulations! You've completed the course!");
     }
   }, [completedLessons, courseData]);
 
@@ -2162,8 +2108,7 @@ export default function LearnContent() {
         <CourseSidebar
           isSidebarOpen={isSidebarOpen}
           courseData={courseData}
-          isPro={isPro}
-          FREE_READABLE_MODULES={FREE_READABLE_MODULES}
+
           expandedModules={expandedModules}
           toggleModule={toggleModule}
           activeLesson={activeLesson}
@@ -2251,21 +2196,21 @@ export default function LearnContent() {
                 <div className="p-4 border-t border-border">
                   <button
                     onClick={() => {
-                      if (!isPro) {
+                      if (!hasPurchased('course_generation')) {
                         toast.error("Notes PDF export is a Pro feature. Please upgrade.");
                         router.push("/dashboard");
                         return;
                       }
                       handleDownloadNotes();
                     }}
-                    disabled={!notes.trim() || !isPro}
-                    className={`w-full flex items-center justify-center space-x-2 py-3 px-4 text-sm rounded-xl font-bold transition-all ${isPro
+                    disabled={!notes.trim() || !hasPurchased('course_generation')}
+                    className={`w-full flex items-center justify-center space-x-2 py-3 px-4 text-sm rounded-xl font-bold transition-all ${hasPurchased('course_generation')
                       ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02]"
                       : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
                       }`}
                   >
                     <Download className="w-4 h-4" />
-                    <span>{isPro ? "Download Notes" : "Pro: PDF Export"}</span>
+                    <span>{hasPurchased('course_generation') ? "Download Notes" : "PDF Export"}</span>
                   </button>
                 </div>
               </div>

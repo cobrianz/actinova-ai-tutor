@@ -64,7 +64,6 @@ export async function GET(request, { params }) {
       difficulty: course.difficulty,
       duration: course.duration,
       price: course.price,
-      isPremium: course.isPremium || false,
       rating: course.rating || 0,
       students: course.students || 0,
       instructor: course.instructor,

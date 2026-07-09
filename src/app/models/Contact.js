@@ -8,7 +8,7 @@ const ContactSchema = new mongoose.Schema(
         message: { type: String, required: true },
         category: {
             type: String,
-            enum: ["general", "support", "enterprise", "partnership", "press"],
+            enum: ["general", "support", "partnership", "press"],
             default: "general",
         },
         status: {

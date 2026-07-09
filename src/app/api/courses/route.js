@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
-import { checkCourseAccess } from "@/lib/planMiddleware";
 
 // === GET: List & Search Courses ===
 async function handleGet(request) {
@@ -19,7 +18,6 @@ async function handleGet(request) {
   // Filters
   const category = searchParams.get("category")?.trim() || null;
   const difficulty = searchParams.get("difficulty")?.trim() || null;
-  const isPremium = searchParams.get("isPremium");
   const search = searchParams.get("search")?.trim() || "";
 
   // Build MongoDB filter
@@ -27,7 +25,6 @@ async function handleGet(request) {
 
   if (category) filter.category = category;
   if (difficulty) filter.difficulty = difficulty;
-  if (isPremium !== null) filter.isPremium = isPremium === "true";
 
   if (search) {
     const regex = { $regex: search, $options: "i" };
@@ -54,47 +51,22 @@ async function handleGet(request) {
 
   const totalPages = Math.ceil(totalCount / limit);
 
-  // Check access if user is authenticated (using optional auth)
-  const user = request.user;
-
-  const sanitizedCourses = await Promise.all(
-    courses.map(async (course) => {
-      let hasAccess = true;
-      let accessError = null;
-
-      if (course.isPremium) {
-        if (user) {
-          const access = await checkCourseAccess(user._id.toString(), course._id.toString());
-          hasAccess = access.hasAccess;
-          accessError = access.reason;
-        } else {
-          hasAccess = false;
-          accessError = "Authentication required for premium courses";
-        }
-      }
-
-      return {
-        id: course._id.toString(),
-        title: course.title,
-        description: course.description,
-        instructor: course.instructor,
-        thumbnail: course.thumbnail,
-        category: course.category,
-        difficulty: course.difficulty,
-        duration: course.duration,
-        lessonsCount: course.lessonsCount,
-        rating: course.rating || 0,
-        students: course.students || 0,
-        isPremium: course.isPremium || false,
-        tierRequired: course.tierRequired || "free",
-        price: course.price,
-        tags: course.tags || [],
-        createdAt: course.createdAt,
-        hasAccess,
-        accessError,
-      };
-    })
-  );
+  const sanitizedCourses = courses.map((course) => ({
+    id: course._id.toString(),
+    title: course.title,
+    description: course.description,
+    instructor: course.instructor,
+    thumbnail: course.thumbnail,
+    category: course.category,
+    difficulty: course.difficulty,
+    duration: course.duration,
+    lessonsCount: course.lessonsCount,
+    rating: course.rating || 0,
+    students: course.students || 0,
+    price: course.price,
+    tags: course.tags || [],
+    createdAt: course.createdAt,
+  }));
 
   return NextResponse.json({
     success: true,
@@ -140,8 +112,6 @@ async function handlePost(request) {
     isPublished: body.isPublished || false,
     lessonsCount: body.lessonsCount || 0,
     tags: body.tags || [],
-    isPremium: body.isPremium || false,
-    tierRequired: body.tierRequired || "pro",
   };
 
   const result = await coursesCol.insertOne(newCourse);

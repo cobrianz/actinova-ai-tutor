@@ -67,16 +67,30 @@ export async function GET(request) {
         cards: "cardSets",
       }[prefix] || "library";
 
-      const item = await db.collection(collection).findOne({
-        _id: new ObjectId(cleanId),
-        $or: [{ userId: userObjId }, { enrolled: userObjId }]
-      });
+      const [item, userProgress] = await Promise.all([
+        db.collection(collection).findOne({
+          _id: new ObjectId(cleanId),
+          $or: [{ userId: userObjId }, { enrolled: userObjId }]
+        }),
+        db.collection("users").findOne(
+          { _id: userObjId },
+          { projection: { courses: 1 } }
+        )
+      ]);
 
       if (!item) {
         return NextResponse.json({ error: "Item not found" }, { status: 404 });
       }
 
-      return NextResponse.json({ success: true, item });
+      // Merge user's completedLessons into the item for frontend consumption
+      const userCourse = userProgress?.courses?.find(c => String(c.courseId) === cleanId);
+      const itemWithProgress = {
+        ...item,
+        _completedLessons: userCourse?.completedLessons || [],
+        _userProgress: userCourse?.progress || 0,
+      };
+
+      return NextResponse.json({ success: true, item: itemWithProgress });
     } catch (err) {
       console.error("Library single fetch error:", err);
       return NextResponse.json({ error: "Failed to fetch item" }, { status: 500 });

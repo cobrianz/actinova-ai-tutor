@@ -24,7 +24,7 @@ const stripHtmlText = (value = "") =>
         .trim();
 
 export default function ReportEditor({ reportId }) {
-    const { user, isPro, isEnterprise, hasPurchased } = useAuth();
+    const { user, isEnterprise, hasPurchased } = useAuth();
     const loggedInUserName =
         user?.name ||
         [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||

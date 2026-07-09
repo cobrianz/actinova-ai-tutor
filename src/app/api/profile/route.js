@@ -114,8 +114,6 @@ export async function GET(request) {
         location: user.location,
         bio: user.profile?.bio || "",
         role: user.role || "student",
-        isPremium: usage.isPremium,
-        subscription: user.subscription,
         createdAt: user.createdAt,
         emailVerified: !!user.emailVerified,
         onboardingCompleted: !!user.onboardingCompleted,
@@ -261,7 +259,6 @@ export async function PUT(request) {
         learningStyle: updatedUser.learningStyle,
         timeCommitment: updatedUser.timeCommitment,
         onboardingCompleted: updatedUser.onboardingCompleted || false,
-        subscription: updatedUser.subscription,
         usage: await getTrackedUsageSummary(db, updatedUser, { lifetime: true }),
       },
     });

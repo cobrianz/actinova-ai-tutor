@@ -25,25 +25,6 @@ async function handleDelete(request) {
       );
     }
 
-    // === Check if user is Premium (or Admin) ===
-    const userDoc = await User.findById(user._id)
-      .select("isPremium subscription role")
-      .lean();
-
-    const isPremium =
-      userDoc?.isPremium ||
-      (userDoc?.subscription?.plan === "pro" &&
-        userDoc?.subscription?.status === "active");
-
-    const isAdmin = userDoc?.role === "admin";
-
-    if (!isPremium && !isAdmin) {
-      return NextResponse.json(
-        { error: "Premium subscription required to delete courses" },
-        { status: 403 }
-      );
-    }
-
     // === Find and verify ownership ===
     const course = await Course.findOne({
       _id: courseId,

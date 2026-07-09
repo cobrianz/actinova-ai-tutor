@@ -75,9 +75,8 @@ export function withAuth(handler, options = {}) {
         return NextResponse.json({ error: "Authentication required", code: "AUTH_REQUIRED" }, { status: 401 });
       }
 
-      // Import plan validation to handle auto-downgrade on EVERY auth check
-      const { validateSubscriptionStatus } = await import("./planMiddleware");
-      const user = await validateSubscriptionStatus(userId);
+      const { default: User } = await import("@/models/User");
+      const user = await User.findById(userId).lean();
 
       if (!user) {
         if (options.optional) {

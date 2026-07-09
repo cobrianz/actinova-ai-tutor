@@ -46,7 +46,7 @@ export default function Chat({ topic: propTopic }) {
   const [topicInput, setTopicInput] = useState("");
   const [showTopicInput, setShowTopicInput] = useState(!propTopic && !urlTopic);
   const messagesEndRef = useRef(null);
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, hasPurchased } = useAuth();
 
   const loadChatHistory = async (currentTopic) => {
     if (!currentTopic || !user) return [];
@@ -159,14 +159,12 @@ export default function Chat({ topic: propTopic }) {
     finally { setShowDeleteModal(false); setTopicToDelete(null); }
   };
 
-  const isPro = user && (user.isPremium || user.purchasedItems?.length > 0 || ((user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") || user.isPremium));
-
   if (authLoading) return <ActirovaLoader />;
   if (!user) return null;
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    if (!isPro) {
+    if (!hasPurchased('course_generation')) {
       setShowUpgradeModal(true);
       return;
     }
@@ -332,13 +330,13 @@ export default function Chat({ topic: propTopic }) {
               <div className="flex items-end gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-lg ring-1 ring-transparent focus-within:ring-green-400/20 focus-within:border-green-300 transition-all">
                 <textarea value={input} onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder={isPro ? "Message Actinova AI..." : "Upgrade to Pro to start chatting"}
-                  rows={1} disabled={!isPro || isSending}
+                  placeholder={hasPurchased('course_generation') ? "Message Actinova AI..." : "Upgrade to start chatting"}
+                  rows={1} disabled={!hasPurchased('course_generation') || isSending}
                   className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-40 min-h-[32px] py-2 px-2 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 text-sm outline-none"
                   onInput={e => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
                 />
-                <button onClick={handleSend} disabled={!input.trim() || !isPro || isSending}
-                  className={`p-2.5 rounded-xl transition-all shrink-0 ${input.trim() && isPro && !isSending ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
+                <button onClick={handleSend} disabled={!input.trim() || !hasPurchased('course_generation') || isSending}
+                  className={`p-2.5 rounded-xl transition-all shrink-0 ${input.trim() && hasPurchased('course_generation') && !isSending ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
                   <Send size={16} />
                 </button>
               </div>

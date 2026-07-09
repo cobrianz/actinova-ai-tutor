@@ -40,12 +40,6 @@ const SkillGapAnalysis = () => {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const { user, loading: authLoading, hasPurchased } = useAuth();
 
-    const isPro = !authLoading && user && (
-        hasPurchased('career_tools') ||
-        (user.subscription && (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") && user.subscription.status === "active") ||
-        user.isPremium
-    );
-
     React.useEffect(() => { fetchHistory(); }, []);
 
     const fetchHistory = async () => {
@@ -63,7 +57,7 @@ const SkillGapAnalysis = () => {
             toast.error("Please provide both current skills and target role");
             return;
         }
-        if (!isPro) {
+        if (!hasPurchased('career_tools')) {
             setShowUpgradeModal(true);
             return;
         }

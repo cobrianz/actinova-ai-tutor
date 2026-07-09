@@ -31,9 +31,8 @@ async function handleGet(request) {
       emailVerified: user.emailVerified || false,
       status: user.status,
       onboardingCompleted: !!user.onboardingCompleted,
-      isPremium: user.isPremium || false,
       createdAt: user.createdAt,
-      usage: { used: 0, isPremium: user.isPremium || false },
+      usage: { used: 0 },
     },
   });
 }

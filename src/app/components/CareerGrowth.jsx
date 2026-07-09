@@ -89,18 +89,10 @@ const CareerGrowth = () => {
     const subTab = searchParams.get("tool") || "overview";
     const { user, loading: authLoading, hasPurchased } = useAuth();
     const careerProduct = PRODUCTS.find(p => p.id === 'career_tools');
-    const isPro = !authLoading && user && (
-        hasPurchased('career_tools') ||
-        !!(user?.credits >= (careerProduct?.creditCost || 25)) ||
-        (user.subscription &&
-            (user.subscription.plan === "pro" || user.subscription.plan === "enterprise") &&
-            user.subscription.status === "active") ||
-        user.isPremium
-    );
 
     const setSubTab = (tool, extraParams = {}) => {
         const isFreeResumeTool = tool === "resume";
-        if (tool !== "overview" && !isPro && !isFreeResumeTool) {
+        if (tool !== "overview" && !hasPurchased('career_tools') && !isFreeResumeTool) {
             setShowPremiumModal(true);
             return;
         }
@@ -118,7 +110,7 @@ const CareerGrowth = () => {
         router.push(`/dashboard?${params.toString()}`);
     };
 
-    const atLimit = user?.usage?.isAtLimit || (!isPro && user?.usage?.remaining === 0);
+    const atLimit = user?.usage?.isAtLimit || (!hasPurchased('career_tools') && user?.usage?.remaining === 0);
     const [usageData, setUsageData] = useState(null);
     const [generatingCourse, setGeneratingCourse] = useState(null);
     const [showLimitModal, setShowLimitModal] = useState(false);
@@ -152,7 +144,7 @@ const CareerGrowth = () => {
             setLimitModalData({
                 used: courseUsed,
                 limit: courseLimit,
-                isPremium: isPro,
+                isPremium: hasPurchased('career_tools'),
             });
             return;
         }
@@ -285,7 +277,7 @@ const CareerGrowth = () => {
         }
     }, [subTab]);
 
-    if (subTab !== "overview" && (isPro || subTab === "resume")) {
+    if (subTab !== "overview" && (hasPurchased('career_tools') || subTab === "resume")) {
         return (
             <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-0 sm:px-6 lg:px-8 min-h-[80vh]">
                 {renderHeader()}
@@ -295,9 +287,9 @@ const CareerGrowth = () => {
                     transition={{ duration: 0.4 }}
                 >
                     {subTab === "resume" && <ResumeBuilder />}
-                    {subTab === "interview" && isPro && <InterviewPrep />}
-                    {subTab === "skillgap" && isPro && <SkillGapAnalysis />}
-                    {subTab === "network" && isPro && <NetworkAI />}
+                    {subTab === "interview" && hasPurchased('career_tools') && <InterviewPrep />}
+                    {subTab === "skillgap" && hasPurchased('career_tools') && <SkillGapAnalysis />}
+                    {subTab === "network" && hasPurchased('career_tools') && <NetworkAI />}
                 </motion.div>
             </div>
         );
@@ -386,14 +378,6 @@ const CareerGrowth = () => {
                         variants={itemVariants}
                         className="md:col-span-4 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-50 dark:from-emerald-950/50 dark:via-green-950/50 dark:to-emerald-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-xl hover:shadow-emerald-500/20"
                     >
-                        {!isPro && (
-                            <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-lime-950" />
-                                    PRO
-                                </div>
-                            </div>
-                        )}
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-green-400/5 to-emerald-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
                         <div className="relative z-10">
                             <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -418,14 +402,6 @@ const CareerGrowth = () => {
                         variants={itemVariants}
                         className="md:col-span-4 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50 via-teal-50 to-rose-50 dark:from-teal-950/50 dark:via-teal-950/50 dark:to-rose-950/50 backdrop-blur-sm p-5 sm:p-6 md:p-8 transition-all hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xl hover:shadow-teal-500/20"
                     >
-                        {!isPro && (
-                            <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-lime-950" />
-                                    PRO
-                                </div>
-                            </div>
-                        )}
                         <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 via-teal-400/5 to-rose-400/10 opacity-100 group-hover:opacity-100 transition-opacity" />
                         <div className="relative z-10">
                             <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
@@ -450,14 +426,6 @@ const CareerGrowth = () => {
                         variants={itemVariants}
                         className="md:col-span-8 group relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-900 via-emerald-900 to-teal-800 text-white p-6 sm:p-8 md:p-10 transition-all hover:scale-[1.01] hover:shadow-2xl hover:shadow-emerald-500/20 hover:border-emerald-500/50"
                     >
-                        {!isPro && (
-                            <div className="absolute top-4 right-4 z-20">
-                                <div className="bg-lime-400 text-lime-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-lime-950" />
-                                    PRO
-                                </div>
-                            </div>
-                        )}
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-teal-500/10 opacity-50" />
                         <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[length:20px_20px]" />
                         <div className="absolute -bottom-12 -right-12 w-32 sm:w-48 h-32 sm:h-48 bg-emerald-500/20 rounded-full blur-3xl group-hover:bg-emerald-500/30 transition-colors" />

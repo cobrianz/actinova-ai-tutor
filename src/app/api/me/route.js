@@ -2,13 +2,11 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getTrackedUsageSummary } from "@/lib/usageSummary";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
-import { syncExpiredPremiumLibraryAccess } from "@/lib/courseCommerce";
 
 async function handleGet(request) {
   const user = request.user;
   const { db } = await connectToDatabase();
   const usersCol = db.collection("users");
-  await syncExpiredPremiumLibraryAccess(db, user);
 
   const now = new Date();
 
@@ -30,10 +28,6 @@ async function handleGet(request) {
   }
 
   const usage = await getTrackedUsageSummary(db, user);
-  const isPremium = user.isPremium ||
-    usage.tier === "pro" ||
-    usage.tier === "enterprise" ||
-    (user.subscription?.plan === "premium" && user.subscription?.status === "active");
 
   const safeUser = {
     id: user._id.toString(),
@@ -46,8 +40,6 @@ async function handleGet(request) {
     emailVerified: user.emailVerified || false,
     status: user.status,
     onboardingCompleted: user.onboardingCompleted || false,
-    isPremium,
-    subscription: user.subscription,
     purchasedItems: user.purchasedItems || [],
     credits: user.credits || 0,
     usage,

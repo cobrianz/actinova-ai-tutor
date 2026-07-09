@@ -148,14 +148,8 @@ export async function POST(request) {
       }
     );
 
-    const isPremium =
-      user.isPremium ||
-      (user.subscription?.plan === "pro" &&
-        user.subscription?.status === "active");
-
     const usage = {
       used: 0,
-      isPremium,
     };
 
     // Update HttpOnly user cookie so client state syncs via server
@@ -168,7 +162,6 @@ export async function POST(request) {
         emailVerified: true,
         status: "active",
         onboardingCompleted: !!user.onboardingCompleted,
-        isPremium,
       };
 
       cookieStore.set("user", JSON.stringify(userCookie), {
@@ -190,7 +183,6 @@ export async function POST(request) {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
-        isPremium,
         streak: user.streak || 0,
         totalLearningTime: user.totalLearningTime || 0,
         emailVerified: true,

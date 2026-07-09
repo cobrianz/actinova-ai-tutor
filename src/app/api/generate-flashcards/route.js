@@ -20,7 +20,6 @@ import { checkAPILimit, trackAPIUsage } from "@/lib/planMiddleware";
 
 export async function POST(request) {
   let userId = null;
-  let isPremium = false;
 
   try {
     // ─── AUTH ───
@@ -77,8 +76,6 @@ export async function POST(request) {
     let currentLimits;
     if (userId) {
       const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-      const hasPurchasedFlashcards = user?.isPremium || user?.purchasedItems?.some((p) => p.itemType === "flashcard_generation");
-      isPremium = hasPurchasedFlashcards || user?.subscription?.tier === "pro" || user?.subscription?.tier === "enterprise";
       currentLimits = getFeatureLimits(user);
     } else {
       currentLimits = getFeatureLimits(null);
@@ -233,8 +230,6 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
           title: existingDuplicate.title,
           totalCards: existingDuplicate.totalCards,
           difficulty,
-          isPremium,
-          canExportToAnki: true,
           canExportToAnki: true,
 
           features: [
@@ -268,8 +263,6 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
             ease: 2.5,
             dueDate: new Date().toISOString(),
           },
-        })),
-        isPremium,
         progress: 0,
         completed: false,
         bookmarked: false,
@@ -320,7 +313,6 @@ No markdown. Only JSON. Perfect for spaced repetition.`,
       title: cardSet.title,
       totalCards: cardSet.totalCards,
       difficulty,
-      isPremium,
       canExportToAnki: true,
       cards: existingCardSetId ? newCards : undefined, // Return new cards when adding to existing set
       features: [

@@ -6,16 +6,6 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
-function getEffectiveSubscriptionExpiry(subscription) {
-  if (!subscription) return null;
-  return subscription.currentPeriodEnd || subscription.expiryDate || subscription.expiresAt || null;
-}
-
-function isPaidPlan(subscription) {
-  const plan = String(subscription?.plan || "").toLowerCase();
-  const tier = String(subscription?.tier || "").toLowerCase();
-  return ["pro", "premium", "enterprise"].includes(plan) || ["pro", "enterprise"].includes(tier);
-}
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -96,46 +86,6 @@ export async function POST() {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
 
-    // Validate plan expiry on refresh as well, so the client can't stay "premium"
-    // after the end date passes (even if cron isn't configured).
-    try {
-      const effectiveExpiry = getEffectiveSubscriptionExpiry(user.subscription);
-      if (
-        effectiveExpiry &&
-        new Date(effectiveExpiry) < new Date() &&
-        user?.subscription?.tier &&
-        String(user.subscription.tier).toLowerCase() !== "free"
-      ) {
-        const downgradeAt = new Date();
-        await usersCol.updateOne(
-          { _id: user._id },
-          {
-            $set: {
-              "subscription.tier": "free",
-              "subscription.status": "expired",
-              "subscription.downgradedAt": downgradeAt,
-              "subscription.currentPeriodEnd": null,
-              "subscription.expiresAt": null,
-              "subscription.expiryDate": null,
-              isPremium: false,
-            },
-          }
-        );
-
-        user.subscription = {
-          ...(user.subscription || {}),
-          tier: "free",
-          status: "expired",
-          downgradedAt: downgradeAt,
-          currentPeriodEnd: null,
-          expiresAt: null,
-          expiryDate: null,
-        };
-        user.isPremium = false;
-      }
-    } catch (e) {
-      console.warn("[refresh] subscription validation failed:", e?.message || e);
-    }
 
     // 4. Token rotation: invalidate old, generate new pair
     const { generateTokenPair } = await import("@/lib/auth");
@@ -190,18 +140,7 @@ export async function POST() {
     const csrfToken = generateCsrfToken();
     setCsrfCookie(cookieStore, csrfToken, isProd);
 
-    // 6. Usage calculation
-    const isPremium = Boolean(
-      user.isPremium ||
-      (user.subscription?.status === "active" && isPaidPlan(user.subscription))
-    );
-
-    const usage = {
-      used: 0,
-      isPremium,
-    };
-
-    // 7. Final response
+    // 6. Final response
     return NextResponse.json({
       success: true,
       message: "Session refreshed",
@@ -210,8 +149,6 @@ export async function POST() {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-        isPremium,
-        usage,
       },
     });
   } catch (error) {

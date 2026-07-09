@@ -71,7 +71,6 @@ export async function GET(request) {
         status: "active",
         role: "student",
         onboardingCompleted: false,
-        isPremium: false,
         streak: 0,
         totalLearningTime: 0,
         credits: SIGNUP_CREDITS,
@@ -80,7 +79,6 @@ export async function GET(request) {
         createdAt: new Date(),
         lastLogin: new Date(),
         loginCount: 1,
-        subscription: { tier: "free", status: "none" },
       };
 
       const result = await usersCol.insertOne(newUser);

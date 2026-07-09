@@ -31,30 +31,6 @@ async function getUserId(request) {
   }
 }
 
-// === Helper: Get Premium Status ===
-async function getPremiumStatus(db, userId) {
-  if (!userId) return false;
-  try {
-    const user = await db.collection("users").findOne(
-      { _id: new ObjectId(userId) },
-      {
-        projection: {
-          isPremium: 1,
-          "subscription.plan": 1,
-          "subscription.status": 1,
-        },
-      }
-    );
-    return (
-      user?.isPremium ||
-      (user?.subscription?.plan === "pro" &&
-        user?.subscription?.status === "active")
-    );
-  } catch {
-    return false;
-  }
-}
-
 // Helper to post-process AI generated content for robustness
 function postProcessContent(content) {
   if (!content) return content;
@@ -309,7 +285,7 @@ async function handleGenerateLessonStream(body, userId, db, request) {
 
   // === Access Validation ===
   const { shareId } = body;
-  const access = await checkCourseAccess(userId, courseId, shareId);
+  const access = await checkCourseAccess(db, userId, courseId, shareId);
   if (!access.hasAccess) {
     return NextResponse.json(
       { error: "Access denied", message: access.reason },
@@ -319,20 +295,30 @@ async function handleGenerateLessonStream(body, userId, db, request) {
 
   // === Determine Premium Status ===
   let isPremium = false;
+
   if (access.isShared || access.isEnrolled) {
-    isPremium =
-      access.fullAccess || (access.sharerTier && access.sharerTier !== "free");
+    isPremium = access.fullAccess || (access.sharerTier && access.sharerTier !== "free");
   } else if (courseId && ObjectId.isValid(courseId)) {
-    const courseDoc =
-      (await db.collection("library").findOne({ _id: new ObjectId(courseId) })) ||
-      (await db.collection("courses").findOne({ _id: new ObjectId(courseId) }));
-    if (courseDoc?.isPremium) isPremium = true;
-  }
-  if (!isPremium && !access.isShared && userId) {
-    isPremium = await getPremiumStatus(db, userId);
+    const courseDoc = await db.collection("library").findOne({ _id: new ObjectId(courseId) }) ||
+                     await db.collection("courses").findOne({ _id: new ObjectId(courseId) });
+    if (courseDoc?.isPremium) {
+      isPremium = true;
+    }
   }
 
-  const wordCount = isPremium ? "2500–3000" : "1500–2000";
+  if (!isPremium && !access.isShared && userId) {
+    const userDoc = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { purchasedItems: 1, credits: 1 } }
+    );
+    if (userDoc) {
+      isPremium = (userDoc.purchasedItems || []).some(
+        (item) => item.itemType === "course_generation"
+      ) || (userDoc.credits || 0) >= 40;
+    }
+  }
+
+  const wordCount = "2500–3000";
 
   // === Check Cache First ===
   if (courseId && ObjectId.isValid(courseId)) {
@@ -353,7 +339,7 @@ async function handleGenerateLessonStream(body, userId, db, request) {
           const encoder = new TextEncoder();
           sseWrite(controller, encoder, {
             event: "meta",
-            data: { cached: true, isPremium, moduleId: mId, lessonIndex: lIdx },
+            data: { cached: true, moduleId: mId, lessonIndex: lIdx },
           });
           sseWrite(controller, encoder, {
             event: "chunk",
@@ -361,7 +347,7 @@ async function handleGenerateLessonStream(body, userId, db, request) {
           });
           sseWrite(controller, encoder, {
             event: "done",
-            data: { cached: true, isPremium },
+            data: { cached: true },
           });
           controller.close();
         },
@@ -379,7 +365,6 @@ Module: ${moduleTitle || "Core Concepts"}
 Lesson: ${lessonTitle}
 Difficulty: ${difficulty}
 Target length: ${wordCount} words (CRITICAL: Do not be concise. Dive extremely deep into every sub-topic).
-Access tier: ${isPremium ? "Premium" : "Free"}
 
 - STRUCTURE (REQUIRED): Always include these sections in this order, with headings exactly as shown:
   1) ## Learning Objectives
@@ -550,7 +535,7 @@ async function handleGenerateLesson(body, userId, db) {
 
   // === 3. Access Validation ===
   const { shareId } = body;
-  const access = await checkCourseAccess(userId, courseId, shareId);
+  const access = await checkCourseAccess(db, userId, courseId, shareId);
   if (!access.hasAccess) {
     return NextResponse.json(
       { error: "Access denied", message: access.reason },
@@ -576,9 +561,17 @@ async function handleGenerateLesson(body, userId, db) {
     }
   }
 
-  // 3. Fallback to User Status (if not already determined by share)
+  // 3. Fallback to credit/purchase status
   if (!isPremium && !access.isShared && userId) {
-    isPremium = await getPremiumStatus(db, userId);
+    const userDoc = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { purchasedItems: 1, credits: 1 } }
+    );
+    if (userDoc) {
+      isPremium = (userDoc.purchasedItems || []).some(
+        (item) => item.itemType === "course_generation"
+      ) || (userDoc.credits || 0) >= 40;
+    }
   }
   const wordCount = isPremium ? "2500–3000" : "1500–2000";
 

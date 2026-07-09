@@ -8,9 +8,9 @@ export const data = {
     },
     {
       icon: "Star",
-      title: "Premium Courses",
+      title: "Marketplace Courses",
       description:
-        "Unlock admin-curated marketplace courses, discover paid community-generated courses, and access premium learning tracks from one shared marketplace.",
+        "Unlock admin-curated marketplace courses, discover paid community-generated courses, and access curated learning tracks from one shared marketplace.",
     },
     {
       icon: "Search",
@@ -52,7 +52,7 @@ export const data = {
       icon: "TrendingUp",
       title: "Progress & Usage Insights",
       description:
-        "Monitor course completion, pinned content, average progress, free-tier limits, and premium course access windows from the dashboard.",
+        "Monitor course completion, pinned content, average progress, and course access windows from the dashboard.",
     },
     {
       icon: "Briefcase",
@@ -84,7 +84,7 @@ export const data = {
     },
     {
       title: "Study with Multiple Tools",
-      description: "Learn through guided lessons, premium marketplace curricula, topic-based AI chat, and saved materials in your library."
+      description:         "Learn through guided lessons, marketplace curricula, topic-based AI chat, and saved materials in your library."
     },
     {
       title: "Review, Track, and Advance",
@@ -132,12 +132,12 @@ export const data = {
     {
       question: "Can I access courses offline?",
       answer:
-        "Some downloads are available on supported paid paths. Premium learning access and resume exports are handled through the product's paid flows.",
+        "Some downloads are available on supported paid paths. Course access and resume exports are handled through the product's paid flows.",
     },
     {
       question: "What if I'm not satisfied with my subscription?",
       answer:
-        "You can start on the free tier, test the product workflows, and only pay when you need premium plan access, premium course unlocks, or paid exports.",
+        "You can test the product workflows, and only pay when you need course unlocks or paid exports.",
     },
     {
       question: "Can I generate reports or essays?",

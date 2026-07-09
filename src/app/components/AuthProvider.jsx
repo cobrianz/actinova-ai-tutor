@@ -492,13 +492,6 @@ export function AuthProvider({ children }) {
     return false;
   };
   
-  const isPro =
-    !!user?.isPremium ||
-    purchasedItems.length > 0 ||
-    !!(tier === "pro" || tier === "enterprise" || 
-       plan === "pro" || plan === "enterprise" || plan === "premium" || plan === "team") &&
-    user?.subscription?.status === "active";
-    
   const isEnterprise =
     !!user?.isPremium ||
     (tier === "enterprise" || plan === "enterprise") &&
@@ -521,7 +514,6 @@ export function AuthProvider({ children }) {
         setUserData,
         fetchUser,
         clearError,
-        isPro,
         isEnterprise,
         hasPurchased,
         purchasedItems,

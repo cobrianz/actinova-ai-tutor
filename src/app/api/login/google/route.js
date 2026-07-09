@@ -74,10 +74,6 @@ export async function POST(request) {
         createdAt: new Date(),
         lastLogin: new Date(),
         loginCount: 1,
-        subscription: {
-           tier: "free",
-           status: "none"
-        }
       };
 
       const result = await usersCol.insertOne(newUser);
@@ -173,12 +169,9 @@ export async function POST(request) {
     });
 
     // Calculate usage for UI
-    const isPremium = user.isPremium || (user.subscription?.plan === "pro" && user.subscription?.status === "active");
-
     const safeUser = sanitizeUser({
       ...user,
       id: user._id.toString(),
-      isPremium,
     });
 
     return NextResponse.json({

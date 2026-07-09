@@ -1,14 +1,10 @@
 "use client";
 
-import { Download, Lock, ChevronUp, ChevronDown, Play } from "lucide-react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { Download, ChevronUp, ChevronDown, Play } from "lucide-react";
 
 export default function CourseSidebar({
   isSidebarOpen,
   courseData,
-  isPro,
-  FREE_READABLE_MODULES,
   expandedModules,
   toggleModule,
   activeLesson,
@@ -23,8 +19,6 @@ export default function CourseSidebar({
   handleShare,
   format,
 }) {
-  const router = useRouter();
-
   return (
     <div
       className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -94,47 +88,18 @@ export default function CourseSidebar({
               className="border-b border-border last:border-b-0"
             >
               <button
-                onClick={() => {
-                  if (!isPro && moduleIndex >= FREE_READABLE_MODULES) {
-                    toast.error("Upgrade to Pro to unlock all 20 modules.", {
-                      action: {
-                        label: "Upgrade",
-                        onClick: () => router.push("/dashboard"),
-                      },
-                    });
-                    return;
-                  }
-                  toggleModule(module.id);
-                }}
-                className={`w-full p-4 flex items-center justify-between transition-colors ${
-                  !isPro && moduleIndex >= FREE_READABLE_MODULES
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-secondary/50"
-                }`}
+                onClick={() => toggleModule(module.id)}
+                className="w-full p-4 flex items-center justify-between transition-colors hover:bg-secondary/50"
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    !isPro && moduleIndex >= FREE_READABLE_MODULES
-                      ? "bg-muted text-muted-foreground"
-                      : "bg-green-500/10 text-green-600"
-                  }`}>
-                    {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
-                      <Lock className="w-4 h-4" />
-                    ) : (
-                      moduleIndex + 1
-                    )}
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-green-500/10 text-green-600">
+                    {moduleIndex + 1}
                   </div>
-                  <span className={`text-sm font-medium text-left ${
-                    !isPro && moduleIndex >= FREE_READABLE_MODULES
-                      ? "text-muted-foreground"
-                      : "text-foreground"
-                  }`}>
+                  <span className="text-sm font-medium text-left text-foreground">
                     {module.title}
                   </span>
                 </div>
-                {!isPro && moduleIndex >= FREE_READABLE_MODULES ? (
-                  <Lock className="w-3.5 h-3.5 text-muted-foreground/50" />
-                ) : expandedModules.has(module.id) ? (
+                {expandedModules.has(module.id) ? (
                   <ChevronUp className="w-4 h-4 text-muted-foreground" />
                 ) : (
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -142,7 +107,7 @@ export default function CourseSidebar({
               </button>
               {expandedModules.has(module.id) && (
                 <div className="bg-secondary/30">
-                  {module.lessons.map((lesson, lessonIndex) => {
+                  {(module.lessons || []).map((lesson, lessonIndex) => {
                     const lessonTitle =
                       typeof lesson === "string" ? lesson : lesson.title;
                     const lessonId =
@@ -196,26 +161,6 @@ export default function CourseSidebar({
             </div>
           ))}
       </div>
-
-      {!isPro && courseData && (
-        <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-green-500/5">
-          <div className="flex items-center space-x-2 mb-2">
-            <Lock className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold text-foreground">
-              {(courseData.totalModules || 0) - FREE_READABLE_MODULES} modules locked
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-            You can read modules 1-2 for free. Upgrade to Pro or unlock this course to access all 20 modules.
-          </p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="w-full py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-opacity"
-          >
-            Upgrade to Pro
-          </button>
-        </div>
-      )}
     </div>
   );
 }

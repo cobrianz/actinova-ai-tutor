@@ -95,7 +95,7 @@ export default function LessonContentPanel({
                     <div className="mt-12 pt-8 border-t border-border flex justify-between items-center">
                       <div className="text-sm text-muted-foreground">
                         Lesson {activeLesson.lessonIndex + 1} of {
-                          courseData?.modules?.find(m => m.id === activeLesson.moduleId)?.lessons?.length || 0
+                          (courseData?.modules || courseData?.courseData?.modules || []).find(m => m.id === activeLesson.moduleId)?.lessons?.length || 0
                         }
                       </div>
                       <button

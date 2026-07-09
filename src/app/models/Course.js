@@ -49,15 +49,7 @@ const courseSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    isPremium: {
-      type: Boolean,
-      default: false,
-    },
-    tierRequired: {
-      type: String,
-      enum: ["free", "pro", "enterprise"],
-      default: "free",
-    },
+
   },
   {
     timestamps: true,

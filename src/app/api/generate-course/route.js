@@ -4,17 +4,10 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { getFeatureLimits } from "@/lib/planLimits";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 import { withAPIRateLimit, trackAPIUsage, checkAPILimit } from "@/lib/planMiddleware";
-import {
-  buildAccessSummary,
-  getPaidPremiumGenerationIntent,
-  getMarketplaceEnrollment,
-  consumePremiumGenerationIntent,
-  publishPaidLibraryCourseToMarketplace,
-} from "@/lib/courseCommerce";
+
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -48,66 +41,17 @@ async function handlePost(request) {
       );
 
     const { db } = await connectToDatabase();
-    const planLimits = getFeatureLimits(user);
-    const subscriptionTier = String(
-      user?.subscription?.tier || user?.subscription?.plan || ""
-    ).toLowerCase();
-    const isEnterprise =
-      subscriptionTier === "enterprise" &&
-      user?.subscription?.status === "active";
-    const hasActiveSubscription =
-      user?.subscription?.status === "active" &&
-      subscriptionTier &&
-      subscriptionTier !== "free";
     const apiFeatureName = format === "quiz" ? "quiz" : "generate-course";
     const limitCheck = await checkAPILimit(user._id, apiFeatureName);
     const isOverUsageLimit = !limitCheck.withinLimit && limitCheck.limit !== -1;
-    const marketplaceEnrollment =
-      format === "course" && marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)
-        ? await getMarketplaceEnrollment(db, userId.toString(), marketplaceCourseId)
-        : null;
-    const marketplaceAccess = marketplaceEnrollment
-      ? buildAccessSummary(marketplaceEnrollment)
-      : null;
-    const hasUnlockedMarketplaceAccess = Boolean(marketplaceAccess?.hasAccess);
-    let premiumIntent = null;
-    let isPremium = hasActiveSubscription;
 
-    if (format === "course" && premiumRequested) {
-      const requiresPremiumPayment =
-        (!hasActiveSubscription && !hasUnlockedMarketplaceAccess) ||
-        (!isEnterprise && isOverUsageLimit && !hasUnlockedMarketplaceAccess);
-
-      if (requiresPremiumPayment) {
-        premiumIntent = await getPaidPremiumGenerationIntent({
-          db,
-          userId,
-          topic,
-          difficulty,
-        });
-
-        if (!premiumIntent) {
-          return NextResponse.json(
-            { error: "Premium payment required before continuing generation" },
-            { status: 402 }
-          );
-        }
-      }
-
-      isPremium = true;
-    }
-
-    if (
-      isOverUsageLimit &&
-      !(format === "course" && premiumRequested && (premiumIntent || hasUnlockedMarketplaceAccess))
-    ) {
+    if (isOverUsageLimit) {
         return NextResponse.json(
             {
                 error: "Insufficient credits",
                 message: `You need ${limitCheck.creditCost} credits to generate this. You have ${limitCheck.credits} credits.`,
                 credits: limitCheck.credits,
                 creditCost: limitCheck.creditCost,
-                isPremium: limitCheck.tier !== "free",
             },
             { status: 429 }
         );
@@ -175,230 +119,7 @@ async function handlePost(request) {
     const existingCourse = await db.collection("library").findOne(existingCourseQuery);
 
     if (existingCourse && !forceRegenerate) {
-      // Scenario 1: Course exists, user is premium, but course is NOT premium. Upgrade it.
-      if (isPremium && !existingCourse.isPremium) {
-        const { modules, lessonsPerModule, totalLessons } = planLimits;
-
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          temperature: 0.7,
-          max_tokens: 8000,
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "system",
-              content: `Generate a complete course outline in JSON format for "${topic}" at ${difficulty} level.
-        
-        The JSON must strictly follow this structure:
-        {
-          "title": "Comprehensive Course Title",
-          "totalModules": 20,
-          "totalLessons": 100,
-          "modules": [
-            {
-              "title": "Module Title",
-              "lessons": [
-                { "title": "Detailed Lesson Title" },
-                { "title": "Detailed Lesson Title" },
-                { "title": "Detailed Lesson Title" },
-                { "title": "Detailed Lesson Title" },
-                { "title": "Detailed Lesson Title" }
-              ]
-            }
-          ]
-        }
-        
-        CRITICAL REQUIREMENTS:
-        1. You MUST return EXACTLY 20 modules. Not 19, not 21 — exactly 20.
-        2. Each module MUST contain EXACTLY 5 lessons. Not 4, not 6 — exactly 5.
-        3. Total lessons = 20 × 5 = 100.
-        4. Be academically rigorous and logically structured.
-        5. Ensure lesson titles are specific and descriptive.
-        6. Do not include lesson content; focus only on titles and structure.
-        7. DO NOT use Python for data visualizations and charts.
-        8. Use only the following visual block types:
-          - \`\`\`chart for data visualizations (bar, line, pie, doughnut)
-          - \`\`\`table for markdown tables
-        9. Planning for 3-5 charts per lesson is required for a visually rich experience.
-        10. Return ONLY the JSON object.`,
-            },
-            {
-              role: "user",
-              content: `Create a ${difficulty} level course on "${topic}" with EXACTLY 20 modules and EXACTLY 5 lessons per module (100 lessons total).`,
-            },
-          ],
-        });
-
-        let course;
-        try {
-          course = JSON.parse(completion.choices[0].message.content.trim());
-        } catch (e) {
-          course = fallbackCourse(topic, difficulty, modules, lessonsPerModule);
-        }
-
-        const normalizedModules = normalizeModules(course.modules || [], topic, lessonsPerModule);
-        const updatedCourseDoc = {
-          title: course.title,
-          totalModules: 20,
-          totalLessons: 100,
-          modules: normalizedModules.map((m, i) => ({
-            ...m,
-            id: i + 1,
-            lessons: m.lessons.map((l, j) => ({
-              title: typeof l === "string" ? l : l.title || `Lesson ${j + 1}`,
-              id: `${i + 1}-${j + 1}`,
-              content: "",
-              completed: false,
-              srs: {
-                interval: 1,
-                repetitions: 0,
-                ease: 2.5,
-                dueDate: new Date().toISOString(),
-              },
-            })),
-          })),
-          isPremium: true,
-          premiumAccessExpiresAt:
-            premiumIntent?.accessExpiresAt || marketplaceAccess?.expiryDate || null,
-          premiumPaymentReference:
-            premiumIntent?.reference || existingCourse.premiumPaymentReference || null,
-          sourceMarketplaceCourseId:
-            marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)
-              ? new ObjectId(marketplaceCourseId)
-              : existingCourse.sourceMarketplaceCourseId || null,
-          lastAccessed: new Date(),
-        };
-
-        await db
-          .collection("library")
-          .updateOne({ _id: existingCourse._id }, { $set: updatedCourseDoc });
-
-        let publishedMarketplaceCourseId = updatedCourseDoc.sourceMarketplaceCourseId || null;
-        if (premiumIntent?._id && !updatedCourseDoc.sourceMarketplaceCourseId) {
-          publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
-            db,
-            userId: userId.toString(),
-            libraryCourse: {
-              ...existingCourse,
-              ...updatedCourseDoc,
-              _id: existingCourse._id,
-            },
-          });
-        }
-
-        if (premiumIntent?._id) {
-          await consumePremiumGenerationIntent({
-            db,
-            intentId: premiumIntent._id.toString(),
-            generatedCourseId: existingCourse._id.toString(),
-          });
-        }
-
-        // Increment usage after successful upgrade
-        await trackAPIUsage(userId, "generate-course", { itemType: "course_generation", creditCost: 40 });
-
-        return NextResponse.json({
-          success: true,
-          courseId: existingCourse._id.toString(),
-          content: {
-            title: course.title,
-            level: difficulty,
-            totalModules: updatedCourseDoc.totalModules,
-            totalLessons: updatedCourseDoc.totalLessons,
-            modules: updatedCourseDoc.modules,
-            isPremium: updatedCourseDoc.isPremium,
-            premiumAccessExpiresAt: updatedCourseDoc.premiumAccessExpiresAt || null,
-            sourceMarketplaceCourseId:
-              publishedMarketplaceCourseId || updatedCourseDoc.sourceMarketplaceCourseId || null,
-          },
-          isExisting: true,
-          wasUpgraded: true,
-          message: "Course upgraded to premium version!",
-        });
-      }
-
-      // Scenario 1b: Course already marked premium (often from an old subscription),
-      // but user just paid for a per-course premium window. Apply the paid window
-      // so modules/downloads actually unlock.
-      if (isPremium && premiumIntent?._id) {
-        const existingExpiry = existingCourse.premiumAccessExpiresAt
-          ? new Date(existingCourse.premiumAccessExpiresAt)
-          : null;
-        const hasLiveWindow = existingExpiry && existingExpiry > new Date();
-
-        if (!hasLiveWindow) {
-          const patch = {
-            isPremium: true,
-            premiumAccessExpiresAt: premiumIntent.accessExpiresAt || null,
-            premiumPaymentReference:
-              premiumIntent.reference || existingCourse.premiumPaymentReference || null,
-            lastAccessed: new Date(),
-            updatedAt: new Date(),
-          };
-
-          await db.collection("library").updateOne(
-            { _id: existingCourse._id },
-            { $set: patch }
-          );
-
-          let publishedMarketplaceCourseId = existingCourse.sourceMarketplaceCourseId || null;
-          if (!existingCourse.sourceMarketplaceCourseId) {
-            publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
-              db,
-              userId: userId.toString(),
-              libraryCourse: { ...existingCourse, ...patch, _id: existingCourse._id },
-            });
-          }
-
-          await consumePremiumGenerationIntent({
-            db,
-            intentId: premiumIntent._id.toString(),
-            generatedCourseId: existingCourse._id.toString(),
-          });
-
-          await trackAPIUsage(userId, "generate-course", { itemType: "course_generation", creditCost: 40 });
-
-          return NextResponse.json({
-            success: true,
-            courseId: existingCourse._id.toString(),
-            content: {
-              title: existingCourse.title,
-              level: difficulty,
-              totalModules: existingCourse.totalModules,
-              totalLessons: existingCourse.totalLessons,
-              modules: existingCourse.modules,
-              isPremium: true,
-              premiumAccessExpiresAt: patch.premiumAccessExpiresAt || null,
-              sourceMarketplaceCourseId:
-                publishedMarketplaceCourseId || existingCourse.sourceMarketplaceCourseId || null,
-            },
-            isExisting: true,
-            wasUpgraded: true,
-            message: "Premium access applied to existing course.",
-          });
-        }
-      }
-
-      if (premiumIntent?._id && existingCourse.isPremium) {
-        await consumePremiumGenerationIntent({
-          db,
-          intentId: premiumIntent._id.toString(),
-          generatedCourseId: existingCourse._id.toString(),
-        });
-      }
-
       let publishedMarketplaceCourseId = existingCourse.sourceMarketplaceCourseId || null;
-      if (
-        existingCourse.premiumAccessExpiresAt &&
-        !existingCourse.sourceMarketplaceCourseId &&
-        !marketplaceCourseId
-      ) {
-        publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
-          db,
-          userId: userId.toString(),
-          libraryCourse: existingCourse,
-        });
-      }
 
       return NextResponse.json({
         success: true,
@@ -409,19 +130,15 @@ async function handlePost(request) {
           totalModules: existingCourse.totalModules,
           totalLessons: existingCourse.totalLessons,
           modules: existingCourse.modules,
-          isPremium: existingCourse.isPremium,
-          premiumAccessExpiresAt: existingCourse.premiumAccessExpiresAt || null,
           sourceMarketplaceCourseId:
             publishedMarketplaceCourseId || existingCourse.sourceMarketplaceCourseId || null,
         },
         isExisting: true,
-        wasUpgraded: false,
         message: "Course already exists. Loaded from library.",
       });
     }
 
     // ─── GENERATE NEW COURSE ───
-    const { modules, lessonsPerModule, totalLessons } = planLimits;
     const finalTitle = canon.standardTitle;
 
     const completion = await openai.chat.completions.create({
@@ -483,10 +200,10 @@ async function handlePost(request) {
     try {
       course = JSON.parse(completion.choices[0].message.content.trim());
     } catch (e) {
-      course = fallbackCourse(topic, difficulty, modules, lessonsPerModule);
+      course = fallbackCourse(topic, difficulty, 20, 5);
     }
 
-    const normalizedModules = normalizeModules(course.modules || [], topic, lessonsPerModule);
+    const normalizedModules = normalizeModules(course.modules || [], topic, 5);
     const courseId = existingCourse?._id || new ObjectId();
     const courseDoc = {
       _id: courseId,
@@ -515,13 +232,9 @@ async function handlePost(request) {
           },
         })),
       })),
-      isPremium,
       progress: 0,
       completed: false,
       pinned: false,
-      premiumAccessExpiresAt:
-        premiumIntent?.accessExpiresAt || marketplaceAccess?.expiryDate || null,
-      premiumPaymentReference: premiumIntent?.reference || null,
       sourceMarketplaceCourseId:
         marketplaceCourseId && ObjectId.isValid(marketplaceCourseId)
           ? new ObjectId(marketplaceCourseId)
@@ -545,23 +258,6 @@ async function handlePost(request) {
       await db.collection("library").insertOne(courseDoc);
     }
 
-    let publishedMarketplaceCourseId = courseDoc.sourceMarketplaceCourseId || null;
-    if (premiumIntent?._id && !courseDoc.sourceMarketplaceCourseId) {
-      publishedMarketplaceCourseId = await publishPaidLibraryCourseToMarketplace({
-        db,
-        userId: userId.toString(),
-        libraryCourse: courseDoc,
-      });
-    }
-
-    if (premiumIntent?._id) {
-      await consumePremiumGenerationIntent({
-        db,
-        intentId: premiumIntent._id.toString(),
-        generatedCourseId: courseId.toString(),
-      });
-    }
-
     // Increment usage after successful generation
     await trackAPIUsage(userId, "generate-course", { itemType: "course_generation", creditCost: 40 });
 
@@ -575,13 +271,9 @@ async function handlePost(request) {
         totalModules: 20,
         totalLessons: 100,
         modules: courseDoc.modules,
-        isPremium: courseDoc.isPremium,
-        premiumAccessExpiresAt: courseDoc.premiumAccessExpiresAt || null,
-        sourceMarketplaceCourseId:
-          publishedMarketplaceCourseId || courseDoc.sourceMarketplaceCourseId || null,
+        sourceMarketplaceCourseId: courseDoc.sourceMarketplaceCourseId || null,
       },
       difficulty,
-      isPremium,
     });
   } catch (error) {
     console.error("Course generation failed! Error details:", {

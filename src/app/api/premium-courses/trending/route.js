@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { hasItem } from "@/lib/planLimits";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -226,13 +227,9 @@ export async function GET(request) {
     }
   }
 
-  // Free users get cached version
-  // Pro users get personalized + fresh
-  const isPro = user?.isPremium || user?.subscription?.plan === "pro";
-
-  if (!isPro) {
+  if (!hasItem(user, 'course_generation') && !user?.isPremium) {
     return NextResponse.json(
-      { error: "Trending courses are exclusive to Pro members", upgrade: true },
+      { error: "Trending courses require course access", upgrade: true },
       { status: 403 }
     );
   }

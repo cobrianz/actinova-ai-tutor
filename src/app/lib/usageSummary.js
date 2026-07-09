@@ -1,5 +1,3 @@
-import { TIERS } from "@/lib/planLimits";
-
 const FEATURE_MAP = {
   courses: "generateCourseLimit",
   flashcards: "flashcards",
@@ -11,8 +9,6 @@ const FEATURE_MAP = {
 
 export async function getTrackedUsageSummary(db, user, options = {}) {
   const { lifetime = false } = options;
-  const tier =
-    user.subscription?.tier || (user.isPremium ? TIERS.PRO : TIERS.FREE);
   const apiNames = Object.values(FEATURE_MAP);
 
   const usageQuery = {
@@ -69,8 +65,5 @@ export async function getTrackedUsageSummary(db, user, options = {}) {
   return {
     used: totalUsed,
     details,
-    isPremium: tier === TIERS.PRO || tier === TIERS.ENTERPRISE,
-    isEnterprise: tier === TIERS.ENTERPRISE,
-    tier,
   };
 }

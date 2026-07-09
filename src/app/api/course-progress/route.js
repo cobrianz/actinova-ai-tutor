@@ -16,7 +16,7 @@ async function handlePost(request) {
     const { courseId, progress, completed, lessonId } = body;
 
     // === Plan Validation ===
-    const access = await checkCourseAccess(user._id, courseId);
+    const access = await checkCourseAccess(db, user._id, courseId);
 
     if (!access.hasAccess) {
       return NextResponse.json(

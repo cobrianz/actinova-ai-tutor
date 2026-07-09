@@ -4,24 +4,6 @@ import { NextResponse } from "next/server";
 import { withAuth, withErrorHandling } from "@/lib/middleware";
 import { connectToDatabase } from "@/lib/mongodb";
 import Chat from "@/models/Chat";
-import User from "@/models/User";
-
-// === Shared: Check if user is Premium ===
-async function requirePremium(userId) {
-  const user = await User.findById(userId).lean();
-  if (!user) throw new Error("User not found");
-
-  const isPremium =
-    user.isPremium ||
-    (user.subscription?.plan === "pro" &&
-      user.subscription?.status === "active");
-
-  if (!isPremium) {
-    throw new Error("Premium subscription required");
-  }
-
-  return user;
-}
 
 // === GET: List topics or get messages for a topic ===
 async function getHandler(request) {
@@ -32,8 +14,6 @@ async function getHandler(request) {
     const { searchParams } = new URL(request.url);
     const topic = searchParams.get("topic")?.trim();
     const action = searchParams.get("action");
-
-    await requirePremium(user._id);
 
     // 1. List all active topics (for sidebar)
     if (action === "topics") {
@@ -79,9 +59,6 @@ async function getHandler(request) {
       messages: chat?.messages || [],
     });
   } catch (error) {
-    if (error.message.includes("Premium")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
     throw error;
   }
 }
@@ -104,8 +81,6 @@ async function postHandler(request) {
       );
     }
 
-    await requirePremium(user._id);
-
     const result = await Chat.findOneAndUpdate(
       { userId: user._id, topic, isActive: true },
       {
@@ -123,9 +98,6 @@ async function postHandler(request) {
       messageCount: messages.length,
     });
   } catch (error) {
-    if (error.message.includes("Premium")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
     throw error;
   }
 }
@@ -143,8 +115,6 @@ async function deleteHandler(request) {
     if (!topic) {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
     }
-
-    await requirePremium(user._id);
 
     if (action === "delete") {
       const result = await Chat.deleteMany({
@@ -177,9 +147,6 @@ async function deleteHandler(request) {
       modified: result.modifiedCount > 0,
     });
   } catch (error) {
-    if (error.message.includes("Premium")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
     throw error;
   }
 }

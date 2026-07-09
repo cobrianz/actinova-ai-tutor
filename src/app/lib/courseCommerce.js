@@ -17,10 +17,8 @@ export const MARKETPLACE_SEED_COURSES = [
     badge: "Admin Pick",
     featured: true,
     price: MARKETPLACE_PRICE_USD,
-    isPremium: true,
     isGlobal: true,
     isPublished: true,
-    tierRequired: "premium-course",
     students: 1240,
     rating: 4.9,
     tags: ["React", "Node.js", "MongoDB", "APIs"],
@@ -43,10 +41,8 @@ export const MARKETPLACE_SEED_COURSES = [
     badge: "Hot Skill",
     featured: false,
     price: MARKETPLACE_PRICE_USD,
-    isPremium: true,
     isGlobal: true,
     isPublished: true,
-    tierRequired: "premium-course",
     students: 980,
     rating: 4.8,
     tags: ["Excel", "SQL", "Power BI", "Dashboards"],
@@ -69,10 +65,8 @@ export const MARKETPLACE_SEED_COURSES = [
     badge: "Trending",
     featured: false,
     price: MARKETPLACE_PRICE_USD,
-    isPremium: true,
     isGlobal: true,
     isPublished: true,
-    tierRequired: "premium-course",
     students: 1560,
     rating: 4.95,
     tags: ["AI", "Prompting", "Automation", "Workflows"],
@@ -113,7 +107,6 @@ export async function ensureMarketplaceSeedCourses(db) {
       coursesCol.updateOne(
         {
           isGlobal: true,
-          isPremium: true,
           $or: [{ slug: course.slug }, { title: course.title }],
         },
         {
@@ -139,7 +132,6 @@ export async function ensureMarketplaceSeedCourses(db) {
 
   await coursesCol.deleteMany({
     isGlobal: true,
-    isPremium: true,
     createdBy: null,
     title: { $nin: seedTitles },
   });
@@ -277,7 +269,6 @@ export async function publishPaidLibraryCourseToMarketplace({
   const now = new Date();
   const existingMarketplaceCourse = await coursesCol.findOne({
     isGlobal: true,
-    isPremium: true,
     $or: [
       { sourceLibraryCourseId: libraryCourse._id },
       { slug },
@@ -293,7 +284,7 @@ export async function publishPaidLibraryCourseToMarketplace({
     slug,
     description:
       libraryCourse.description || buildMarketplaceDescriptionFromCourse(libraryCourse),
-    category: libraryCourse.category || "Community Premium",
+    category: libraryCourse.category || "Community",
     difficulty: String(libraryCourse.difficulty || libraryCourse.level || "beginner").toLowerCase(),
     duration: libraryCourse.duration || "30 days",
     instructor: libraryCourse.instructor || "Actirova Community",
@@ -301,10 +292,8 @@ export async function publishPaidLibraryCourseToMarketplace({
     badge: libraryCourse.badge || "Community Pick",
     featured: false,
     price: MARKETPLACE_PRICE_USD,
-    isPremium: true,
     isGlobal: true,
     isPublished: true,
-    tierRequired: "premium-course",
     students: existingMarketplaceCourse?.students || 0,
     rating: existingMarketplaceCourse?.rating || 4.7,
     tags: Array.isArray(libraryCourse.tags) ? libraryCourse.tags : [],
@@ -459,7 +448,6 @@ export async function savePremiumGenerationIntent({
           { _id: existing._id },
           {
             $set: {
-              isPremium: true,
               premiumAccessExpiresAt: accessExpiresAt,
               premiumPaymentReference: reference || existing.premiumPaymentReference || null,
               updatedAt: now,
@@ -553,7 +541,6 @@ export async function cloneMarketplaceCourseToLibrary({
     totalModules: course.totalModules || course.modules?.length || 0,
     totalLessons: course.totalLessons || course.lessonsCount || 0,
     modules: course.modules || [],
-    isPremium: true,
     premiumAccessExpiresAt: accessExpiryDate,
     progress: 0,
     completed: false,
@@ -566,34 +553,4 @@ export async function cloneMarketplaceCourseToLibrary({
   return result.insertedId;
 }
 
-export async function syncExpiredPremiumLibraryAccess(db, user) {
-  if (!user?._id) return 0;
 
-  const plan = String(user?.subscription?.plan || "").toLowerCase();
-  const tier = String(user?.subscription?.tier || "").toLowerCase();
-  const hasActivePaidPlan =
-    user?.subscription?.status === "active" &&
-    ["pro", "premium", "enterprise"].includes(plan || tier);
-
-  if (hasActivePaidPlan) {
-    return 0;
-  }
-
-  const result = await db.collection("library").updateMany(
-    {
-      userId: new ObjectId(user._id),
-      format: "course",
-      isPremium: true,
-      premiumAccessExpiresAt: { $lt: new Date() },
-    },
-    {
-      $set: {
-        isPremium: false,
-        premiumAccessExpiredAt: new Date(),
-        updatedAt: new Date(),
-      },
-    }
-  );
-
-  return result.modifiedCount || 0;
-}

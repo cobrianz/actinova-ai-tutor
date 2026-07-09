@@ -13,7 +13,7 @@ import { downloadQuizPdfFromServer } from "@/lib/quizPdfDownload";
 import { apiClient } from "@/lib/csrfClient";
 
 const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
-  const { user, loading: authLoading, isPro, isEnterprise, hasPurchased } = useAuth();
+  const { user, loading: authLoading, isEnterprise, hasPurchased } = useAuth();
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);

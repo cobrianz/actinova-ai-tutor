@@ -28,14 +28,6 @@ export default function FlashcardsLibrary({ setActiveContent }) {
   const [flashcardToDelete, setFlashcardToDelete] = useState(null);
   const { user, refreshToken, hasPurchased } = useAuth();
   const flashcardProduct = PRODUCTS.find(p => p.id === 'flashcard_generation');
-  const isPro =
-    user &&
-    (hasPurchased('flashcard_generation') ||
-    !!(user?.credits >= (flashcardProduct?.creditCost || 25)) ||
-    (user.subscription &&
-      user.subscription.plan === "pro" &&
-      user.subscription.status === "active") ||
-      user.isPremium);
 
   useEffect(() => {
     fetchFlashcards();

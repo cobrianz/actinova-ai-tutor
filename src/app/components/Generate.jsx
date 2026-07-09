@@ -47,7 +47,7 @@ export default function Generate({ setActiveContent }) {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalFeature, setUpgradeModalFeature] = useState(null);
   const router = useRouter();
-  const { user, loading, refreshToken, isPro, hasPurchased } = useAuth();
+  const { user, loading, refreshToken, hasPurchased } = useAuth();
 
   // Sync state with URL params for reactivity
   React.useEffect(() => {
@@ -136,7 +136,7 @@ export default function Generate({ setActiveContent }) {
 
   // Strict check for Premium access (Pro or Enterprise)
   // Check tier (set by billing) and ensure status is active.
-  const isPremium = hasPurchased('course_generation') || !!user?.isPremium || isPro;
+  const isPremium = hasPurchased('course_generation') || !!user?.isPremium;
 
   // Format → product ID mapping for credit/access checks
   const formatProductMap = {
