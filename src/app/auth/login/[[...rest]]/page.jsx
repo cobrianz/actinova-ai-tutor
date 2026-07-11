@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -100,14 +96,14 @@ export default function LoginPage() {
           <div className="space-y-3">
             <form onSubmit={handleEmailLogin} className="space-y-2">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1">Email address</Label>
+                <label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1 block">Email address</label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  <Input
+                  <input
                     id="email"
                     type="email"
                     placeholder="name@example.com"
-                    className="pl-10 h-10 bg-white/80 border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none"
+                    className="pl-10 h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -117,7 +113,7 @@ export default function LoginPage() {
 
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center px-1">
-                  <Label htmlFor="password" className="text-sm font-bold text-gray-700">Password</Label>
+                  <label htmlFor="password" className="text-sm font-bold text-gray-700 block">Password</label>
                   <Link
                     href="/auth/forgot-password"
                     className="text-xs font-bold text-green-600 hover:text-green-700 transition-colors"
@@ -127,11 +123,11 @@ export default function LoginPage() {
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  <Input
+                  <input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10 pr-10 h-10 bg-white/80 border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none"
+                    className="pl-10 pr-10 h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -147,11 +143,12 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center space-x-2 py-0.5">
-                <Checkbox
+                <input
                   id="remember"
+                  type="checkbox"
                   checked={rememberMe}
-                  onCheckedChange={setRememberMe}
-                  className="w-4 h-4 border-slate-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 transition-colors"
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500/10 transition-colors"
                 />
                 <label
                   htmlFor="remember"
@@ -161,13 +158,13 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              <Button
+              <button
                 type="submit"
-                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700"
+                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue"}
-              </Button>
+              </button>
             </form>
 
             <div className="relative flex items-center py-1.5">
@@ -177,18 +174,17 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Button
-                variant="outline"
+              <button
                 type="button"
                 onClick={() => handleGoogleLogin()}
-                className="w-full h-10 bg-white border-slate-200 hover:bg-slate-50 text-gray-700 font-bold rounded-lg transition-all flex items-center justify-center gap-3 border shadow-none"
+                className="w-full h-10 bg-white hover:bg-slate-50 text-gray-700 font-bold rounded-lg transition-all flex items-center justify-center gap-3 border border-slate-200 shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 <div className="w-5 h-5 flex items-center justify-center">
                   <GoogleIcon size={18} />
                 </div>
                 <span>Sign in with Google</span>
-              </Button>
+              </button>
             </div>
 
             <p className="text-center text-sm font-medium text-gray-500 pt-1">

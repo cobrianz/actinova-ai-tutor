@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 import Flashcards from "./Flashcards";
@@ -13,257 +13,254 @@ import {
   Bookmark,
   ArrowLeft,
   Eye,
+  Brain,
+  Layers,
+  FolderOpen,
 } from "lucide-react";
 import { apiClient } from "@/lib/csrfClient";
+
+function StatsBar({ flashcards, bookmarkedCount }) {
+  const stats = useMemo(() => {
+    const totalSets = flashcards.length;
+    const totalCards = flashcards.reduce((acc, c) => acc + (c.totalCards || 0), 0);
+    return { totalSets, totalCards };
+  }, [flashcards]);
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="rounded-xl bg-card border border-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Layers size={18} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">{stats.totalSets}</p>
+            <p className="text-xs text-muted-foreground">Total Sets</p>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-card border border-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+            <Brain size={18} className="text-green-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">{stats.totalCards}</p>
+            <p className="text-xs text-muted-foreground">Total Cards</p>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-card border border-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <Bookmark size={18} className="text-amber-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">{bookmarkedCount}</p>
+            <p className="text-xs text-muted-foreground">Bookmarked</p>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-card border border-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+            <FolderOpen size={18} className="text-blue-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">
+              {new Set(flashcards.map(c => c.topic || c.title)).size}
+            </p>
+            <p className="text-xs text-muted-foreground">Topics</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlashcardSetCard({ card, isBookmarked, onBookmark, onStudy, onDelete }) {
+  const diff = (card.difficulty || card.level || "beginner").toLowerCase();
+  const diffConfig = {
+    beginner: { label: "Beginner", color: "text-green-500", bg: "bg-green-500/10" },
+    intermediate: { label: "Intermediate", color: "text-amber-500", bg: "bg-amber-500/10" },
+    advanced: { label: "Advanced", color: "text-red-500", bg: "bg-red-500/10" },
+  };
+  const d = diffConfig[diff] || diffConfig.beginner;
+  const total = card.totalCards ?? (Array.isArray(card.cards) ? card.cards.length : 0);
+
+  return (
+    <div className="group rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/30">
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Sparkles size={18} className="text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-foreground line-clamp-2 text-balance">
+                {card.title}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                {card.topic || "Interactive flashcards"}
+              </p>
+            </div>
+          </div>
+          <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${d.bg} ${d.color}`}>
+            {d.label}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+          <Sparkles size={12} />
+          <span>{total} cards</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onStudy(card)}
+            className="flex-1 py-2 px-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+          >
+            <BookOpen size={14} />
+            Study
+          </button>
+          <button
+            onClick={() => onBookmark(card._id)}
+            className={`p-2 rounded-xl border transition-colors ${
+              isBookmarked
+                ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
+                : "text-muted-foreground border-border hover:bg-muted"
+            }`}
+          >
+            <Bookmark size={16} className={isBookmarked ? "fill-current" : ""} />
+          </button>
+          <button
+            onClick={() => onDelete(card)}
+            className="p-2 rounded-xl border border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function FlashcardsLibrary({ setActiveContent }) {
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFlashcard, setSelectedFlashcard] = useState(null);
   const [showFlashcards, setShowFlashcards] = useState(false);
-  const [loadingFlashcards, setLoadingFlashcards] = useState(new Set());
-  const [transitioning, setTransitioning] = useState(false);
   const [bookmarkedFlashcards, setBookmarkedFlashcards] = useState(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [flashcardToDelete, setFlashcardToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const { user, refreshToken, hasPurchased } = useAuth();
-  const flashcardProduct = PRODUCTS.find(p => p.id === 'flashcard_generation');
 
   useEffect(() => {
     fetchFlashcards();
-    // Load bookmarked from localStorage
     try {
       const saved = localStorage.getItem("bookmarked_flashcards");
-      if (saved) {
-        setBookmarkedFlashcards(new Set(JSON.parse(saved)));
-      }
-    } catch { }
+      if (saved) setBookmarkedFlashcards(new Set(JSON.parse(saved)));
+    } catch {}
   }, []);
 
-  const fetchFlashcards = async (retryAfterRefresh = true) => {
+  const fetchFlashcards = async (retry = true) => {
     try {
       const response = await apiClient.get("/api/flashcards");
-
-      if (response.status === 401 && retryAfterRefresh) {
-        // Try to refresh token and retry
-
-        const refreshSuccess = await refreshToken();
-        if (refreshSuccess) {
-          return fetchFlashcards(false);
-        } else {
-          toast.error("Session expired. Please log in again.");
-          return;
-        }
+      if (response.status === 401 && retry) {
+        const ok = await refreshToken();
+        if (ok) return fetchFlashcards(false);
+        toast.error("Session expired. Please log in again.");
+        return;
       }
-
       if (response.ok) {
         const data = await response.json();
         setFlashcards(data.cards || []);
-      } else {
-        toast.error("Failed to load flashcards");
       }
     } catch (error) {
       console.error("Error fetching flashcards:", error);
-      toast.error("Error loading flashcards");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteClick = (flashcard) => {
-    setFlashcardToDelete(flashcard);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = async (retryAfterRefresh = true) => {
-    if (!flashcardToDelete) return;
-
-    try {
-      const response = await apiClient.delete(`/api/flashcards/${flashcardToDelete._id}`);
-
-      if (response.status === 401 && retryAfterRefresh) {
-        // Try to refresh token and retry
-        const refreshSuccess = await refreshToken();
-        if (refreshSuccess) {
-          return confirmDelete(false);
-        } else {
-          toast.error("Session expired. Please log in again.");
-          return;
-        }
-      }
-
-      if (response.ok) {
-        setFlashcards(
-          flashcards.filter((card) => card._id !== flashcardToDelete._id)
-        );
-        toast.success("Flashcard set deleted successfully");
-        setShowDeleteModal(false);
-        setFlashcardToDelete(null);
-      } else {
-        toast.error("Failed to delete flashcard set");
-      }
-    } catch (error) {
-      console.error("Error deleting flashcard set:", error);
-      toast.error("Error deleting flashcard set");
-    }
-  };
-
-  const handleBookmark = async (flashcardId, retryAfterRefresh = true) => {
-    // Optimistic UI update
-    const isCurrentlyBookmarked = bookmarkedFlashcards.has(flashcardId);
+  const handleBookmark = async (id) => {
+    const isBookmarked = bookmarkedFlashcards.has(id);
     const newSet = new Set(bookmarkedFlashcards);
-    if (isCurrentlyBookmarked) {
-      newSet.delete(flashcardId);
-    } else {
-      newSet.add(flashcardId);
-    }
+    isBookmarked ? newSet.delete(id) : newSet.add(id);
     setBookmarkedFlashcards(newSet);
-    // Save to localStorage
-    try {
-      localStorage.setItem(
-        "bookmarked_flashcards",
-        JSON.stringify([...newSet])
-      );
-    } catch { }
+    try { localStorage.setItem("bookmarked_flashcards", JSON.stringify([...newSet])); } catch {}
 
     try {
-      const response = await apiClient.post("/api/library", {
-        action: "bookmark",
-        itemId: `cards_${flashcardId}`,
-      }, {
-        headers: {
-          "x-user-id": user?._id || user?.id || "",
-        }
-      });
-
-      if (response.status === 401 && retryAfterRefresh) {
-        // Try to refresh token and retry
-        const refreshSuccess = await refreshToken();
-        if (refreshSuccess) {
-          return handleBookmark(flashcardId, false);
-        }
-      }
-
-      if (response.ok) {
-        toast.success(
-          isCurrentlyBookmarked
-            ? "Removed from bookmarks"
-            : "Added to bookmarks"
-        );
-      } else {
-        // Revert optimistic update on failure
-        const revertSet = new Set(bookmarkedFlashcards);
-        if (!isCurrentlyBookmarked) {
-          revertSet.delete(flashcardId);
-        } else {
-          revertSet.add(flashcardId);
-        }
-        setBookmarkedFlashcards(revertSet);
-        try {
-          localStorage.setItem(
-            "bookmarked_flashcards",
-            JSON.stringify([...revertSet])
-          );
-        } catch { }
-        toast.error("Failed to update bookmark");
-      }
-    } catch (error) {
-      // Revert optimistic update on error
-      const revertSet = new Set(bookmarkedFlashcards);
-      if (!isCurrentlyBookmarked) {
-        revertSet.delete(flashcardId);
-      } else {
-        revertSet.add(flashcardId);
-      }
-      setBookmarkedFlashcards(revertSet);
-      try {
-        localStorage.setItem(
-          "bookmarked_flashcards",
-          JSON.stringify([...revertSet])
-        );
-      } catch { }
-      console.error("Error bookmarking card:", error);
+      await apiClient.post("/api/library", { action: "bookmark", itemId: `cards_${id}` });
+      toast.success(isBookmarked ? "Removed from bookmarks" : "Added to bookmarks");
+    } catch {
+      setBookmarkedFlashcards(bookmarkedFlashcards);
       toast.error("Failed to update bookmark");
     }
   };
 
+  const handleDeleteClick = (card) => {
+    setFlashcardToDelete(card);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!flashcardToDelete) return;
+    setDeleteLoading(true);
+    try {
+      const response = await apiClient.delete(`/api/flashcards/${flashcardToDelete._id}`);
+      if (response.ok) {
+        setFlashcards((prev) => prev.filter((c) => c._id !== flashcardToDelete._id));
+        toast.success("Flashcard set deleted");
+        setShowDeleteModal(false);
+        setFlashcardToDelete(null);
+      } else {
+        toast.error("Failed to delete");
+      }
+    } catch {
+      toast.error("Failed to delete flashcard set");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleStudy = (card) => {
+    setSelectedFlashcard(card);
+    setShowFlashcards(true);
+  };
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-48 mb-2"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-64"></div>
-          </div>
-          <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-40"></div>
+        <div className="space-y-2">
+          <div className="h-7 bg-muted rounded-lg w-48 animate-pulse" />
+          <div className="h-4 bg-muted rounded-lg w-64 animate-pulse" />
         </div>
-
-        <div className="py-12 bg-accent rounded-2xl mb-12 border border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="text-center">
-                  <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16 mx-auto mb-2"></div>
-                  <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24 mx-auto"></div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />
+          ))}
         </div>
-
-        <div className="mb-12">
-          <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-64 mb-2"></div>
-          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-96"></div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, index) => (
-            <div
-              key={index}
-              className="bg-card border border-border rounded-lg p-6 animate-pulse"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2 bg-gray-300 dark:bg-gray-600 rounded-xl w-12 h-12"></div>
-                <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded-full w-20"></div>
-              </div>
-              <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
-              <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-6"></div>
-              <div className="flex items-center gap-2 mb-6 py-3 border-t border-gray-200 dark:border-slate-700">
-                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 flex-1">
-                  <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-10"></div>
-                  <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded flex-1"></div>
-                </div>
-                <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-10"></div>
-              </div>
-              <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded w-full mt-4"></div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-52 bg-muted rounded-2xl animate-pulse" />
           ))}
         </div>
       </div>
     );
   }
 
-  // If showing individual card set
   if (showFlashcards && selectedFlashcard) {
     return (
-      <div
-        className={`min-h-screen bg-background transition-opacity duration-300 ${transitioning ? "opacity-0" : "opacity-100"}`}
-      >
-        <div className="p-4">
+      <div className="min-h-screen bg-background">
+        <div className="p-4 border-b border-border">
           <button
-            onClick={() => {
-              setShowFlashcards(false);
-              setSelectedFlashcard(null);
-            }}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Back to flashcards library"
+            onClick={() => { setShowFlashcards(false); setSelectedFlashcard(null); }}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft size={20} />
-            <span>Back</span>
+            <ArrowLeft size={16} />
+            Back to Library
           </button>
         </div>
         <Flashcards cardData={selectedFlashcard} />
@@ -271,319 +268,86 @@ export default function FlashcardsLibrary({ setActiveContent }) {
     );
   }
 
-  // Main library view
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            My Flashcards
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
-            View and manage your generated flashcard sets
+          <h1 className="text-2xl font-bold text-foreground">My Flashcards</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Study and memorize key concepts with flashcards
           </p>
         </div>
         <button
           onClick={() => setActiveContent("generate")}
-          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          <Plus className="w-5 h-5" />
-          <span>Create New</span>
+          <Plus size={16} />
+          Create New
         </button>
       </div>
 
       {flashcards.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 dark:text-gray-600 mb-4">
-            <Sparkles className="w-16 h-16 mx-auto" />
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-xl font-semibold text-foreground mb-2">
-            No flashcards yet
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            Create your first flashcard set to get started
+          <h3 className="text-lg font-semibold text-foreground mb-2">No flashcards yet</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+            Create your first flashcard set to start learning with spaced repetition
           </p>
+          <button
+            onClick={() => setActiveContent("generate")}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={16} />
+            Create Flashcards
+          </button>
         </div>
       ) : (
         <>
-          {/* Stats Section */}
-          {(() => {
-            const totalSets = flashcards.length;
-            const totalCards = flashcards.reduce(
-              (acc, card) => acc + (card.totalCards || 0),
-              0
-            );
-            // Compute opened cards by reading localStorage entries per set
-            let openedCardsTotal = 0;
-            try {
-              openedCardsTotal = flashcards.reduce((acc, set) => {
-                const key = `opened_cards_${set._id}`;
-                const raw =
-                  typeof window !== "undefined"
-                    ? localStorage.getItem(key)
-                    : null;
-                if (!raw) return acc;
-                try {
-                  const arr = JSON.parse(raw);
-                  return acc + (Array.isArray(arr) ? arr.length : 0);
-                } catch {
-                  return acc;
-                }
-              }, 0);
-            } catch { }
-            // Compute bookmarked sets using current UI state
-            const bookmarkedCount = bookmarkedFlashcards.size;
+          <StatsBar flashcards={flashcards} bookmarkedCount={bookmarkedFlashcards.size} />
 
-            return (
-              <div className="py-8 sm:py-10 mb-12">
-                <div className="max-w-full mx-auto px-0 ">
-                  <div className="flex flex-wrap justify-between gap-6">
-                    {/* Tile: Total Sets */}
-                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
-                      <div className="relative p-5 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 flex items-center justify-center font-bold">
-                          {totalSets}
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Total Sets
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Collections you've created
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Tile: Total Cards */}
-                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
-                      <div className="relative p-5 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-300 flex items-center justify-center font-bold">
-                          {totalCards}
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Total Cards
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Across all sets
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Tile: Opened Cards */}
-                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
-                      <div className="relative p-5 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {openedCardsTotal}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Opened Cards
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Across all sets (this device)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Tile: Bookmarked Sets */}
-                    <div className="relative overflow-hidden rounded-xl bg-card border border-border flex-1 min-w-[240px]">
-                      <div className="relative p-3 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-300 flex items-center justify-center">
-                          <p className="text-2xl font-bold text-gray-900 dark:text:white">
-                            {bookmarkedCount}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Bookmarked
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Sets saved for quick access
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Section Header */}
-          <div className="mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-2 text-balance">
-              Your Flashcards Library
-            </h2>
-            <p className="text-muted-foreground text-balance">
-              Master key concepts with your personalized flashcard collections
-            </p>
-          </div>
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {flashcards.map((card) => {
-              const diff = (
-                card.difficulty ||
-                card.level ||
-                "beginner"
-              ).toLowerCase();
-              const diffLabel = diff.charAt(0).toUpperCase() + diff.slice(1);
-              const diffClasses =
-                diff === "beginner"
-                  ? "bg-green-500/15 text-green-600 border-green-500/30 dark:bg-green-500/20 dark:text-green-300"
-                  : diff === "intermediate"
-                    ? "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:bg-yellow-500/20 dark:text-yellow-300"
-                    : "bg-red-500/15 text-red-600 border-red-500/30 dark:bg-red-500/20 dark:text-red-300";
-
-              const total =
-                card.totalCards ??
-                (Array.isArray(card.cards) ? card.cards.length : 0);
-
-              return (
-                <div key={card._id} className="h-full">
-                  <div className="relative flex h-full flex-col rounded-xl border border-border bg-card transition-colors hover:border-primary">
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 flex items-center justify-center shrink-0">
-                            <Sparkles size={20} />
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="text-lg font-semibold text-foreground line-clamp-2 text-balance">
-                              {card.title}
-                            </h3>
-                            <p className="mt-1 text-sm text-muted-foreground line-clamp-1">
-                              {card.topic
-                                ? `Flashcards for ${card.topic}`
-                                : `Interactive flashcards to master key concepts.`}
-                            </p>
-                          </div>
-                        </div>
-                        <div
-                          className={`inline-flex items-center px-3 py-1 rounded-full border text-xs font-semibold ${diffClasses}`}
-                        >
-                          {diffLabel}
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                        <span className="inline-flex items-center gap-1">
-                          <Sparkles
-                            size={14}
-                            className="text-gray-500 dark:text-gray-400"
-                          />
-                          <span className="font-medium">{total}</span>
-                          <span>cards</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto px-5 pb-5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleBookmark(card._id)}
-                            className={`p-2 rounded-lg border transition-colors ${bookmarkedFlashcards.has(card._id)
-                              ? "text-yellow-600 dark:text-yellow-300 border-yellow-300/40 bg-yellow-50 dark:bg-yellow-900/20"
-                              : "text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:bg-yellow-50/40 dark:hover:bg-yellow-900/10 hover:text-yellow-600"
-                              }`}
-                            title={
-                              bookmarkedFlashcards.has(card._id)
-                                ? "Remove bookmark"
-                                : "Bookmark"
-                            }
-                          >
-                            <Bookmark
-                              size={18}
-                              className={
-                                bookmarkedFlashcards.has(card._id)
-                                  ? "fill-current"
-                                  : ""
-                              }
-                            />
-                          </button>
-
-                        </div>
-
-
-                      </div>
-
-                      <button
-                        onClick={async () => {
-                          setTransitioning(true);
-                          setLoadingFlashcards((prev) =>
-                            new Set(prev).add(card._id)
-                          );
-                          setTimeout(() => {
-                            setSelectedFlashcard(card);
-                            setShowFlashcards(true);
-                            setLoadingFlashcards((prev) => {
-                              const newSet = new Set(prev);
-                              newSet.delete(card._id);
-                              return newSet;
-                            });
-                            setTransitioning(false);
-                          }, 300);
-                        }}
-                        disabled={loadingFlashcards.has(card._id)}
-                        className="w-full mt-4 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Sparkles size={16} />
-                        <span>
-                          {loadingFlashcards.has(card._id)
-                            ? "Loading..."
-                            : "Study Flashcards"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {flashcards.map((card) => (
+              <FlashcardSetCard
+                key={card._id}
+                card={card}
+                isBookmarked={bookmarkedFlashcards.has(card._id)}
+                onBookmark={handleBookmark}
+                onStudy={handleStudy}
+                onDelete={handleDeleteClick}
+              />
+            ))}
           </div>
         </>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       {showDeleteModal && flashcardToDelete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-gray-200 dark:border-slate-700">
-            <div className="p-6">
-              <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
-                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+          <div className="bg-card rounded-2xl w-full max-w-sm shadow-2xl border border-border">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-500" />
               </div>
-
-              <h3 className="text-xl font-bold text-foreground text-center mb-2">
-                Delete Flashcard Set
-              </h3>
-
-              <p className="text-muted-foreground text-center mb-6">
-                Are you sure you want to delete{" "}
-                <strong>"{flashcardToDelete.title}"</strong>? This action cannot
-                be undone.
+              <h3 className="font-semibold text-foreground mb-1">Delete Flashcard Set</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Are you sure you want to delete &quot;{flashcardToDelete.title}&quot;? This cannot be undone.
               </p>
-
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setFlashcardToDelete(null);
-                  }}
-                  className="flex-1 px-4 py-2 border border-input text-muted-foreground rounded-lg hover:bg-secondary transition-colors"
+                  onClick={() => { setShowDeleteModal(false); setFlashcardToDelete(null); }}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-muted-foreground bg-muted rounded-xl hover:bg-muted/80 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  disabled={deleteLoading}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
                 >
-                  Delete
+                  {deleteLoading ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>

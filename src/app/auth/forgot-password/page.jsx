@@ -17,9 +17,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -133,14 +130,14 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4">
               {step === 1 && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1">Email address</Label>
+                  <label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1 block">Email address</label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    <Input
+                    <input
                       id="email"
                       type="email"
                       placeholder="name@example.com"
-                      className="pl-10 h-10 bg-white/80 border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none"
+                      className="pl-10 h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -151,7 +148,7 @@ export default function ForgotPasswordPage() {
 
               {step === 2 && (
                 <div className="space-y-1 text-center">
-                  <Label htmlFor="code" className="text-sm font-bold text-gray-700 mb-2 block">Reset code</Label>
+                  <label htmlFor="code" className="text-sm font-bold text-gray-700 mb-2 block">Reset code</label>
                   <input
                     id="code"
                     type="text"
@@ -169,14 +166,14 @@ export default function ForgotPasswordPage() {
               {step === 3 && (
                 <div className="space-y-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-sm font-bold text-gray-700 ml-1">New password</Label>
+                    <label htmlFor="password" className="text-sm font-bold text-gray-700 ml-1 block">New password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      <Input
+                      <input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10 pr-10 h-11 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none"
+                        className="pl-10 pr-10 h-11 w-full bg-white border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none outline-none"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -191,14 +188,14 @@ export default function ForgotPasswordPage() {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-sm font-bold text-gray-700 ml-1">Confirm password</Label>
+                    <label htmlFor="confirmPassword" className="text-sm font-bold text-gray-700 ml-1 block">Confirm password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      <Input
+                      <input
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10 pr-10 h-11 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none"
+                        className="pl-10 pr-10 h-11 w-full bg-white border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-xl transition-all font-medium text-sm shadow-none outline-none"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
@@ -215,15 +212,15 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              <Button
+              <button
                 type="submit"
-                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700"
+                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   step === 1 ? "Request link" : step === 2 ? "Verify code" : "Update password"
                 )}
-              </Button>
+              </button>
               
               {step > 1 && (
                 <button

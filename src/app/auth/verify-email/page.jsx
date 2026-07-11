@@ -7,9 +7,6 @@ import { Lock, ArrowLeft, Key, Loader2, User, Zap, Sparkles } from "lucide-react
 import { toast } from "sonner";
 import { useAuth } from "../../components/AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 function VerifyEmailContent() {
   const [code, setCode] = useState("");
@@ -151,7 +148,7 @@ function VerifyEmailContent() {
           <div className="space-y-3">
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1 text-center">
-                <Label htmlFor="code" className="text-sm font-bold text-gray-700 mb-2 block">Verification code</Label>
+                <label htmlFor="code" className="text-sm font-bold text-gray-700 mb-2 block">Verification code</label>
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input
@@ -168,13 +165,13 @@ function VerifyEmailContent() {
                   <p className="text-[10px] font-black text-gray-400 mt-2.5 uppercase tracking-widest">Enter the code from your inbox</p>
               </div>
 
-              <Button
+              <button
                 type="submit"
-                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700"
+                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading || code.length < 6}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify account"}
-              </Button>
+              </button>
             </form>
 
             <div className="text-center space-y-2">
