@@ -16,8 +16,13 @@ dotenv.config({ path: ".env.local" });
 dotenv.config();
 
 const uri = process.env.MONGODB_URI;
+const dbName = process.env.MONGODB_DB_NAME;
 if (!uri) {
   console.error("Missing MONGODB_URI env var.");
+  process.exit(1);
+}
+if (!dbName) {
+  console.error("Missing MONGODB_DB_NAME env var.");
   process.exit(1);
 }
 
@@ -33,17 +38,7 @@ async function run() {
   await client.connect();
 
   try {
-    const dbNameFromUri = (() => {
-      try {
-        const u = new URL(uri);
-        const p = u.pathname?.replace(/^\//, "");
-        return p || null;
-      } catch {
-        return null;
-      }
-    })();
-
-    const db = client.db(dbNameFromUri || undefined);
+    const db = client.db(dbName);
 
     const existing = new Set(await db.listCollections({}, { nameOnly: true }).toArray().then((x) => x.map((c) => c.name)));
 

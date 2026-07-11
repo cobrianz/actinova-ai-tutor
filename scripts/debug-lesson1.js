@@ -7,11 +7,13 @@ const { MongoClient } = require("mongodb");
 
 async function main() {
   const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  const dbName = process.env.MONGODB_DB_NAME;
   if (!uri) throw new Error("Missing MONGODB_URI (or MONGO_URI) in .env.local");
+  if (!dbName) throw new Error("Missing MONGODB_DB_NAME in .env.local");
 
   const client = new MongoClient(uri);
   await client.connect();
-  const db = client.db();
+  const db = client.db(dbName);
   const col = db.collection("library");
 
   const doc = await col.findOne(
