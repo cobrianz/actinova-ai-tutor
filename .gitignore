@@ -72,3 +72,21 @@ Thumbs.db
 # generated type files (regenerated on build)
 /next-env.d.ts
 .env.local
+
+# PWA build artifacts
+public/sw.js
+public/workbox-*.js
+public/precache.*.js
+
+# sitemap build artifacts
+public/sitemap.xml
+public/sitemap-0.xml
+
+# scripts (one-time use)
+scripts/debug-lesson1.js
+scripts/migrate-test-to-actinova.js
+scripts/empty-billing.js
+scripts/drop-community-collections.js
+
+# templates (unused)
+templates/

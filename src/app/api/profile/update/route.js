@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
+import { getTrackedUsageSummary } from "@/lib/usageSummary";
 
 async function handleGet(request) {
   const user = request.user;
@@ -89,7 +90,7 @@ async function handlePut(request) {
       avatar: updatedUser.avatar,
       location: updatedUser.location,
       bio: updatedUser.profile?.bio || "",
-      usage: await calculateUsage(updatedUser, db),
+      usage: await getTrackedUsageSummary(db, updatedUser),
     },
   });
 }
@@ -205,7 +206,7 @@ async function handlePost(request) {
       onboardingCompleted: !!updatedUser.onboardingCompleted,
       emailVerified: !!updatedUser.emailVerified,
       status: updatedUser.status,
-      usage: await calculateUsage(updatedUser, db),
+      usage: await getTrackedUsageSummary(db, updatedUser),
     },
   });
 }

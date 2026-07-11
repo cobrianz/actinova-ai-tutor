@@ -12,7 +12,7 @@ export const CREDIT_PACKS = [
   { id: "pro", credits: 500, price: 49.99, popular: false },
 ];
 
-export const SIGNUP_CREDITS = 10;
+export const SIGNUP_CREDITS = 60;
 
 export function hasItem(user, itemType) {
   return user?.purchasedItems?.some(item => item.itemType === itemType) ?? false;
