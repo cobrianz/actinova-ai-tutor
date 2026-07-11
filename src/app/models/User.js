@@ -240,6 +240,12 @@ const userSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    streak: {
+      current: { type: Number, default: 0 },
+      longest: { type: Number, default: 0 },
+      lastActiveDate: { type: String }, // YYYY-MM-DD format
+      activeDates: [{ type: String }], // Array of YYYY-MM-DD for calendar
+    },
     settings: {
       notifications: {
         email: { type: Boolean, default: true },

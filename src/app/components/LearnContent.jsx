@@ -13,6 +13,10 @@ import {
   X,
   CheckCircle,
   Lock,
+  HelpCircle,
+  Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -329,6 +333,9 @@ export default function LearnContent() {
   }, [chatMessages]);
 
   const [activeRightPanel, setActiveRightPanel] = useState("notes");
+  const [generatedQuestions, setGeneratedQuestions] = useState([]);
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [revealedAnswers, setRevealedAnswers] = useState(new Set());
 
   // Handle responsive sidebar defaults
   useEffect(() => {
@@ -1152,6 +1159,92 @@ export default function LearnContent() {
     }
   };
 
+  const generateQuestions = async () => {
+    const currentLesson = getCurrentLesson();
+    if (!currentLesson?.content) {
+      toast.error("Lesson content not loaded yet");
+      return;
+    }
+
+    setIsGeneratingQuestions(true);
+    setGeneratedQuestions([]);
+    setRevealedAnswers(new Set());
+
+    try {
+      const response = await apiClient.post("/api/course-agent", {
+        action: "generateQuestions",
+        lessonContent: currentLesson.content,
+        lessonTitle: currentLesson.title,
+        courseTopic: courseData?.title || topic,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate questions");
+      }
+
+      const data = await response.json();
+      setGeneratedQuestions(data.questions || []);
+      toast.success(`Generated ${data.questions?.length || 0} questions`);
+    } catch (error) {
+      console.error("Question generation error:", error);
+      toast.error("Failed to generate questions. Please try again.");
+    } finally {
+      setIsGeneratingQuestions(false);
+    }
+  };
+
+  const toggleAnswer = (questionId) => {
+    setRevealedAnswers((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+  };
+
+  const generateFlashcardsFromLesson = async () => {
+    const currentLesson = getCurrentLesson();
+    if (!currentLesson?.content) {
+      toast.error("Lesson content not loaded yet");
+      return;
+    }
+
+    if (!hasPurchased('flashcard_generation')) {
+      toast.error("Flashcard generation is a Pro feature. Please upgrade.");
+      return;
+    }
+
+    setIsGeneratingQuestions(true);
+
+    try {
+      const response = await apiClient.post("/api/course-agent", {
+        action: "generateFlashcards",
+        lessonContent: currentLesson.content,
+        lessonTitle: currentLesson.title,
+        courseTopic: courseData?.title || topic,
+        difficulty: courseData?.level || difficulty,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate flashcards");
+      }
+
+      const data = await response.json();
+      toast.success(`Generated ${data.totalCards || 0} flashcards!`);
+      
+      // Navigate to flashcards tab in dashboard
+      router.push("/dashboard?tab=flashcards");
+    } catch (error) {
+      console.error("Flashcard generation error:", error);
+      toast.error("Failed to generate flashcards. Please try again.");
+    } finally {
+      setIsGeneratingQuestions(false);
+    }
+  };
+
   // Interactive D3 visualizations removed. If needed later, replace with static
   // images or links to externally hosted diagrams.
 
@@ -1266,6 +1359,12 @@ export default function LearnContent() {
       return () => clearTimeout(timeoutId);
     }
   }, [notes, courseData, activeLesson]);
+
+  // Reset questions when lesson changes
+  useEffect(() => {
+    setGeneratedQuestions([]);
+    setRevealedAnswers(new Set());
+  }, [activeLesson]);
 
   // Clean up old local storage entries to prevent storage bloat
   const cleanupLocalStorage = () => {
@@ -2157,6 +2256,16 @@ export default function LearnContent() {
                 Notes
               </button>
               <button
+                onClick={() => setActiveRightPanel("questions")}
+                className={`flex-1 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeRightPanel === "questions"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
+                Questions
+              </button>
+              <button
                 onClick={() => setActiveRightPanel("chat")}
                 className={`flex-1 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeRightPanel === "chat"
                   ? "border-primary text-primary"
@@ -2214,6 +2323,141 @@ export default function LearnContent() {
                   </button>
                 </div>
               </div>
+            ) : activeRightPanel === "questions" ? (
+              <div className="h-full flex flex-col">
+                <div className="p-3 sm:p-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-sm sm:text-base text-foreground">
+                        Practice Questions
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Test your understanding
+                      </p>
+                    </div>
+                    {generatedQuestions.length > 0 && (
+                      <button
+                        onClick={generateQuestions}
+                        disabled={isGeneratingQuestions}
+                        className="text-xs text-primary hover:text-primary/80 font-medium"
+                      >
+                        Regenerate
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
+                  {isGeneratingQuestions ? (
+                    <div className="flex flex-col items-center justify-center h-full space-y-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Generating questions from this lesson...
+                      </p>
+                    </div>
+                  ) : generatedQuestions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full space-y-4">
+                      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <HelpCircle className="w-8 h-8 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <h4 className="font-semibold text-sm text-foreground mb-1">
+                          Ready to test yourself?
+                        </h4>
+                        <p className="text-xs text-muted-foreground max-w-[200px]">
+                          Generate questions based on the current lesson content
+                        </p>
+                      </div>
+                      <button
+                        onClick={generateQuestions}
+                        disabled={!currentLesson?.content}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                          currentLesson?.content
+                            ? "bg-primary text-primary-foreground hover:scale-[1.02] shadow-lg shadow-primary/20"
+                            : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+                        }`}
+                      >
+                        Generate Questions
+                      </button>
+                      <button
+                        onClick={generateFlashcardsFromLesson}
+                        disabled={!currentLesson?.content || !hasPurchased('flashcard_generation')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                          currentLesson?.content && hasPurchased('flashcard_generation')
+                            ? "bg-secondary text-foreground hover:scale-[1.02] border border-border"
+                            : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+                        }`}
+                      >
+                        Generate Flashcards
+                      </button>
+                    </div>
+                  ) : (
+                    generatedQuestions.map((q) => (
+                      <div
+                        key={q.id}
+                        className="bg-card border border-border rounded-xl overflow-hidden"
+                      >
+                        <div className="p-3 sm:p-4">
+                          <div className="flex items-start gap-2 mb-2">
+                            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                              q.difficulty === "easy"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : q.difficulty === "hard"
+                                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                            }`}>
+                              {q.difficulty}
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium text-foreground leading-relaxed">
+                            {q.question}
+                          </p>
+                        </div>
+                        <div className="border-t border-border">
+                          <button
+                            onClick={() => toggleAnswer(q.id)}
+                            className="w-full px-3 sm:px-4 py-2.5 flex items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            <span>{revealedAnswers.has(q.id) ? "Hide Answer" : "Show Answer"}</span>
+                            {revealedAnswers.has(q.id) ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          {revealedAnswers.has(q.id) && (
+                            <div className="px-3 sm:p-4 pt-0 pb-3 sm:pb-4">
+                              <div className="bg-muted/50 rounded-lg p-3 mt-2">
+                                <p
+                                  className="text-sm text-foreground leading-relaxed"
+                                  dangerouslySetInnerHTML={{
+                                    __html: renderContent(q.answer)
+                                  }}
+                                />
+                              </div>
+                            </div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      {generatedQuestions.length > 0 && (
+                        <div className="pt-4 border-t border-border">
+                          <button
+                            onClick={generateFlashcardsFromLesson}
+                            disabled={!hasPurchased('flashcard_generation')}
+                            className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${
+                              hasPurchased('flashcard_generation')
+                                ? "bg-secondary text-foreground hover:bg-secondary/80 border border-border"
+                                : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+                            }`}
+                          >
+                            Create Flashcards from This Lesson
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
             ) : (
               <div className="h-full flex flex-col bg-muted/30 dark:bg-background relative overflow-hidden">
                 {/* Chat Background Pattern */}

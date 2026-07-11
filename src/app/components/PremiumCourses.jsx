@@ -36,16 +36,40 @@ export default function PremiumCourses() {
 
     async function fetchCourses() {
       try {
-        const response = await apiClient.get("/api/premium-courses");
-        const data = await response.json();
+        // Fetch both marketplace and trending courses
+        const [marketplaceRes, trendingRes] = await Promise.allSettled([
+          apiClient.get("/api/premium-courses"),
+          apiClient.get("/api/premium-courses/trending"),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to load premium courses");
+        let marketplaceCourses = [];
+        if (marketplaceRes.status === "fulfilled" && marketplaceRes.value.ok) {
+          const data = await marketplaceRes.value.json();
+          marketplaceCourses = data.courses || [];
+        }
+
+        let trendingCourses = [];
+        if (trendingRes.status === "fulfilled" && trendingRes.value.ok) {
+          const data = await trendingRes.value.json();
+          trendingCourses = (data.courses || []).map((c) => ({
+            ...c,
+            id: c.id || `trending-${Date.now()}`,
+            isTrending: true,
+            badge: "Trending",
+            featured: false,
+            price: 0,
+            access: { hasAccess: true, source: "subscription" },
+            students: 0,
+            rating: 0,
+            totalModules: 20,
+            totalLessons: 100,
+          }));
         }
 
         if (!mounted) return;
 
-        const list = data.courses || [];
+        // Combine: trending first, then marketplace
+        const list = [...trendingCourses, ...marketplaceCourses];
         setCourses(list);
         setFeatured(list.find((course) => course.featured) || list[0] || null);
       } catch (error) {
@@ -99,13 +123,14 @@ export default function PremiumCourses() {
     });
   }, [courses, searchQuery]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+  // Calculate pagination - only for marketplace courses
+  const marketplaceCourses = useMemo(() => filteredCourses.filter((c) => !c.isTrending), [filteredCourses]);
+  const totalPages = Math.ceil(marketplaceCourses.length / coursesPerPage);
   const paginatedCourses = useMemo(() => {
     const start = (currentPage - 1) * coursesPerPage;
     const end = start + coursesPerPage;
-    return filteredCourses.slice(start, end);
-  }, [filteredCourses, currentPage]);
+    return marketplaceCourses.slice(start, end);
+  }, [marketplaceCourses, currentPage]);
 
   // Reset to page 1 when search query changes
   useEffect(() => {
@@ -213,6 +238,32 @@ export default function PremiumCourses() {
   async function handleStartLearning(course) {
     try {
       setBusyCourseId(course.id);
+
+      // For trending courses (AI-generated, not in DB), go directly to learn
+      if (course.isTrending && !course.id?.startsWith("trending-")) {
+        const nextParams = new URLSearchParams({
+          format: "course",
+          difficulty: course.difficulty || "advanced",
+          originalTopic: course.title,
+          premiumRequested: "true",
+        });
+        router.push(`/learn/${encodeURIComponent(course.title)}?${nextParams.toString()}`);
+        return;
+      }
+
+      // For trending courses without DB ID, generate directly
+      if (course.isTrending) {
+        const nextParams = new URLSearchParams({
+          format: "course",
+          difficulty: course.difficulty || "advanced",
+          originalTopic: course.title,
+          premiumRequested: "true",
+          forceRegenerate: "true",
+        });
+        router.push(`/learn/${encodeURIComponent(course.title)}?${nextParams.toString()}`);
+        return;
+      }
+
       const response = await apiClient.post(`/api/premium-courses/${course.id}/start`);
       const data = await response.json();
 
@@ -246,7 +297,7 @@ export default function PremiumCourses() {
     : featured?.access?.actionLabel || `Unlock for $${featured?.price || 8}`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
       <motion.div
         className="text-center mb-12 lg:mb-16"
         initial={{ opacity: 0, y: -20 }}
@@ -435,18 +486,109 @@ export default function PremiumCourses() {
         </div>
       ) : (
         <>
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {paginatedCourses.map((course, index) => {
-            const { daysLeft, progress } = getCourseExpiryInfo(course);
-            const actionLabel = course.access?.hasAccess
-              ? course.hasGenerated
-                ? "Continue Learning"
-                : "Start Learning"
-              : course.access?.actionLabel || `Unlock for $${course.price || 8}`;
+          {/* Trending Courses Section */}
+          {filteredCourses.some((c) => c.isTrending) && (
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-gradient-to-r from-lime-400 to-emerald-500 rounded-xl">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Trending For You</h2>
+                  <p className="text-sm text-muted-foreground">Advanced courses based on your library</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.filter((c) => c.isTrending).map((course, index) => {
+                  const actionLabel = "Start Learning";
+                  return (
+                    <motion.div
+                      key={course.id || index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -4 }}
+                      className="group relative bg-card rounded-xl overflow-hidden transition-all duration-300 flex flex-col h-full"
+                    >
+                      <div className="px-6 pt-6 flex justify-between items-start">
+                        <div className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200">
+                          <TrendingUp className="w-3 h-3" />
+                          Trending
+                        </div>
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          {course.category || "General"}
+                        </span>
+                      </div>
+                      <div className="px-6 pt-4 pb-2 flex-1">
+                        <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                          {course.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                          {course.description}
+                        </p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {course.estimatedDuration || course.duration || "8 weeks"}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            course.difficulty === "expert"
+                              ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                              : "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300"
+                          }`}>
+                            {course.difficulty}
+                          </span>
+                        </div>
+                        {course.learningOutcomes && (
+                          <div className="space-y-1">
+                            {course.learningOutcomes.slice(0, 3).map((outcome, i) => (
+                              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                                <Sparkles className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                                <span className="line-clamp-1">{outcome}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="px-6 pb-6 pt-4">
+                        <button
+                          onClick={() => handleStartLearning(course)}
+                          disabled={busyCourseId === course.id}
+                          className="w-full py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-sm hover:from-green-700 hover:to-emerald-700 transition-all disabled:opacity-50"
+                        >
+                          {busyCourseId === course.id ? "Loading..." : actionLabel}
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Marketplace Courses Section */}
+          {filteredCourses.some((c) => !c.isTrending) && (
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-xl">
+                  <Crown className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Marketplace Courses</h2>
+                  <p className="text-sm text-muted-foreground">Curated courses from Actirova Academy</p>
+                </div>
+              </div>
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {paginatedCourses.filter((c) => !c.isTrending).map((course, index) => {
+                const { daysLeft, progress } = getCourseExpiryInfo(course);
+                const actionLabel = course.access?.hasAccess
+                  ? course.hasGenerated
+                    ? "Continue Learning"
+                    : "Start Learning"
+                  : course.access?.actionLabel || `Unlock for $${course.price || 8}`;
 
             return (
               <motion.div
@@ -560,9 +702,11 @@ export default function PremiumCourses() {
                 </motion.div>
               );
             })}
-          </motion.div>
+              </motion.div>
+            </div>
+          )}
 
-          {/* Pagination */}
+          {/* Pagination - only for marketplace courses */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-10">
               <button

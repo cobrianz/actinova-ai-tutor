@@ -1,14 +1,22 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  ArrowLeft,
+  Download,
+  Trophy,
+  RotateCcw,
+} from "lucide-react";
 import Link from "next/link";
 import { apiClient } from "@/lib/csrfClient";
+import { downloadQuizPdfFromServer } from "@/lib/quizPdfDownload";
 
 const TakeQuizPage = ({ params }) => {
   const [quiz, setQuiz] = useState(null);
@@ -40,7 +48,30 @@ const TakeQuizPage = ({ params }) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
   };
 
+  const handleDownloadExam = async () => {
+    if (!quiz?._id) {
+      toast.error("Missing quiz id");
+      return;
+    }
+    try {
+      await downloadQuizPdfFromServer({
+        quizId: quiz._id,
+        title: quiz?.title || "Assessment",
+      });
+    } catch (e) {
+      toast.error(e?.message || "Failed to download exam");
+    }
+  };
+
   const handleSubmit = () => {
+    const unansweredCount = quiz.questions.filter((q) => !answers[q._id]).length;
+    if (unansweredCount > 0) {
+      const proceed = window.confirm(
+        `You have ${unansweredCount} unanswered question${unansweredCount > 1 ? "s" : ""}. Are you sure you want to submit?`
+      );
+      if (!proceed) return;
+    }
+
     let totalScore = 0;
     quiz.questions.forEach((q) => {
       const userAnswer = answers[q._id];
@@ -55,185 +86,292 @@ const TakeQuizPage = ({ params }) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-500 dark:text-gray-400">Loading quiz...</p>
+      <div className="flex justify-center items-center min-h-screen bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary/30 border-t-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading quiz...</p>
+        </div>
       </div>
     );
   }
 
   if (!quiz) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <p className="text-red-500">Could not load the quiz.</p>
+      <div className="flex justify-center items-center min-h-screen bg-background">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Could not load the quiz.</p>
+          <Link href="/dashboard?tab=quizzes">
+            <Button variant="outline">Back to Quizzes</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   const totalMarks = quiz.questions.reduce((acc, q) => acc + q.points, 0);
+  const percentageScore = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <Link
-          href="/dashboard?tab=quizzes"
-          className="flex items-center text-sm text-blue-500 hover:underline mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Quizzes
-        </Link>
-        <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">{quiz.title}</CardTitle>
-            <div className="flex justify-between text-gray-500 dark:text-gray-400 mt-2">
-              <span>{quiz.course}</span>
-              <span>Total Marks: {totalMarks}</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              href="/dashboard?tab=quizzes"
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Back</span>
+            </Link>
+
+            <h1 className="text-sm sm:text-base font-semibold text-foreground truncate flex-1 text-center">
+              {quiz.title}
+            </h1>
+
+            <Button
+              onClick={handleDownloadExam}
+              variant="outline"
+              size="sm"
+              className="shrink-0 border-border hover:bg-muted"
+            >
+              <Download className="w-4 h-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Download</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        {/* Quiz Info */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="text-sm text-muted-foreground">
+            {quiz.course} &middot; {quiz.questions.length} questions &middot; {totalMarks} total points
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-xs font-semibold uppercase">
+              {quiz.difficulty || "Medium"}
+            </span>
+          </div>
+        </div>
+
+        {/* Questions */}
+        <Card className="bg-card">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <div className="space-y-6">
               {quiz.questions.map((q, index) => (
                 <div
                   key={q._id}
-                  className="p-4 border-t border-gray-200 dark:border-gray-700"
+                  className="p-4 sm:p-5 rounded-xl bg-muted/30"
                 >
-                  <h3 className="text-lg font-semibold mb-4">
-                    {index + 1}. {q.text}{" "}
-                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                      ({q.points} points)
-                    </span>
-                  </h3>
+                  {/* Question Header */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="flex-shrink-0 w-9 h-9 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm sm:text-base font-semibold text-foreground leading-relaxed">
+                        {q.text}
+                      </h3>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs font-medium">
+                            {q.points} pt{q.points !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                    </div>
+                  </div>
 
-                  {q.type === "multiple-choice" && (
+                  {/* Answer Options */}
+                  {q.type === "multiple-choice" || q.type === "true-false" ? (
                     <RadioGroup
-                      onValueChange={(value) =>
-                        handleAnswerChange(q._id, value)
-                      }
+                      onValueChange={(value) => handleAnswerChange(q._id, value)}
                       disabled={submitted}
+                      className="space-y-2 ml-12"
                     >
-                      {q.options.map((option) => (
-                        <div
-                          key={option}
-                          className="flex items-center space-x-3 my-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 has-[:checked]:bg-blue-50 has-[:checked]:dark:bg-blue-900/20 has-[:checked]:border-blue-500"
-                        >
-                          <RadioGroupItem
-                            value={option}
-                            id={`${q._id}-${option}`}
-                          />
-                          <Label
-                            htmlFor={`${q._id}-${option}`}
-                            className="flex-1 cursor-pointer"
-                          >
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
+                      {q.options.map((option, optIndex) => {
+                        const isSelected = answers[q._id] === option;
+                        const isCorrect = submitted && JSON.stringify(q.correctAnswer) === JSON.stringify(option);
+                        const isWrong = submitted && isSelected && !isCorrect;
 
-                  {q.type === "true-false" && (
-                    <RadioGroup
-                      onValueChange={(value) =>
-                        handleAnswerChange(q._id, value)
-                      }
-                      disabled={submitted}
-                    >
-                      {q.options.map((option) => (
-                        <div
-                          key={option}
-                          className="flex items-center space-x-3 my-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 has-[:checked]:bg-blue-50 has-[:checked]:dark:bg-blue-900/20 has-[:checked]:border-blue-500"
-                        >
-                          <RadioGroupItem
-                            value={option}
-                            id={`${q._id}-${option}`}
-                          />
-                          <Label
+                        return (
+                          <label
+                            key={option}
                             htmlFor={`${q._id}-${option}`}
-                            className="flex-1 cursor-pointer"
+                            className={`flex items-center gap-3 p-3 sm:p-3.5 rounded-lg border-2 transition-all duration-150 cursor-pointer ${
+                              isCorrect
+                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                                : isWrong
+                                  ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                                  : isSelected
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                            } ${submitted ? "cursor-default" : ""}`}
                           >
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
+                            <RadioGroupItem
+                              value={option}
+                              id={`${q._id}-${option}`}
+                              className="w-4 h-4"
+                            />
+                            <span className="flex-1 text-sm text-foreground">
+                              <span className="font-medium text-muted-foreground mr-1.5">
+                                {String.fromCharCode(65 + optIndex)}.
+                              </span>
+                              {option}
+                            </span>
+                            {isCorrect && (
+                              <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                            )}
+                            {isWrong && (
+                              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                            )}
+                          </label>
+                        );
+                      })}
                     </RadioGroup>
-                  )}
+                  ) : (
+                    <div className="space-y-2 ml-12">
+                      {q.options.map((option, optIndex) => {
+                        const selectedAnswers = answers[q._id] || [];
+                        const isSelected = selectedAnswers.includes(option);
+                        const isCorrect = submitted && Array.isArray(q.correctAnswer) && q.correctAnswer.includes(option);
+                        const isWrong = submitted && isSelected && !isCorrect;
 
-                  {q.type === "multiple-select" && (
-                    <div className="space-y-2">
-                      {q.options.map((option) => (
-                        <div
-                          key={option}
-                          className="flex items-center space-x-3 my-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 has-[:checked]:bg-blue-50 has-[:checked]:dark:bg-blue-900/20 has-[:checked]:border-blue-500"
-                        >
-                          <Checkbox
-                            id={`${q._id}-${option}`}
-                            onCheckedChange={(checked) => {
-                              const currentAnswers = answers[q._id] || [];
-                              const newAnswers = checked
-                                ? [...currentAnswers, option]
-                                : currentAnswers.filter((a) => a !== option);
-                              handleAnswerChange(q._id, newAnswers);
-                            }}
-                            disabled={submitted}
-                          />
-                          <Label
+                        return (
+                          <label
+                            key={option}
                             htmlFor={`${q._id}-${option}`}
-                            className="flex-1 cursor-pointer"
+                            className={`flex items-center gap-3 p-3 sm:p-3.5 rounded-lg border-2 transition-all duration-150 cursor-pointer ${
+                              isCorrect
+                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                                : isWrong
+                                  ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                                  : isSelected
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                            } ${submitted ? "cursor-default" : ""}`}
                           >
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
+                            <Checkbox
+                              id={`${q._id}-${option}`}
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                const currentAnswers = answers[q._id] || [];
+                                const newAnswers = checked
+                                  ? [...currentAnswers, option]
+                                  : currentAnswers.filter((a) => a !== option);
+                                handleAnswerChange(q._id, newAnswers);
+                              }}
+                              disabled={submitted}
+                              className="w-4 h-4"
+                            />
+                            <span className="flex-1 text-sm text-foreground">
+                              <span className="font-medium text-muted-foreground mr-1.5">
+                                {String.fromCharCode(65 + optIndex)}.
+                              </span>
+                              {option}
+                            </span>
+                            {isCorrect && (
+                              <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                            )}
+                            {isWrong && (
+                              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                            )}
+                          </label>
+                        );
+                      })}
                     </div>
                   )}
 
+                  {/* Correct Answer Display */}
                   {submitted && (
-                    <div className="mt-4 p-3 rounded-lg text-sm">
-                      {JSON.stringify(answers[q._id]) ===
-                        JSON.stringify(q.correctAnswer) ? (
-                        <div className="flex items-center text-green-600 dark:text-green-400">
-                          <CheckCircle className="w-5 h-5 mr-2" />
-                          Correct!
+                    <div className="mt-3 ml-12">
+                      {JSON.stringify(answers[q._id]) !==
+                      JSON.stringify(q.correctAnswer) ? (
+                        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-lg">
+                          <CheckCircle className="w-4 h-4 shrink-0" />
+                          <span>
+                            Correct answer:{" "}
+                            <strong>
+                              {Array.isArray(q.correctAnswer)
+                                ? q.correctAnswer.join(", ")
+                                : q.correctAnswer}
+                            </strong>
+                          </span>
                         </div>
-                      ) : (
-                        <div className="flex items-center text-red-600 dark:text-red-400">
-                          <XCircle className="w-5 h-5 mr-2" />
-                          Incorrect. Correct answer:{" "}
-                          {Array.isArray(q.correctAnswer)
-                            ? q.correctAnswer.join(", ")
-                            : q.correctAnswer}
-                        </div>
-                      )}
+                      ) : null}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-
-            {submitted ? (
-              <div className="mt-8 text-center">
-                <h2 className="text-2xl font-bold">Quiz Complete!</h2>
-                <p className="text-xl mt-2">
-                  Your score:{" "}
-                  <span className="font-bold text-blue-500">{score}</span> /{" "}
-                  {totalMarks}
-                </p>
-                <Button
-                  onClick={() => window.location.reload()}
-                  className="mt-6"
-                >
-                  Try Again
-                </Button>
-              </div>
-            ) : (
-              <div className="mt-8 flex justify-end space-x-4">
-                <Link href="/dashboard?tab=quizzes">
-                  <Button variant="outline">Cancel</Button>
-                </Link>
-                <Button onClick={handleSubmit}>Submit Quiz</Button>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+        {/* Bottom Controls */}
+        <div className="mt-6">
+          {submitted ? (
+            <div className="bg-card rounded-xl p-6 sm:p-8">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-3">
+                  <Trophy className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground mb-1">
+                  Quiz Complete
+                </h2>
+                <p className="text-muted-foreground">
+                  Here&apos;s how you performed
+                </p>
+              </div>
+
+              <div className="max-w-sm mx-auto mb-6">
+                <div className="bg-muted/50 rounded-xl p-6 text-center">
+                  <div className="text-4xl font-bold text-foreground mb-1">
+                    {score}<span className="text-lg text-muted-foreground font-normal">/{totalMarks}</span>
+                  </div>
+                  <div className={`text-lg font-semibold ${percentageScore >= 70 ? "text-green-600 dark:text-green-400" : percentageScore >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"}`}>
+                    {percentageScore}%
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {percentageScore >= 70 ? "Great job!" : percentageScore >= 50 ? "Good effort!" : "Keep practicing!"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+                <Button
+                  onClick={handleDownloadExam}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Quiz
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                <Link href="/dashboard?tab=quizzes" className="w-full sm:w-auto">
+                  <Button variant="outline" className="w-full">
+                    Cancel
+                  </Button>
+                </Link>
+                <Button
+                  onClick={handleSubmit}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto sm:px-8"
+                >
+                  Submit Quiz
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

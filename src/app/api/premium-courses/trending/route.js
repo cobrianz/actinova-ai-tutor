@@ -49,10 +49,50 @@ export async function generateTrendingCourses(user = null) {
   const goals = user?.goals?.length ? user.goals.join(", ") : null;
   const skill = user?.skillLevel || "intermediate";
 
+  // Fetch user's library courses to generate harder versions
+  let libraryTopics = [];
+  if (user?._id) {
+    try {
+      const libraryCourses = await db
+        .collection("library")
+        .find(
+          { userId: user._id, format: "course" },
+          { projection: { topic: 1, title: 1, difficulty: 1 } }
+        )
+        .toArray();
+      libraryTopics = libraryCourses.map((c) => ({
+        topic: c.topic || c.title,
+        difficulty: c.difficulty || "beginner",
+      }));
+    } catch (e) {
+      console.warn("Failed to fetch library for trending:", e);
+    }
+  }
+
+  const libraryContext = libraryTopics.length > 0
+    ? `
+
+USER'S EXISTING LIBRARY COURSES (generate HARDER, more advanced versions of these topics):
+${libraryTopics.map((c) => `- "${c.topic}" (current level: ${c.difficulty})`).join("\n")}
+
+IMPORTANT: For each library course, generate a premium course that is significantly HARDER and more advanced. Examples:
+- If they have "Python Basics", generate "Advanced Python: Metaclasses, Async Patterns & Production Systems"
+- If they have "JavaScript Fundamentals", generate "Expert JavaScript: Runtime Internals, Engine Optimization & Framework Architecture"
+- If they have "Data Science Intro", generate "Senior Data Scientist: Statistical Modeling, MLOps & Production Pipelines"
+
+Each premium course should feel like the NEXT LEVEL after completing their existing library course.`
+    : "";
+
   const prompt = `Generate exactly 6 premium, trending, DIVERSE courses for 2025 learners.
 ${interests ? `User is interested in: ${interests}` : ""}
 ${goals ? `User goals: ${goals}` : ""}
 ${skill ? `User skill level: ${skill}` : ""}
+${libraryContext}
+
+CRITICAL REQUIREMENTS:
+1. ALL courses MUST be "advanced" or "expert" difficulty - NO beginner or intermediate courses
+2. Each course must be a SIGNIFICANT STEP UP from the user's existing library courses
+3. Courses should feel like professional certification or senior-level training
 
 CRITICAL: Ensure MASSIVE variety across fields:
 - Technology (AI, Programming, Web Dev, etc.) - MAX 2 courses
@@ -72,26 +112,14 @@ Return ONLY a valid JSON array of 6 course objects with these fields:
 - title (specific, compelling, 50 chars max)
 - description (2 sentences, why it's valuable)
 - category (specific: "Next.js Mastery", "AI Agents", "Web3 Security", etc.)
-- difficulty ("beginner", "intermediate", "advanced")
+- difficulty ("advanced" or "expert" ONLY)
 - estimatedDuration ("6 weeks", "10 weeks", etc.)
 - tags (array of 5-7 strings)
 - whyTrending (1 sentence explanation)
 - learningOutcomes (array of 5 bullet skills)
 - targetAudience (1 short sentence)
 
-Ensure massive variety across ALL fields - NOT just tech. Include courses from:
-- Technology (AI, Programming, etc.) - but limit to 1-2 max
-- Business & Entrepreneurship
-- Health & Wellness
-- Creative Arts
-- Humanities
-- Science
-- Lifestyle
-- Professional Skills
-- Trades & Technical Skills
-- Education & Teaching
-
-Prioritize 2025 trends across ALL fields, not just tech: AI agents, sustainable living, mental wellness, creative entrepreneurship, climate solutions, personal finance, remote work, etc.`;
+Prioritize 2025 trends across ALL fields: AI agents, sustainable living, mental wellness, creative entrepreneurship, climate solutions, personal finance, remote work, etc.`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -115,6 +143,7 @@ Prioritize 2025 trends across ALL fields, not just tech: AI agents, sustainable 
       ...c,
       id: `trending-${Date.now()}-${i}`,
       userId,
+      difficulty: ["advanced", "expert"].includes(c.difficulty) ? c.difficulty : "advanced",
       isPremium: true,
       isTrending: true,
       price: 0,

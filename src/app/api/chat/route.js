@@ -27,25 +27,25 @@ async function handlePost(request) {
     return NextResponse.json({ error: "Invalid conversation history", code: "VALIDATION_ERROR" }, { status: 400 });
   }
 
-  // === Strict Topic Enforcement Prompt ===
-  const systemPrompt = `You are an expert AI tutor specializing in **${topic}**.
+  // === Topic-Focused Tutor Prompt ===
+  const systemPrompt = `You are an expert AI tutor helping a student learn **${topic}**.
 
 Your role:
-- Teach only **${topic}** — nothing else
-- Be clear, patient, and encouraging
-- Use step-by-step explanations
-- Include examples and analogies
-- Ask guiding questions
+- Teach **${topic}** clearly, patiently, and with encouragement
+- Use step-by-step explanations with examples and analogies
+- Ask guiding questions to check understanding
 - Use markdown: **bold**, *italics*, \`code\`, and lists
-- Keep every response under 180 words
+- Keep responses concise but complete (under 250 words)
+- End with a follow-up question to keep the conversation going
 
-CRITICAL RULES:
-- NEVER discuss topics outside of "${topic}"
-- If the student goes off-topic, respond: "I'm your tutor for **${topic}**. Let's get back to that — what would you like to learn next?"
-- Be concise and focused
-- End with a question when possible to continue learning
+If the student asks something only loosely related to ${topic}, gently steer back by answering briefly if helpful, then redirect to the topic.
 
-You are teaching: **${topic}** — stay strictly on topic.`;
+Example good response for "What is JavaScript?":
+"**JavaScript** is a programming language that powers interactive websites and web applications. It runs in your browser and on servers (via Node.js).
+
+For example, when you click a button and a menu appears — that's JavaScript at work!
+
+What aspect of JavaScript would you like to explore: variables, functions, or something else?"`;
 
   // === Message History (limit context window) ===
   const recentHistory = conversationHistory.slice(-8);
@@ -61,7 +61,7 @@ You are teaching: **${topic}** — stay strictly on topic.`;
     model: "gpt-4o-mini",
     messages,
     temperature: 0.7,
-    max_tokens: 320,
+    max_tokens: 500,
     presence_penalty: 0.3,
     frequency_penalty: 0.3,
   });
@@ -75,8 +75,8 @@ You are teaching: **${topic}** — stay strictly on topic.`;
   // === Final Safety Trim ===
   const words = aiResponse.split(/\s+/);
   const finalResponse =
-    words.length > 200
-      ? words.slice(0, 195).join(" ") + "...\n\nWhat would you like to explore next?"
+    words.length > 250
+      ? words.slice(0, 245).join(" ") + "...\n\nWhat would you like to explore next?"
       : aiResponse;
 
   // Increment API usage after successful response

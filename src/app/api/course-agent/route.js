@@ -97,7 +97,17 @@ export async function POST(request) {
       return await handleGenerateLesson(body, userId, db);
     }
 
-    // === 2. AI Q&A (Default) ===
+    // === 2. Generate Q&A from Lesson ===
+    if (action === "generateQuestions") {
+      return await handleGenerateQuestions(body, userId, db);
+    }
+
+    // === 3. Generate Flashcards from Lesson ===
+    if (action === "generateFlashcards") {
+      return await handleGenerateFlashcards(body, userId, db);
+    }
+
+    // === 4. AI Q&A (Default) ===
     return await handleAIQuestion(body, userId, db);
   } catch (error) {
     console.error("AI Tutor API Error:", error);
@@ -691,5 +701,234 @@ SITUATIONAL VISUALS: Use \`\`\`chart\`\`\` blocks ONLY when strictly necessary f
     content,
     cached: false,
     isPremium,
+  });
+}
+
+// === Handle Generate Q&A from Lesson Content ===
+async function handleGenerateQuestions(body, userId, db) {
+  const { lessonContent, lessonTitle, courseTopic } = body;
+
+  if (!lessonContent?.trim()) {
+    return NextResponse.json(
+      { error: "Lesson content is required" },
+      { status: 400 }
+    );
+  }
+
+  const systemPrompt = `You are an expert educator creating study questions from lesson content.
+
+Generate exactly 5 high-quality question-and-answer pairs from the provided lesson content.
+Each question should test understanding of key concepts, not just surface-level recall.
+
+RULES:
+- Generate EXACTLY 5 questions
+- Mix question types: definitions, explanations, comparisons, applications, and "why" questions
+- Answers should be concise but complete (2-4 sentences)
+- Questions should progress from foundational to more advanced
+- Bold key terms in answers using markdown **like this**
+- Format each Q&A pair clearly
+
+Output format (strict JSON):
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Question text here?",
+      "answer": "Answer text here.",
+      "difficulty": "easy|medium|hard"
+    }
+  ]
+}`;
+
+  const userPrompt = `Lesson: ${lessonTitle}
+${courseTopic ? `Course: ${courseTopic}` : ""}
+
+Lesson Content:
+${lessonContent.substring(0, 8000)}
+
+Generate 5 Q&A pairs from this lesson content. Return ONLY valid JSON.`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 1500,
+    response_format: { type: "json_object" },
+  });
+
+  const response = completion.choices[0]?.message?.content?.trim();
+
+  if (!response) {
+    return NextResponse.json(
+      { error: "Failed to generate questions" },
+      { status: 500 }
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(response);
+  } catch (e) {
+    return NextResponse.json(
+      { error: "Invalid response format" },
+      { status: 500 }
+    );
+  }
+
+  const questions = parsed?.questions || [];
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return NextResponse.json(
+      { error: "No questions generated" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    questions: questions.map((q, i) => ({
+      id: q.id || i + 1,
+      question: q.question,
+      answer: q.answer,
+      difficulty: q.difficulty || "medium",
+    })),
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// === Handle Generate Flashcards from Lesson Content ===
+async function handleGenerateFlashcards(body, userId, db) {
+  const { lessonContent, lessonTitle, courseTopic, difficulty = "intermediate" } = body;
+
+  if (!lessonContent?.trim()) {
+    return NextResponse.json(
+      { error: "Lesson content is required" },
+      { status: 400 }
+    );
+  }
+
+  const systemPrompt = `You are an expert educator creating flashcards from lesson content.
+
+Generate exactly 10 high-quality flashcards from the provided lesson content.
+Each flashcard should test understanding of key concepts.
+
+RULES:
+- Generate EXACTLY 10 flashcards
+- Mix categories: concept, tip, warning, practice
+- Questions should be clear and concise
+- Answers should be complete but brief (2-3 sentences)
+- Bold key terms in answers using markdown **like this**
+- Include key points as bullet lists
+- Add a practical example where relevant
+
+Output format (strict JSON):
+{
+  "cards": [
+    {
+      "id": 1,
+      "question": "Front of card - question or prompt",
+      "answer": "Back of card - main answer",
+      "explanation": "Why this matters",
+      "keyPoints": ["Point 1", "Point 2"],
+      "example": "Practical example",
+      "category": "concept|tip|warning|practice",
+      "difficulty": "beginner|intermediate|advanced"
+    }
+  ]
+}`;
+
+  const userPrompt = `Lesson: ${lessonTitle}
+${courseTopic ? `Course: ${courseTopic}` : ""}
+Difficulty: ${difficulty}
+
+Lesson Content:
+${lessonContent.substring(0, 8000)}
+
+Generate 10 flashcards from this lesson content. Return ONLY valid JSON.`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 3000,
+    response_format: { type: "json_object" },
+  });
+
+  const response = completion.choices[0]?.message?.content?.trim();
+
+  if (!response) {
+    return NextResponse.json(
+      { error: "Failed to generate flashcards" },
+      { status: 500 }
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(response);
+  } catch (e) {
+    return NextResponse.json(
+      { error: "Invalid response format" },
+      { status: 500 }
+    );
+  }
+
+  const cards = parsed?.cards || [];
+  if (!Array.isArray(cards) || cards.length === 0) {
+    return NextResponse.json(
+      { error: "No flashcards generated" },
+      { status: 500 }
+    );
+  }
+
+  // Save to cardSets collection
+  const cardSet = {
+    userId: userId ? new ObjectId(userId) : null,
+    title: `${courseTopic || lessonTitle} - ${difficulty}`,
+    topic: (courseTopic || lessonTitle).toLowerCase().trim(),
+    originalTopic: courseTopic || lessonTitle,
+    difficulty,
+    totalCards: cards.length,
+    cards: cards.map((c, i) => ({
+      _id: new ObjectId(),
+      id: i + 1,
+      question: c.question,
+      answer: c.answer,
+      explanation: c.explanation || "",
+      keyPoints: c.keyPoints || [],
+      example: c.example || "",
+      category: c.category || "concept",
+      difficulty: c.difficulty || difficulty,
+      reviews: [],
+      srs: {
+        interval: 0,
+        repetitions: 0,
+        ease: 2.5,
+        dueDate: new Date().toISOString(),
+      },
+    })),
+    progress: 0,
+    completed: false,
+    bookmarked: false,
+    ankiExportReady: true,
+    sourceLesson: lessonTitle,
+    createdAt: new Date(),
+    lastAccessed: new Date(),
+  };
+
+  const result = await db.collection("cardSets").insertOne(cardSet);
+
+  return NextResponse.json({
+    success: true,
+    cardSetId: result.insertedId.toString(),
+    title: cardSet.title,
+    totalCards: cards.length,
+    cards: cardSet.cards,
+    timestamp: new Date().toISOString(),
   });
 }

@@ -118,6 +118,45 @@ async function handlePost(request) {
               $set: { "courses.$.lastUpdated": new Date() }
             }
           );
+
+          // Update streak on lesson completion
+          try {
+            const today = new Date();
+            const todayStr = today.toISOString().split("T")[0];
+            
+            const userDoc = await db.collection("users").findOne(
+              { _id: user._id },
+              { projection: { streak: 1 } }
+            );
+            
+            const streak = userDoc?.streak || { current: 0, longest: 0, lastActiveDate: null, activeDates: [] };
+            
+            if (streak.lastActiveDate !== todayStr) {
+              const yesterday = new Date(today);
+              yesterday.setDate(yesterday.getDate() - 1);
+              const yesterdayStr = yesterday.toISOString().split("T")[0];
+              
+              let newCurrent = streak.current;
+              if (streak.lastActiveDate === yesterdayStr) {
+                newCurrent = streak.current + 1;
+              } else {
+                newCurrent = 1;
+              }
+              
+              const longest = Math.max(newCurrent, streak.longest);
+              const activeDates = [...new Set([...(streak.activeDates || []), todayStr])];
+              const cutoff = new Date(today);
+              cutoff.setFullYear(cutoff.getFullYear() - 1);
+              const trimmedDates = activeDates.filter(d => d >= cutoff.toISOString().split("T")[0]);
+              
+              await db.collection("users").updateOne(
+                { _id: user._id },
+                { $set: { streak: { current: newCurrent, longest, lastActiveDate: todayStr, activeDates: trimmedDates } } }
+              );
+            }
+          } catch (streakErr) {
+            console.error("Streak update error:", streakErr);
+          }
         } else {
           await db.collection("users").updateOne(
             { _id: user._id, "courses.courseId": courseId },

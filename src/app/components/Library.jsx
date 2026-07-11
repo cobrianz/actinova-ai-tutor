@@ -386,7 +386,24 @@ export default function Library({ setActiveContent }) {
           <h3 className="text-lg font-semibold text-foreground mb-4 text-center">
             Your Learning Progress
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+            {/* Streak Card */}
+            <motion.div
+              className="bg-gradient-to-br from-orange-500 to-red-500 rounded-lg p-3 border border-orange-400 flex items-center gap-3 text-white"
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                <Flame className="w-5 h-5" />
+              </div>
+              <div className="flex-1 flex items-center justify-around">
+                <div className="text-xl sm:text-2xl font-bold">
+                  {user?.streak || 0}
+                </div>
+                <div className="text-[10px] sm:text-xs font-medium opacity-90">
+                  Day Streak
+                </div>
+              </div>
+            </motion.div>
             <motion.div
               className="bg-card rounded-lg p-3 border border-border flex items-center gap-3"
               transition={{ type: "spring", stiffness: 300 }}
@@ -459,6 +476,49 @@ export default function Library({ setActiveContent }) {
                 </div>
               </div>
             </motion.div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Streak Calendar */}
+      {user?.streakData?.activeDates?.length > 0 && (
+        <motion.div
+          className="bg-card rounded-xl p-4 my-6 border border-border"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-foreground">Learning Activity</h4>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Flame className="w-3 h-3 text-orange-500" />
+              <span>{user.streakData.current || 0} day streak</span>
+              {user.streakData.longest > 0 && (
+                <span className="ml-2 text-orange-500">(Best: {user.streakData.longest})</span>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-1 overflow-x-auto pb-2">
+            {Array.from({ length: 30 }, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - (29 - i));
+              const dateStr = date.toISOString().split("T")[0];
+              const isActive = user.streakData.activeDates?.includes(dateStr);
+              const isToday = dateStr === new Date().toISOString().split("T")[0];
+              return (
+                <div
+                  key={i}
+                  className={`w-3 h-3 rounded-sm flex-shrink-0 ${
+                    isActive
+                      ? "bg-orange-500"
+                      : isToday
+                      ? "bg-orange-200 dark:bg-orange-800"
+                      : "bg-muted"
+                  }`}
+                  title={dateStr}
+                />
+              );
+            })}
           </div>
         </motion.div>
       )}

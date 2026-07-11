@@ -335,12 +335,12 @@ async function generateQuiz(topic, difficulty, questions, userId, db) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 6000,
       response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content: `Generate a professional examination-style quiz with ${questionsCount} multiple-choice questions about "${topic}" at ${difficulty} level.
+          content: `Generate a professional examination-style quiz with EXACTLY ${questionsCount} multiple-choice questions about "${topic}" at ${difficulty} level.
 
 DIFFICULTY GUIDELINES:
 - Beginner: Basic concepts, definitions, fundamental principles, straightforward application
@@ -374,7 +374,7 @@ QUESTION REQUIREMENTS:
         },
         {
           role: "user",
-          content: `Create a ${difficulty} level professional examination quiz on "${topic}" with ${questionsCount} multiple-choice questions that test deep understanding and analytical skills.`,
+          content: `Create a ${difficulty} level professional examination quiz on "${topic}" with EXACTLY ${questionsCount} multiple-choice questions. Do NOT generate fewer or more than ${questionsCount} questions.`,
         },
       ],
     });
@@ -389,8 +389,72 @@ QUESTION REQUIREMENTS:
       );
     }
 
-    // Limit check is handled by withAPIRateLimit middleware for the parent route
-    // but we can add a double-check here if needed using the same unified logic
+    // Ensure exactly 50 questions
+    if (!quiz.questions || !Array.isArray(quiz.questions)) {
+      return NextResponse.json(
+        { error: "Invalid quiz format from AI" },
+        { status: 500 }
+      );
+    }
+
+    if (quiz.questions.length !== questionsCount) {
+      // Trim or pad to exactly 50
+      quiz.questions = quiz.questions.slice(0, questionsCount);
+      
+      // If AI returned fewer than 50, retry once
+      if (quiz.questions.length < questionsCount) {
+        console.warn(`AI returned ${quiz.questions.length} questions, retrying for ${questionsCount}...`);
+        const retry = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          temperature: 0.7,
+          max_tokens: 6000,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content: `Generate EXACTLY ${questionsCount} multiple-choice questions about "${topic}" at ${difficulty} level. You MUST return exactly ${questionsCount} questions, no more, no less.
+
+All questions must be multiple choice with 4 options (A, B, C, D).
+Return ONLY valid JSON:
+{
+  "title": "Quiz Title",
+  "course": "${topic}",
+  "questions": [
+    {
+      "text": "Question text",
+      "type": "multiple-choice",
+      "points": ${difficulty === "beginner" ? 1 : difficulty === "intermediate" ? 2 : 3},
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "Correct option text"
+    }
+  ]
+}`,
+            },
+            {
+              role: "user",
+              content: `Generate EXACTLY ${questionsCount} multiple-choice questions on "${topic}" at ${difficulty} level.`,
+            },
+          ],
+        });
+
+        try {
+          const retryQuiz = JSON.parse(retry.choices[0].message.content.trim());
+          if (retryQuiz.questions && retryQuiz.questions.length === questionsCount) {
+            quiz = retryQuiz;
+          } else {
+            // Use what we have, pad with duplicates if needed
+            while (quiz.questions.length < questionsCount && retryQuiz.questions?.length > 0) {
+              quiz.questions.push(retryQuiz.questions[quiz.questions.length % retryQuiz.questions.length]);
+            }
+            quiz.questions = quiz.questions.slice(0, questionsCount);
+          }
+        } catch (retryErr) {
+          console.error("Retry also failed:", retryErr);
+          // Proceed with whatever we have, trimmed to count
+          quiz.questions = quiz.questions.slice(0, questionsCount);
+        }
+      }
+    }
 
 
     const testDoc = {
