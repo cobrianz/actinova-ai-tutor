@@ -1210,7 +1210,7 @@ const ResumeBuilder = () => {
         const payment = searchParams.get("payment");
         const historyId = searchParams.get("historyId");
         const exportFormat = (searchParams.get("exportFormat") || "docx").toLowerCase();
-        const ref = searchParams.get("ref") || "";
+        const ref = searchParams.get("reference") || searchParams.get("trxref") || searchParams.get("ref") || "";
 
         if (purchaseType !== "resume-export" || payment !== "success" || !historyId) {
             return;
@@ -1219,6 +1219,11 @@ const ResumeBuilder = () => {
         const effectKey = `${historyId}:${exportFormat}:${ref}`;
         if (handledExportPaymentRef.current === effectKey) {
             return;
+        }
+
+        // Verify payment server-side first
+        if (ref) {
+            apiClient.get(`/api/billing/verify-payment?ref=${encodeURIComponent(ref)}`).catch(() => {});
         }
 
         const resumeItem = history.find((item) => item._id === historyId && item.type === "resume");

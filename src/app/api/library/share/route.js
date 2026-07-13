@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
-import { TIERS } from "@/lib/planMiddleware";
+const TIERS = { FREE: "free", PRO: "pro" };
 
 // GET /api/library/share?shareId=...
 // Publicly fetch a shared course

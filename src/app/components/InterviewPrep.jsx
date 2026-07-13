@@ -242,13 +242,13 @@ const InterviewPrep = () => {
                         </div>
                         <div className="px-6 pb-6 flex justify-end gap-3">
                             {!feedback ? (
-                                <Button onClick={handleSubmitAnswer} disabled={loading || !currentAnswer.trim()} className="bg-green-600 hover:bg-green-700 text-white rounded-2xl px-8 py-5">
-                                    {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Evaluating...</> : <><Send className="w-4 h-4 mr-2" /> Submit</>}
+                                <Button onClick={handleSubmitAnswer} disabled={loading || !currentAnswer.trim()} className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-xs">
+                                    {loading ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Evaluating...</> : <><Send className="w-3.5 h-3.5 mr-2" /> Submit</>}
                                 </Button>
                             ) : (
                                 <>
-                                    <Button variant="outline" onClick={() => { setFeedback(null); setError(null); }} className="rounded-2xl px-6 border-slate-200">Retry</Button>
-                                    <Button onClick={handleNext} className="bg-green-600 hover:bg-green-700 text-white rounded-2xl px-8">
+                                    <Button variant="outline" onClick={() => { setFeedback(null); setError(null); }} className="rounded-lg px-4 py-2 border-slate-200 text-xs">Retry</Button>
+                                    <Button onClick={handleNext} className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2 text-xs">
                                         {currentQuestionIdx < questions.length - 1 ? 'Next Question' : 'Finish'} <ChevronRight className="w-4 h-4 ml-1" />
                                     </Button>
                                 </>

@@ -6,6 +6,7 @@ import User from "@/models/User";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { checkCourseAccess } from "@/lib/planMiddleware";
+import { XP_REWARDS, calculateLevel, checkBadges } from "@/lib/gamification";
 
 async function handlePost(request) {
   const user = request.user;
@@ -13,7 +14,7 @@ async function handlePost(request) {
 
   try {
     const body = await request.json();
-    const { courseId, progress, completed, lessonId } = body;
+    const { courseId, progress, completed, lessonId, title } = body;
 
     // === Plan Validation ===
     const access = await checkCourseAccess(db, user._id, courseId);
@@ -71,6 +72,7 @@ async function handlePost(request) {
           $push: {
             courses: {
               courseId,
+              title: title || null,
               progress: Math.round(progress),
               completed,
               startedAt: new Date(),
@@ -78,6 +80,12 @@ async function handlePost(request) {
             },
           },
         }
+      );
+    } else if (title) {
+      // Ensure title is set on existing enrollments
+      await db.collection("users").updateOne(
+        { _id: user._id, "courses.courseId": courseId, "courses.title": null },
+        { $set: { "courses.$.title": title } }
       );
     }
 
@@ -156,6 +164,51 @@ async function handlePost(request) {
             }
           } catch (streakErr) {
             console.error("Streak update error:", streakErr);
+          }
+
+          // Award XP for lesson completion
+          try {
+            const xpAmount = XP_REWARDS.lesson_complete;
+            const todayStr2 = new Date().toISOString().split("T")[0];
+            const xpUser = await db.collection("users").findOne(
+              { _id: user._id },
+              { projection: { xp: 1, level: 1, achievements: 1, dailyXp: 1, dailyXpDate: 1, courses: 1 } }
+            );
+            const oldXp = xpUser?.xp || 0;
+            const newXp = oldXp + xpAmount;
+            const oldLevelInfo = calculateLevel(oldXp);
+            const newLevelInfo = calculateLevel(newXp);
+            const levelUp = newLevelInfo.level > oldLevelInfo.level;
+            let newDailyXp = (xpUser?.dailyXpDate === todayStr2) ? (xpUser?.dailyXp || 0) : 0;
+            newDailyXp += xpAmount;
+
+            const updateOps = {
+              $set: { xp: newXp, level: newLevelInfo.level, dailyXp: newDailyXp, dailyXpDate: todayStr2 },
+            };
+
+            const completedCoursesCount = (xpUser?.courses || []).filter(c => c.completed).length;
+            const newBadges = checkBadges(
+              { ...xpUser, xp: newXp, level: newLevelInfo.level, dailyXp: newDailyXp },
+              { completedCourses: completedCoursesCount }
+            );
+            if (newBadges.length > 0) {
+              updateOps.$push = { achievements: { $each: newBadges } };
+            }
+
+            await db.collection("users").updateOne({ _id: user._id }, updateOps);
+
+            // Also check if course just completed (100%)
+            if (isFinished && !xpUser?.courses?.find(c => c.courseId?.toString() === courseId)?.completed) {
+              const courseXp = XP_REWARDS.course_complete;
+              const finalXp = newXp + courseXp;
+              const finalLevel = calculateLevel(finalXp);
+              await db.collection("users").updateOne(
+                { _id: user._id },
+                { $set: { xp: finalXp, level: finalLevel.level } }
+              );
+            }
+          } catch (xpErr) {
+            console.error("XP award error:", xpErr);
           }
         } else {
           await db.collection("users").updateOne(

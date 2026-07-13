@@ -158,7 +158,8 @@ function ProfileMockup() {
           >
             <User className="w-10 h-10 text-white" />
           </motion.div>
-          <h3 className="font-heading text-xl font-semibold text-foreground">
+          <h3 className="text-xl font-semibold text-foreground"
+              style={{ fontFamily: "var(--font-fraunces)" }}>
             Welcome to Actirova
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -256,7 +257,8 @@ function LearningPathMockup() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-fraunces)" }}>
               React Mastery
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -409,7 +411,8 @@ function LessonMockup() {
 
         {/* Lesson Info */}
         <div>
-          <h3 className="font-heading text-lg font-semibold text-foreground">
+          <h3 className="text-lg font-semibold text-foreground"
+              style={{ fontFamily: "var(--font-fraunces)" }}>
             Understanding React Hooks
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
@@ -538,7 +541,8 @@ function ProgressMockup() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-fraunces)" }}>
               Your Progress
             </h3>
             <p className="text-sm text-muted-foreground">Keep up the momentum!</p>
@@ -638,7 +642,8 @@ function ReportsMockup() {
               <p className="text-xs text-lime-600 dark:text-lime-400 font-medium uppercase tracking-wider">
                 Comprehensive Analysis
               </p>
-              <h3 className="font-heading text-xl font-bold text-foreground mt-1">
+              <h3 className="text-xl font-bold text-foreground mt-1"
+                  style={{ fontFamily: "var(--font-fraunces)" }}>
                 Learning Report
               </h3>
             </div>
@@ -726,17 +731,20 @@ export default function HowItWorks() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50/60 border border-white/60 text-[#1a1a1a] text-[13px] font-medium mb-6 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50/60 border border-white/60 text-[#1a1a1a] text-xs font-medium mb-4 backdrop-blur-md"
+            style={{ fontFamily: "var(--font-fraunces)" }}
           >
             <Sparkles className="w-4 h-4 text-green-500" />
             Simple 6-Step Process
           </motion.div>
-          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-[#1a1a1a]">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4 text-[#1a1a1a]"
+              style={{ fontFamily: "var(--font-fraunces)" }}>
             How{" "}
             <span className="text-green-500">Actirova</span>{" "}
             Works
           </h2>
-          <p className="text-lg md:text-xl text-[#1a1a1a]/60 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-base text-[#1a1a1a]/60 max-w-2xl mx-auto leading-relaxed"
+             style={{ fontFamily: "var(--font-fraunces)" }}>
             From first prompt to saved study materials, premium marketplace access, and career execution, each step maps
             to tools already available in the platform.
           </p>
@@ -779,10 +787,12 @@ export default function HowItWorks() {
                       </span>
                     </div>
 
-                    <h3 className="font-heading text-2xl md:text-3xl font-bold text-[#1a1a1a] mb-4">
+                    <h3 className="text-xl md:text-2xl font-bold text-[#1a1a1a] mb-3"
+                        style={{ fontFamily: "var(--font-fraunces)" }}>
                       {step.title}
                     </h3>
-                    <p className="text-lg text-[#1a1a1a]/60 leading-relaxed mb-6">
+                    <p className="text-sm text-[#1a1a1a]/60 leading-relaxed mb-4"
+                       style={{ fontFamily: "var(--font-fraunces)" }}>
                       {step.description}
                     </p>
 

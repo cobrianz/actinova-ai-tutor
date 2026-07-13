@@ -265,7 +265,7 @@ export default function Chat({ topic: propTopic }) {
               <div className="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center mb-6 shadow-lg shadow-green-600/20">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">How can I help you learn?</h2>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white mb-2">How can I help you learn?</h2>
               <p className="text-slate-500 mb-8 text-sm">Enter a topic below or choose from common subjects</p>
 
               {/* Suggested topics */}

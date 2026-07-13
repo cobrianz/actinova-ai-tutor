@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import QuizInterface from "./QuizInterface";
 import { apiClient } from "@/lib/csrfClient";
+import { getAdaptiveActionContext } from "@/lib/adaptiveActions";
 
 const TestYourself = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -26,6 +27,7 @@ const TestYourself = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [adaptiveContext, setAdaptiveContext] = useState(null);
   const itemsPerPage = 6;
   const [filterDifficulty, setFilterDifficulty] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -87,6 +89,25 @@ const TestYourself = () => {
       }
     };
     fetchQuizzes();
+  }, []);
+
+  useEffect(() => {
+    const fetchAdaptiveContext = async () => {
+      try {
+        const response = await apiClient.get("/api/analytics/overview");
+        if (response.ok) {
+          const data = await response.json();
+          setAdaptiveContext(getAdaptiveActionContext({
+            adaptiveInsights: data.adaptiveInsights,
+            quizTrends: data.quizTrends || [],
+            courseProgress: data.courseProgress || [],
+          }));
+        }
+      } catch (error) {
+        console.debug("Adaptive quiz context unavailable", error);
+      }
+    };
+    fetchAdaptiveContext();
   }, []);
 
   const handleDeleteQuiz = async (quizId) => {
@@ -162,6 +183,13 @@ const TestYourself = () => {
         <p className="text-lg text-muted-foreground mt-2">
           Challenge yourself with quizzes on various topics.
         </p>
+        {adaptiveContext && (
+          <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300">
+            <div className="font-semibold">Recommended next step</div>
+            <div>{adaptiveContext.nextBestActionTitle}</div>
+            <div className="mt-1 text-xs opacity-90">{adaptiveContext.nextBestActionDescription}</div>
+          </div>
+        )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -377,7 +405,7 @@ const TestYourself = () => {
                           <Button
                             variant="default"
                             onClick={() => setSelectedQuiz(quiz)}
-                            className="w-full sm:w-auto rounded-xl px-8 py-2 font-bold shadow-lg shadow-primary/20"
+                            className="w-full sm:w-auto rounded-lg px-4 py-1.5 font-bold text-xs"
                           >
                             {(() => {
                               const completedKey = `quiz_completed_${quiz._id}`;

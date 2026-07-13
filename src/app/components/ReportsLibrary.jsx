@@ -52,7 +52,7 @@ export default function ReportsLibrary({ setActiveContent }) {
                     <p className="text-slate-500 mt-1 text-sm">Your AI-generated research documents</p>
                 </div>
                 <button onClick={() => setActiveContent("reports")}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-2xl font-bold text-sm transition-colors shadow shadow-green-600/20">
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors">
                     <Plus size={17} /> Create New
                 </button>
             </motion.div>

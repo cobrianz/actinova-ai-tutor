@@ -64,7 +64,8 @@ export default function Features() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-[#1a1a1a]"
+            className="text-2xl md:text-3xl font-bold mb-4 tracking-tight text-[#1a1a1a]"
+            style={{ fontFamily: "var(--font-fraunces)" }}
           >
             Improve Your <span className="text-green-500">Learning Experience</span>
           </motion.h2>
@@ -73,7 +74,8 @@ export default function Features() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-[#1a1a1a]/60 max-w-2xl mx-auto"
+            className="text-sm md:text-base text-[#1a1a1a]/60 max-w-2xl mx-auto"
+            style={{ fontFamily: "var(--font-fraunces)" }}
           >
             Every major workflow already in the product, from generating study material
             to unlocking premium marketplace content and using career acceleration tools.
@@ -102,10 +104,12 @@ export default function Features() {
                     <div className="w-12 h-12 rounded-2xl bg-white/80 border border-[#D2D7F8]/80 flex items-center justify-center mb-6 group-hover:bg-[#1a1a1a] transition-colors">
                       <Icon className="w-6 h-6 text-[#1a1a1a] group-hover:text-white" />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#1a1a1a]">
+                    <h3 className="text-base font-bold mb-2 text-[#1a1a1a]"
+                        style={{ fontFamily: "var(--font-fraunces)" }}>
                       {feature.title}
                     </h3>
-                    <p className="text-[#1a1a1a]/60 leading-relaxed">
+                    <p className="text-sm text-[#1a1a1a]/60 leading-relaxed"
+                       style={{ fontFamily: "var(--font-fraunces)" }}>
                       {feature.description}
                     </p>
                     
@@ -129,10 +133,12 @@ export default function Features() {
           
           <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-[#1a1a1a]">
+              <h3 className="text-xl md:text-2xl font-bold mb-4 leading-tight text-[#1a1a1a]"
+                  style={{ fontFamily: "var(--font-fraunces)" }}>
                 One platform for learning, practice, writing, and career growth.
               </h3>
-              <p className="text-[#1a1a1a]/60 text-lg mb-8">
+              <p className="text-sm text-[#1a1a1a]/60 mb-6"
+                 style={{ fontFamily: "var(--font-fraunces)" }}>
                 Move from idea to course, quiz, flashcards, report, premium marketplace access, and career action without switching tools.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -147,7 +153,7 @@ export default function Features() {
                   <div className="flex items-center gap-1 text-yellow-400">
                     {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
                   </div>
-                  <span className="text-sm font-medium text-[#1a1a1a]/80">4.9/5 from 2,000+ reviews</span>
+                  <span className="text-xs font-medium text-[#1a1a1a]/80">4.9/5 from 2,000+ reviews</span>
                 </div>
               </div>
             </div>
@@ -159,7 +165,8 @@ export default function Features() {
                   { label: "Career AI Tools", value: "4" }
                 ].map((stat, i) => (
                   <div key={i} className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-[#1a1a1a]/60">{stat.label}</span>
+                    <span className="text-xs font-medium text-[#1a1a1a]/60"
+                          style={{ fontFamily: "var(--font-fraunces)" }}>{stat.label}</span>
                     <div className="flex items-center gap-3">
                       <div className="w-32 h-2 bg-black/5 rounded-full overflow-hidden">
                         <motion.div 
@@ -170,7 +177,8 @@ export default function Features() {
                           className="h-full bg-green-500"
                         />
                       </div>
-                      <span className="text-lg font-bold text-[#1a1a1a]">{stat.value}</span>
+                      <span className="text-base font-bold text-[#1a1a1a]"
+                            style={{ fontFamily: "var(--font-fraunces)" }}>{stat.value}</span>
                     </div>
                   </div>
                 ))}

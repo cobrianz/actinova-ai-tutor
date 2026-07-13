@@ -7,13 +7,13 @@ import {
     Clock,
     ArrowRight,
     Search,
-    Tag,
     TrendingUp,
     User,
     Share2,
 } from "lucide-react";
 import Link from "next/link";
 import HeroNavbar from "../components/heroNavbar";
+import Footer from "../components/Footer";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 
@@ -57,7 +57,6 @@ export default function BlogPage() {
                         .split("-")
                         .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
                         .join(" ");
-
                     catArr.push({ name, value, count });
                 }
                 setCategories(catArr);
@@ -98,21 +97,28 @@ export default function BlogPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#FAFAF7] flex flex-col">
             <HeroNavbar />
+            <div className="flex-1">
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
                 {/* Header */}
                 <motion.div
-                    className="text-center mb-12"
+                    className="text-center mb-10"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+                    <h1
+                        className="text-2xl md:text-3xl font-bold text-[#0f172a] mb-3 tracking-tight"
+                        style={{ fontFamily: "var(--font-fraunces)" }}
+                    >
                         Learning Insights & Tips
                     </h1>
-                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                    <p
+                        className="text-sm md:text-base text-[#0f172a]/65 max-w-xl mx-auto"
+                        style={{ fontFamily: "var(--font-fraunces)" }}
+                    >
                         Discover the latest trends in education, learning strategies, and
                         insights from our community of educators and learners.
                     </p>
@@ -120,34 +126,35 @@ export default function BlogPage() {
 
                 {/* Search and Categories */}
                 <motion.div
-                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12"
+                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                 >
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search articles..."
-                            className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className="w-full pl-9 pr-3 py-2 border border-black/10 rounded-lg bg-white text-sm text-[#0f172a] placeholder-[#0f172a]/40 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                            style={{ fontFamily: "var(--font-fraunces)" }}
                         />
                     </div>
 
-                    {/* Categories */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                         {categories.map((category) => (
                             <motion.button
                                 key={category.value}
                                 onClick={() => setSelectedCategory(category.value)}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category.value
-                                    ? "bg-green-500 text-white shadow-lg shadow-green-500/20"
-                                : "bg-white/40 text-muted-foreground hover:bg-white/60 border border-white"
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${selectedCategory === category.value
+                                    ? "bg-green-500 text-white"
+                                    : "bg-white text-[#0f172a]/60 hover:bg-white/80 border border-black/10"
                                 }`}
+                                style={{ fontFamily: "var(--font-fraunces)" }}
                             >
                                 {category.name} ({category.count})
                             </motion.button>
@@ -159,99 +166,102 @@ export default function BlogPage() {
                 {featuredPost &&
                     filteredPosts.some((p) => p.slug === featuredPost.slug) && (
                         <motion.div
-                            className="mb-20 relative group"
+                            className="mb-12"
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                         >
-                            <div className="relative overflow-hidden rounded-[2.5rem] border border-border bg-card/50 backdrop-blur-xl shadow-2xl shadow-primary/5">
-                                {/* Decorative elements */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-background/40 to-teal-500/10 opacity-50 dark:opacity-30" />
-                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-                                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-
-                                {/* Grid Pattern */}
-                                <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.07]" style={{ backgroundImage: `radial-gradient(circle at 2px 2px, var(--foreground) 1px, transparent 0)`, backgroundSize: '40px 40px' }} />
-
-                                {/* Content */}
-                                <div className="relative p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row gap-12 items-center">
-                                    <div className="flex-1 order-2 lg:order-1">
+                            <div className="relative overflow-hidden rounded-2xl border border-white bg-white/80 backdrop-blur-xl shadow-sm">
+                                <div className="relative p-6 md:p-10 flex flex-col lg:flex-row gap-8 items-center">
+                                    <div className="flex-1">
                                         <motion.div
-                                            className="inline-flex items-center space-x-2 mb-8 px-4 py-1.5 bg-green-500/10 border border-green-500/20 text-green-600 rounded-full"
-                                            whileHover={{ scale: 1.05 }}
+                                            className="inline-flex items-center gap-1.5 mb-4 px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-600 rounded-full"
+                                            whileHover={{ scale: 1.03 }}
                                         >
-                                            <TrendingUp className="w-4 h-4" />
-                                            <span className="text-[10px] sm:text-xs font-black  tracking-[0.2em]">Featured Article</span>
+                                            <TrendingUp className="w-3 h-3" />
+                                            <span
+                                                className="text-[10px] font-bold tracking-wider uppercase"
+                                                style={{ fontFamily: "var(--font-fraunces)" }}
+                                            >
+                                                Featured Article
+                                            </span>
                                         </motion.div>
 
-                                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-foreground mb-6 leading-[1.1] tracking-tight">
+                                        <h2
+                                            className="text-xl md:text-2xl lg:text-3xl font-bold text-[#0f172a] mb-3 leading-tight"
+                                            style={{ fontFamily: "var(--font-fraunces)" }}
+                                        >
                                             {featuredPost.title}
                                         </h2>
 
-                                        <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl line-clamp-3 font-medium">
+                                        <p
+                                            className="text-sm text-[#0f172a]/60 mb-6 leading-relaxed max-w-xl line-clamp-3"
+                                            style={{ fontFamily: "var(--font-fraunces)" }}
+                                        >
                                             {featuredPost.excerpt}
                                         </p>
 
-                                        <div className="flex flex-wrap items-center gap-8 mb-10">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 p-[2px]">
-                                                    <div className="w-full h-full rounded-[14px] bg-white flex items-center justify-center overflow-hidden">
-                                                        {featuredPost.author?.avatar ? (
-                                                            <img src={featuredPost.author.avatar} alt={featuredPost.author.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <User className="w-6 h-6 text-green-600" />
-                                                        )}
-                                                    </div>
+                                        <div className="flex flex-wrap items-center gap-4 mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                                                    {featuredPost.author?.avatar ? (
+                                                        <img src={featuredPost.author.avatar} alt={featuredPost.author.name} className="w-full h-full rounded-full object-cover" />
+                                                    ) : (
+                                                        <User className="w-4 h-4 text-green-600" />
+                                                    )}
                                                 </div>
-                                                <div className="text-sm">
-                                                    <p className="text-muted-foreground font-bold  tracking-wider text-[10px]">Author</p>
-                                                    <p className="font-black text-foreground text-base">{featuredPost.author?.name || "Admin"}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="h-10 w-px bg-border hidden sm:block" />
-
-                                            <div className="flex items-center gap-6">
-                                                <div className="flex items-center gap-2 text-sm font-bold bg-white/40 dark:bg-white/10 px-4 py-2 rounded-xl border-2 border-white">
-                                                    <Calendar className="w-4 h-4 text-green-600" />
-                                                    <span className="text-muted-foreground">{featuredPost.date}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm font-bold bg-white/40 dark:bg-white/10 px-4 py-2 rounded-xl border-2 border-white">
-                                                    <Clock className="w-4 h-4 text-teal-600" />
-                                                    <span className="text-muted-foreground">{featuredPost.readTime}</span>
+                                                <div>
+                                                    <p
+                                                        className="text-xs font-bold text-[#0f172a]"
+                                                        style={{ fontFamily: "var(--font-fraunces)" }}
+                                                    >
+                                                        {featuredPost.author?.name || "Admin"}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-4 mt-auto lg:ml-auto justify-end w-full">
-                                                <Link
-                                                    href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                                    className="group/btn inline-flex items-center space-x-3 bg-green-500 text-white px-10 py-5 rounded-[1.5rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-green-500/20 border-2 border-white/20"
-                                                >
-                                                    <span>Start Reading</span>
-                                                    <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
-                                                </Link>
 
-                                                <motion.button
-                                                    onClick={() => {
-                                                        if (navigator.share) {
-                                                            navigator.share({
-                                                                title: featuredPost.title,
-                                                                text: featuredPost.excerpt,
-                                                                url: `${window.location.origin}/blog/${featuredPost.slug}`,
-                                                            });
-                                                        } else {
-                                                            navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
-                                                            toast.success("Link copied to clipboard!");
-                                                        }
-                                                    }}
-                                                    className="p-5 bg-white/40 hover:bg-white/60 text-foreground rounded-[1.5rem] transition-all border-2 border-white"
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                >
-                                                    <Share2 className="w-6 h-6 text-muted-foreground group-hover:text-green-600" />
-                                                </motion.button>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-1 text-xs text-[#0f172a]/50">
+                                                    <Calendar className="w-3 h-3" />
+                                                    <span style={{ fontFamily: "var(--font-fraunces)" }}>{featuredPost.date}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-xs text-[#0f172a]/50">
+                                                    <Clock className="w-3 h-3" />
+                                                    <span style={{ fontFamily: "var(--font-fraunces)" }}>{featuredPost.readTime}</span>
+                                                </div>
                                             </div>
                                         </div>
 
+                                        <div className="flex items-center gap-3">
+                                            <Link
+                                                href={`/blog/${featuredPost.slug || featuredPost._id}`}
+                                                className="inline-flex items-center gap-2 bg-green-500 text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-green-600 transition-all shadow-sm"
+                                                style={{ fontFamily: "var(--font-fraunces)" }}
+                                            >
+                                                <span>Start Reading</span>
+                                                <ArrowRight className="w-3.5 h-3.5" />
+                                            </Link>
+
+                                            <motion.button
+                                                onClick={() => {
+                                                    if (navigator.share) {
+                                                        navigator.share({
+                                                            title: featuredPost.title,
+                                                            text: featuredPost.excerpt,
+                                                            url: `${window.location.origin}/blog/${featuredPost.slug}`,
+                                                        });
+                                                    } else {
+                                                        navigator.clipboard.writeText(`${window.location.origin}/blog/${featuredPost.slug}`);
+                                                        toast.success("Link copied to clipboard!");
+                                                    }
+                                                }}
+                                                className="p-2.5 bg-white hover:bg-green-50 text-[#0f172a]/60 rounded-full transition-all border border-black/10"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <Share2 className="w-3.5 h-3.5" />
+                                            </motion.button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -266,7 +276,7 @@ export default function BlogPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
                         >
                             {Array.from({ length: 6 }).map((_, index) => (
                                 <motion.div
@@ -274,39 +284,20 @@ export default function BlogPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                                    className="bg-card border border-border rounded-lg overflow-hidden skeleton-block"
+                                    className="bg-[#F8F8F5] rounded-2xl overflow-hidden border border-black/[0.04]"
                                 >
-                                    {/* Image skeleton */}
-                                    <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 animate-pulse" />
-
-                                    <div className="p-6">
-                                        {/* Title skeleton */}
-                                        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-3 animate-pulse" />
-                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse w-3/4" />
-
-                                        {/* Excerpt skeleton */}
-                                        <div className="space-y-2 mb-4">
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-5/6" />
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-4/6" />
+                                    <div className="h-1 bg-gray-200 animate-pulse" />
+                                    <div className="p-5">
+                                        <div className="h-3 bg-gray-100 rounded-full mb-3 animate-pulse w-16" />
+                                        <div className="h-4 bg-gray-200 rounded mb-2 animate-pulse" />
+                                        <div className="h-4 bg-gray-200 rounded mb-3 animate-pulse w-3/4" />
+                                        <div className="space-y-1.5 mb-4">
+                                            <div className="h-3 bg-gray-100 rounded animate-pulse" />
+                                            <div className="h-3 bg-gray-100 rounded animate-pulse w-5/6" />
                                         </div>
-
-                                        {/* Tags skeleton */}
-                                        <div className="flex gap-2 mb-4">
-                                            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full px-3 py-1 animate-pulse w-16" />
-                                            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full px-3 py-1 animate-pulse w-20" />
-                                        </div>
-
-                                        {/* Author and read link skeleton */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
-                                                <div>
-                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-1 animate-pulse w-20" />
-                                                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24" />
-                                                </div>
-                                            </div>
-                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-12" />
+                                        <div className="flex items-center gap-2 pt-3 border-t border-black/5">
+                                            <div className="w-6 h-6 bg-gray-100 rounded-full animate-pulse" />
+                                            <div className="h-3 bg-gray-100 rounded animate-pulse w-20" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -319,7 +310,7 @@ export default function BlogPage() {
                             initial="hidden"
                             animate="visible"
                             exit="hidden"
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
                         >
                             {filteredPosts
                                 .filter((post) => !post.featured)
@@ -327,60 +318,108 @@ export default function BlogPage() {
                                     <motion.article
                                         key={post.slug || post._id}
                                         variants={itemVariants}
-                                        whileHover={{ y: -5 }}
-                                        className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                                        whileHover={{ y: -4 }}
+                                        className="group bg-[#F8F8F5] rounded-2xl overflow-hidden border border-black/[0.04] hover:border-green-500/25 hover:shadow-lg hover:shadow-green-500/5 transition-all duration-300"
                                     >
-                                        <div className="p-6">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded text-xs font-bold border border-green-500/20">
+                                        {/* Top accent bar */}
+                                        <div className="h-0.5 bg-gradient-to-r from-green-400 to-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                        {/* Thumbnail */}
+                                        {post.thumbnailUrl && (
+                                            <div className="relative h-40 overflow-hidden">
+                                                <img
+                                                    src={post.thumbnailUrl}
+                                                    alt={post.title}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                                            </div>
+                                        )}
+
+                                        <div className="p-5">
+                                            {/* Category + trending */}
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <span
+                                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-600 border border-green-500/15 uppercase tracking-wider"
+                                                    style={{ fontFamily: "var(--font-fraunces)" }}
+                                                >
                                                     {post.category}
                                                 </span>
                                                 {post.trending && (
-                                                    <div className="flex items-center space-x-1 text-orange-500 text-xs font-medium">
-                                                        <TrendingUp className="w-3 h-3" />
-                                                        <span>Trending</span>
-                                                    </div>
+                                                    <span
+                                                        className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/15 flex items-center gap-1"
+                                                        style={{ fontFamily: "var(--font-fraunces)" }}
+                                                    >
+                                                        <TrendingUp className="w-2.5 h-2.5" />
+                                                        Trending
+                                                    </span>
                                                 )}
                                             </div>
 
-                                            <h3 className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
+                                            {/* Title */}
+                                            <h3
+                                                className="text-base font-bold text-[#0f172a] mb-2 line-clamp-2 leading-snug group-hover:text-green-600 transition-colors"
+                                                style={{ fontFamily: "var(--font-fraunces)" }}
+                                            >
                                                 {post.title}
                                             </h3>
 
-                                            <p className="text-muted-foreground mb-4 line-clamp-3">
+                                            {/* Excerpt */}
+                                            <p
+                                                className="text-xs text-[#0f172a]/50 mb-4 line-clamp-2 leading-relaxed"
+                                                style={{ fontFamily: "var(--font-fraunces)" }}
+                                            >
                                                 {post.excerpt}
                                             </p>
 
-                                            <div className="flex flex-wrap gap-2 mb-4">
-                                                {(post.tags || []).slice(0, 3).map((tag) => (
-                                                    <span
-                                                        key={tag}
-                                                        className="bg-secondary text-muted-foreground px-2 py-1 rounded text-xs flex items-center space-x-1"
-                                                    >
-                                                        <Tag className="w-3 h-3" />
-                                                        <span>{tag}</span>
-                                                    </span>
-                                                ))}
-                                            </div>
+                                            {/* Tags */}
+                                            {(post.tags || []).length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5 mb-4">
+                                                    {(post.tags || []).slice(0, 3).map((tag) => (
+                                                        <span
+                                                            key={tag}
+                                                            className="px-2 py-0.5 rounded-full text-[10px] bg-black/[0.04] text-[#0f172a]/40 font-medium"
+                                                            style={{ fontFamily: "var(--font-fraunces)" }}
+                                                        >
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
 
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                                                        <User className="w-4 h-4 text-muted-foreground" />
+                                            {/* Footer */}
+                                            <div className="flex items-center justify-between pt-3 border-t border-black/[0.04]">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="w-6 h-6 rounded-full bg-green-500/10 border border-green-500/15 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        {post.author?.avatar ? (
+                                                            <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-3 h-3 text-green-600" />
+                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-foreground">
+                                                    <div className="min-w-0">
+                                                        <span
+                                                            className="text-[11px] font-bold text-[#0f172a] leading-tight block truncate"
+                                                            style={{ fontFamily: "var(--font-fraunces)" }}
+                                                        >
                                                             {post.author?.name || "Admin"}
-                                                        </p>
-                                                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                                            <span>{post.date}</span>
-                                                            <span>•</span>
-                                                            <span>{post.readTime}</span>
-                                                        </div>
+                                                        </span>
+                                                        <span
+                                                            className="text-[10px] text-[#0f172a]/35 leading-tight block"
+                                                            style={{ fontFamily: "var(--font-fraunces)" }}
+                                                        >
+                                                            {post.date}
+                                                        </span>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <span
+                                                        className="text-[10px] text-[#0f172a]/30 hidden sm:inline"
+                                                        style={{ fontFamily: "var(--font-fraunces)" }}
+                                                    >
+                                                        {post.readTime}
+                                                    </span>
                                                     <motion.button
                                                         onClick={(e) => {
                                                             e.preventDefault();
@@ -395,20 +434,18 @@ export default function BlogPage() {
                                                                 toast.success("Link copied!");
                                                             }
                                                         }}
-                                                        className="p-2 hover:bg-secondary rounded transition-colors text-muted-foreground hover:text-primary"
+                                                        className="p-1.5 hover:bg-green-50 rounded-lg transition-colors text-[#0f172a]/25 hover:text-green-600"
                                                         title="Share article"
                                                         whileHover={{ scale: 1.1 }}
                                                         whileTap={{ scale: 0.95 }}
                                                     >
-                                                        <Share2 className="w-4 h-4" />
+                                                        <Share2 className="w-3 h-3" />
                                                     </motion.button>
-
                                                     <Link
                                                         href={`/blog/${post.slug || post._id}`}
-                                                        className="text-green-600 hover:text-green-700 font-bold text-sm flex items-center space-x-1"
+                                                        className="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
                                                     >
-                                                        <span>Read</span>
-                                                        <ArrowRight className="w-4 h-4" />
+                                                        <ArrowRight className="w-3 h-3" />
                                                     </Link>
                                                 </div>
                                             </div>
@@ -422,16 +459,22 @@ export default function BlogPage() {
                 {/* Empty State */}
                 {!loading && filteredPosts.length === 0 && (
                     <motion.div
-                        className="text-center py-16"
+                        className="text-center py-12"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-foreground mb-2">
+                        <Search className="w-12 h-12 text-[#0f172a]/20 mx-auto mb-3" />
+                        <h3
+                            className="text-base font-bold text-[#0f172a] mb-1"
+                            style={{ fontFamily: "var(--font-fraunces)" }}
+                        >
                             No articles found
                         </h3>
-                        <p className="text-muted-foreground mb-6">
+                        <p
+                            className="text-xs text-[#0f172a]/50 mb-4"
+                            style={{ fontFamily: "var(--font-fraunces)" }}
+                        >
                             {searchQuery
                                 ? `No articles match "${searchQuery}" in the selected category.`
                                 : "No articles found in the selected category."}
@@ -441,31 +484,40 @@ export default function BlogPage() {
                                 setSearchQuery("");
                                 setSelectedCategory("all");
                             }}
-                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                            className="bg-green-500 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-600 transition-colors"
+                            style={{ fontFamily: "var(--font-fraunces)" }}
                         >
                             Clear Filters
                         </button>
                     </motion.div>
                 )}
 
-
                 {/* Newsletter Signup */}
                 <motion.div
-                    className="mt-20 bg-secondary rounded-2xl p-8 text-center"
+                    className="mt-16 bg-[#F2F1EC] rounded-2xl p-6 text-center"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                 >
-                    <h2 className="text-2xl font-bold text-foreground mb-4">
+                    <h2
+                        className="text-lg font-bold text-[#0f172a] mb-2"
+                        style={{ fontFamily: "var(--font-fraunces)" }}
+                    >
                         Stay Updated with Learning Insights
                     </h2>
-                    <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                    <p
+                        className="text-xs text-[#0f172a]/55 mb-4 max-w-md mx-auto"
+                        style={{ fontFamily: "var(--font-fraunces)" }}
+                    >
                         Get the latest articles, learning tips, and educational insights
                         delivered to your inbox weekly.
                     </p>
                     <NewsletterForm />
                 </motion.div>
             </div>
+            </div>
+
+            <Footer />
         </div>
     );
 }
@@ -493,9 +545,12 @@ function NewsletterForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-sm mx-auto">
             {status === "success" ? (
-                <div className="w-full p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-500 font-medium">
+                <div
+                    className="w-full p-2 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 text-xs font-medium"
+                    style={{ fontFamily: "var(--font-fraunces)" }}
+                >
                     Subscribed successfully!
                 </div>
             ) : (
@@ -505,12 +560,14 @@ function NewsletterForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email"
-                        className="flex-1 px-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="flex-1 px-3 py-2 border border-black/10 rounded-lg bg-white text-xs text-[#0f172a] placeholder-[#0f172a]/40 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                        style={{ fontFamily: "var(--font-fraunces)" }}
                         disabled={status === "loading"}
                     />
                     <button
                         disabled={status === "loading"}
-                        className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors font-bold shadow-lg shadow-green-500/20 disabled:opacity-50 border border-white/20"
+                        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-xs font-bold disabled:opacity-50"
+                        style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                         {status === "loading" ? "..." : "Subscribe"}
                     </button>

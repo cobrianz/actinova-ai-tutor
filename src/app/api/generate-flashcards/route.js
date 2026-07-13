@@ -58,18 +58,24 @@ export async function POST(request) {
 
     // ─── USER CREDIT CHECK (planMiddleware) ───
     if (userId) {
-      const limitCheck = await checkAPILimit(userId, "generate-flashcards");
+      const freshUser = await db.collection("users").findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { credits: 1, purchasedItems: 1 } }
+      );
+      if (freshUser) {
+        const limitCheck = await checkAPILimit(db, freshUser, "flashcard_generation");
 
-      if (!limitCheck.withinLimit) {
-        return NextResponse.json(
-          {
-            error: "Insufficient credits",
-            message: `You need ${limitCheck.creditCost} credits to generate flashcards. You have ${limitCheck.credits} credits.`,
-            credits: limitCheck.credits,
-            creditCost: limitCheck.creditCost,
-          },
-          { status: 429 }
-        );
+        if (!limitCheck.allowed) {
+          return NextResponse.json(
+            {
+              error: "Insufficient credits",
+              message: `You need ${limitCheck.creditCost} credits to generate flashcards. You have ${limitCheck.credits} credits.`,
+              credits: limitCheck.credits,
+              creditCost: limitCheck.creditCost,
+            },
+            { status: 429 }
+          );
+        }
       }
     }
 

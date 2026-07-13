@@ -37,6 +37,7 @@ import { apiClient } from "@/lib/csrfClient";
 import { PRODUCTS } from "@/lib/planLimits";
 import LessonChart from "./LessonChart";
 import LessonTable from "./LessonTable";
+import CourseNotes from "./CourseNotes";
 import html2canvas from "html2canvas";
 
 export default function LearnContent() {
@@ -726,8 +727,19 @@ export default function LearnContent() {
             completed: progress >= 100,
             isLessonCompleted: true,
             lessonId,
+            title: courseData?.title || courseData?.topic || null,
             userId: String(user?._id || user?.id || ""),
           });
+
+          // Sync lesson completion to related study plans
+          try {
+            await apiClient.post("/api/study-plan/sync-from-course", {
+              courseId,
+              moduleId,
+              lessonIndex,
+              completed: true,
+            });
+          } catch (_) {}
         } catch (progressErr) {
           // Silent fail — don't block the user from reading content
           console.warn("Failed to auto-save lesson completion:", progressErr);
@@ -830,6 +842,7 @@ export default function LearnContent() {
           progress,
           completed: progress === 100,
           isLessonCompleted: isNowCompleted,
+          title: courseData?.title || courseData?.topic || null,
           userId: String(user?._id || user?.id || ""),
           lessonId: lessonId,
         }, {
@@ -845,6 +858,16 @@ export default function LearnContent() {
           }
           throw new Error(`Server returned ${response.status}`);
         }
+
+        // Sync lesson completion to related study plans
+        try {
+          await apiClient.post("/api/study-plan/sync-from-course", {
+            courseId,
+            moduleId,
+            lessonIndex,
+            completed: isNowCompleted,
+          });
+        } catch (_) {}
       }
     } catch (err) {
       console.error("Progress save error:", err);
@@ -1294,6 +1317,14 @@ export default function LearnContent() {
       currentLesson.content !== "Content for this lesson is coming soon..." &&
       !lessonContentLoading &&
       hasPurchased('course_generation')
+  );
+
+  const courseLessons = (courseData?.modules || courseData?.courseData?.modules || []).flatMap((mod) =>
+    (mod.lessons || []).map((lesson, idx) => ({
+      id: (typeof lesson === "object" && lesson?.id) || `${mod.id}-${idx}`,
+      title: typeof lesson === "string" ? lesson : lesson.title,
+      moduleTitle: mod.title,
+    }))
   );
 
   const saveNotes = async (notesContent) => {
@@ -2279,50 +2310,10 @@ export default function LearnContent() {
           </div>
           <div className="flex-1 overflow-hidden">
             {activeRightPanel === "notes" ? (
-              <div className="h-full flex flex-col">
-                <div className="p-3 sm:p-4 border-b border-border">
-                  <h3 className="font-semibold text-sm sm:text-base text-foreground">
-                    My Notes
-                  </h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Take notes while learning
-                  </p>
-                </div>
-                <div className="flex-1 p-3 sm:p-4">
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Write your notes here..."
-                    className="w-full h-full resize-none overflow-y-auto hide-scrollbar bg-transparent text-sm sm:text-base text-foreground placeholder-muted-foreground focus:outline-none"
-                    dir="ltr"
-                  />
-                  {isSavingNotes && (
-                    <div className="text-xs text-muted-foreground mt-2 animate-pulse">
-                      Saving...
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 border-t border-border">
-                  <button
-                    onClick={() => {
-                      if (!hasPurchased('course_generation')) {
-                        toast.error("Notes PDF export is a Pro feature. Please upgrade.");
-                        router.push("/dashboard");
-                        return;
-                      }
-                      handleDownloadNotes();
-                    }}
-                    disabled={!notes.trim() || !hasPurchased('course_generation')}
-                    className={`w-full flex items-center justify-center space-x-2 py-3 px-4 text-sm rounded-xl font-bold transition-all ${hasPurchased('course_generation')
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02]"
-                      : "bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
-                      }`}
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>{hasPurchased('course_generation') ? "Download Notes" : "PDF Export"}</span>
-                  </button>
-                </div>
-              </div>
+              <CourseNotes
+                courseId={courseData?._id}
+                lessons={courseLessons}
+              />
             ) : activeRightPanel === "questions" ? (
               <div className="h-full flex flex-col">
                 <div className="p-3 sm:p-4 border-b border-border">

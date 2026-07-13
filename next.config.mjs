@@ -2,7 +2,7 @@
 
 const nextConfig = {
   turbopack: {},
-  serverExternalPackages: ['@react-pdf/renderer', 'puppeteer'],
+  serverExternalPackages: ['@react-pdf/renderer', 'puppeteer', 'msedge-tts'],
 };
 
 export default nextConfig;

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
@@ -20,6 +21,7 @@ import {
   RotateCcw,
   Trophy,
   AlertTriangle,
+  Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
@@ -172,7 +174,11 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
     let totalScore = 0;
     loadedQuestions.forEach((card) => {
       const userAnswer = answers[card._id];
-      if (JSON.stringify(userAnswer) === JSON.stringify(card.correctAnswer)) {
+      const isTextBased = card.type === "fill_blank" || card.type === "short_answer";
+      const isCorrect = isTextBased
+        ? String(userAnswer || "").trim().toLowerCase() === String(card.correctAnswer || "").trim().toLowerCase()
+        : JSON.stringify(userAnswer) === JSON.stringify(card.correctAnswer);
+      if (isCorrect) {
         totalScore += card.points;
       }
     });
@@ -260,7 +266,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
     >
       {/* Sticky Header Bar */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             {/* Back button */}
             {onBack ? (
@@ -287,20 +293,22 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
             </h1>
 
             {/* Download button - always visible */}
-            <Button
-              onClick={handleDownloadExam}
-              variant="outline"
-              size="sm"
-              className="shrink-0 border-border hover:bg-muted"
-            >
-              <Download className="w-4 h-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">Download</span>
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                onClick={handleDownloadExam}
+                variant="outline"
+                size="sm"
+                className="border-border hover:bg-muted"
+              >
+                <Download className="w-4 h-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Download</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div className="bg-muted/50 rounded-xl p-4 text-center">
@@ -399,7 +407,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                     </div>
 
                     {/* Answer Options */}
-                    {q.type === "multiple-choice" || q.type === "true-false" ? (
+                    {(q.type === "multiple-choice" || q.type === "multiple_choice" || q.type === "true-false" || q.type === "true_false") ? (
                       <RadioGroup
                         onValueChange={(value) => handleAnswerChange(q._id, value)}
                         disabled={submitted}
@@ -445,6 +453,31 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                           );
                         })}
                       </RadioGroup>
+                    ) : (q.type === "fill_blank" || q.type === "short_answer") ? (
+                      <div className="ml-12 space-y-2">
+                        <Input
+                          type="text"
+                          placeholder={q.type === "fill_blank" ? "Type your answer..." : "Type your answer..."}
+                          value={answers[q._id] || ""}
+                          onChange={(e) => handleAnswerChange(q._id, e.target.value)}
+                          disabled={submitted}
+                          className={`w-full max-w-md ${
+                            submitted
+                              ? JSON.stringify(answers[q._id]?.trim().toLowerCase()) === JSON.stringify(q.correctAnswer?.trim().toLowerCase())
+                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                                : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                              : ""
+                          }`}
+                        />
+                        {submitted && (
+                          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-lg">
+                            <CheckCircle className="w-4 h-4 shrink-0" />
+                            <span>
+                              Expected answer: <strong>{q.correctAnswer}</strong>
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="space-y-2 ml-12">
                         {q.options.map((option, optIndex) => {
@@ -495,6 +528,14 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
                             </label>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Explanation Display (after submit) */}
+                    {submitted && q.explanation && (
+                      <div className="mt-3 ml-12 flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 border border-border px-3 py-2.5 rounded-lg">
+                        <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-yellow-500" />
+                        <span>{q.explanation}</span>
                       </div>
                     )}
 

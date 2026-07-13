@@ -14,6 +14,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiClient } from "@/lib/csrfClient";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar({ toggleSidebar }) {
   const { user, logout, loading } = useAuth();
@@ -103,16 +104,18 @@ export default function Navbar({ toggleSidebar }) {
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="text-sm font-bold bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-all shadow-sm"
+                  className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg hover:bg-primary/90 transition-all"
                 >
                   Sign up
                 </Link>
               </div>
             ) : (
-              <Link
-                href="/dashboard?tab=profile"
-                className="p-1 rounded-lg hover:opacity-80 transition-opacity"
-              >
+              <div className="flex items-center space-x-2">
+                <NotificationBell />
+                <Link
+                  href="/dashboard?tab=profile"
+                  className="p-1 rounded-lg hover:opacity-80 transition-opacity"
+                >
                 <Avatar className="w-8 h-8 border border-border">
                   <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
@@ -120,6 +123,7 @@ export default function Navbar({ toggleSidebar }) {
                   </AvatarFallback>
                 </Avatar>
               </Link>
+              </div>
             )}
           </div>
         </div>

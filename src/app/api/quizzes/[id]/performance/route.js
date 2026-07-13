@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
+import { XP_REWARDS, calculateLevel, checkBadges } from "@/lib/gamification";
 
 export async function POST(request, { params }) {
   try {
@@ -68,9 +69,58 @@ export async function POST(request, { params }) {
     test.performances.push(performanceData);
     await test.save();
 
+    // Award XP for quiz completion
+    let xpResult = null;
+    try {
+      const { db } = await connectToDatabase();
+      const isPerfect = percentage === 100;
+      const xpAmount = isPerfect ? XP_REWARDS.quiz_complete + XP_REWARDS.quiz_perfect : XP_REWARDS.quiz_complete;
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      const xpUser = await db.collection("users").findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { xp: 1, level: 1, achievements: 1, dailyXp: 1, dailyXpDate: 1, courses: 1 } }
+      );
+
+      const oldXp = xpUser?.xp || 0;
+      const newXp = oldXp + xpAmount;
+      const oldLevelInfo = calculateLevel(oldXp);
+      const newLevelInfo = calculateLevel(newXp);
+      const levelUp = newLevelInfo.level > oldLevelInfo.level;
+      let newDailyXp = (xpUser?.dailyXpDate === todayStr) ? (xpUser?.dailyXp || 0) : 0;
+      newDailyXp += xpAmount;
+
+      const updateOps = {
+        $set: { xp: newXp, level: newLevelInfo.level, dailyXp: newDailyXp, dailyXpDate: todayStr },
+      };
+
+      const completedCoursesCount = (xpUser?.courses || []).filter(c => c.completed).length;
+      const newBadges = checkBadges(
+        { ...xpUser, xp: newXp, level: newLevelInfo.level, dailyXp: newDailyXp },
+        { completedCourses: completedCoursesCount }
+      );
+      if (newBadges.length > 0) {
+        updateOps.$push = { achievements: { $each: newBadges } };
+      }
+
+      await db.collection("users").updateOne({ _id: new ObjectId(userId) }, updateOps);
+
+      xpResult = {
+        xpAwarded: xpAmount,
+        totalXp: newXp,
+        level: newLevelInfo.level,
+        levelUp,
+        previousLevel: oldLevelInfo.level,
+        newBadges: newBadges.map(b => ({ badgeId: b.badgeId, name: b.name, icon: b.icon, rarity: b.rarity })),
+      };
+    } catch (xpErr) {
+      console.error("XP award error:", xpErr);
+    }
+
     return NextResponse.json({
       success: true,
       performance: performanceData,
+      xp: xpResult,
       message: "Performance saved successfully",
     });
   } catch (error) {

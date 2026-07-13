@@ -886,9 +886,9 @@ export default function Explore() {
   }, [user]);
 
   const courseUsed = usageData?.details?.courses?.used ?? 0;
-  const courseLimit = usageData?.details?.courses?.limit ?? 2;
-  const courseUnlimited = courseLimit === -1 || courseLimit === null;
-  const atLimit = !!(usageData && !usageData.isEnterprise && !courseUnlimited && courseUsed >= courseLimit);
+  const courseLimit = usageData?.details?.courses?.limit ?? Infinity;
+  const courseUnlimited = courseLimit === -1 || courseLimit === Infinity || courseLimit === null;
+  const atLimit = !!(usageData && !usageData.isEnterprise && !courseUnlimited && courseLimit <= 0);
 
   // Filtered categories based on search query
   const filteredCategories = useMemo(() => {
@@ -1287,8 +1287,8 @@ export default function Explore() {
       {/* Header */}
       <div className="mb-10">
         <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 mb-8">
-          <h1 className="text-4xl font-black text-white mb-2">Explore Courses</h1>
-          <p className="text-green-100 text-lg">Discover categories and trending AI-generated courses tailored to your learning goals</p>
+          <h1 className="text-xl font-black text-white mb-2">Explore Courses</h1>
+          <p className="text-green-100 text-xs">Discover categories and trending AI-generated courses tailored to your learning goals</p>
         </div>
       </div>
 
@@ -1324,7 +1324,7 @@ export default function Explore() {
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Trending This Week</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Trending This Week</h2>
               <p className="text-sm text-slate-500">Hot topics gaining popularity</p>
             </div>
           </div>
@@ -1342,14 +1342,14 @@ export default function Explore() {
             ) : filteredTrendingTopics.length === 0 && searchQuery ? (
               <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                 <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 text-lg">No trending topics match your search</p>
+                <p className="text-slate-500 text-sm">No trending topics match your search</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTrendingTopics.map((topic, i) => (
                   <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">{topic.title}</h3>
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">{topic.title}</h3>
                       <span className={`ml-2 px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                         topic.difficulty === 'intermediate' ? 'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         }`}>{topic.difficulty || 'Beginner'}</span>
@@ -1384,7 +1384,7 @@ export default function Explore() {
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Browse by Category</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Browse by Category</h2>
               <p className="text-sm text-slate-500">Explore our diverse course categories</p>
             </div>
           </div>
@@ -1417,7 +1417,7 @@ export default function Explore() {
                           <BookOpen className="w-5 h-5 text-green-600 dark:text-green-400 group-hover:text-white transition-colors" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{category.name}</h3>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{category.name}</h3>
                           <p className="text-xs text-slate-500 font-medium">{category.count || 0} specializations</p>
                         </div>
                       </div>
@@ -1451,7 +1451,7 @@ export default function Explore() {
                   <div className="text-center mt-10">
                     <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border border-green-100 dark:border-green-800 rounded-2xl p-8 inline-block max-w-md">
                       <Sparkles className="w-10 h-10 text-green-500 mx-auto mb-4" />
-                      <p className="text-green-700 dark:text-green-300 font-bold text-lg mb-2">Can't find what you're looking for?</p>
+                      <p className="text-green-700 dark:text-green-300 font-bold text-sm mb-2">Can't find what you're looking for?</p>
                       <p className="text-green-500 text-sm mb-5">Generate a custom course with AI</p>
                       <button onClick={() => router.push("/dashboard?tab=generate")}
                         className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all">
@@ -1475,7 +1475,7 @@ export default function Explore() {
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   {exploringCategory} Courses
                 </h2>
                 <p className="text-sm text-slate-500">Generating curriculum...</p>
@@ -1521,7 +1521,7 @@ export default function Explore() {
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                     {generatedSet.category} Courses
                   </h2>
                   <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full font-medium">
@@ -1556,7 +1556,7 @@ export default function Explore() {
                     className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 relative group"
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">
                         {course.title}
                       </h3>
                       <div className="flex items-center">

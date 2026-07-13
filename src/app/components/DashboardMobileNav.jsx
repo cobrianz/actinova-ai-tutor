@@ -203,7 +203,7 @@ export default function DashboardMobileNav() {
 
             <button
               onClick={() => navigate("generate")}
-              className="flex items-center justify-center -mt-3 w-14 h-14 rounded-full bg-green-500 text-white shadow-xl hover:bg-green-600 active:scale-95 transition-all duration-200"
+              className="flex items-center justify-center -mt-3 w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200"
             >
               <Plus className="w-7 h-7 stroke-[2.5]" />
             </button>

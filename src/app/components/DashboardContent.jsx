@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import Explore from "./Explore";
 import Generate from "./Generate";
 import Library from "./Library";
@@ -12,53 +12,115 @@ import TestYourself from "./TestYourself";
 import ReportsLibrary from "./ReportsLibrary";
 import ProfileContent from "./ProfileContent";
 import CareerGrowth from "./CareerGrowth";
+import DashboardOverview from "./DashboardOverview";
+import StudyPlanLibrary from "./StudyPlanLibrary";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
+import confetti from "canvas-confetti";
+
+function fireCelebration() {
+  const duration = 3000;
+  const end = Date.now() + duration;
+  const colors = ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#96E6A1", "#DDA0DD"];
+
+  const frame = () => {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.7 },
+      colors,
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.7 },
+      colors,
+    });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  };
+  frame();
+
+  // Big burst from center
+  confetti({
+    particleCount: 100,
+    spread: 100,
+    origin: { y: 0.6 },
+    colors,
+  });
+}
 
 export default function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fetchUser } = useAuth();
+  const [showCelebration, setShowCelebration] = useState(false);
+  const verifiedRef = useRef(null);
 
   useEffect(() => {
     const payment = searchParams.get("payment");
-    const plan = searchParams.get("plan");
     const purchaseType = searchParams.get("purchaseType");
+    const ref = searchParams.get("reference") || searchParams.get("trxref") || searchParams.get("ref");
 
-    if (payment === "success") {
-      if (purchaseType === "marketplace-course") {
-        toast.success("Marketplace course unlocked successfully.");
-      } else if (purchaseType === "premium-generation") {
-        toast.success("Payment received. Premium generation is continuing.");
-      } else if (purchaseType === "resume-export") {
-        // ResumeBuilder handles the post-payment download messaging.
-      } else {
-        toast.success(`Payment successful! You now have ${plan || "Pro"} plan access.`);
+    if (payment !== "success") return;
+    if (!ref) return;
+    if (verifiedRef.current === ref) return;
+    verifiedRef.current = ref;
+
+    (async () => {
+      try {
+        const res = await apiClient.get(`/api/billing/verify-payment?ref=${encodeURIComponent(ref)}`);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          toast.success(
+            purchaseType === "credit-purchase" ? "Credits added to your account!" :
+            purchaseType === "marketplace-course" ? "Course unlocked successfully!" :
+            purchaseType === "premium-generation" ? "Premium access activated!" :
+            "Payment successful!"
+          );
+          fireCelebration();
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 4000);
+        } else {
+          console.error("Verify failed:", data);
+          toast.error(data.error || "Payment verification failed. Contact support.");
+        }
+      } catch (err) {
+        console.error("Verify request failed:", err);
+        toast.error("Could not verify payment. Contact support.");
       }
 
-      fetchUser?.();
+      // Refresh user data to reflect new credits
+      await fetchUser?.();
 
-      if (purchaseType === "premium-generation") {
-        return;
+      // Clean up URL params
+      if (purchaseType !== "premium-generation") {
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("payment");
+        nextParams.delete("plan");
+        nextParams.delete("purchaseType");
+        nextParams.delete("ref");
+        nextParams.delete("reference");
+        nextParams.delete("trxref");
+        const nextUrl = `/dashboard${nextParams.toString() ? `?${nextParams.toString()}` : ""}`;
+        router.replace(nextUrl);
       }
+    })();
+  }, [searchParams, fetchUser, router]);
 
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("payment");
-      nextParams.delete("plan");
-      nextParams.delete("purchaseType");
-      nextParams.delete("ref");
-      const nextUrl = `/dashboard${nextParams.toString() ? `?${nextParams.toString()}` : ""}`;
-      router.replace(nextUrl);
-    } else if (payment === "failed") {
+  useEffect(() => {
+    if (searchParams.get("payment") === "failed") {
       toast.error("Payment failed. Please try again.");
       router.replace("/dashboard");
-    } else if (payment === "error") {
+    } else if (searchParams.get("payment") === "error") {
       toast.error("An error occurred during payment. Please contact support.");
       router.replace("/dashboard");
     }
-  }, [fetchUser, router, searchParams]);
+  }, [searchParams, router]);
 
-  const activeContent = searchParams.get("tab") || "generate";
+  const activeContent = searchParams.get("tab") || "analytics";
   const isChat = activeContent === "chat";
 
   const setActiveContent = (tab) => {
@@ -68,6 +130,7 @@ export default function DashboardContent() {
   };
 
   const routeComponents = {
+    analytics: DashboardOverview,
     generate: Generate,
     explore: Explore,
     library: Library,
@@ -78,9 +141,10 @@ export default function DashboardContent() {
     chat: Chat,
     profile: ProfileContent,
     career: CareerGrowth,
+    "study-plans": StudyPlanLibrary,
   };
 
-  const ContentComponent = routeComponents[activeContent] || routeComponents.generate;
+  const ContentComponent = routeComponents[activeContent] || routeComponents.home;
 
   return (
     <div
@@ -92,7 +156,7 @@ export default function DashboardContent() {
         className={
           isChat
             ? "w-full h-full"
-            : "max-w-[90rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide"
+            : "max-w-[110rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide"
         }
         style={
           isChat
@@ -126,6 +190,19 @@ export default function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* Purchase Celebration Overlay */}
+      {showCelebration && (
+        <div className="fixed inset-0 z-[200] pointer-events-none flex items-center justify-center">
+          <div className="text-center animate-bounce">
+            <div className="text-6xl mb-4">🎉</div>
+            <p className="text-lg font-black text-foreground drop-shadow-lg" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Payment Successful!
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">Your credits have been added</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

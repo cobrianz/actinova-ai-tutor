@@ -15,6 +15,7 @@ import {
   GraduationCap,
   ArrowRight,
   Trophy,
+  CalendarCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
@@ -35,6 +36,8 @@ export default function Generate({ setActiveContent }) {
   const [localTopic, setLocalTopic] = useState(initialTopic);
   const [format, setFormat] = useState(searchParams.get("format") || "course");
   const [difficulty, setDifficulty] = useState("beginner");
+  const [quizCount, setQuizCount] = useState(10);
+  const [quizDifficulty, setQuizDifficulty] = useState("medium");
 
   const [reportType, setReportType] = useState("report");
   const [reportLength, setReportLength] = useState("medium");
@@ -144,6 +147,7 @@ export default function Generate({ setActiveContent }) {
     report: 'report_generation',
     flashcards: 'flashcard_generation',
     quiz: 'exam_generation',
+    'study-plan': 'study_plan_generation',
   };
   const formatProductId = formatProductMap[format] || 'course_generation';
   const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
@@ -154,7 +158,7 @@ export default function Generate({ setActiveContent }) {
     if (!usageData || !usageData.details) return { used: 0, limit: Infinity, atLimit: false };
     const detail = usageData.details[formatKey];
     if (!detail) return { used: 0, limit: Infinity, atLimit: false };
-    const atLimit = detail.limit !== -1 && detail.limit !== null && detail.limit !== Infinity && detail.used >= detail.limit;
+    const atLimit = detail.limit !== -1 && detail.limit !== null && detail.limit !== Infinity && detail.limit <= 0;
     return { used: detail.used, limit: detail.limit, atLimit };
   };
 
@@ -162,12 +166,14 @@ export default function Generate({ setActiveContent }) {
   const flashcardsLimitInfo = formatLimit("flashcards");
   const quizzesLimitInfo = formatLimit("quizzes");
   const reportsLimitInfo = formatLimit("reports");
+  const studyPlansLimitInfo = formatLimit("studyPlans");
 
   const currentFormatAtLimit = () => {
     if (format === "course") return courseLimitInfo.atLimit;
     if (format === "flashcards") return flashcardsLimitInfo.atLimit;
     if (format === "quiz") return quizzesLimitInfo.atLimit;
     if (format === "report") return reportsLimitInfo.atLimit;
+    if (format === "study-plan") return studyPlansLimitInfo.atLimit;
     return false;
   };
 
@@ -317,7 +323,8 @@ export default function Generate({ setActiveContent }) {
           topic: subject,
           difficulty,
           format: "quiz",
-          questions: 50,
+          count: quizCount,
+          quizDifficulty,
         });
 
         if (!response.ok) {
@@ -353,6 +360,54 @@ export default function Generate({ setActiveContent }) {
 
         setShowLoader(false);
         setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Handle study plan generation directly
+    if (format === "study-plan") {
+      setShowLoader(true);
+      setIsSubmitting(true);
+
+      try {
+        const response = await apiClient.post("/api/study-plan", {
+          topic: subject,
+          goal: "skill-upgrade",
+          weeks: 4,
+          difficulty,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (response.status === 429) {
+            toast.error(errorData.message || "Insufficient credits for study plan generation.");
+            setShowLoader(false);
+            setIsSubmitting(false);
+            return;
+          }
+          throw new Error(errorData.error || "Failed to generate study plan");
+        }
+
+        const data = await response.json();
+
+        // Notify usage update
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("usageUpdated"));
+        }
+
+        toast.success("Study plan generated successfully!");
+
+        // Redirect to study plans tab
+        setActiveContent("study-plans");
+
+      } catch (error) {
+        console.error("Study plan generation failed:", error);
+        toast.error(error.message || "Failed to generate study plan");
+      } finally {
+        setTimeout(() => {
+          setShowLoader(false);
+          setIsSubmitting(false);
+        }, 500);
       }
       return;
     }
@@ -496,7 +551,7 @@ export default function Generate({ setActiveContent }) {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-5xl font-bold text-foreground mb-4 tracking-tight"
+            className="text-xl md:text-2xl font-bold text-foreground mb-4 tracking-tight"
             style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
           >
             {friendlyName
@@ -508,9 +563,9 @@ export default function Generate({ setActiveContent }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed"
+            className="text-muted-foreground text-xs md:text-sm max-w-xl mx-auto leading-relaxed"
           >
-            Enter a topic below to generate a personalized course, flashcards, or quiz
+            Enter a topic below to generate a personalized course, flashcards, quiz, or study plan
           </motion.p>
           
           {/* Limit warning for non-premium users on current format */}
@@ -524,6 +579,7 @@ export default function Generate({ setActiveContent }) {
               {format === "flashcards" && `Flashcard limit reached (${flashcardsLimitInfo.used}/${flashcardsLimitInfo.limit}).`}
               {format === "quiz" && `Quiz limit reached (${quizzesLimitInfo.used}/${quizzesLimitInfo.limit}).`}
               {format === "report" && `Report limit reached (${reportsLimitInfo.used}/${reportsLimitInfo.limit}).`}
+              {format === "study-plan" && `Study plan limit reached (${studyPlansLimitInfo.used}/${studyPlansLimitInfo.limit}).`}
               {" "}<button onClick={() => setShowUpgradeModal(true)} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
             </motion.div>
           )}
@@ -555,7 +611,7 @@ export default function Generate({ setActiveContent }) {
                   e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
                 }}
                 placeholder={format === "report" ? "Paste your assignment prompt or research topic here..." : "What do you want to learn today?"}
-                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-lg text-foreground placeholder-foreground/30 resize-none h-20 hide-scrollbar"
+                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm text-foreground placeholder-foreground/30 resize-none h-20 hide-scrollbar"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -578,7 +634,38 @@ export default function Generate({ setActiveContent }) {
               </div>
             </div>
 
-            {/* Bottom Row: Controls & Action */}
+              {/* Quiz-specific options */}
+              {format === "quiz" && (
+                <div className="flex items-center gap-2 flex-wrap px-2 pt-2 pb-0">
+                  <div className="relative">
+                    <select
+                      value={quizCount}
+                      onChange={(e) => setQuizCount(Number(e.target.value))}
+                      className="appearance-none flex items-center gap-2 px-3 py-1.5 pr-8 rounded-full border border-white/60 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-white/60 transition-colors text-[12px] font-medium text-foreground outline-none cursor-pointer"
+                    >
+                      <option value={5}>5 Questions</option>
+                      <option value={10}>10 Questions</option>
+                      <option value={20}>20 Questions</option>
+                      <option value={50}>50 Questions</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-50" />
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={quizDifficulty}
+                      onChange={(e) => setQuizDifficulty(e.target.value)}
+                      className="appearance-none flex items-center gap-2 px-3 py-1.5 pr-8 rounded-full border border-white/60 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-white/60 transition-colors text-[12px] font-medium text-foreground outline-none cursor-pointer"
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-50" />
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Row: Controls & Action */}
             <div className="flex items-center justify-between p-2 mt-auto border-t border-[#D2D7F8]/30">
               <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                 {/* Level Dropdown */}
@@ -625,12 +712,13 @@ export default function Generate({ setActiveContent }) {
         </motion.div>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-16 px-4 sm:px-0">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto mb-16 px-4 sm:px-0">
           {[
             { id: "course", label: "Course", sub: "Create a study plan to course", icon: BookOpen },
             { id: "flashcards", label: "Flashcards", sub: "Explain complex topic to flashcards", icon: Sparkles },
             { id: "quiz", label: "Practice Quiz", icon: Trophy, sub: "Test your knowledge with a quiz" },
             { id: "report", label: "Report", sub: "Professional report or essay", icon: FileText, pro: true },
+            { id: "study-plan", label: "Study Plan", sub: "Personalized weekly schedule", icon: CalendarCheck },
           ].map((f) => (
             <motion.div
               key={f.id}
@@ -697,7 +785,7 @@ export default function Generate({ setActiveContent }) {
       </div>
 
         <div>
-          <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-foreground mb-6 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-green-500" />
             Popular Learning Tracks
           </h3>
@@ -761,7 +849,7 @@ function PopularTopics({ setTopic, setLocalTopic }) {
             setTopic(topicOption);
             setLocalTopic(topicOption);
           }}
-          className="p-3 sm:p-4 text-left bg-card border border-border rounded-lg hover:border-foreground/30 hover:shadow-md transition-all"
+          className="p-2.5 sm:p-3 text-left bg-card border border-border rounded-lg hover:border-foreground/30 transition-all"
         >
           <span className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">
             {topicOption}

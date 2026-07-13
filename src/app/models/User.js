@@ -246,6 +246,38 @@ const userSchema = new mongoose.Schema(
       lastActiveDate: { type: String }, // YYYY-MM-DD format
       activeDates: [{ type: String }], // Array of YYYY-MM-DD for calendar
     },
+    // Gamification fields
+    xp: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    level: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    achievements: [
+      {
+        badgeId: { type: String, required: true },
+        name: { type: String, required: true },
+        description: { type: String },
+        icon: { type: String },
+        earnedAt: { type: Date, default: Date.now },
+        rarity: {
+          type: String,
+          enum: ["common", "rare", "epic", "legendary"],
+          default: "common",
+        },
+      },
+    ],
+    dailyXp: {
+      type: Number,
+      default: 0,
+    },
+    dailyXpDate: {
+      type: String, // YYYY-MM-DD of last daily reset
+    },
     settings: {
       notifications: {
         email: { type: Boolean, default: true },

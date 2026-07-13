@@ -4,6 +4,7 @@ export const PRODUCTS = [
   { id: "career_tools", name: "Career Tools", creditCost: 25 },
   { id: "exam_generation", name: "Exam Generation", creditCost: 25 },
   { id: "flashcard_generation", name: "Flashcard Generation", creditCost: 25 },
+  { id: "study_plan_generation", name: "Study Plan Generation", creditCost: 25 },
 ];
 
 export const CREDIT_PACKS = [

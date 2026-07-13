@@ -272,7 +272,7 @@ const NetworkAI = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {history.map(item => (
                             <div key={item._id} onClick={() => restoreEntry(item)}
-                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-4 md:p-5 hover:border-green-300 hover:shadow-lg transition-all cursor-pointer group relative">
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 transition-all cursor-pointer group relative">
                                 <button onClick={e => deleteEntry(item._id, e)} className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 opacity-100 transition-all"><X size={13} /></button>
                                 <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-3">
                                     {item.metadata?.subMode === "outreach" ? <MessageSquare size={16} className="text-green-600" /> : <Compass size={16} className="text-green-600" />}

@@ -40,11 +40,13 @@ export default function Footer() {
               <div className="w-10 h-10 bg-white border-2 border-white flex items-center justify-center rounded-xl p-1 overflow-hidden pointer-events-none shadow-sm">
                 <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="font-heading text-2xl font-bold tracking-tight text-[#1a1a1a]">
+              <span className="text-xl font-bold tracking-tight text-[#1a1a1a]"
+                    style={{ fontFamily: "var(--font-fraunces)" }}>
                 Actirova
               </span>
             </Link>
-            <p className="text-[#1a1a1a]/60 text-lg leading-relaxed max-w-sm">
+            <p className="text-[#1a1a1a]/60 text-sm leading-relaxed max-w-sm"
+               style={{ fontFamily: "var(--font-fraunces)" }}>
               Empowering the next generation of learners with advanced AI-driven
               personalized education. Master any skill at your own pace.
             </p>
@@ -67,7 +69,8 @@ export default function Footer() {
           {/* Link Columns */}
           {Object.entries(footerLinks).slice(0, 2).map(([title, links]) => (
             <div key={title} className="space-y-6">
-              <h4 className="font-bold text-sm uppercase tracking-wider text-[#1a1a1a]">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-[#1a1a1a]"
+                  style={{ fontFamily: "var(--font-fraunces)" }}>
                 {title}
               </h4>
               <ul className="space-y-4">
@@ -76,6 +79,7 @@ export default function Footer() {
                     <Link
                       href={link.href}
                       className="text-[#1a1a1a]/60 hover:text-green-500 transition-colors flex items-center group"
+                      style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                       <span className="w-0 group-hover:w-2 h-0.5 bg-green-500 mr-0 group-hover:mr-2 transition-all" />
                       {link.label}
@@ -89,10 +93,12 @@ export default function Footer() {
 
           {/* Newsletter Column */}
           <div className="space-y-6">
-            <h4 className="font-bold text-sm uppercase tracking-wider text-[#1a1a1a]">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-[#1a1a1a]"
+                style={{ fontFamily: "var(--font-fraunces)" }}>
               Newsletter
             </h4>
-            <p className="text-[#1a1a1a]/60 text-sm">
+            <p className="text-[#1a1a1a]/60 text-xs"
+               style={{ fontFamily: "var(--font-fraunces)" }}>
               Subscribe to get the latest updates and learning resources.
             </p>
             <NewsletterForm />
@@ -101,10 +107,12 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-12 border-t-2 border-white/50 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[#1a1a1a]/60 text-sm font-medium">
+          <p className="text-[#1a1a1a]/60 text-sm font-medium"
+             style={{ fontFamily: "var(--font-fraunces)" }}>
             © {new Date().getFullYear()} Actirova AI Tutor. All rights reserved.
           </p>
-          <div className="flex gap-8 text-sm font-medium text-[#1a1a1a]/60">
+          <div className="flex gap-8 text-sm font-medium text-[#1a1a1a]/60"
+               style={{ fontFamily: "var(--font-fraunces)" }}>
             <Link href="/terms" className="hover:text-green-500 transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-green-500 transition-colors">Privacy</Link>
             <Link href="/cookies" className="hover:text-green-500 transition-colors">Cookies</Link>
@@ -154,13 +162,13 @@ function NewsletterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-4 py-3 rounded-[16px] bg-white/60 border-2 border-white focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all text-sm text-[#1a1a1a] placeholder-[#1a1a1a]/40 backdrop-blur-md"
+              className="w-full px-3 py-2 rounded-xl bg-white/60 border-2 border-white focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all text-xs text-[#1a1a1a] placeholder-[#1a1a1a]/40 backdrop-blur-md"
               disabled={status === "loading"}
             />
           </div>
           <button
             disabled={status === "loading"}
-            className="w-full px-4 py-3 bg-white border-2 border-white text-[#1a1a1a] rounded-[16px] font-bold text-sm hover:bg-green-50 transition-all disabled:opacity-50 shadow-sm"
+            className="w-full px-3 py-2 bg-white border-2 border-white text-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-green-50 transition-all disabled:opacity-50 shadow-sm"
           >
             {status === "loading" ? "Subscribing..." : "Subscribe"}
           </button>

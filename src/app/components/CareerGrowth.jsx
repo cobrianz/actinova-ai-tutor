@@ -314,10 +314,10 @@ const CareerGrowth = () => {
                         <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                         <span className="text-[10px] sm:text-xs font-bold text-primary">AI-Powered Career Suite</span>
                     </motion.div>
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-4 sm:mb-6 px-2 bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter mb-4 sm:mb-6 px-2 bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-tight">
                         Skyrocket Your Career
                     </h1>
-                    <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium px-4">
+                    <p className="text-xs sm:text-sm md:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium px-4">
                         Four specialized AI tools working in harmony to optimize your professional presence and unlock your full potential.
                     </p>
                 </motion.div>
@@ -343,8 +343,8 @@ const CareerGrowth = () => {
                                 <div className="mb-4 sm:mb-6 inline-flex p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-sm">
                                     <FileText size={24} className="sm:w-7 sm:h-7" />
                                 </div>
-                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 sm:mb-3 leading-tight">Resume Accelerator</h2>
-                                <p className="text-slate-300 mb-6 sm:mb-8 font-medium leading-relaxed text-xs sm:text-sm md:text-base">
+                                <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 leading-tight">Resume Accelerator</h2>
+                                <p className="text-slate-300 mb-6 sm:mb-8 font-medium leading-relaxed text-[10px] sm:text-xs sm:text-sm">
                                     Craft a job-winning resume from scratch or optimize your existing one for ATS systems using advanced AI.
                                 </p>
                                 <div className="flex flex-wrap gap-4">
@@ -383,13 +383,13 @@ const CareerGrowth = () => {
                             <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                 <Target size={24} className="sm:w-7 sm:h-7" />
                             </div>
-                            <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Skill Gap Analysis</h2>
+                            <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Skill Gap Analysis</h2>
                             <p className="text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 font-medium text-xs sm:text-sm leading-relaxed">
                                 Identify the exact skills missing between you and your dream role.
                             </p>
                             <Button
                                 onClick={() => setSubTab("skillgap")}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl h-10 shadow-lg shadow-emerald-500/20"
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg h-8 text-xs"
                             >
                                 Analyze Skills
                                 <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -407,13 +407,13 @@ const CareerGrowth = () => {
                             <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                                 <MessageSquare size={24} className="sm:w-7 sm:h-7" />
                             </div>
-                            <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Mock Interview</h2>
+                            <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Mock Interview</h2>
                             <p className="text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 font-medium text-xs sm:text-sm leading-relaxed">
                                 Pressure-test your knowledge with personalized AI interviewers.
                             </p>
                             <Button
                                 onClick={() => setSubTab("interview")}
-                                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl h-10 shadow-lg shadow-teal-500/20"
+                                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg h-8 text-xs"
                             >
                                 Practice Now
                                 <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -435,14 +435,14 @@ const CareerGrowth = () => {
                                 <div className="mb-4 sm:mb-6 inline-flex p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-sm">
                                     <Users size={24} className="sm:w-7 sm:h-7" />
                                 </div>
-                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 sm:mb-3 leading-tight">Network AI</h2>
-                                <p className="text-slate-300 mb-4 sm:mb-6 font-medium leading-relaxed text-xs sm:text-sm md:text-base">
+                                <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 leading-tight">Network AI</h2>
+                                <p className="text-slate-300 mb-4 sm:mb-6 font-medium leading-relaxed text-[10px] sm:text-xs sm:text-sm">
                                     Unlock back-channel opportunities. Draft perfect outreach and find ideal mentors instantly.
                                 </p>
                                 <div className="flex flex-wrap gap-4">
                                     <Button
                                         onClick={() => setSubTab("network")}
-                                        className="bg-white text-emerald-900 hover:bg-white/90 font-bold px-6 py-2 rounded-xl h-auto shadow-lg shadow-white/10"
+                                        className="bg-white text-emerald-900 hover:bg-white/90 font-bold px-4 py-1.5 rounded-lg h-auto text-xs"
                                     >
                                         <Users className="w-4 h-4 mr-2" />
                                         Expand Reach
@@ -473,10 +473,10 @@ const CareerGrowth = () => {
                 >
                     <div className="text-center mb-8 sm:mb-10">
 
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 sm:mb-4 text-slate-900 dark:text-white">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tighter mb-3 sm:mb-4 text-slate-900 dark:text-white">
                             Trending Careers & Skills {new Date().getFullYear()}
                         </h2>
-                        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
                             Discover the most in-demand careers and skills this year, powered by AI market analysis
                         </p>
                     </div>
@@ -503,8 +503,8 @@ const CareerGrowth = () => {
                                 {/* Trending Careers */}
                                 {trendingData.trendingCareers && trendingData.trendingCareers.length > 0 && (
                                     <div>
-                                        <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-                                            <Briefcase className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                        <h3 className="text-sm sm:text-base font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                            <Briefcase className="w-5 h-5 text-green-600 dark:text-green-400" />
                                             Trending Careers
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -517,9 +517,9 @@ const CareerGrowth = () => {
                                                     className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/30 dark:via-emerald-950/30 dark:to-teal-950/30 border-2 border-green-200 dark:border-green-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
-                                                        <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
-                                                            {career.title}
-                                                        </h4>
+                                                        <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex-1">
+                                                             {career.title}
+                                                         </h4>
                                                         <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black">
                                                             {career.growth || "Growing"}
                                                         </span>
@@ -553,7 +553,7 @@ const CareerGrowth = () => {
                                                     <div className="mt-5 pt-5 border-t border-green-100 dark:border-green-800/50 flex gap-3">
                                                         <Button
                                                             variant="default"
-                                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
                                                             onClick={() => handleGenerateCourse(career.title)}
                                                             disabled={generatingCourse === career.title}
                                                         >
@@ -562,7 +562,7 @@ const CareerGrowth = () => {
                                                         </Button>
                                                         <Button
                                                             variant="secondary"
-                                                            className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/50 dark:hover:bg-green-900 dark:text-green-300 shadow-sm"
+                                                            className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/50 dark:hover:bg-green-900 dark:text-green-300 text-xs"
                                                             onClick={() => {
                                                                 toast.loading(`Generating professional resume for ${career.title}...`);
                                                                 setTimeout(() => {
@@ -583,8 +583,8 @@ const CareerGrowth = () => {
                                 {/* Trending Skills */}
                                 {trendingData.trendingSkills && trendingData.trendingSkills.length > 0 && (
                                     <div>
-                                        <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-                                            <BookOpen className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                                        <h3 className="text-sm sm:text-base font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                            <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                                             Trending Skills to Learn
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -597,9 +597,9 @@ const CareerGrowth = () => {
                                                     className="bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-50 dark:from-emerald-950/30 dark:via-green-950/30 dark:to-emerald-950/30 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:shadow-xl transition-all hover:scale-[1.02]"
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
-                                                        <h4 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex-1">
-                                                            {skill.skill}
-                                                        </h4>
+                                                        <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex-1">
+                                                             {skill.skill}
+                                                         </h4>
                                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${skill.demand === 'critical' ? 'bg-red-500 text-white' :
                                                             skill.demand === 'high' ? 'bg-lime-500 text-white' :
                                                                 'bg-yellow-500 text-white'
@@ -649,7 +649,7 @@ const CareerGrowth = () => {
                                     >
                                         <div className="flex items-center gap-3 mb-4">
                                             <Sparkles className="w-6 h-6 text-green-600 dark:text-green-400" />
-                                            <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Market Insights</h3>
+                                            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Market Insights</h3>
                                         </div>
                                         <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
                                             {trendingData.marketInsights}

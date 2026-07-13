@@ -287,7 +287,7 @@ const SkillGapAnalysis = () => {
                         )}
 
                         <Button variant="outline" onClick={() => { setResult(null); setError(null); }}
-                            className="w-full rounded-2xl py-5 border-slate-200 text-slate-600">
+                            className="w-full rounded-lg py-3 border-slate-200 text-slate-600 text-xs">
                             Start New Analysis <ArrowRight size={16} className="ml-2" />
                         </Button>
                     </motion.div>

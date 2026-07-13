@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+import confetti from "canvas-confetti";
 
 export default function PremiumCourses() {
   const router = useRouter();
@@ -90,8 +91,13 @@ export default function PremiumCourses() {
   useEffect(() => {
     if (searchParams.get("payment") === "success") {
       const purchaseType = searchParams.get("purchaseType");
+      const ref = searchParams.get("reference") || searchParams.get("trxref") || searchParams.get("ref");
       if (purchaseType === "marketplace-course") {
         toast.success("Course unlocked. Your 30-day access is now active.");
+        confetti({ particleCount: 80, spread: 90, origin: { y: 0.6 }, colors: ["#FFD700", "#FF6B6B", "#4ECDC4"] });
+        if (ref) {
+          apiClient.get(`/api/billing/verify-payment?ref=${encodeURIComponent(ref)}`).catch(() => {});
+        }
       }
     }
   }, [searchParams]);
@@ -309,7 +315,7 @@ export default function PremiumCourses() {
             Premium Courses
           </span>
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
+        <p className="text-xs md:text-sm text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
           Get access to what you want easily and cheaply.
         </p>
       </motion.div>
@@ -370,10 +376,10 @@ export default function PremiumCourses() {
                   </div>
                 </div>
 
-                <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight tracking-tight">
+                <h2 className="text-xl md:text-2xl font-black text-foreground mb-6 leading-tight tracking-tight">
                   {featured.title}
                 </h2>
-                <p className="text-lg text-muted-foreground mb-8 leading-relaxed font-medium">
+                <p className="text-sm text-muted-foreground mb-8 leading-relaxed font-medium">
                   {featured.description}
                 </p>
 
@@ -412,7 +418,7 @@ export default function PremiumCourses() {
                 </div>
 
                 <div className="flex items-baseline space-x-3 mb-8">
-                  <span className="text-3xl font-black text-foreground">
+                  <span className="text-lg font-black text-foreground">
                     ${featured.price || 8}
                   </span>
                   <span className="text-sm text-muted-foreground">per unlock / renew</span>
@@ -424,7 +430,7 @@ export default function PremiumCourses() {
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-primary">
                     <Crown className="w-12 h-12" />
                   </div>
-                  <p className="text-foreground font-bold italic text-lg leading-relaxed relative mb-4">
+                  <p className="text-foreground font-bold italic text-sm leading-relaxed relative mb-4">
                     "Unlock once, learn for 30 days, then renew only when you need more time."
                   </p>
                   <div className="flex items-center gap-3">
@@ -494,7 +500,7 @@ export default function PremiumCourses() {
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Trending For You</h2>
+                  <h2 className="text-sm font-bold text-foreground">Trending For You</h2>
                   <p className="text-sm text-muted-foreground">Advanced courses based on your library</p>
                 </div>
               </div>
@@ -519,7 +525,7 @@ export default function PremiumCourses() {
                         </span>
                       </div>
                       <div className="px-6 pt-4 pb-2 flex-1">
-                        <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                        <h3 className="text-sm font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
                           {course.title}
                         </h3>
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
@@ -573,7 +579,7 @@ export default function PremiumCourses() {
                   <Crown className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Marketplace Courses</h2>
+                  <h2 className="text-sm font-bold text-foreground">Marketplace Courses</h2>
                   <p className="text-sm text-muted-foreground">Curated courses from Actirova Academy</p>
                 </div>
               </div>
@@ -614,7 +620,7 @@ export default function PremiumCourses() {
 
                 <div className="p-6 flex flex-col flex-1">
                   <div className="mb-4">
-                    <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    <h3 className="text-sm font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
                       {course.title}
                     </h3>
                     <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">

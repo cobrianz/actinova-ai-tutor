@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+
 import {
   BookOpen,
   Star,
@@ -13,13 +13,50 @@ import {
   User,
   LogOut,
   Briefcase,
-  Brain,
-  Coins
+  Coins,
+  Home,
+  CalendarCheck,
+  ChevronRight,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
+import XPWidget from "./XPWidget";
+
+const NAV_GROUPS = [
+  {
+    label: "Create",
+    items: [
+      { name: "New Session", id: "generate", icon: Plus },
+      { name: "AI Chat", id: "chat", icon: MessageCircle, premium: true },
+    ],
+  },
+  {
+    label: "Discover",
+    items: [
+      { name: "Explore", id: "explore", icon: Search },
+      { name: "Library", id: "library", icon: BookOpen },
+      { name: "Premium", id: "premium-courses", icon: Star, premium: true, showLock: false },
+    ],
+  },
+  {
+    label: "Learn",
+    items: [
+      { name: "Study Plans", id: "study-plans", icon: CalendarCheck },
+      { name: "Flashcards", id: "flashcards", icon: FileText },
+      { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
+    ],
+  },
+  {
+    label: "Grow",
+    items: [
+      { name: "Reports & Essays", id: "reports-library", icon: ScrollText, premium: true },
+      { name: "Career Growth", id: "career", icon: Briefcase, premium: true, showLock: false },
+      { name: "Analytics", id: "analytics", icon: Home },
+    ],
+  },
+];
 
 export default function Sidebar({
   setActiveContent,
@@ -33,27 +70,16 @@ export default function Sidebar({
   const { user, logout, loading: authLoading, isEnterprise, credits } = useAuth();
   const activeSub = user?.subscription?.status === "active";
   const planTier = user?.subscription?.tier;
-  const planLabel = isEnterprise ? "Enterprise" : activeSub && (planTier === "pro" || planTier === "enterprise") ? "Pro" : "Free";
+  const planLabel = isEnterprise
+    ? "Enterprise"
+    : activeSub && (planTier === "pro" || planTier === "enterprise")
+    ? "Pro"
+    : "Free";
 
+  const isPro = planLabel !== "Free";
 
-  const navigation = [
-    { name: "New", id: "generate", icon: Plus },
-    { name: "AI Chat", id: "chat", icon: MessageCircle, premium: true },
-    { name: "Explore", id: "explore", icon: Search },
-    { name: "Library", id: "library", icon: BookOpen },
-    { name: "Reports & Essays", id: "reports-library", icon: ScrollText, premium: true },
-    { name: "Career Growth", id: "career", icon: Briefcase, premium: true, showLock: false },
-    { name: "Flashcards", id: "flashcards", icon: FileText },
-    { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
-    { name: "Premium", id: "premium-courses", icon: Star, premium: true, showLock: false },
-  ].filter(Boolean);
-
-  // On mobile (< md), hide items already shown in the bottom nav
   const isMobile = screenSize === "small" || screenSize === "medium";
-  const bottomNavIds = ["generate", "chat", "explore", "library"];
-  const visibleNav = isMobile
-    ? navigation.filter(item => !bottomNavIds.includes(item.id))
-    : navigation;
+  const bottomNavIds = ["analytics", "generate", "chat", "explore", "library"];
 
   useEffect(() => {
     const handleResize = () => {
@@ -62,18 +88,14 @@ export default function Sidebar({
       else if (width < 1200) setScreenSize("medium");
       else setScreenSize("large");
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    if (screenSize === "large") {
-      setSidebarOpen(true);
-    } else {
-      setSidebarOpen(false);
-    }
+    if (screenSize === "large") setSidebarOpen(true);
+    else setSidebarOpen(false);
   }, [screenSize, setSidebarOpen]);
 
   useEffect(() => {
@@ -85,18 +107,12 @@ export default function Sidebar({
       router.push("/dashboard");
       return;
     }
-
-    const item = visibleNav.find(n => n.id === id) || navigation.find(n => n.id === id);
-    // Allow navigation but keep locks as indicators
-
     setActiveItem(id);
     if (setActiveContent) {
       setActiveContent(id);
     } else {
       router.push(`/dashboard?tab=${id}`);
     }
-
-    // Close on small and medium screens
     if (screenSize === "small" || screenSize === "medium") {
       setSidebarOpen(false);
     }
@@ -110,136 +126,189 @@ export default function Sidebar({
     }
   };
 
+  // Filter mobile bottom-nav items from groups
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: isMobile
+      ? group.items.filter((item) => !bottomNavIds.includes(item.id))
+      : group.items,
+  })).filter((g) => g.items.length > 0);
+
+  const creditPercent = Math.min(100, (credits / 120) * 100);
+
   return (
     <>
       {/* Backdrop */}
-      {sidebarOpen && screenSize !== "large" && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && screenSize !== "large" && (
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      <div className="flex relative items-start h-full">
+      <div className="relative h-full">
         <motion.div
           animate={{
-            width: sidebarOpen ? 256 : 0,
-            x: sidebarOpen ? 0 : -256,
+            width: sidebarOpen ? 280 : 0,
+            x: sidebarOpen ? 0 : -280,
           }}
-          transition={{ duration: 0.3, type: "spring", damping: 25, stiffness: 200 }}
-          className={`fixed lg:static top-0 left-0 h-screen lg:h-full bg-card border-r border-border overflow-hidden z-[100] lg:z-auto shadow-2xl lg:shadow-none`}
+          transition={{ duration: 0.3, type: "spring", damping: 28, stiffness: 220 }}
+          className="fixed lg:static top-0 left-0 h-screen lg:h-full overflow-hidden z-[100] lg:z-auto"
+          style={{
+            background: "var(--sidebar-bg, var(--card))",
+            borderRight: "1px solid var(--border)",
+          }}
         >
-          {/* Main Sidebar Content Wrapper to maintain width while animating */}
-          <div className="w-64 h-full flex flex-col">
-            {/* Branding Section */}
-            <div className="p-6 border-b border-border">
-              <div className="flex flex-col space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 relative flex-shrink-0">
-                    <Image
-                      src="/logo.png"
-                      alt="Actirova Logo"
-                      width={32}
-                      height={32}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <h2 className="text-lg font-bold text-foreground">Actirova</h2>
-                </div>
-                <p className="text-xs text-muted-foreground">Your personalized learning companion for any topic</p>
-              </div>
-            </div>
+          <div className="w-[280px] h-full flex flex-col">
 
-            <nav className="p-4 overflow-y-auto scrollbar-hide flex-1">
-              <style jsx>{`
-                .scrollbar-hide::-webkit-scrollbar {
-                  display: none;
-                }
+
+            {/* ── Navigation ── */}
+            <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3 space-y-4">
+              <style>{`
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                .scrollbar-hide { scrollbar-width: none; }
               `}</style>
-              <div className="mb-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">Menu</h3>
-              </div>
-              <ul className="space-y-4">
-                {visibleNav.map((item, index) => {
-                  const Icon = item.icon;
-                  const isActive = activeItem === item.id;
 
-                  return (
-                    <motion.li
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="relative group"
-                    >
-                      <button
-                        onClick={() => handleItemClick(item.id)}
-                        className={`flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                          ? "bg-accent text-accent-foreground border border-green-200 dark:border-green-800"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                          }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="flex-1 text-left">{item.name}</span>
-                      </button>
-                    </motion.li>
-                  );
-                })}
-              </ul>
+              {visibleGroups.map((group, gi) => (
+                <div key={group.label}>
+                  {/* Group label */}
+                  <p className="px-2 mb-1.5 text-[9px] font-semibold tracking-widest uppercase text-muted-foreground/60 select-none">
+                    {group.label}
+                  </p>
+
+                  <ul className="space-y-0.5">
+                    {group.items.map((item, index) => {
+                      const Icon = item.icon;
+                      const isActive = activeItem === item.id;
+
+                      return (
+                        <motion.li
+                          key={item.id}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: gi * 0.05 + index * 0.04 }}
+                          className="relative"
+                        >
+                          <button
+                            onClick={() => handleItemClick(item.id)}
+                            className={`
+                              relative flex items-center w-full gap-2.5 px-3 py-2.5 rounded-xl
+                              text-sm font-medium transition-all duration-200 group
+                              ${isActive
+                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                              }
+                            `}
+                          >
+                            {/* Active left indicator */}
+                            {isActive && (
+                              <motion.div
+                                layoutId="active-indicator"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-green-500"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                              />
+                            )}
+
+                            {/* Icon container */}
+                            <span
+                              className={`
+                                flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0
+                                transition-all duration-200
+                                ${isActive
+                                  ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                                  : "bg-secondary/60 text-muted-foreground group-hover:bg-secondary group-hover:text-foreground"
+                                }
+                              `}
+                            >
+                              <Icon className="w-4 h-4" />
+                            </span>
+
+                            <span className="flex-1 text-left truncate text-[13.5px]">
+                              {item.name}
+                            </span>
+
+                            {/* Active chevron */}
+                            {isActive && (
+                              <ChevronRight className="w-3.5 h-3.5 text-green-500/70 flex-shrink-0" />
+                            )}
+                          </button>
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
             </nav>
 
-            {/* Bottom sections */}
-            <div className="p-4 space-y-4 border-t border-border">
-              {/* Profile Section */}
-              <div>
+            {/* ── Footer Panel ── */}
+            <div className="px-3 pb-4 pt-2 space-y-2.5 border-t border-border/60">
+
+              {/* XP / Gamification */}
+              <XPWidget />
+
+              {/* Credits bar */}
+              <div className="px-3 py-2.5 rounded-xl bg-gradient-to-br from-green-500/5 to-emerald-500/5 border border-green-500/15 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => handleItemClick("profile")}
-                    className={`flex items-center space-x-3 flex-1 text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeItem === "profile"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                      }`}
-                  >
-                    <User className="w-5 h-5" />
-                    <span>Account</span>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer ml-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="w-3 h-3 text-green-600 dark:text-green-400" />
+                    <span className="text-[10px] font-semibold text-green-700 dark:text-green-400">
+                      Credits
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
+                    {credits} left
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${creditPercent}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
                 </div>
               </div>
 
-              {/* Credits Section */}
-              <div className="p-4 bg-accent/30 rounded-lg border border-border">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Coins className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                      <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                        Credits
-                      </span>
-                    </div>
-                    <span className="text-xs text-green-700 dark:text-green-300">
-                      {planLabel}
+              {/* User row */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleItemClick("profile")}
+                  className={`
+                    flex items-center gap-2.5 flex-1 text-left px-3 py-2 rounded-xl
+                    text-sm font-medium transition-all duration-200
+                    ${activeItem === "profile"
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                    }
+                  `}
+                >
+                  {/* Avatar */}
+                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+                    <User className="w-3.5 h-3.5" />
+                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[12px] font-semibold truncate text-foreground leading-none">
+                      {user?.name || user?.email?.split("@")[0] || "Account"}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground leading-none mt-0.5 truncate">
+                      {planLabel} plan
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-lg font-bold text-foreground">
-                    <span>{credits}</span>
-                    <span className="text-xs text-muted-foreground font-normal">available</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(100, (credits / 120) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  title="Sign out"
+                  className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all duration-200 flex-shrink-0"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>

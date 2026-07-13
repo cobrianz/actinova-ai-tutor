@@ -82,19 +82,19 @@ export default function HeroNavbar({ handleGetStarted }) {
       )}
     >
       <div className="max-w-5xl mx-auto">
-        <nav className="relative flex items-center justify-between pl-4 pr-1.5 py-1.5 rounded-2xl border-2 border-white bg-[#D2D7F8]/80 backdrop-blur-xl transition-all duration-500 group/nav">
+        <nav className="relative flex items-center justify-between pl-4 pr-2 py-2 rounded-full border border-black/10 bg-[#FAFAF7]/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition-all duration-500 group/nav">
           {/* Logo */}
           <Link href="/" onClick={() => setActiveItem("")} className="flex items-center gap-2 group/logo flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-white border border-teal-100 flex items-center justify-center transition-transform group-hover/logo:scale-105 overflow-hidden p-1">
+            <div className="w-8 h-8 rounded-full bg-white border border-black/10 flex items-center justify-center transition-transform group-hover/logo:scale-105 overflow-hidden p-1">
               <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-heading text-lg font-bold tracking-tight text-[#1a1a1a]">
+            <span className="text-lg font-semibold tracking-tight text-[#1a1a1a]" style={{ fontFamily: "var(--font-fraunces)" }}>
               Actirova
             </span>
           </Link>
 
-          {/* Desktop Navigation - Centered Pill */}
-          <div className="hidden md:flex items-center bg-[#f5f5f7]/50 rounded-full px-1 py-1 border border-black/5">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center rounded-full px-1 py-1">
             {navLinks.map((link) => {
               const isActive = activeItem === link.label || (!link.isAnchor && pathname === link.href);
               return (
@@ -103,10 +103,10 @@ export default function HeroNavbar({ handleGetStarted }) {
                   href={link.href}
                   onClick={(e) => link.isAnchor && handleNavClick(e, link.href, true)}
                   className={cn(
-                    "text-[13px] font-medium px-5 py-2 rounded-full transition-all relative",
+                    "text-[13px] font-medium px-4 py-2 rounded-full transition-all relative",
                     isActive 
-                      ? "bg-green-300 text-green-900 font-semibold" 
-                      : "text-muted-foreground hover:text-[#1a1a1a]"
+                      ? "bg-black text-white" 
+                      : "text-[#475569] hover:text-[#0f172a] hover:bg-black/5"
                   )}
                 >
                   {link.label}
@@ -123,13 +123,13 @@ export default function HeroNavbar({ handleGetStarted }) {
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleLogout}
-                  className="text-[13px] font-semibold px-2 text-red-500 hover:text-red-600 transition-colors"
+                  className="text-[13px] font-semibold px-2 text-[#475569] hover:text-[#0f172a] transition-colors"
                 >
                   Logout
                 </button>
                 <button
                   onClick={() => router.push("/dashboard")}
-                  className="px-6 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-semibold hover:bg-black transition-all shadow-sm"
+                  className="px-5 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-semibold hover:bg-black transition-all"
                 >
                   Dashboard
                 </button>
@@ -138,13 +138,13 @@ export default function HeroNavbar({ handleGetStarted }) {
               <>
                 <Link
                   href="/auth/login"
-                  className="text-[13px] font-semibold px-4 text-[#1a1a1a] hover:opacity-70 transition-opacity"
+                  className="text-[13px] font-semibold px-4 text-[#475569] hover:text-[#0f172a] transition-colors"
                 >
                   Sign In
                 </Link>
                 <button
                   onClick={() => router.push("/auth/signup")}
-                  className="px-6 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-semibold hover:bg-black transition-all shadow-sm flex items-center gap-2"
+                  className="px-5 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-semibold hover:bg-black transition-all flex items-center gap-2"
                 >
                   Try Demo
                   <ArrowRight className="w-3.5 h-3.5" />

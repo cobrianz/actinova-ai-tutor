@@ -29,7 +29,7 @@ export function middleware(request) {
   ];
 
   // Specific check for public API routes or webhooks if any
-  if (pathname.startsWith("/api/webhook") || pathname.startsWith("/api/public") || pathname.startsWith("/api/auth")) {
+  if (pathname.startsWith("/api/webhook") || pathname.startsWith("/api/public") || pathname.startsWith("/api/auth") || pathname.startsWith("/api/billing")) {
     return NextResponse.next();
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useDeferredValue } from "react";
-import { BookOpen, Play } from "lucide-react";
+import { useDeferredValue, useState, useCallback, useRef } from "react";
+import { BookOpen, Play, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { renderLessonBlocks } from "@/lib/contentRenderer";
 import LessonChart from "./LessonChart";
 import LessonTable from "./LessonTable";
@@ -21,6 +21,45 @@ export default function LessonContentPanel({
   courseData,
 }) {
   const deferredTypingContent = useDeferredValue(typingContent);
+  const [ttsState, setTtsState] = useState('idle'); // 'idle' | 'loading' | 'playing'
+  const audioRef = useRef(null);
+
+  const handleTTS = useCallback(async (textToSpeak) => {
+    if (ttsState === 'playing') {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setTtsState('idle');
+      return;
+    }
+    if (!textToSpeak) return;
+    setTtsState('loading');
+    try {
+      const text = String(textToSpeak)
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/`[^`]+`/g, '')
+        .slice(0, 2000);
+        
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error('TTS failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setTtsState('idle'); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setTtsState('idle'); };
+      audio.play();
+      setTtsState('playing');
+    } catch (e) {
+      console.error('TTS error:', e);
+      setTtsState('idle');
+    }
+  }, [ttsState]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -44,6 +83,18 @@ export default function LessonContentPanel({
                         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground border-b-2 border-slate-300 dark:border-slate-600 pb-2">
                           {currentLesson?.title || "Lesson"}
                         </h1>
+                        <div className="flex items-center gap-2 mt-2 mb-4">
+                          <button
+                            onClick={() => handleTTS(deferredTypingContent)}
+                            disabled={ttsState === 'loading'}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all disabled:opacity-50"
+                          >
+                            {ttsState === 'loading' && <Loader2 className="w-3 h-3 animate-spin" />}
+                            {ttsState === 'playing' && <VolumeX className="w-3 h-3" />}
+                            {ttsState === 'idle' && <Volume2 className="w-3 h-3" />}
+                            {ttsState === 'loading' ? 'Loading...' : ttsState === 'playing' ? 'Stop audio' : 'Listen'}
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-6" id="lesson-content-container">
                         {renderLessonBlocks(deferredTypingContent, { streaming: true, LessonChart, LessonTable })}
@@ -87,6 +138,18 @@ export default function LessonContentPanel({
                       <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground border-b-2 border-slate-300 dark:border-slate-600 pb-2">
                         {currentLesson?.title || "Lesson"}
                       </h1>
+                      <div className="flex items-center gap-2 mt-2 mb-4">
+                        <button
+                          onClick={() => handleTTS(currentLesson.content)}
+                          disabled={ttsState === 'loading'}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-all disabled:opacity-50"
+                        >
+                          {ttsState === 'loading' && <Loader2 className="w-3 h-3 animate-spin" />}
+                          {ttsState === 'playing' && <VolumeX className="w-3 h-3" />}
+                          {ttsState === 'idle' && <Volume2 className="w-3 h-3" />}
+                          {ttsState === 'loading' ? 'Loading...' : ttsState === 'playing' ? 'Stop audio' : 'Listen'}
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-6" id="lesson-content-container">
                       {renderLessonBlocks(currentLesson.content, { LessonChart, LessonTable })}
@@ -106,7 +169,7 @@ export default function LessonContentPanel({
                           }
                           goToNextLesson();
                         }}
-                        className="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+                        className="flex items-center space-x-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all text-xs"
                       >
                         <span>Next Lesson</span>
                         <Play className="w-4 h-4 fill-current" />

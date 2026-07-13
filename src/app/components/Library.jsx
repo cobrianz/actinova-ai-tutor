@@ -367,7 +367,7 @@ export default function Library({ setActiveContent }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+        <h1 className="text-lg font-bold text-foreground mb-2">
           My Library
         </h1>
         <p className="text-muted-foreground">
@@ -383,7 +383,7 @@ export default function Library({ setActiveContent }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-lg font-semibold text-foreground mb-4 text-center">
+          <h3 className="text-sm font-semibold text-foreground mb-4 text-center">
             Your Learning Progress
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
@@ -396,7 +396,7 @@ export default function Library({ setActiveContent }) {
                 <Flame className="w-5 h-5" />
               </div>
               <div className="flex-1 flex items-center justify-around">
-                <div className="text-xl sm:text-2xl font-bold">
+                <div className="text-base sm:text-lg font-bold">
                   {user?.streak || 0}
                 </div>
                 <div className="text-[10px] sm:text-xs font-medium opacity-90">
@@ -555,13 +555,13 @@ export default function Library({ setActiveContent }) {
           <div className="flex bg-muted rounded-lg p-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${viewMode === "grid" ? "bg-background shadow-sm" : ""}`}
+              className={`p-1.5 rounded ${viewMode === "grid" ? "bg-background" : ""}`}
             >
-              <Grid className="w-4 h-4" />
+              <Grid className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${viewMode === "list" ? "bg-background shadow-sm" : ""}`}
+              className={`p-1.5 rounded ${viewMode === "list" ? "bg-background" : ""}`}
             >
               <List className="w-4 h-4" />
             </button>
@@ -593,7 +593,7 @@ export default function Library({ setActiveContent }) {
           animate={{ opacity: 1 }}
         >
           <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2 text-foreground">
+          <h3 className="text-sm font-semibold mb-2 text-foreground">
             {searchQuery ? "No courses found" : "Your library is empty"}
           </h3>
           <p className="text-muted-foreground mb-6">
@@ -659,7 +659,7 @@ export default function Library({ setActiveContent }) {
                             </span>
                           )}
                         </div>
-                        <h3 className="text-lg font-semibold text-foreground line-clamp-2">
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-2">
                           {course.title}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -754,7 +754,7 @@ export default function Library({ setActiveContent }) {
                       ) : (
                         <Link
                           href={`/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`}
-                          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-black text-sm font-medium whitespace-nowrap shadow-md"
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-[#1a1a1a] text-white rounded-lg hover:bg-black text-xs font-medium whitespace-nowrap"
                         >
                           <Play className="w-4 h-4" />
                           {course.progress === 100 ? "Review" : "Continue"}

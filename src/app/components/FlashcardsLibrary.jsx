@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 import Flashcards from "./Flashcards";
+import SRSReview from "./SRSReview";
 import { PRODUCTS } from "@/lib/planLimits";
 import {
   Trash2,
@@ -16,6 +17,8 @@ import {
   Brain,
   Layers,
   FolderOpen,
+  Bell,
+  RefreshCw,
 } from "lucide-react";
 import { apiClient } from "@/lib/csrfClient";
 
@@ -34,7 +37,7 @@ function StatsBar({ flashcards, bookmarkedCount }) {
             <Layers size={18} className="text-primary" />
           </div>
           <div>
-            <p className="text-xl font-bold text-foreground">{stats.totalSets}</p>
+            <p className="text-base font-bold text-foreground">{stats.totalSets}</p>
             <p className="text-xs text-muted-foreground">Total Sets</p>
           </div>
         </div>
@@ -154,10 +157,23 @@ export default function FlashcardsLibrary({ setActiveContent }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [flashcardToDelete, setFlashcardToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [dueCount, setDueCount] = useState(0);
   const { user, refreshToken, hasPurchased } = useAuth();
+
+  const fetchDueCount = async () => {
+    try {
+      const res = await apiClient.get("/api/srs/due");
+      if (res.ok) {
+        const data = await res.json();
+        setDueCount(data.dueCount ?? data.cards?.length ?? 0);
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     fetchFlashcards();
+    fetchDueCount();
     try {
       const saved = localStorage.getItem("bookmarked_flashcards");
       if (saved) setBookmarkedFlashcards(new Set(JSON.parse(saved)));
@@ -228,7 +244,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
   const handleStudy = (card) => {
     setSelectedFlashcard(card);
     setShowFlashcards(true);
-  };
+    };
 
   if (loading) {
     return (
@@ -247,6 +263,23 @@ export default function FlashcardsLibrary({ setActiveContent }) {
             <div key={i} className="h-52 bg-muted rounded-2xl animate-pulse" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (showReview) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="p-4 border-b border-border">
+          <button
+            onClick={() => { setShowReview(false); fetchDueCount(); }}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Back to Library
+          </button>
+        </div>
+        <SRSReview onComplete={() => { setShowReview(false); fetchDueCount(); }} />
       </div>
     );
   }
@@ -273,18 +306,32 @@ export default function FlashcardsLibrary({ setActiveContent }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Flashcards</h1>
+          <h1 className="text-lg font-bold text-foreground">My Flashcards</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Study and memorize key concepts with flashcards
           </p>
         </div>
-        <button
-          onClick={() => setActiveContent("generate")}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus size={16} />
-          Create New
-        </button>
+        <div className="flex items-center gap-2">
+          {dueCount > 0 && (
+            <button
+              onClick={() => setShowReview(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors"
+            >
+              <Bell size={16} />
+              Due for Review
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                {dueCount}
+              </span>
+            </button>
+          )}
+          <button
+            onClick={() => setActiveContent("generate")}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={16} />
+            Create New
+          </button>
+        </div>
       </div>
 
       {flashcards.length === 0 ? (
@@ -292,7 +339,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">No flashcards yet</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-2">No flashcards yet</h3>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
             Create your first flashcard set to start learning with spaced repetition
           </p>

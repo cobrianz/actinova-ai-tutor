@@ -43,9 +43,9 @@ export default function LandingPage({ initialNotice = null }) {
   if (isStandalone) return null;
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary">
+    <div className="min-h-screen bg-background selection:bg-primary/10 selection:text-primary flex flex-col">
       <HeroNavbar handleGetStarted={handleGetStarted} />
-      <main>
+      <main className="flex-1">
         <Hero handleGetStarted={handleGetStarted} initialNotice={initialNotice} />
         <Features />
         <HowItWorks />

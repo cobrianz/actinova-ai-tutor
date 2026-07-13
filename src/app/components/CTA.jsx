@@ -30,17 +30,20 @@ export default function CTA({ handleGetStarted }) {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 border border-[#D2D7F8]/80 text-white text-[13px] font-medium mb-8 backdrop-blur-md"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-[#D2D7F8]/80 text-white text-xs font-medium mb-6 backdrop-blur-md"
+              style={{ fontFamily: "var(--font-fraunces)" }}
             >
               <Sparkles className="w-4 h-4 text-green-500" />
               Join the Future of Learning
             </motion.div>
 
-            <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-[1.1] tracking-tight text-white">
+            <h2 className="text-2xl md:text-4xl font-bold mb-6 leading-[1.1] tracking-tight text-white"
+                style={{ fontFamily: "var(--font-fraunces)" }}>
               Start your journey to <span className="text-green-400">mastery</span> today.
             </h2>
             
-            <p className="text-lg md:text-xl text-white/80 mb-12 leading-relaxed">
+            <p className="text-sm md:text-base text-white/80 mb-8 leading-relaxed"
+               style={{ fontFamily: "var(--font-fraunces)" }}>
               Start with free generation, expand into premium marketplace courses,
               and use quizzes, flashcards, reports, AI chat, and career tools as your workflow grows.
             </p>
@@ -48,17 +51,20 @@ export default function CTA({ handleGetStarted }) {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
               <button
                 onClick={handleGetStarted}
-                className="group w-full sm:w-auto px-8 py-4 bg-white border-2 border-[#D2D7F8]/80 text-[#1a1a1a] rounded-full font-bold text-base transition-all hover:bg-green-50 active:scale-95 flex items-center justify-center gap-2 shadow-sm"
+                className="group w-full sm:w-auto px-6 py-3 bg-white border-2 border-[#D2D7F8]/80 text-[#1a1a1a] rounded-full font-bold text-sm transition-all hover:bg-green-50 active:scale-95 flex items-center justify-center gap-2 shadow-sm"
+                style={{ fontFamily: "var(--font-fraunces)" }}
               >
                 Get Started for Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="w-full sm:w-auto px-8 py-4 bg-transparent hover:bg-white/20 text-white rounded-full font-bold text-base border-2 border-[#D2D7F8]/80 transition-all">
+                <button className="w-full sm:w-auto px-6 py-3 bg-transparent hover:bg-white/20 text-white rounded-full font-bold text-sm border-2 border-[#D2D7F8]/80 transition-all"
+                        style={{ fontFamily: "var(--font-fraunces)" }}>
                 Schedule a Demo
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-white/80 font-medium">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-white/80 font-medium"
+                 style={{ fontFamily: "var(--font-fraunces)" }}>
               {[
                 "No credit card required",
                 "2 free course generations to start",

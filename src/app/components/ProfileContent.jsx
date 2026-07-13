@@ -11,7 +11,11 @@ import {
   Clock,
   Coins,
   Award,
+  CreditCard,
+  Smartphone,
 } from "lucide-react";
+import NotificationSettings from "./NotificationSettings";
+import BadgesPage from "./BadgesPage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
@@ -36,11 +40,15 @@ export default function ProfileContent() {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [profileData, setProfileData] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [editData, setEditData] = useState({ firstName: "", lastName: "" });
+  const [payMethod, setPayMethod] = useState("card");
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     fetchProfileData();
+    fetchAnalytics();
   }, []);
 
   const fetchProfileData = async () => {
@@ -57,6 +65,18 @@ export default function ProfileContent() {
       console.error("Profile fetch error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await fetch("/api/analytics/overview");
+      if (res.ok) {
+        const data = await res.json();
+        setAnalyticsData(data);
+      }
+    } catch (err) {
+      console.error("Analytics fetch error:", err);
     }
   };
 
@@ -94,7 +114,7 @@ export default function ProfileContent() {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div className="bg-card border border-border rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
           <div className="sticky top-0 flex items-center justify-between p-6 border-b border-border bg-card">
-            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+            <h2 className="text-sm font-bold text-foreground">{title}</h2>
             <button onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-secondary text-muted-foreground">
               <X size={20} />
             </button>
@@ -117,12 +137,12 @@ export default function ProfileContent() {
             <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
               <Avatar className="w-24 h-24 ring-4 ring-green-500/20 ring-offset-2 ring-offset-background">
                 <AvatarImage src={profileData?.user?.avatar || user?.avatar} alt={profileData?.user?.firstName || user?.name} />
-                <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-3xl font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xl font-bold">
                   {profileData?.user?.firstName?.[0] || user?.name?.[0] || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-3xl font-bold mb-1">
+                <h1 className="text-lg font-bold mb-1">
                   {profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "User")}
                 </h1>
                 <p className="text-sm text-muted-foreground mb-4">{profileData?.user?.email || user?.email}</p>
@@ -143,12 +163,12 @@ export default function ProfileContent() {
               </div>
               <div className="flex gap-6 px-6 py-4 rounded-xl bg-muted/50 border border-border/50">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{profileData?.usage?.used || 0}</div>
+                  <div className="text-base font-bold text-foreground">{profileData?.usage?.used || 0}</div>
                   <div className="text-xs text-muted-foreground">Generations</div>
                 </div>
                 <div className="w-px bg-border" />
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
+                  <div className="text-base font-bold text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
                   <div className="text-xs text-muted-foreground">Courses</div>
                 </div>
               </div>
@@ -168,13 +188,38 @@ export default function ProfileContent() {
               <button onClick={fetchProfileData} className="ml-4 px-5 py-2 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors">Retry</button>
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
+              {/* Tabs */}
+              <div className="flex gap-2 p-1 bg-secondary/50 rounded-xl w-fit">
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    activeTab === "overview"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab("achievements")}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    activeTab === "achievements"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Achievements
+                </button>
+              </div>
 
-              {/* ── Personal Info ── */}
+              {activeTab === "overview" && (
+                <div className="space-y-8">
+                  {/* ── Personal Info ── */}
               <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">Personal Info</h2>
+                    <h2 className="text-sm font-bold text-foreground">Personal Info</h2>
                     <p className="text-sm text-muted-foreground mt-1">Your account details</p>
                   </div>
                   <button
@@ -200,35 +245,36 @@ export default function ProfileContent() {
                 </div>
               </div>
 
-              {/* ── Usage Analytics (All-Time) ── */}
+              {/* ── Notification Settings ── */}
+              <NotificationSettings />
+
+              {/* ── Usage Analytics ── */}
               <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">Usage Analytics</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Your all-time activity breakdown</p>
+                    <h2 className="text-sm font-bold text-foreground">Usage Analytics</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Your learning activity breakdown</p>
                   </div>
                 </div>
                 <div className="h-72">
                   <Bar
                     data={{
-                      labels: ["Courses", "Reports", "Chat", "Flashcards", "Quizzes", "Career"],
+                      labels: ["Courses", "Quizzes", "Reports", "Chats", "Flashcards"],
                       datasets: [{
                         label: "All-Time Usage",
                         data: [
-                          profileData?.usage?.details?.courses?.used || 0,
-                          profileData?.usage?.details?.reports?.used || 0,
-                          profileData?.usage?.details?.chat?.used || 0,
-                          profileData?.usage?.details?.flashcards?.used || 0,
-                          profileData?.usage?.details?.quizzes?.used || 0,
-                          profileData?.usage?.details?.career?.used || 0,
+                          analyticsData?.summary?.totalCourses || 0,
+                          analyticsData?.summary?.totalQuizzes || 0,
+                          analyticsData?.summary?.totalReports || 0,
+                          analyticsData?.summary?.totalChats || 0,
+                          analyticsData?.summary?.totalFlashcards || 0,
                         ],
                         backgroundColor: [
                           "rgba(34,197,94,0.8)",
                           "rgba(34,197,94,0.65)",
                           "rgba(34,197,94,0.5)",
                           "rgba(34,197,94,0.4)",
-                          "rgba(34,197,94,0.35)",
-                          "rgba(34,197,94,0.25)",
+                          "rgba(34,197,94,0.3)",
                         ],
                         borderColor: "rgba(34,197,94,1)",
                         borderWidth: 1,
@@ -253,7 +299,7 @@ export default function ProfileContent() {
                           padding: 12,
                           callbacks: {
                             label: function(context) {
-                              return `${context.parsed.y} total uses`;
+                              return `${context.parsed.y} total`;
                             },
                           },
                         },
@@ -291,43 +337,74 @@ export default function ProfileContent() {
                         <p className="text-xs text-amber-600 dark:text-amber-400">Use credits to generate content</p>
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-amber-700 dark:text-amber-300">{profileData?.user?.credits || 0}</span>
+                    <span className="text-lg font-black text-amber-700 dark:text-amber-300">{profileData?.user?.credits || 0}</span>
                   </div>
+                  {/* Payment Method Toggle */}
+                  <div className="flex items-center gap-2 mb-4 p-1 bg-amber-100/50 dark:bg-amber-900/20 rounded-lg w-fit">
+                    <button
+                      onClick={() => setPayMethod("card")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        payMethod === "card"
+                          ? "bg-white dark:bg-amber-950 text-amber-800 dark:text-amber-200"
+                          : "text-amber-600 dark:text-amber-400 hover:text-amber-800"
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Card (USD)
+                    </button>
+                    <button
+                      onClick={() => setPayMethod("mpesa")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        payMethod === "mpesa"
+                          ? "bg-white dark:bg-amber-950 text-amber-800 dark:text-amber-200"
+                          : "text-amber-600 dark:text-amber-400 hover:text-amber-800"
+                      }`}
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      M-Pesa (KES)
+                    </button>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {CREDIT_PACKS.map((pack) => (
-                      <button
-                        key={pack.id}
-                        onClick={async () => {
-                          try {
-                            const res = await apiClient.post("/api/billing/create-session", {
-                              purchaseType: "credit-purchase",
-                              packId: pack.id,
-                              paymentMethod: "card",
-                            });
-                            const data = await res.json();
-                            if (res.ok && data.sessionUrl) {
-                              window.location.href = data.sessionUrl;
+                    {CREDIT_PACKS.map((pack) => {
+                      const kesPrice = Math.ceil(pack.price * 155);
+                      return (
+                        <button
+                          key={pack.id}
+                          onClick={async () => {
+                            try {
+                              const res = await apiClient.post("/api/billing/create-session", {
+                                purchaseType: "credit-purchase",
+                                packId: pack.id,
+                                paymentMethod: payMethod,
+                              });
+                              const data = await res.json();
+                              if (res.ok && data.sessionUrl) {
+                                window.location.href = data.sessionUrl;
+                              }
+                            } catch (err) {
+                              console.error("Credit purchase error:", err);
                             }
-                          } catch (err) {
-                            console.error("Credit purchase error:", err);
-                          }
-                        }}
-                        className={`relative p-4 rounded-xl border text-center transition-all hover:scale-[1.02] active:scale-95 ${
-                          pack.popular
-                            ? "border-amber-500 bg-amber-100 dark:bg-amber-900/40 shadow-lg shadow-amber-500/20"
-                            : "border-amber-200/50 dark:border-amber-700/30 bg-white/50 dark:bg-amber-950/30"
-                        }`}
-                      >
-                        {pack.popular && (
-                          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                            Popular
-                          </span>
-                        )}
-                        <div className="text-xl font-black text-amber-800 dark:text-amber-200 mt-1">{pack.credits}</div>
-                        <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Credits</div>
-                        <div className="mt-2 text-sm font-bold text-amber-900 dark:text-amber-100">${pack.price}</div>
-                      </button>
-                    ))}
+                          }}
+                          className={`relative p-3 rounded-xl border text-center transition-all hover:scale-[1.02] active:scale-95 ${
+                            pack.popular
+                              ? "border-amber-500 bg-amber-100 dark:bg-amber-900/40"
+                              : "border-amber-200/50 dark:border-amber-700/30 bg-white/50 dark:bg-amber-950/30"
+                          }`}
+                        >
+                          {pack.popular && (
+                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                              Popular
+                            </span>
+                          )}
+                          <div className="text-sm font-black text-amber-800 dark:text-amber-200 mt-1">{pack.credits}</div>
+                          <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Credits</div>
+                          <div className="mt-2 text-sm font-bold text-amber-900 dark:text-amber-100">
+                            {payMethod === "mpesa" ? `KES ${kesPrice.toLocaleString()}` : `$${pack.price}`}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -388,6 +465,9 @@ export default function ProfileContent() {
                 </div>
               </div>
 
+            </div>
+              )}
+              {activeTab === "achievements" && <BadgesPage />}
             </div>
           )}
         </div>

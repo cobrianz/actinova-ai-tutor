@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BookOpen,
   Lightbulb,
@@ -15,6 +15,9 @@ import {
   Sparkles,
   RotateCcw,
   Filter,
+  Download,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
@@ -42,8 +45,72 @@ export default function Flashcards({ cardData }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const [speakingCardId, setSpeakingCardId] = useState(null);
+  const [ttsLoading, setTtsLoading] = useState(null);
+  const audioRef = useRef(null);
+  const abortRef = useRef(null);
+  const speakIdRef = useRef(0);
   const { user, hasPurchased } = useAuth();
   const router = useRouter();
+
+  const speak = async (text, cardId) => {
+    stopSpeaking();
+    const id = ++speakIdRef.current;
+    setTtsLoading(cardId);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "female" }),
+        signal: controller.signal,
+      });
+      if (id !== speakIdRef.current) return;
+      if (!res.ok) throw new Error("TTS failed");
+      const blob = await res.blob();
+      if (id !== speakIdRef.current) return;
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onplay = () => { if (id === speakIdRef.current) setSpeakingCardId(cardId); };
+      audio.onended = () => { if (id === speakIdRef.current) { setSpeakingCardId(null); setTtsLoading(null); } URL.revokeObjectURL(url); };
+      audio.onerror = () => { if (id === speakIdRef.current) { setSpeakingCardId(null); setTtsLoading(null); } URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch (e) {
+      if (e.name === "AbortError") return;
+      console.error("TTS error:", e);
+      if (id === speakIdRef.current) {
+        setSpeakingCardId(null);
+        toast.error("Speech failed. Please try again.");
+      }
+    } finally {
+      if (id === speakIdRef.current) setTtsLoading(null);
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+    setSpeakingCardId(null);
+  };
+
+  const speakCard = (card) => {
+    if (speakingCardId === card.id) {
+      stopSpeaking();
+      return;
+    }
+    const text = `${card.question}. ... ${card.answer}`;
+    speak(text, card.id);
+  };
 
   useEffect(() => {
     if (cardData?.cards) {
@@ -135,11 +202,54 @@ export default function Flashcards({ cardData }) {
   }, {});
 
   const toggleFlip = (id) => {
-    setFlipped((prev) => ({ ...prev, [id]: !prev[id] }));
+    setFlipped((prev) => {
+      const wasFlipped = prev[id];
+      const newState = { ...prev, [id]: !wasFlipped };
+      if (!wasFlipped && autoSpeak) {
+        const card = studyCards.find((c) => c.id === id);
+        if (card) {
+          const text = `${card.question}. ${card.answer}`;
+          speak(text, id);
+        }
+      } else {
+        stopSpeaking();
+      }
+      return newState;
+    });
   };
 
   const resetAll = () => {
     setFlipped({});
+    stopSpeaking();
+  };
+
+  const handleExportAnki = () => {
+    if (studyCards.length === 0) {
+      toast.error("No cards to export");
+      return;
+    }
+
+    const lines = studyCards.map((card) => {
+      const front = card.question.replace(/\t/g, " ").replace(/\n/g, "<br>");
+      let back = card.answer.replace(/\t/g, " ").replace(/\n/g, "<br>");
+      if (card.explanation) {
+        back += `<br><br><b>Explanation:</b> ${card.explanation.replace(/\t/g, " ").replace(/\n/g, "<br>")}`;
+      }
+      return `${front}\t${back}`;
+    });
+
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `anki-cards-${(cardData.title || "flashcards").replace(/[^a-z0-9]/gi, "_").toLowerCase()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Exported ${studyCards.length} cards for Anki import`);
   };
 
   const renderFormattedText = (text) => {
@@ -194,6 +304,29 @@ export default function Flashcards({ cardData }) {
         >
           <RotateCcw size={14} />
           Reset
+        </button>
+
+        <button
+          onClick={handleExportAnki}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+        >
+          <Download size={14} />
+          Export to Anki
+        </button>
+
+        <button
+          onClick={() => {
+            if (autoSpeak) stopSpeaking();
+            setAutoSpeak((prev) => !prev);
+          }}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+            autoSpeak
+              ? "bg-primary/10 text-primary border border-primary/30"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          {autoSpeak ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          Auto Speak
         </button>
 
         <div className="h-5 w-px bg-border" />
@@ -265,9 +398,25 @@ export default function Flashcards({ cardData }) {
                       <CatIcon size={10} />
                       {cat.label}
                     </span>
-                    <span className={`text-[10px] font-medium ${diff.color}`}>
-                      {diff.label}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] font-medium ${diff.color}`}>
+                        {diff.label}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); speakCard(card); }}
+                        disabled={ttsLoading === card.id}
+                        className="p-1 rounded-md hover:bg-muted/80 transition-colors disabled:opacity-50"
+                        title="Read aloud"
+                      >
+                        {ttsLoading === card.id ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary" />
+                        ) : speakingCardId === card.id ? (
+                          <Volume2 size={12} className="text-primary animate-pulse" />
+                        ) : (
+                          <Volume2 size={12} className="text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex-1 flex items-center justify-center">
@@ -291,11 +440,25 @@ export default function Flashcards({ cardData }) {
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                    <div className="flex items-center gap-2 pb-2 border-b border-border">
+                    <div className="flex items-center gap-2 pb-2 border-t border-border">
                       <Brain size={14} className="text-primary" />
                       <span className="text-xs font-semibold text-primary uppercase tracking-wide">
                         Answer
                       </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); speakCard(card); }}
+                        disabled={ttsLoading === card.id}
+                        className="ml-auto p-1 rounded-md hover:bg-muted/80 transition-colors disabled:opacity-50"
+                        title="Read aloud"
+                      >
+                        {ttsLoading === card.id ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary" />
+                        ) : speakingCardId === card.id ? (
+                          <Volume2 size={12} className="text-primary animate-pulse" />
+                        ) : (
+                          <Volume2 size={12} className="text-muted-foreground" />
+                        )}
+                      </button>
                     </div>
 
                     <p className="text-sm text-foreground leading-relaxed">

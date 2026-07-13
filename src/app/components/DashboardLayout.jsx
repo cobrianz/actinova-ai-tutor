@@ -8,6 +8,9 @@ import DashboardMobileNav from "./DashboardMobileNav";
 
 import { ThemeProvider } from "./ThemeProvider";
 import ProtectedRoute from "./ProtectedRoute";
+import dynamic from 'next/dynamic';
+
+const DailyLoginBonus = dynamic(() => import('./DailyLoginBonus'), { ssr: false });
 
 export default function DashboardLayout({
   children,
@@ -23,10 +26,11 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <ThemeProvider>
+        <DailyLoginBonus />
         <div className="h-screen bg-background flex flex-col">
           <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
           <div className="flex flex-1 overflow-hidden">
-            <div className="hidden lg:block relative h-full z-50">
+            <div className="hidden lg:flex flex-shrink-0 relative h-full z-50">
               <Sidebar
                 setActiveContent={setActiveContent}
                 sidebarOpen={sidebarOpen}

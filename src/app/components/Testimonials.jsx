@@ -15,11 +15,13 @@ export default function Testimonials() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-[#1a1a1a]"
+            className="text-2xl md:text-3xl font-bold mb-4 tracking-tight text-[#1a1a1a]"
+            style={{ fontFamily: "var(--font-fraunces)" }}
           >
             Loved by <span className="text-green-500">Learners Worldwide</span>
           </motion.h2>
-          <p className="text-lg text-[#1a1a1a]/60 max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-[#1a1a1a]/60 max-w-2xl mx-auto"
+             style={{ fontFamily: "var(--font-fraunces)" }}>
             Don't just take our word for it. Hear from the students and professionals
             who have transformed their learning with Actirova AI.
           </p>
@@ -44,7 +46,8 @@ export default function Testimonials() {
                 ))}
               </div>
 
-              <p className="text-lg text-[#1a1a1a]/90 italic mb-8 relative z-10">
+              <p className="text-sm text-[#1a1a1a]/90 italic mb-6 relative z-10 leading-relaxed"
+                 style={{ fontFamily: "var(--font-fraunces)" }}>
                 "{testimonial.content}"
               </p>
 
@@ -53,8 +56,10 @@ export default function Testimonials() {
                   {testimonial.name[0]}
                 </div>
                 <div>
-                  <div className="font-bold text-[#1a1a1a]">{testimonial.name}</div>
-                  <div className="text-sm text-[#1a1a1a]/60">{testimonial.role}</div>
+                  <div className="font-bold text-[#1a1a1a]"
+                       style={{ fontFamily: "var(--font-fraunces)" }}>{testimonial.name}</div>
+                  <div className="text-sm text-[#1a1a1a]/60"
+                       style={{ fontFamily: "var(--font-fraunces)" }}>{testimonial.role}</div>
                 </div>
               </div>
             </motion.div>
@@ -69,10 +74,12 @@ export default function Testimonials() {
           className="mt-20 p-12 rounded-[3rem] bg-green-50/40 backdrop-blur-xl border-2 border-white text-center relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.1)_0,transparent_70%)]" />
-          <h3 className="text-2xl md:text-3xl font-bold text-[#1a1a1a] mb-6 relative z-10">
+          <h3 className="text-xl md:text-2xl font-bold text-[#1a1a1a] mb-4 relative z-10"
+              style={{ fontFamily: "var(--font-fraunces)" }}>
             "The most effective way to learn in the 21st century."
           </h3>
-          <p className="text-[#1a1a1a]/60 font-medium relative z-10 uppercase tracking-widest text-sm">
+          <p className="text-[#1a1a1a]/60 font-medium relative z-10 uppercase tracking-widest text-sm"
+             style={{ fontFamily: "var(--font-fraunces)" }}>
             — Educational Technology Review 2026
           </p>
         </motion.div>
