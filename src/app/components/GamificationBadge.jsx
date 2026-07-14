@@ -1,20 +1,44 @@
 "use client";
 
 import { getRarityColor } from "@/lib/gamification";
+import {
+  Award,
+  BookOpen,
+  Flame,
+  Trophy,
+  Database,
+  Star,
+  Zap,
+  CalendarDays,
+} from "lucide-react";
 
-const BADGE_ICONS = {
-  "1": "📖", "2": "🔥", "3": "🔥", "4": "🔥", "5": "🔥",
-  "6": "🧠", "7": "🧠", "8": "🧠",
-  "9": "🏆", "10": "🏆", "11": "🏆",
-  "12": "💾", "13": "💾", "14": "💾",
-  "15": "⭐", "16": "⭐", "17": "⭐",
-  "18": "⚡", "19": "⚡", "20": "⚡",
-  "21": "📅",
+const BADGE_ICON_COMPONENTS = {
+  "1": BookOpen,
+  "2": Flame,
+  "3": Flame,
+  "4": Flame,
+  "5": Flame,
+  "6": Award,
+  "7": Award,
+  "8": Award,
+  "9": Trophy,
+  "10": Trophy,
+  "11": Trophy,
+  "12": Database,
+  "13": Database,
+  "14": Database,
+  "15": Star,
+  "16": Star,
+  "17": Star,
+  "18": Zap,
+  "19": Zap,
+  "20": Zap,
+  "21": CalendarDays,
 };
 
 export default function GamificationBadge({ badge, size = "md" }) {
   const rarityColor = getRarityColor(badge.rarity);
-  const icon = BADGE_ICONS[badge.icon] || "🎖";
+  const IconComponent = BADGE_ICON_COMPONENTS[badge.icon] || Award;
 
   const sizeClasses = {
     sm: "w-10 h-10 text-lg",
@@ -38,7 +62,7 @@ export default function GamificationBadge({ badge, size = "md" }) {
       <div
         className={`flex items-center justify-center rounded-lg ${sizeClasses[size]}`}
       >
-        {icon}
+        <IconComponent className="w-full h-full" />
       </div>
       {size !== "sm" && (
         <span className="text-[10px] font-medium text-center leading-tight truncate w-full">

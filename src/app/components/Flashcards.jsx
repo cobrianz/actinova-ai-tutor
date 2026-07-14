@@ -27,7 +27,7 @@ import { PRODUCTS } from "@/lib/planLimits";
 import UpgradeModal from "./UpgradeModal";
 
 const categoryConfig = {
-  concept: { icon: BookOpen, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30", label: "Concept" },
+  concept: { icon: BookOpen, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", label: "Concept" },
   tip: { icon: Lightbulb, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/30", label: "Tip" },
   warning: { icon: AlertCircle, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/30", label: "Warning" },
   practice: { icon: CheckCircle, color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/30", label: "Practice" },
@@ -434,15 +434,15 @@ export default function Flashcards({ cardData }) {
 
                 {/* Back */}
                 <div
-                  className={`absolute inset-0 rounded-2xl border border-primary/30 bg-primary/5 p-5 flex flex-col ${
+                  className={`absolute inset-0 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 flex flex-col ${
                     !isFlipped ? "invisible" : ""
                   }`}
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
                     <div className="flex items-center gap-2 pb-2 border-t border-border">
-                      <Brain size={14} className="text-primary" />
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                      <Brain size={14} className="text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
                         Answer
                       </span>
                       <button
@@ -484,7 +484,7 @@ export default function Flashcards({ cardData }) {
                         <ul className="space-y-1">
                           {card.keyPoints.map((point, idx) => (
                             <li key={idx} className="text-xs text-muted-foreground flex gap-2">
-                              <span className="text-primary">•</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">•</span>
                               <span>{point}</span>
                             </li>
                           ))}
@@ -520,7 +520,7 @@ export default function Flashcards({ cardData }) {
       <button
         onClick={handleGenerateMore}
         disabled={isGeneratingMore}
-        className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium text-xs hover:from-green-700 hover:to-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       >
         {isGeneratingMore ? (
           <>

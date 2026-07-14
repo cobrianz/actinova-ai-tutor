@@ -23,41 +23,62 @@ export default function LessonContentPanel({
   const deferredTypingContent = useDeferredValue(typingContent);
   const [ttsState, setTtsState] = useState('idle'); // 'idle' | 'loading' | 'playing'
   const audioRef = useRef(null);
+  const abortRef = useRef(null);
+  const speakIdRef = useRef(0);
 
   const handleTTS = useCallback(async (textToSpeak) => {
     if (ttsState === 'playing') {
-      audioRef.current?.pause();
-      audioRef.current = null;
+      if (abortRef.current) { abortRef.current.abort(); abortRef.current = null; }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; audioRef.current = null; }
       setTtsState('idle');
       return;
     }
     if (!textToSpeak) return;
+    const id = ++speakIdRef.current;
     setTtsState('loading');
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const text = String(textToSpeak)
+        .replace(/<[^>]+>/g, '')
         .replace(/#{1,6}\s/g, '')
         .replace(/\*\*/g, '')
         .replace(/\*/g, '')
         .replace(/`[^`]+`/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+        .replace(/^\s*[-*+]\s/gm, '')
+        .replace(/^\s*\d+\.\s/gm, '')
+        .replace(/^\s*>/gm, '')
+        .replace(/---+/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim()
         .slice(0, 2000);
         
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, voice: 'female' }),
+        signal: controller.signal,
       });
+      if (id !== speakIdRef.current) return;
       if (!res.ok) throw new Error('TTS failed');
       const blob = await res.blob();
+      if (id !== speakIdRef.current) return;
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => { setTtsState('idle'); URL.revokeObjectURL(url); };
-      audio.onerror = () => { setTtsState('idle'); };
-      audio.play();
+      audio.onended = () => { if (id === speakIdRef.current) { setTtsState('idle'); } URL.revokeObjectURL(url); };
+      audio.onerror = () => { if (id === speakIdRef.current) { setTtsState('idle'); } URL.revokeObjectURL(url); };
+      await audio.play();
       setTtsState('playing');
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error('TTS error:', e);
-      setTtsState('idle');
+      if (id === speakIdRef.current) setTtsState('idle');
+    } finally {
+      if (id === speakIdRef.current) setTtsState('idle');
     }
   }, [ttsState]);
 

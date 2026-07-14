@@ -536,7 +536,7 @@ export default function Generate({ setActiveContent }) {
           <ActirovaLoader text={format} />
         </div>
       )}
-      <div className="max-w-4xl mx-auto px-4 py-10 relative z-10">
+      <div className="px-0 py-6 relative z-10">
         <div className="text-center mb-12">
           {/* Badge */}
           <motion.div
@@ -698,7 +698,7 @@ export default function Generate({ setActiveContent }) {
                 <button 
                   onClick={handleGenerate}
                   disabled={!topic.trim() || isSubmitting}
-                  className={`w-11 h-11 flex items-center justify-center rounded-full transition-all border border-[#D2D7F8]/60 ${topic.trim().length > 0 ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-[#1a1a1a] dark:bg-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-white/90 text-white'}`}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border border-[#D2D7F8]/60 ${topic.trim().length > 0 ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-[#1a1a1a] dark:bg-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-white/90 text-white'}`}
                 >
                   {isSubmitting ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -849,7 +849,7 @@ function PopularTopics({ setTopic, setLocalTopic }) {
             setTopic(topicOption);
             setLocalTopic(topicOption);
           }}
-          className="p-2.5 sm:p-3 text-left bg-card border border-border rounded-lg hover:border-foreground/30 transition-all"
+          className="p-2 text-left bg-card border border-border rounded-lg hover:border-foreground/30 transition-all"
         >
           <span className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">
             {topicOption}

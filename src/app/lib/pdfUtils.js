@@ -1279,7 +1279,7 @@ export const downloadReceiptAsPDF = async (data) => {
     savePdf(pdf, `Actirova_Receipt_${receiptNo || Date.now()}.pdf`);
 };
 
-export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
+export const downloadResumeAsPDF = async (resumeData, fileName = "Resume", templateId = "classic") => {
     if (!resumeData) throw new Error("Resume data is required.");
 
     const pdf = new jsPDF({
@@ -1292,17 +1292,62 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
     const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
     const MARGIN = 16;
     const CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
+
+    const templateStyles = {
+        classic: {
+            accent: [22, 101, 52], accentSoft: [240, 253, 244],
+            headerAlign: "center", sectionStyle: "pill", summaryStyle: "plain", entryStyle: "plain", nameSize: 25,
+        },
+        modern: {
+            accent: [5, 150, 105], accentSoft: [236, 253, 245],
+            headerAlign: "left", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 24,
+        },
+        executive: {
+            accent: [22, 101, 52], accentSoft: [240, 253, 244],
+            headerAlign: "center", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 24,
+        },
+        minimal: {
+            accent: [100, 116, 139], accentSoft: [241, 245, 249],
+            headerAlign: "left", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 22,
+        },
+        creative: {
+            accent: [124, 58, 237], accentSoft: [245, 243, 255],
+            headerAlign: "left", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 22,
+        },
+        technical: {
+            accent: [8, 145, 178], accentSoft: [236, 254, 255],
+            headerAlign: "left", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 22,
+        },
+        elegant: {
+            accent: [146, 64, 14], accentSoft: [255, 251, 235],
+            headerAlign: "center", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 24,
+        },
+        bold: {
+            accent: [220, 38, 38], accentSoft: [254, 242, 242],
+            headerAlign: "left", sectionStyle: "block", summaryStyle: "plain", entryStyle: "plain", nameSize: 24,
+        },
+        compact: {
+            accent: [71, 85, 105], accentSoft: [241, 245, 249],
+            headerAlign: "left", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 20,
+        },
+        professional: {
+            accent: [29, 78, 216], accentSoft: [239, 246, 255],
+            headerAlign: "left", sectionStyle: "rule", summaryStyle: "plain", entryStyle: "plain", nameSize: 22,
+        },
+    };
+
+    const tplStyle = templateStyles[templateId] || templateStyles.classic;
     const COLORS = {
         text: [26, 26, 46],
         muted: [100, 116, 139],
         line: [226, 232, 240],
-        accent: [34, 197, 94],
-        accentSoft: [240, 253, 244],
-        headerAlign: "center",
-        sectionStyle: "pill",
-        summaryStyle: "plain",
-        entryStyle: "plain",
-        nameSize: 25,
+        accent: tplStyle.accent,
+        accentSoft: tplStyle.accentSoft,
+        headerAlign: tplStyle.headerAlign,
+        sectionStyle: tplStyle.sectionStyle,
+        summaryStyle: tplStyle.summaryStyle,
+        entryStyle: tplStyle.entryStyle,
+        nameSize: tplStyle.nameSize,
     };
     const BASE_LINE_HEIGHT = 5.8;
 
@@ -1722,7 +1767,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume") => {
     savePdf(pdf, `${fileName}.pdf`);
 };
 
-export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
+export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", templateId = "classic") => {
     if (!resumeData) throw new Error("Resume data is required.");
 
     const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Tab, TabStopPosition, TabStopType, LeaderType, Table, TableRow, TableCell, WidthType }, fileSaverModule] = await Promise.all([
@@ -1777,6 +1822,13 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
         return start || end;
     };
 
+    const templateAccents = {
+        classic: "166534", modern: "059669", executive: "166534", minimal: "64748B",
+        creative: "7c3aed", technical: "0891b2", elegant: "92400e", bold: "dc2626",
+        compact: "475569", professional: "1d4ed8",
+    };
+    const accentColor = templateAccents[templateId] || "166534";
+
     const sectionHeading = (label) =>
         new Paragraph({
             heading: HeadingLevel.HEADING_2,
@@ -1789,7 +1841,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume") => {
                 new TextRun({
                     text: textValue(label).toUpperCase(),
                     bold: true,
-                    color: "166534",
+                    color: accentColor,
                     size: 24,
                 }),
             ],

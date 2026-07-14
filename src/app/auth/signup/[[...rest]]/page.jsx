@@ -8,19 +8,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
 import GoogleIcon from "@/components/GoogleIcon";
 import { isFlutterApp } from "@/lib/appBridge";
+import AuthLayout from "@/components/AuthLayout";
 import {
   Mail,
   Lock,
   Loader2,
-  User,
-  ArrowRight,
   Eye,
   EyeOff,
-  ArrowLeft,
-  CheckCircle2,
-  ShieldCheck,
-  Zap,
-  Sparkles
 } from "lucide-react";
 
 export default function SignupPage() {
@@ -99,201 +93,189 @@ export default function SignupPage() {
     }
   };
 
-  const steps = [
-    { id: 'details', title: 'Your details', desc: 'Provide an email and password', icon: User },
-    { id: 'verify', title: 'Verify your email', desc: 'Enter your verification code', icon: Mail },
-    { id: 'invite', title: 'Start learning', desc: 'Unlock your personalized journey', icon: Zap },
-    { id: 'welcome', title: 'Welcome to Actirova!', desc: 'Get up and running in minutes', icon: Sparkles },
-  ];
+  const getPasswordStrength = () => {
+    let s = 0;
+    if (formData.password.length >= 8) s++;
+    if (/[A-Z]/.test(formData.password)) s++;
+    if (/[0-9]/.test(formData.password)) s++;
+    if (/[^A-Za-z0-9]/.test(formData.password)) s++;
+    return s;
+  };
+
+  const strength = formData.password ? getPasswordStrength() : 0;
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden font-sans" style={{ backgroundColor: '#DFE3FC' }}>
-      {/* Overlay */}
-      <div className="absolute inset-0 z-0 opacity-40" style={{ backgroundColor: '#DFE3FC' }} />
+    <AuthLayout
+      title="Create your free account"
+      subtitle="Get started with AI-powered learning. Generate courses, quizzes, flashcards, and study plans in seconds."
+    >
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: "var(--font-fraunces)" }}>
+            Create a free account
+          </h1>
+          <p className="text-sm text-gray-500 mt-1.5 font-medium">
+            Fill in your details to get started
+          </p>
+        </div>
 
-      {/* Main Form Container */}
-      <div className="relative z-10 flex flex-col items-center justify-center w-full px-6 py-12 md:py-0">
-        <div className="w-full max-w-sm space-y-4 py-6 bg-white/30 backdrop-blur-2xl rounded-2xl border-2 border-white p-6">
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center justify-center w-12 h-12 mb-4">
-               <Lock className="w-8 h-8 text-green-600" />
+        <form onSubmit={handleEmailSignup} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label htmlFor="firstName" className="text-sm font-semibold text-gray-700 block">First name</label>
+              <input
+                id="firstName"
+                placeholder="John"
+                className="h-11 w-full bg-white border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 rounded-xl transition-all text-sm outline-none px-3.5"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 font-bricolage mb-2 tracking-tight">Create a free account</h2>
-            <p className="text-gray-600 font-medium">Provide your email and choose a password.</p>
+            <div className="space-y-1.5">
+              <label htmlFor="lastName" className="text-sm font-semibold text-gray-700 block">Last name</label>
+              <input
+                id="lastName"
+                placeholder="Doe"
+                className="h-11 w-full bg-white border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 rounded-xl transition-all text-sm outline-none px-3.5"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <form onSubmit={handleEmailSignup} className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="firstName" className="text-sm font-bold text-gray-700 ml-1 block">First name</label>
-                <input
-                    id="firstName"
-                    placeholder="john"
-                    className="h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="lastName" className="text-sm font-bold text-gray-700 ml-1 block">Last name</label>
-                <input
-                    id="lastName"
-                    placeholder="doe"
-                    className="h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1 block">Email address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    className="pl-10 h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="password" className="text-sm font-bold text-gray-700 ml-1 block">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10 h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {/* Password Strength Indicator - Simple Dots like in image */}
-                {formData.password && (
-                  <div className="flex gap-1 mt-1.5 px-1">
-                    {[1, 2, 3, 4].map((level) => {
-                       const strength = (() => {
-                        let s = 0;
-                        if (formData.password.length >= 8) s++;
-                        if (/[A-Z]/.test(formData.password)) s++;
-                        if (/[0-9]/.test(formData.password)) s++;
-                        if (/[^A-Za-z0-9]/.test(formData.password)) s++;
-                        return s;
-                      })();
-                      return (
-                        <div key={level} className={`h-1 flex-1 rounded-full transition-all ${strength >= level ? (strength <= 2 ? "bg-red-500" : strength === 3 ? "bg-yellow-500" : "bg-green-600") : "bg-slate-100"}`} />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="confirmPassword" className="text-sm font-bold text-gray-700 ml-1 block">Confirm password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  <input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10 h-10 w-full bg-white/80 border border-slate-300 focus:border-green-500 focus:ring-green-500/10 rounded-lg transition-all font-medium text-sm shadow-none outline-none"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-2 pt-0.5">
-                <input
-                  id="acceptTerms"
-                  type="checkbox"
-                  checked={formData.acceptTerms}
-                  onChange={(e) => setFormData(prev => ({ ...prev, acceptTerms: e.target.checked }))}
-                  className="mt-1 w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500/10 transition-colors"
-                />
-                <label htmlFor="acceptTerms" className="text-xs font-medium text-gray-500 leading-normal cursor-pointer">
-                  I agree to the <Link href="/terms" className="text-green-600 font-bold hover:underline">terms of service</Link> and <Link href="/privacy" className="text-green-600 font-bold hover:underline">privacy policy</Link>
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] mt-2 shadow-none border border-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue"}
-              </button>
-            </form>
-
-            <div className="relative flex items-center py-1.5">
-              <div className="flex-grow border-t border-slate-200"></div>
-              <span className="flex-shrink-0 mx-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">or</span>
-              <div className="flex-grow border-t border-slate-200"></div>
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="text-sm font-semibold text-gray-700 block">Email address</label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                className="pl-10 h-11 w-full bg-white border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 rounded-xl transition-all text-sm outline-none"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
+          </div>
 
-            <div className="space-y-1.5">
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="text-sm font-semibold text-gray-700 block">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a strong password"
+                className="pl-10 pr-10 h-11 w-full bg-white border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 rounded-xl transition-all text-sm outline-none"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
               <button
                 type="button"
-                onClick={() => handleGoogleSignup()}
-                className="w-full h-10 bg-white hover:bg-slate-50 text-gray-700 font-bold rounded-lg transition-all flex items-center justify-center gap-3 border border-slate-200 shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
               >
-                <div className="w-5 h-5 flex items-center justify-center">
-                  <GoogleIcon size={18} />
-                </div>
-                <span>Sign up with Google</span>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-
-            <p className="text-center text-sm font-medium text-gray-500 pt-1">
-              Already have an account?{" "}
-              <Link
-                href={searchParams.get("callbackUrl") ? `/auth/login?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl"))}` : "/auth/login"}
-                className="text-green-600 font-bold hover:text-green-700 hover:underline underline-offset-4"
-              >
-                Sign in
-              </Link>
-            </p>
+            {formData.password && (
+              <div className="flex gap-1.5 mt-2">
+                {[1, 2, 3, 4].map((level) => (
+                  <div
+                    key={level}
+                    className={`h-1.5 flex-1 rounded-full transition-all ${
+                      strength >= level
+                        ? strength <= 2
+                          ? "bg-red-500"
+                          : strength === 3
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                        : "bg-gray-100"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-        
-        {/* Footer Link for Mobile */}
-        <div className="lg:hidden mt-auto pb-8">
-           <Link 
-            href="/" 
-            className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-green-600 transition-colors"
+
+          <div className="space-y-1.5">
+            <label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700 block">Confirm password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                className="pl-10 pr-10 h-11 w-full bg-white border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/10 rounded-xl transition-all text-sm outline-none"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-2.5">
+            <input
+              id="acceptTerms"
+              type="checkbox"
+              checked={formData.acceptTerms}
+              onChange={(e) => setFormData(prev => ({ ...prev, acceptTerms: e.target.checked }))}
+              className="mt-1 w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500/10 transition-colors"
+            />
+            <label htmlFor="acceptTerms" className="text-xs font-medium text-gray-500 leading-relaxed cursor-pointer">
+              I agree to the{" "}
+              <Link href="/terms" className="text-green-600 font-semibold hover:underline">terms of service</Link>
+              {" "}and{" "}
+              <Link href="/privacy" className="text-green-600 font-semibold hover:underline">privacy policy</Link>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-sm shadow-green-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            disabled={loading}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </Link>
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account"}
+          </button>
+        </form>
+
+        <div className="relative flex items-center">
+          <div className="flex-grow border-t border-gray-200" />
+          <span className="flex-shrink-0 mx-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-gray-200" />
         </div>
+
+        <button
+          type="button"
+          onClick={() => handleGoogleSignup()}
+          className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition-all flex items-center justify-center gap-3 border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading}
+        >
+          <GoogleIcon size={18} />
+          <span>Continue with Google</span>
+        </button>
+
+        <p className="text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <Link
+            href={searchParams.get("callbackUrl") ? `/auth/login?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl"))}` : "/auth/login"}
+            className="text-green-600 font-semibold hover:text-green-700 hover:underline underline-offset-4"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

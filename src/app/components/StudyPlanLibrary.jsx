@@ -5,7 +5,6 @@ import {
   CalendarCheck,
   Plus,
   Clock,
-  Trash2,
   BookOpen,
   CheckCircle2,
   Search,
@@ -79,24 +78,6 @@ export default function StudyPlanLibrary({ setActiveContent }) {
       }
     } catch {
       toast.error("Failed to load study plan");
-    }
-  };
-
-  const handleDeletePlan = async (planId) => {
-    if (!confirm("Delete this study plan?")) return;
-    try {
-      const res = await apiClient.delete(`/api/study-plan/${planId}`);
-      if (res.ok) {
-        toast.success("Study plan deleted");
-        setPlans((prev) => prev.filter((p) => p._id !== planId));
-        if (selectedPlanId === planId) {
-          setView("library");
-          setSelectedPlan(null);
-          setSelectedPlanId(null);
-        }
-      }
-    } catch {
-      toast.error("Failed to delete study plan");
     }
   };
 
@@ -656,31 +637,29 @@ export default function StudyPlanLibrary({ setActiveContent }) {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3 tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-            <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-              <CalendarCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-2 tracking-tight" style={{ fontFamily: "var(--font-fraunces)" }}>
+            <CalendarCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
             Study Plans
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 ml-[52px]">
+          <p className="text-[11px] text-muted-foreground mt-0.5 ml-7">
             Your personalized AI-powered learning schedules
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setView("leaderboard")}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-border bg-card hover:bg-secondary/50 text-sm font-semibold transition-all hover:shadow-md active:scale-[0.98]"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary/50 text-[11px] font-medium transition-all"
           >
-            <Trophy className="w-4 h-4 text-yellow-500" />
-            Leaderboard
+            <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+            Ranks
           </button>
           <button
             onClick={() => setView("generator")}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/35 active:scale-[0.98]"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-[11px] font-medium transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             New Plan
           </button>
         </div>
@@ -688,14 +667,14 @@ export default function StudyPlanLibrary({ setActiveContent }) {
 
       {/* Search */}
       {plans.length > 0 && (
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+        <div className="relative mb-5">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search study plans..."
-            className="w-full pl-11 pr-4 py-3 rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm text-foreground text-sm placeholder-foreground/30 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500/40 transition-all"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border/60 bg-card text-foreground text-[11px] placeholder-foreground/30 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500/40 transition-all"
           />
         </div>
       )}
@@ -731,10 +710,10 @@ export default function StudyPlanLibrary({ setActiveContent }) {
             <p className="text-sm text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
               Create your first AI-powered study plan with a personalized weekly schedule built around your goals
             </p>
-            <button
-              onClick={() => setView("generator")}
-              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-2xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/35 active:scale-[0.98]"
-            >
+              <button
+                onClick={() => setView("generator")}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/35 active:scale-[0.98]"
+              >
               <Sparkles className="w-4 h-4" />
               Create Your First Plan
               <ArrowRight className="w-4 h-4" />
@@ -764,18 +743,18 @@ export default function StudyPlanLibrary({ setActiveContent }) {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="group rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:border-green-500/30 cursor-pointer"
+                className="group rounded-xl sm:rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:border-green-500/30 cursor-pointer"
                 onClick={() => handleViewPlan(plan._id)}
               >
-                <div className="p-5">
+                <div className="p-3.5 sm:p-5">
                   {/* Top row: icon + title + difficulty */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${
                       plan.completed
                         ? "bg-green-500 text-white"
                         : "bg-green-500/10 text-green-600 dark:text-green-400"
                     }`}>
-                      {plan.completed ? <Trophy className="w-5 h-5" /> : <CalendarCheck className="w-5 h-5" />}
+                      {plan.completed ? <Trophy className="w-4 h-4 sm:w-5 sm:h-5" /> : <CalendarCheck className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-foreground line-clamp-2 text-balance">{plan.title}</h3>
@@ -789,7 +768,7 @@ export default function StudyPlanLibrary({ setActiveContent }) {
                   </div>
 
                   {/* Meta row */}
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
+                  <div className="flex items-center gap-2.5 sm:gap-3 text-xs text-muted-foreground mb-3 sm:mb-4">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {plan.durationWeeks}w
@@ -807,7 +786,7 @@ export default function StudyPlanLibrary({ setActiveContent }) {
                   </div>
 
                   {/* Progress bar */}
-                  <div className="mb-4">
+                  <div className="mb-3 sm:mb-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[11px] text-muted-foreground">
                         {completedTasks} of {totalTasks} completed
@@ -825,48 +804,42 @@ export default function StudyPlanLibrary({ setActiveContent }) {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-1.5">
                     {plan.completed ? (
                       <button
-                        className="flex-1 py-2 px-3 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium border border-green-500/20 flex items-center justify-center gap-2"
+                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium border border-green-500/20 flex items-center justify-center gap-1.5"
                       >
-                        <Trophy size={14} />
-                        Review Plan
+                        <Trophy size={12} />
+                        Review
                       </button>
                     ) : isInProgress ? (
                       <button
-                        className="flex-1 py-2 px-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                       >
-                        <Zap size={14} />
+                        <Zap size={12} />
                         Continue
                       </button>
                     ) : (
                       <button
-                        className="flex-1 py-2 px-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                       >
-                        <BookOpen size={14} />
-                        Start Plan
+                        <BookOpen size={12} />
+                        Start
                       </button>
                     )}
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDeletePlan(plan._id); }}
-                      className="p-2 rounded-xl border border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                    <button
                       onClick={(e) => handleExportPlan(plan, e)}
-                      className="p-2 rounded-xl border border-border text-muted-foreground hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/30 transition-colors"
+                      className="p-1.5 rounded-lg border border-border text-muted-foreground hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/30 transition-colors"
                       title="Export study plan"
                     >
-                      <Download size={16} />
+                      <Download size={13} />
                     </button>
                     <button
                       onClick={(e) => handleSharePlan(plan, e)}
-                      className="p-2 rounded-xl border border-border text-muted-foreground hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/30 transition-colors"
+                      className="p-1.5 rounded-lg border border-border text-muted-foreground hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/30 transition-colors"
                       title="Share study plan"
                     >
-                      <Share2 size={16} />
+                      <Share2 size={13} />
                     </button>
                   </div>
                 </div>

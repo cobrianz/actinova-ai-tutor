@@ -40,7 +40,7 @@ const TrendsSkeleton = () => (
         {/* Trending Careers Skeleton */}
         <div>
             <div className="h-8 w-64 bg-slate-100 dark:bg-slate-800/50 rounded-lg mb-6 animate-pulse" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
                     <div key={i} className="bg-white dark:bg-slate-900/40 border-2 border-slate-100 dark:border-slate-800/60 rounded-2xl p-6 h-[280px] flex flex-col justify-between shadow-sm">
                         <div className="space-y-4">
@@ -65,7 +65,7 @@ const TrendsSkeleton = () => (
         {/* Trending Skills Skeleton */}
         <div>
             <div className="h-8 w-48 bg-slate-100 dark:bg-slate-800/50 rounded-lg mb-6 animate-pulse" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
                     <div key={i} className="bg-white dark:bg-slate-900/40 border-2 border-slate-100 dark:border-slate-800/60 rounded-2xl p-6 h-[220px] flex flex-col justify-between shadow-sm">
                         <div className="space-y-4">
@@ -279,7 +279,7 @@ const CareerGrowth = () => {
 
     if (subTab !== "overview" && (hasPurchased('career_tools') || subTab === "resume")) {
         return (
-            <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-0 sm:px-6 lg:px-8 min-h-[80vh]">
+            <div className="w-full py-4 sm:py-8 px-0 min-h-[80vh]">
                 {renderHeader()}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.98 }}
@@ -298,7 +298,7 @@ const CareerGrowth = () => {
     return (
         <div className="relative min-h-screen bg-white dark:bg-slate-950">
 
-            <main className="max-w-7xl mx-auto py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 lg:px-8">
+            <main className="py-8 sm:py-12 md:py-16 lg:py-20 px-0">
                 {/* Hero Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -314,7 +314,7 @@ const CareerGrowth = () => {
                         <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                         <span className="text-[10px] sm:text-xs font-bold text-primary">AI-Powered Career Suite</span>
                     </motion.div>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter mb-4 sm:mb-6 px-2 bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter mb-4 sm:mb-6 px-2 bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>
                         Skyrocket Your Career
                     </h1>
                     <p className="text-xs sm:text-sm md:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium px-4">
@@ -343,7 +343,7 @@ const CareerGrowth = () => {
                                 <div className="mb-4 sm:mb-6 inline-flex p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-sm">
                                     <FileText size={24} className="sm:w-7 sm:h-7" />
                                 </div>
-                                <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 leading-tight">Resume Accelerator</h2>
+                                <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>Resume Accelerator</h2>
                                 <p className="text-slate-300 mb-6 sm:mb-8 font-medium leading-relaxed text-[10px] sm:text-xs sm:text-sm">
                                     Craft a job-winning resume from scratch or optimize your existing one for ATS systems using advanced AI.
                                 </p>
@@ -383,7 +383,7 @@ const CareerGrowth = () => {
                             <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                 <Target size={24} className="sm:w-7 sm:h-7" />
                             </div>
-                            <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Skill Gap Analysis</h2>
+                            <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>Skill Gap Analysis</h2>
                             <p className="text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 font-medium text-xs sm:text-sm leading-relaxed">
                                 Identify the exact skills missing between you and your dream role.
                             </p>
@@ -407,7 +407,7 @@ const CareerGrowth = () => {
                             <div className="mb-4 sm:mb-5 inline-flex p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                                 <MessageSquare size={24} className="sm:w-7 sm:h-7" />
                             </div>
-                            <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight">Mock Interview</h2>
+                            <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 text-slate-900 dark:text-white leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>Mock Interview</h2>
                             <p className="text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 font-medium text-xs sm:text-sm leading-relaxed">
                                 Pressure-test your knowledge with personalized AI interviewers.
                             </p>
@@ -435,7 +435,7 @@ const CareerGrowth = () => {
                                 <div className="mb-4 sm:mb-6 inline-flex p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-sm">
                                     <Users size={24} className="sm:w-7 sm:h-7" />
                                 </div>
-                                <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 leading-tight">Network AI</h2>
+                                <h2 className="text-sm sm:text-base md:text-lg font-black mb-2 sm:mb-3 leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>Network AI</h2>
                                 <p className="text-slate-300 mb-4 sm:mb-6 font-medium leading-relaxed text-[10px] sm:text-xs sm:text-sm">
                                     Unlock back-channel opportunities. Draft perfect outreach and find ideal mentors instantly.
                                 </p>
@@ -473,7 +473,7 @@ const CareerGrowth = () => {
                 >
                     <div className="text-center mb-8 sm:mb-10">
 
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tighter mb-3 sm:mb-4 text-slate-900 dark:text-white">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tighter mb-3 sm:mb-4 text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>
                             Trending Careers & Skills {new Date().getFullYear()}
                         </h2>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -503,11 +503,11 @@ const CareerGrowth = () => {
                                 {/* Trending Careers */}
                                 {trendingData.trendingCareers && trendingData.trendingCareers.length > 0 && (
                                     <div>
-                                        <h3 className="text-sm sm:text-base font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                        <h3 className="text-sm sm:text-base font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>
                                             <Briefcase className="w-5 h-5 text-green-600 dark:text-green-400" />
                                             Trending Careers
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
                                             {trendingData.trendingCareers.slice(0, 6).map((career, idx) => (
                                                 <motion.div
                                                     key={idx}
@@ -583,11 +583,11 @@ const CareerGrowth = () => {
                                 {/* Trending Skills */}
                                 {trendingData.trendingSkills && trendingData.trendingSkills.length > 0 && (
                                     <div>
-                                        <h3 className="text-sm sm:text-base font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                        <h3 className="text-sm sm:text-base font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>
                                             <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                                             Trending Skills to Learn
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
                                             {trendingData.trendingSkills.slice(0, 6).map((skill, idx) => (
                                                 <motion.div
                                                     key={idx}
@@ -649,7 +649,7 @@ const CareerGrowth = () => {
                                     >
                                         <div className="flex items-center gap-3 mb-4">
                                             <Sparkles className="w-6 h-6 text-green-600 dark:text-green-400" />
-                                            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Market Insights</h3>
+                                            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>Market Insights</h3>
                                         </div>
                                         <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
                                             {trendingData.marketInsights}

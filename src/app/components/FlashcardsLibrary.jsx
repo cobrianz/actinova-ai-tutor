@@ -66,8 +66,8 @@ function StatsBar({ flashcards, bookmarkedCount }) {
       </div>
       <div className="rounded-xl bg-card border border-border p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-            <FolderOpen size={18} className="text-blue-500" />
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <FolderOpen size={18} className="text-emerald-500" />
           </div>
           <div>
             <p className="text-xl font-bold text-foreground">
@@ -121,14 +121,14 @@ function FlashcardSetCard({ card, isBookmarked, onBookmark, onStudy, onDelete })
         <div className="flex items-center gap-2">
           <button
             onClick={() => onStudy(card)}
-            className="flex-1 py-2 px-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-1.5 px-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
           >
             <BookOpen size={14} />
             Study
           </button>
           <button
             onClick={() => onBookmark(card._id)}
-            className={`p-2 rounded-xl border transition-colors ${
+            className={`p-1.5 rounded-lg border transition-colors ${
               isBookmarked
                 ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
                 : "text-muted-foreground border-border hover:bg-muted"
@@ -138,9 +138,9 @@ function FlashcardSetCard({ card, isBookmarked, onBookmark, onStudy, onDelete })
           </button>
           <button
             onClick={() => onDelete(card)}
-            className="p-2 rounded-xl border border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-colors"
+            className="p-1.5 rounded-lg border border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-colors"
           >
-            <Trash2 size={16} />
+            <Trash2 size={14} />
           </button>
         </div>
       </div>
@@ -315,9 +315,9 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           {dueCount > 0 && (
             <button
               onClick={() => setShowReview(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors"
             >
-              <Bell size={16} />
+              <Bell size={13} />
               Due for Review
               <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
                 {dueCount}
@@ -326,9 +326,9 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           )}
           <button
             onClick={() => setActiveContent("generate")}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
           >
-            <Plus size={16} />
+            <Plus size={13} />
             Create New
           </button>
         </div>
@@ -345,9 +345,9 @@ export default function FlashcardsLibrary({ setActiveContent }) {
           </p>
           <button
             onClick={() => setActiveContent("generate")}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
           >
-            <Plus size={16} />
+            <Plus size={13} />
             Create Flashcards
           </button>
         </div>
@@ -382,17 +382,17 @@ export default function FlashcardsLibrary({ setActiveContent }) {
               <p className="text-sm text-muted-foreground mb-6">
                 Are you sure you want to delete &quot;{flashcardToDelete.title}&quot;? This cannot be undone.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   onClick={() => { setShowDeleteModal(false); setFlashcardToDelete(null); }}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-muted-foreground bg-muted rounded-xl hover:bg-muted/80 transition-colors"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
                   disabled={deleteLoading}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
                 >
                   {deleteLoading ? "Deleting..." : "Delete"}
                 </button>

@@ -40,7 +40,7 @@ const ratingButtons = [
   {
     quality: 5,
     label: "Easy",
-    color: "bg-blue-500 hover:bg-blue-600 text-white",
+    color: "bg-emerald-500 hover:bg-emerald-600 text-white",
     description: "Remembered perfectly",
     icon: Zap,
   },
@@ -240,8 +240,8 @@ export default function SRSReview({ onComplete }) {
                 },
                 {
                   count: reviewStats.easy,
-                  color: "text-blue-500",
-                  bg: "bg-blue-500/10",
+                  color: "text-emerald-600 dark:text-emerald-400",
+                  bg: "bg-emerald-500/10",
                   label: "Easy",
                 },
               ].map((stat) => (
@@ -323,7 +323,7 @@ export default function SRSReview({ onComplete }) {
             },
             {
               count: reviewStats.easy,
-              color: "text-blue-500",
+              color: "text-emerald-600 dark:text-emerald-400",
               label: "Easy",
             },
           ].map((stat) => (

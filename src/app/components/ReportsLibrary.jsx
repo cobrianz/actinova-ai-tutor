@@ -44,32 +44,32 @@ export default function ReportsLibrary({ setActiveContent }) {
     const types = ["all", ...new Set(reports.map(r => r.type?.toLowerCase()).filter(Boolean))];
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+        <div className="px-0 py-6 space-y-6">
             {/* Header */}
             <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white">Reports & Essays</h1>
-                    <p className="text-slate-500 mt-1 text-sm">Your AI-generated research documents</p>
+                    <h1 className="text-xl font-black text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>Reports & Essays</h1>
+                    <p className="text-slate-500 mt-1 text-[11px]">Your AI-generated research documents</p>
                 </div>
                 <button onClick={() => setActiveContent("reports")}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors">
-                    <Plus size={17} /> Create New
+                    className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold text-[11px] transition-colors">
+                    <Plus size={14} /> Create New
                 </button>
             </motion.div>
 
             {/* Search + Filter */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
-                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="text" placeholder="Search by title or topic..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-green-400/20 focus:border-green-400 transition-all" />
+                        className="w-full pl-10 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-green-400/20 focus:border-green-400 transition-all" />
                 </div>
                 {types.length > 1 && (
-                    <div className="flex items-center gap-2">
-                        <Filter size={14} className="text-slate-400" />
+                    <div className="flex items-center gap-1.5">
+                        <Filter size={12} className="text-slate-400" />
                         {types.map(t => (
                             <button key={t} onClick={() => setFilterType(t)}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-bold capitalize transition-all ${filterType === t ? "bg-green-600 text-white" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 hover:border-green-300 hover:text-green-600"}`}>
+                                className={`px-3 py-2 rounded-lg text-[10px] font-bold capitalize transition-all ${filterType === t ? "bg-green-600 text-white" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 hover:border-green-300 hover:text-green-600"}`}>
                                 {t === "all" ? "All" : t}
                             </button>
                         ))}
@@ -79,58 +79,52 @@ export default function ReportsLibrary({ setActiveContent }) {
 
             {/* Cards */}
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
+                        <div key={i} className="h-40 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                     ))}
                 </div>
             ) : filtered.length > 0 ? (
                 <AnimatePresence mode="wait">
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filtered.map((report, i) => {
                             const typeKey = report.type?.toLowerCase() || "default";
                             const colors = TYPE_COLORS[typeKey] || TYPE_COLORS.default;
                             return (
                                 <motion.div key={report._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                                     onClick={() => router.push(`/reports/${report._id}`)}
-                                    className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 hover:border-green-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden">
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden">
 
-                                    {/* Background glow */}
-                                    <div className="absolute top-0 right-0 w-28 h-28 bg-green-500/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-green-500/10 transition-colors" />
-
-                                    <div className="relative z-10">
-                                        {/* Icon */}
-                                        <div className="flex items-start justify-between mb-5">
-                                            <div className={`w-12 h-12 ${colors.bg} rounded-2xl flex items-center justify-center`}>
-                                                <ScrollText size={22} className={colors.text} />
-                                            </div>
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className={`w-9 h-9 ${colors.bg} rounded-lg flex items-center justify-center shrink-0`}>
+                                            <ScrollText size={16} className={colors.text} />
                                         </div>
-
-                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white line-clamp-2 leading-snug mb-2 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
-                                            {report.title || "Untitled Research"}
-                                        </h3>
-                                        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-5">
-                                            {report.topic}
-                                        </p>
-
-                                        {/* Footer */}
-                                        <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
-                                                <span className="text-xs font-bold text-slate-500 capitalize">{report.type || "Report"}</span>
-                                                {report.citationStyle && (
-                                                    <span className="text-xs font-bold px-2 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-full">{report.citationStyle}</span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                                                <Clock size={11} />
-                                                {new Date(report.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                                            </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 leading-snug group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors" style={{ fontFamily: "var(--font-fraunces)" }}>
+                                                {report.title || "Untitled Research"}
+                                            </h3>
+                                            <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                                {report.topic}
+                                            </p>
                                         </div>
+                                    </div>
 
-                                        <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-green-600 dark:text-green-400 group-hover:translate-x-1 transition-transform">
-                                            Open Document <ExternalLink size={12} />
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                                            <span className="text-[10px] font-bold text-slate-500 capitalize">{report.type || "Report"}</span>
+                                            {report.citationStyle && (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-full">{report.citationStyle}</span>
+                                            )}
                                         </div>
+                                        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                                            <Clock size={10} />
+                                            {new Date(report.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-green-600 dark:text-green-400 group-hover:translate-x-1 transition-transform">
+                                        Open Document <ExternalLink size={10} />
                                     </div>
                                 </motion.div>
                             );
@@ -138,19 +132,19 @@ export default function ReportsLibrary({ setActiveContent }) {
                     </motion.div>
                 </AnimatePresence>
             ) : (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6">
-                        <FileText size={36} className="text-slate-300 dark:text-slate-600" />
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-4">
+                        <FileText size={24} className="text-slate-300 dark:text-slate-600" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1" style={{ fontFamily: "var(--font-fraunces)" }}>
                         {searchQuery ? "No results found" : "No documents yet"}
                     </h2>
-                    <p className="text-slate-500 text-sm mb-6">
+                    <p className="text-slate-500 text-[11px] mb-4">
                         {searchQuery ? `Try searching with different keywords` : "Create your first research report or essay"}
                     </p>
                     <button onClick={() => setActiveContent("reports")}
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-2xl font-bold text-sm transition-colors">
-                        <Plus size={16} /> Create Document
+                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold text-[11px] transition-colors">
+                        <Plus size={14} /> Create Document
                     </button>
                 </div>
             )}

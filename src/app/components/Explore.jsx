@@ -1283,91 +1283,95 @@ export default function Explore() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="px-0 py-6">
       {/* Header */}
-      <div className="mb-10">
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 mb-8">
-          <h1 className="text-xl font-black text-white mb-2">Explore Courses</h1>
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 mb-6">
+          <h1 className="text-xl font-black text-white mb-1.5" style={{ fontFamily: "var(--font-fraunces)" }}>Explore Courses</h1>
           <p className="text-green-100 text-xs">Discover categories and trending AI-generated courses tailored to your learning goals</p>
         </div>
       </div>
 
       {/* Search + Filters */}
-      <div className="mb-10">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search courses, topics, categories..."
-                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all text-base" />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {[{ val: selectedCategory, set: setSelectedCategory, opts: [{ v: '', l: 'All Categories' }, ...staticCategories.map(c => ({ v: c.name, l: c.name }))] },
-              { val: selectedDifficulty, set: setSelectedDifficulty, opts: [{ v: '', l: 'All Levels' }, { v: 'beginner', l: 'Beginner' }, { v: 'intermediate', l: 'Intermediate' }, { v: 'advanced', l: 'Advanced' }] },
-              { val: isPremium, set: setIsPremium, opts: [{ v: '', l: 'All Courses' }, { v: 'true', l: 'Premium' }, { v: 'false', l: 'Free' }] }].map((s, i) => (
-                <select key={i} value={s.val} onChange={e => s.set(e.target.value)}
-                  className="px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
-                  {s.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
-              ))}
-            </div>
+      <div className="mb-6">
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search courses, topics..."
+              className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all text-[11px]" />
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {[{ val: selectedCategory, set: setSelectedCategory, opts: [{ v: '', l: 'All' }, ...staticCategories.map(c => ({ v: c.name, l: c.name }))] },
+            { val: selectedDifficulty, set: setSelectedDifficulty, opts: [{ v: '', l: 'Levels' }, { v: 'beginner', l: 'Beginner' }, { v: 'intermediate', l: 'Intermediate' }, { v: 'advanced', l: 'Advanced' }] },
+            { val: isPremium, set: setIsPremium, opts: [{ v: '', l: 'All' }, { v: 'true', l: 'Premium' }, { v: 'false', l: 'Free' }] }].map((s, i) => (
+              <select key={i} value={s.val} onChange={e => s.set(e.target.value)}
+                className="px-2.5 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 text-[10px] font-medium outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                {s.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+              </select>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Trending Topics */}
-      <div className="mb-14">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-lime-400 to-lime-500 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-lime-400 to-lime-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Trending This Week</h2>
-              <p className="text-sm text-slate-500">Hot topics gaining popularity</p>
+              <h2 className="text-xs font-bold text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>Trending This Week</h2>
+              <p className="text-[11px] text-slate-500">Hot topics gaining popularity</p>
             </div>
           </div>
-          <button onClick={() => toggleSectionMinimized("trending-topics")} className="p-2.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-            {minimizedSections.has("trending-topics") ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+          <button onClick={() => toggleSectionMinimized("trending-topics")} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+            {minimizedSections.has("trending-topics") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         </div>
 
         {!minimizedSections.has("trending-topics") && (
           <>
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => <div key={i} className="h-64 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />)}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(6)].map((_, i) => <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />)}
               </div>
             ) : filteredTrendingTopics.length === 0 && searchQuery ? (
-              <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 text-sm">No trending topics match your search</p>
+              <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 text-xs">No trending topics match your search</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredTrendingTopics.map((topic, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 group cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">{topic.title}</h3>
-                      <span className={`ml-2 px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${topic.difficulty === 'beginner' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                        topic.difficulty === 'intermediate' ? 'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                        }`}>{topic.difficulty || 'Beginner'}</span>
+                  <div key={i} className="group relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
+                    <div className="h-1.5 bg-gradient-to-r from-green-500 via-emerald-500 to-lime-500" />
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2.5">
+                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${topic.difficulty === 'beginner' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' :
+                          topic.difficulty === 'intermediate' ? 'bg-lime-50 text-lime-600 dark:bg-lime-900/20 dark:text-lime-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                          }`}>{topic.difficulty || 'Beginner'}</span>
+                        <TrendingUp className="w-3.5 h-3.5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <h3 className="text-[13px] font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-green-600 transition-colors leading-snug" style={{ fontFamily: "var(--font-fraunces)" }}>{topic.title}</h3>
+                      <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed line-clamp-2">{topic.description}</p>
+                      {topic.whyTrending && (
+                        <div className="flex items-center gap-1 text-[10px] text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20 rounded-md px-2 py-1 mb-2.5">
+                          <span>🔥</span> <span className="truncate">{topic.whyTrending}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {topic.tags?.slice(0, 3).map((tag, j) => (
+                          <span key={j} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-medium rounded">{tag}</span>
+                        ))}
+                      </div>
+                      <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
+                        disabled={generatingCourse === topic.title}
+                        className={`w-full ${getButtonColorStyles()} disabled:opacity-50 py-1.5 px-3 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all border-none`}>
+                        {generatingCourse === topic.title ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-3 h-3" /> Generate</>}
+                      </button>
                     </div>
-                    <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-2">{topic.description}</p>
-                    {topic.whyTrending && (
-                      <p className="text-xs text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20 rounded-xl px-3 py-2 mb-4 flex items-center gap-1.5"><span className="text-base">🔥</span> {topic.whyTrending}</p>
-                    )}
-                    <div className="flex flex-wrap gap-2 mb-5">
-                      {topic.tags?.slice(0, 3).map((tag, j) => (
-                        <span key={j} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg">{tag}</span>
-                      ))}
-                    </div>
-                    <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
-                      disabled={generatingCourse === topic.title}
-                      className={`w-full ${getButtonColorStyles()} disabled:opacity-50 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all border-none`}>
-                      {generatingCourse === topic.title ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate course</>}
-                    </button>
                   </div>
                 ))}
               </div>
@@ -1377,85 +1381,88 @@ export default function Explore() {
       </div>
 
       {/* Categories */}
-      <div className="mb-14">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Browse by Category</h2>
-              <p className="text-sm text-slate-500">Explore our diverse course categories</p>
+              <h2 className="text-xs font-bold text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>Browse by Category</h2>
+              <p className="text-[11px] text-slate-500">Explore our diverse course categories</p>
             </div>
           </div>
-          <button onClick={() => toggleSectionMinimized("categories")} className="p-2.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-            {minimizedSections.has("categories") ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+          <button onClick={() => toggleSectionMinimized("categories")} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+            {minimizedSections.has("categories") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         </div>
 
         {!minimizedSections.has("categories") && (
           <>
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(9)].map((_, i) => <div key={i} className="h-56 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />)}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(9)].map((_, i) => <div key={i} className="h-44 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />)}
               </div>
             ) : filteredCategories.length === 0 && searchQuery ? (
-              <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 text-lg">No categories match your search</p>
+              <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 text-xs">No categories match your search</p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
-                    <div key={i} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 overflow-hidden relative">
+                    <div key={i} className="group relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-0.5 transition-all duration-300">
+                      <div className="h-1.5 bg-gradient-to-r from-green-500 to-emerald-500" />
                       {!userIsPremium && (
-                        <div className="absolute top-4 right-4 bg-lime-100 text-lime-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span className="text-xs">⭐</span> Premium</div>
+                        <div className="absolute top-3.5 right-3 bg-lime-100 text-lime-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-0.5"><span className="text-[9px]">⭐</span> Pro</div>
                       )}
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 flex items-center justify-center group-hover:from-green-500 group-hover:to-teal-600 group-hover:scale-110 transition-all duration-300">
-                          <BookOpen className="w-5 h-5 text-green-600 dark:text-green-400 group-hover:text-white transition-colors" />
+                      <div className="p-4">
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 flex items-center justify-center group-hover:from-green-500 group-hover:to-teal-600 group-hover:scale-110 transition-all duration-300">
+                            <BookOpen className="w-4 h-4 text-green-600 dark:text-green-400 group-hover:text-white transition-colors" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-[13px] font-bold text-slate-900 dark:text-white truncate" style={{ fontFamily: "var(--font-fraunces)" }}>{category.name}</h3>
+                            <p className="text-[10px] text-slate-500 font-medium">{category.count || 0} specializations</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{category.name}</h3>
-                          <p className="text-xs text-slate-500 font-medium">{category.count || 0} specializations</p>
+                        <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed line-clamp-2">{category.description}</p>
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {category.topics.slice(0, 3).map((topic, j) => (
+                            <span key={j} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-medium rounded">{topic}</span>
+                          ))}
+                          {category.topics.length > 3 && (
+                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 text-[9px] rounded">+{category.topics.length - 3}</span>
+                          )}
                         </div>
+                        <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
+                          className={`w-full ${getButtonColorStyles()} py-1.5 px-3 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all border-none disabled:opacity-50`}>
+                          {exploringCategory === category.name ? <><div className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-3 h-3" /> Explore</>}
+                        </button>
                       </div>
-                      <p className="text-sm text-slate-500 mb-4 leading-relaxed">{category.description}</p>
-                      <div className="flex flex-wrap gap-2 mb-5">
-                        {category.topics.slice(0, 4).map((topic, j) => (
-                          <span key={j} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg">{topic}</span>
-                        ))}
-                        {category.topics.length > 4 && (
-                          <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 text-xs rounded-lg">+{category.topics.length - 4}</span>
-                        )}
-                      </div>
-                      <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
-                        className={`w-full ${getButtonColorStyles()} py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all border-none disabled:opacity-50`}>
-                        {exploringCategory === category.name ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-4 h-4" /> Explore curriculum</>}
-                      </button>
                     </div>
                   ))}
                 </div>
 
                 {visibleCategoriesCount < filteredCategories.length && (
-                  <div className="text-center mt-8">
+                  <div className="text-center mt-6">
                     <button onClick={handleSeeMoreCategories}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-8 py-3 rounded-xl text-sm font-semibold hover:border-green-300 hover:text-green-600 dark:hover:text-green-400 transition-all inline-flex items-center gap-2">
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 px-4 py-1.5 rounded-lg text-[11px] font-semibold hover:border-green-300 hover:text-green-600 dark:hover:text-green-400 transition-all inline-flex items-center gap-1.5">
                       Show More ({filteredCategories.length - visibleCategoriesCount} remaining)
                     </button>
                   </div>
                 )}
 
                 {visibleCategoriesCount >= filteredCategories.length && filteredCategories.length > 9 && (
-                  <div className="text-center mt-10">
-                    <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border border-green-100 dark:border-green-800 rounded-2xl p-8 inline-block max-w-md">
-                      <Sparkles className="w-10 h-10 text-green-500 mx-auto mb-4" />
-                      <p className="text-green-700 dark:text-green-300 font-bold text-sm mb-2">Can't find what you're looking for?</p>
-                      <p className="text-green-500 text-sm mb-5">Generate a custom course with AI</p>
+                  <div className="text-center mt-8">
+                    <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border border-green-100 dark:border-green-800 rounded-xl p-6 inline-block max-w-sm">
+                      <Sparkles className="w-8 h-8 text-green-500 mx-auto mb-3" />
+                      <p className="text-green-700 dark:text-green-300 font-bold text-xs mb-1" style={{ fontFamily: "var(--font-fraunces)" }}>Can't find what you're looking for?</p>
+                      <p className="text-green-500 text-[11px] mb-4">Generate a custom course with AI</p>
                       <button onClick={() => router.push("/dashboard?tab=generate")}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 mx-auto transition-all">
-                        <Sparkles className="w-4 h-4" /> Generate Custom Course
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 mx-auto transition-all">
+                        <Sparkles className="w-3.5 h-3.5" /> Generate Custom Course
                       </button>
                     </div>
                   </div>
@@ -1467,46 +1474,46 @@ export default function Explore() {
       </div>
 
       {/* Generated Courses */}
-      <div id="generated-courses-section" className="mb-16">
+      <div id="generated-courses-section" className="mb-12">
         {exploringCategory && (
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-white" />
+          <div className="mb-8">
+            <div className="flex items-center gap-2.5 mb-6">
+              <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h2 className="text-xs font-bold text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>
                   {exploringCategory} Courses
                 </h2>
-                <p className="text-sm text-slate-500">Generating curriculum...</p>
+                <p className="text-[10px] text-slate-500">Generating curriculum...</p>
               </div>
               <div className="ml-auto">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-500 border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-500 border-t-transparent"></div>
               </div>
             </div>
 
             {/* Fading Cards Loader */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {[...Array(6)].map((_, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 animate-pulse"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 animate-pulse"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded flex-1 mr-4"></div>
-                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded flex-1 mr-3"></div>
+                    <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                   </div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded mb-3"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded mb-6 w-3/4"></div>
-                  <div className="flex items-center gap-4 text-sm mb-5">
-                    <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded mb-4 w-3/4"></div>
+                  <div className="flex items-center gap-3 text-[10px] mb-4">
+                    <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
                   </div>
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-                    <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-                    <div className="h-6 w-14 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                  <div className="flex items-center gap-1.5 mb-4">
+                    <div className="h-5 w-14 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                    <div className="h-5 w-18 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                    <div className="h-5 w-12 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                   </div>
-                  <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                  <div className="h-9 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
                 </div>
               ))}
             </div>
@@ -1514,17 +1521,17 @@ export default function Explore() {
         )}
 
         {generatedCourses.map((generatedSet, setIndex) => (
-          <div key={generatedSet.id} id={generatedSet.id} className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
+          <div key={generatedSet.id} id={generatedSet.id} className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-xs font-bold text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>
                     {generatedSet.category} Courses
                   </h2>
-                  <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full font-medium">
+                  <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-medium">
                     {generatedSet.cached ? "📦 From Cache" : "✨ Generated"} • {new Date(generatedSet.generatedAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -1532,7 +1539,7 @@ export default function Explore() {
               <div className="flex items-center">
                 <button
                   onClick={() => toggleSectionMinimized(generatedSet.id)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                   title={
                     minimizedSections.has(generatedSet.id)
                       ? "Expand section"
@@ -1540,79 +1547,79 @@ export default function Explore() {
                   }
                 >
                   {minimizedSections.has(generatedSet.id) ? (
-                    <ChevronDown className="w-5 h-5" />
+                    <ChevronDown className="w-4 h-4" />
                   ) : (
-                    <ChevronUp className="w-5 h-5" />
+                    <ChevronUp className="w-4 h-4" />
                   )}
                 </button>
               </div>
             </div>
 
             {!minimizedSections.has(generatedSet.id) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {generatedSet.courses.map((course, index) => (
                   <div
                     key={index}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:border-green-400 transition-all duration-300 relative group"
+                    className="group relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-0.5 transition-all duration-300"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex-1 group-hover:text-green-600 transition-colors">
-                        {course.title}
-                      </h3>
-                      <div className="flex items-center">
+                    <div className="h-1.5 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" />
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2.5">
                         <span
-                          className={`px-3 py-1 text-xs font-semibold rounded-full ${course.difficulty === "beginner"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          className={`px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${course.difficulty === "beginner"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
                             : course.difficulty === "intermediate"
-                              ? "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400"
-                              : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                              ? "bg-lime-50 text-lime-600 dark:bg-lime-900/20 dark:text-lime-400"
+                              : "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
                             }`}
                         >
                           {course.difficulty || "Beginner"}
                         </span>
                       </div>
-                    </div>
 
-                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">
-                      {course.description}
-                    </p>
+                      <h3 className="text-[13px] font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-green-600 transition-colors leading-snug" style={{ fontFamily: "var(--font-fraunces)" }}>
+                        {course.title}
+                      </h3>
 
-                    <div className="flex items-center gap-4 text-sm text-slate-500 mb-5">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
-                        <span className="font-medium">{course.estimatedDuration || "6 weeks"}</span>
+                      <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed line-clamp-2">
+                        {course.description}
+                      </p>
+
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-2.5">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span className="font-medium">{course.estimatedDuration || "6 weeks"}</span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center flex-wrap gap-2 mb-5">
-                      {course.tags?.slice(0, 3).map((tag, tagIndex) => (
-                        <span
-                          key={tagIndex}
-                          className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-lg"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                      <div className="flex items-center flex-wrap gap-1 mb-3">
+                        {course.tags?.slice(0, 3).map((tag, tagIndex) => (
+                          <span
+                            key={tagIndex}
+                            className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-medium rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
 
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleGenerateCourse(course);
                         }}
                         disabled={generatingCourse === course.title}
-                        className={`w-full ${getButtonColorStyles()} py-3 px-4 rounded-xl transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none`}
+                        className={`w-full ${getButtonColorStyles()} py-1.5 px-3 rounded-lg transition-all text-[11px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 border-none`}
                       >
                         {generatingCourse === course.title ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white"></div>
                             <span>Generating...</span>
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-4 h-4" />
-                            <span>Generate course</span>
+                            <Sparkles className="w-3 h-3" />
+                            <span>Generate</span>
                           </>
                         )}
                       </button>
@@ -1627,13 +1634,13 @@ export default function Explore() {
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
+        <div className="flex items-center justify-center gap-1.5 mt-8">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={!pagination.hasPrev}
-            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
+            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
           {Array.from(
@@ -1644,7 +1651,7 @@ export default function Explore() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`min-w-[44px] h-11 px-4 rounded-xl text-sm font-semibold transition-all ${currentPage === page
+                  className={`min-w-[30px] h-7 px-2 rounded-lg text-[10px] font-semibold transition-all ${currentPage === page
                     ? "bg-green-600 text-white border border-green-600"
                     : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-green-300 hover:text-green-600 dark:hover:text-green-400"
                     }`}
@@ -1662,9 +1669,9 @@ export default function Explore() {
               )
             }
             disabled={!pagination.hasNext}
-            className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
+            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-green-300 transition-all"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       )}

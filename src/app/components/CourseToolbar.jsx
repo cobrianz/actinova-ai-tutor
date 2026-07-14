@@ -42,7 +42,7 @@ export default function CourseToolbar({
               setIsRightPanelOpen(false);
               setIsSidebarOpen(!isSidebarOpen);
             }}
-            className={`hidden md:flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isSidebarOpen
+            className={`hidden md:flex items-center space-x-1.5 px-2.5 py-1 text-[11px] sm:text-xs rounded-lg border transition-all font-bold ${isSidebarOpen
               ? "bg-primary/10 text-primary border-primary/20"
               : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
               }`}
@@ -56,7 +56,7 @@ export default function CourseToolbar({
           <button
             onClick={handleShare}
             disabled={!courseData?._id || isSharingToggle}
-            className={`p-1.5 sm:p-2 rounded-lg border transition-all ${isSharingToggle ? "opacity-50 cursor-not-allowed" : ""} ${
+            className={`p-1 sm:p-1.5 rounded-lg border transition-all ${isSharingToggle ? "opacity-50 cursor-not-allowed" : ""} ${
               isMyShareActive
                 ? "bg-green-500/10 text-green-500 border-green-500/20 shadow-sm"
                 : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary"
@@ -71,7 +71,7 @@ export default function CourseToolbar({
           </button>
           <button
             onClick={handleDownloadLesson}
-            className="p-1.5 sm:p-2 rounded-lg border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
+            className="p-1 sm:p-1.5 rounded-lg border bg-secondary/50 text-muted-foreground border-border hover:bg-secondary transition-all"
             title="Download Lesson PDF"
             disabled={!canDownloadLessonPdf}
           >
@@ -79,7 +79,7 @@ export default function CourseToolbar({
           </button>
           <button
             onClick={handleMarkCurrentLesson}
-            className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all font-bold border ${isCurrentLessonCompleted
+            className={`flex items-center space-x-1.5 px-2 py-1 text-[11px] sm:text-xs rounded-lg transition-all font-bold border ${isCurrentLessonCompleted
               ? "bg-green-500/10 text-green-500 border-green-500/20"
               : "bg-primary/10 text-primary border-primary/20"
               }`}
@@ -92,7 +92,7 @@ export default function CourseToolbar({
           </button>
           <button
             onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-            className={`flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg border transition-all font-bold ${isRightPanelOpen
+            className={`flex items-center space-x-1.5 px-2 py-1 text-[11px] sm:text-xs rounded-lg border transition-all font-bold ${isRightPanelOpen
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-secondary/50 text-muted-foreground border-border"
               }`}

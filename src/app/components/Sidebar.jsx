@@ -155,8 +155,8 @@ export default function Sidebar({
       <div className="relative h-full">
         <motion.div
           animate={{
-            width: sidebarOpen ? 280 : 0,
-            x: sidebarOpen ? 0 : -280,
+            width: sidebarOpen ? 240 : 0,
+            x: sidebarOpen ? 0 : -240,
           }}
           transition={{ duration: 0.3, type: "spring", damping: 28, stiffness: 220 }}
           className="fixed lg:static top-0 left-0 h-screen lg:h-full overflow-hidden z-[100] lg:z-auto"
@@ -165,7 +165,7 @@ export default function Sidebar({
             borderRight: "1px solid var(--border)",
           }}
         >
-          <div className="w-[280px] h-full flex flex-col">
+          <div className="w-[240px] h-full flex flex-col">
 
 
             {/* ── Navigation ── */}
@@ -178,7 +178,7 @@ export default function Sidebar({
               {visibleGroups.map((group, gi) => (
                 <div key={group.label}>
                   {/* Group label */}
-                  <p className="px-2 mb-1.5 text-[9px] font-semibold tracking-widest uppercase text-muted-foreground/60 select-none">
+                  <p className="px-2 mb-1 text-[8px] font-semibold tracking-widest uppercase text-muted-foreground/60 select-none" style={{ fontFamily: "var(--font-fraunces)" }}>
                     {group.label}
                   </p>
 
@@ -198,8 +198,8 @@ export default function Sidebar({
                           <button
                             onClick={() => handleItemClick(item.id)}
                             className={`
-                              relative flex items-center w-full gap-2.5 px-3 py-2.5 rounded-xl
-                              text-sm font-medium transition-all duration-200 group
+                              relative flex items-center w-full gap-2 px-2.5 py-2 rounded-lg
+                              text-xs font-medium transition-all duration-200 group
                               ${isActive
                                 ? "bg-green-500/10 text-green-700 dark:text-green-400"
                                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
@@ -210,7 +210,7 @@ export default function Sidebar({
                             {isActive && (
                               <motion.div
                                 layoutId="active-indicator"
-                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-green-500"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-green-500"
                                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
                               />
                             )}
@@ -218,7 +218,7 @@ export default function Sidebar({
                             {/* Icon container */}
                             <span
                               className={`
-                                flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0
+                                flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0
                                 transition-all duration-200
                                 ${isActive
                                   ? "bg-green-500/15 text-green-600 dark:text-green-400"
@@ -226,10 +226,10 @@ export default function Sidebar({
                                 }
                               `}
                             >
-                              <Icon className="w-4 h-4" />
+                              <Icon className="w-3.5 h-3.5" />
                             </span>
 
-                            <span className="flex-1 text-left truncate text-[13.5px]">
+                            <span className="flex-1 text-left truncate text-[12px]" style={{ fontFamily: "var(--font-fraunces)" }}>
                               {item.name}
                             </span>
 
@@ -280,8 +280,8 @@ export default function Sidebar({
                 <button
                   onClick={() => handleItemClick("profile")}
                   className={`
-                    flex items-center gap-2.5 flex-1 text-left px-3 py-2 rounded-xl
-                    text-sm font-medium transition-all duration-200
+                    flex items-center gap-2 flex-1 text-left px-2.5 py-1.5 rounded-lg
+                    text-xs font-medium transition-all duration-200
                     ${activeItem === "profile"
                       ? "bg-green-500/10 text-green-700 dark:text-green-400"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
@@ -293,7 +293,7 @@ export default function Sidebar({
                     <User className="w-3.5 h-3.5" />
                   </span>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-[12px] font-semibold truncate text-foreground leading-none">
+                    <span className="text-[11px] font-semibold truncate text-foreground leading-none" style={{ fontFamily: "var(--font-fraunces)" }}>
                       {user?.name || user?.email?.split("@")[0] || "Account"}
                     </span>
                     <span className="text-[9px] text-muted-foreground leading-none mt-0.5 truncate">

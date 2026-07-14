@@ -168,7 +168,7 @@ export default function DashboardOverview() {
               <button
                 key={item.title}
                 onClick={() => router.push("/dashboard?tab=study-plans")}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-secondary/60 px-3 py-1.5 text-xs text-foreground transition hover:bg-secondary"
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-secondary/60 px-2.5 py-1 text-[11px] text-foreground transition hover:bg-secondary"
               >
                 <ArrowRight className="w-3 h-3" />
                 {item.title}
@@ -326,7 +326,7 @@ function StatCard({ icon, label, value, sub, color, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`p-3 rounded-xl border border-border bg-card text-left transition-all hover:border-foreground/20 ${
+      className={`p-2.5 rounded-lg border border-border bg-card text-left transition-all hover:border-foreground/20 ${
         onClick ? "cursor-pointer" : "cursor-default"
       }`}
     >
@@ -344,7 +344,7 @@ function ActivityIcon({ type }) {
     lesson_completed: "bg-green-100 text-green-600 dark:bg-green-900/30",
     quiz_taken: "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
     course_completed: "bg-amber-100 text-amber-600 dark:bg-amber-900/30",
-    flashcard_review: "bg-blue-100 text-blue-600 dark:bg-blue-900/30",
+    flashcard_review: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30",
     xp_earned: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30",
   };
 

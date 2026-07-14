@@ -74,15 +74,13 @@ export default function HeroNavbar({ handleGetStarted }) {
   };
 
   return (
-    <motion.header
+    <header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={cn(
-        "fixed top-6 left-0 right-0 z-[100] transition-all duration-500 px-4",
-      )}
+      className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500"
     >
-      <div className="max-w-5xl mx-auto">
-        <nav className="relative flex items-center justify-between pl-4 pr-2 py-2 rounded-full border border-black/10 bg-[#FAFAF7]/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition-all duration-500 group/nav">
+      <nav className="relative flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 bg-[#FCFCFA] transition-all duration-500 group/nav">
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
           {/* Logo */}
           <Link href="/" onClick={() => setActiveItem("")} className="flex items-center gap-2 group/logo flex-shrink-0">
             <div className="w-8 h-8 rounded-full bg-white border border-black/10 flex items-center justify-center transition-transform group-hover/logo:scale-105 overflow-hidden p-1">
@@ -160,8 +158,8 @@ export default function HeroNavbar({ handleGetStarted }) {
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-        </nav>
-      </div>
+        </div>
+      </nav>
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -222,6 +220,6 @@ export default function HeroNavbar({ handleGetStarted }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header >
+    </header>
   );
 }

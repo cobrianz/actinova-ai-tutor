@@ -114,7 +114,7 @@ export default function ProfileContent() {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div className="bg-card border border-border rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
           <div className="sticky top-0 flex items-center justify-between p-6 border-b border-border bg-card">
-            <h2 className="text-sm font-bold text-foreground">{title}</h2>
+            <h2 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--font-fraunces)" }}>{title}</h2>
             <button onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-secondary text-muted-foreground">
               <X size={20} />
             </button>
@@ -128,7 +128,7 @@ export default function ProfileContent() {
   return (
     <div className="min-h-full bg-background text-foreground">
       <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="space-y-8">
 
           {/* ── Premium Profile Header ── */}
           <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-green-500/[0.03] p-8">
@@ -142,7 +142,7 @@ export default function ProfileContent() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-lg font-bold mb-1">
+                <h1 className="text-lg font-bold mb-1" style={{ fontFamily: "var(--font-fraunces)" }}>
                   {profileData?.user?.firstName ? `${profileData.user.firstName} ${profileData.user.lastName}` : (user?.name || "User")}
                 </h1>
                 <p className="text-sm text-muted-foreground mb-4">{profileData?.user?.email || user?.email}</p>
@@ -219,7 +219,7 @@ export default function ProfileContent() {
               <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-sm font-bold text-foreground">Personal Info</h2>
+                    <h2 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--font-fraunces)" }}>Personal Info</h2>
                     <p className="text-sm text-muted-foreground mt-1">Your account details</p>
                   </div>
                   <button
@@ -252,7 +252,7 @@ export default function ProfileContent() {
               <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h2 className="text-sm font-bold text-foreground">Usage Analytics</h2>
+                    <h2 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--font-fraunces)" }}>Usage Analytics</h2>
                     <p className="text-sm text-muted-foreground mt-1">Your learning activity breakdown</p>
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export default function ProfileContent() {
                         <Coins size={20} className="text-amber-600" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-amber-900 dark:text-amber-200">Credits</h3>
+                        <h3 className="font-bold text-amber-900 dark:text-amber-200" style={{ fontFamily: "var(--font-fraunces)" }}>Credits</h3>
                         <p className="text-xs text-amber-600 dark:text-amber-400">Use credits to generate content</p>
                       </div>
                     </div>

@@ -9,7 +9,7 @@ import {
     FileText, Sparkles, CheckCircle, AlertCircle, TrendingUp,
     BrainCircuit, ChevronRight, Loader2, ArrowRight, Target,
     Clock, Trash2, X, Download, Copy, Check, Edit2, AlignLeft,
-    GraduationCap, Star, UserCircle, Briefcase,
+    GraduationCap, Star, UserCircle, Briefcase, Layout,
     User, Mail, Phone, MapPin, Globe, Linkedin, Github,
     Award, FolderOpen, Languages, Heart, Users, Wrench,
     Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, Settings
@@ -23,6 +23,8 @@ import {
     downloadResumeAsDOCX
 } from "@/lib/pdfUtils";
 import { useAuth } from "./AuthProvider";
+import { RESUME_TEMPLATES, getTemplateById } from "@/lib/resumeTemplates";
+import { TEMPLATE_COMPONENTS } from "./ResumeTemplates";
 
 // ─── Initial Form Data ──────────────────────────────────────────
 const initialFormData = {
@@ -764,6 +766,9 @@ const ResumeBuilder = () => {
     const [librarySearch, setLibrarySearch] = useState("");
     const [libraryLoading, setLibraryLoading] = useState(false);
     const [showMobileActions, setShowMobileActions] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState("classic");
+    const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+    const templateDropdownRef = useRef(null);
     const libraryPickerOpen = showLibraryPicker;
     const handledExportPaymentRef = useRef("");
 
@@ -850,6 +855,68 @@ const ResumeBuilder = () => {
             setSkillInput("");
         }
     }, [skillInput, formData.skills]);
+
+    const templateHandleBlur = useCallback((section, field, value, index = null) => {
+        const normalizedValue =
+            section === "personalInfo" && (field === "github" || field === "linkedin")
+                ? normalizeProfileLink(field, value)
+                : value;
+        if (section === "personalInfo") {
+            updatePersonalInfo(field, normalizedValue);
+            setGeneratedResume(prev => prev ? { ...prev, personalInfo: { ...prev.personalInfo, [field]: normalizedValue } } : prev);
+        } else if (index !== null) {
+            updateItem(section, index, field, normalizedValue);
+            if (generatedResume) {
+                setGeneratedResume(prev => ({
+                    ...prev,
+                    [section]: prev[section]?.map((item, i) => i === index ? { ...item, [field]: normalizedValue } : item)
+                }));
+            }
+        } else if (section === "skills" && typeof index === "number") {
+            setFormData(prev => ({
+                ...prev,
+                skills: prev.skills.map((s, i) => i === index ? normalizedValue : s)
+            }));
+            if (generatedResume) {
+                setGeneratedResume(prev => ({
+                    ...prev,
+                    skills: prev.skills?.map((s, i) => i === index ? normalizedValue : s)
+                }));
+            }
+        }
+    }, [updatePersonalInfo, updateItem, generatedResume]);
+
+    const templateAddSectionType = useCallback((type) => {
+        const templates = {
+            experience: { title: "New Role", company: "Company", location: "Location", startDate: "Date", endDate: "Present", description: "Describe your key responsibilities and achievements..." },
+            education: { school: "University", degree: "Degree", location: "Location", startDate: "Date", endDate: "Date", description: "" },
+            skills: "New Skill",
+            projects: { name: "Project Name", description: "Describe the project and its impact", technologies: "React, Node.js" },
+            certifications: { name: "Certification Name", issuer: "Issuing Organization", date: "Date", url: "" },
+            awards: { title: "Award Title", org: "Organization", date: "Date", description: "" },
+            languages: { language: "Language", level: "Proficient" },
+            customSections: { title: "References", content: "Available upon request.", type: "references" },
+        };
+        if (!templates[type]) return;
+        addItem(type, templates[type]);
+        if (generatedResume) {
+            setGeneratedResume(prev => ({
+                ...prev,
+                [type]: [...(prev[type] || []), templates[type]]
+            }));
+        }
+    }, [addItem, generatedResume]);
+
+    React.useEffect(() => {
+        if (!showTemplateDropdown) return;
+        const handleClickOutside = (e) => {
+            if (templateDropdownRef.current && !templateDropdownRef.current.contains(e.target)) {
+                setShowTemplateDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showTemplateDropdown]);
 
     React.useEffect(() => {
         if (user && !generatedResume && !resumeText.trim()) {
@@ -1150,12 +1217,12 @@ const ResumeBuilder = () => {
             .replace(/\s+/g, "_");
 
         if (format === "pdf") {
-            await downloadResumeAsPDF(resumeData, fileName);
+            await downloadResumeAsPDF(resumeData, fileName, selectedTemplate);
             return;
         }
 
-        await downloadResumeAsDOCX(resumeData, fileName);
-    }, [currentResumeData]);
+        await downloadResumeAsDOCX(resumeData, fileName, selectedTemplate);
+    }, [currentResumeData, selectedTemplate]);
 
     const ensureResumeSavedForExport = useCallback(async () => {
         const resumeData = normalizedResumeForPersistence;
@@ -1521,6 +1588,7 @@ const ResumeBuilder = () => {
             const response = await apiClient.post("/api/career/resume/generate", {
                 role: trimmedRole,
                 resumeText: trimmedResumeText || undefined,
+                template: selectedTemplate,
             });
             if (response.ok) {
                 const data = sanitizeGeneratedResumeData(await response.json());
@@ -1646,7 +1714,8 @@ const ResumeBuilder = () => {
             const response = await apiClient.post("/api/career/resume/refine", {
                 resume: currentResumeData,
                 jobDescription: jobMatchDescription,
-                matchResult: jobMatchResult
+                matchResult: jobMatchResult,
+                template: selectedTemplate,
             });
             if (response.ok) {
                 const data = sanitizeGeneratedResumeData(await response.json());
@@ -1852,9 +1921,9 @@ const ResumeBuilder = () => {
                         ["--popover-foreground", FALLBACK_TEXT],
                         ["--primary", "#166534"],
                         ["--primary-foreground", FALLBACK_BG],
-                        ["--secondary", "#f8fafc"],
+                        ["--secondary", FALLBACK_BG],
                         ["--secondary-foreground", FALLBACK_TEXT],
-                        ["--muted", "#f8fafc"],
+                        ["--muted", FALLBACK_BG],
                         ["--muted-foreground", "#475569"],
                         ["--accent", "#dcfce7"],
                         ["--accent-foreground", "#166534"],
@@ -2062,6 +2131,46 @@ const ResumeBuilder = () => {
                     >
                         <TrendingUp size={14} className="mr-1.5" /> Match to Job
                     </Button>
+                    {editorTab === 'editor' && (
+                        <div className="relative" ref={templateDropdownRef}>
+                            <button
+                                onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+                                className="h-10 px-4 rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-xs flex items-center gap-2 transition-all"
+                            >
+                                <Layout size={14} className="mr-1" />
+                                {getTemplateById(selectedTemplate).name}
+                                <ChevronDown size={12} className={`transition-transform ${showTemplateDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+                            {showTemplateDropdown && (
+                                <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[100] overflow-hidden">
+                                    <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2">Choose Template</p>
+                                    </div>
+                                    <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+                                        {RESUME_TEMPLATES.map((tpl) => (
+                                            <button
+                                                key={tpl.id}
+                                                onClick={() => { setSelectedTemplate(tpl.id); setShowTemplateDropdown(false); }}
+                                                className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex items-start gap-3 ${selectedTemplate === tpl.id ? 'bg-green-50 dark:bg-green-900/20 ring-1 ring-green-200 dark:ring-green-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                            >
+                                                <div className="w-8 h-10 rounded-md border border-slate-200 dark:border-slate-700 shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, ${tpl.accent}22, ${tpl.accent}44)` }}>
+                                                    <div className="w-full h-1.5 rounded-t-md" style={{ background: tpl.accent }} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.name}</span>
+                                                        {selectedTemplate === tpl.id && <Check size={12} className="text-green-600" />}
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{tpl.description}</p>
+                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 capitalize mt-0.5 inline-block">{tpl.category}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {false && <Button variant="outline" onClick={exportToPDF} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
                         <Download size={14} className="mr-1.5" /> Export PDF
                     </Button>}
@@ -2168,60 +2277,18 @@ const ResumeBuilder = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <FormResumePreview
-                                    data={currentResumeData}
-                                    onUpdate={(section, indexOrField, fieldOrValue, value) => {
-                                        if (section === 'personalInfo') {
-                                            updatePersonalInfo(indexOrField, fieldOrValue);
-                                            setGeneratedResume(prev => prev ? { ...prev, personalInfo: { ...prev.personalInfo, [indexOrField]: fieldOrValue } } : prev);
-                                        } else if (indexOrField === 'remove') {
-                                            // Remove entire section: onUpdate(section, 'remove')
-                                            updateItem(section, null, 'remove');
-                                            if (generatedResume) {
-                                                setGeneratedResume(prev => ({ ...prev, [section]: [] }));
-                                            }
-                                        } else if (fieldOrValue === 'remove') {
-                                            // Remove specific item: onUpdate(section, index, 'remove')
-                                            updateItem(section, indexOrField, 'remove');
-                                            if (generatedResume) {
-                                                setGeneratedResume(prev => ({
-                                                    ...prev,
-                                                    [section]: prev[section]?.filter((_, i) => i !== indexOrField)
-                                                }));
-                                            }
-                                        } else if (indexOrField === 'add') {
-                                            // Add item: onUpdate(section, 'add', template)
-                                            addItem(section, fieldOrValue);
-                                            if (generatedResume) {
-                                                setGeneratedResume(prev => ({
-                                                    ...prev,
-                                                    [section]: [...(prev[section] || []), fieldOrValue]
-                                                }));
-                                            }
-                                        } else if (typeof indexOrField === 'number') {
-                                            // Update specific item field: onUpdate(section, index, field, value)
-                                            updateItem(section, indexOrField, fieldOrValue, value);
-                                            if (generatedResume) {
-                                                setGeneratedResume(prev => ({
-                                                    ...prev,
-                                                    [section]: prev[section]?.map((item, i) => i === indexOrField ? { ...item, [fieldOrValue]: value } : item)
-                                                }));
-                                            }
-                                        } else if (section === 'skills') {
-                                            // Update skill at index: onUpdate('skills', index, newValue)
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                skills: prev.skills.map((s, i) => i === indexOrField ? fieldOrValue : s)
-                                            }));
-                                            if (generatedResume) {
-                                                setGeneratedResume(prev => ({
-                                                    ...prev,
-                                                    skills: prev.skills?.map((s, i) => i === indexOrField ? fieldOrValue : s)
-                                                }));
-                                            }
-                                        }
-                                    }}
-                                />
+                                (() => {
+                                    const TemplateComponent = TEMPLATE_COMPONENTS[selectedTemplate] || TEMPLATE_COMPONENTS.classic;
+                                    return (
+                                        <div id="resume-preview">
+                                            <TemplateComponent
+                                                data={currentResumeData}
+                                                handleBlur={templateHandleBlur}
+                                                addSectionType={templateAddSectionType}
+                                            />
+                                        </div>
+                                    );
+                                })()
                             )}
                         </div>
                     )}

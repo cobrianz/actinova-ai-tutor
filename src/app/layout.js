@@ -5,7 +5,6 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import ToasterClient from "./components/ToasterClient";
 import InstallPrompt from "./components/InstallPrompt";
 import DevServiceWorkerReset from "./components/DevServiceWorkerReset";
-import PushNotificationManager from "./components/PushNotificationManager";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -89,7 +88,6 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             {children}
             <DevServiceWorkerReset />
-            <PushNotificationManager />
             <ToasterClient />
             <InstallPrompt />
             <SpeedInsights />

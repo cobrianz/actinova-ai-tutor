@@ -3,7 +3,7 @@
 import {
   Search, BookOpen, Plus, MessageCircle, MoreHorizontal,
   FileText, ScrollText, Briefcase, HelpCircle, Star,
-  User, LogOut, X, TrendingUp, Coins
+  User, LogOut, X, TrendingUp, Coins, CalendarCheck
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -12,10 +12,11 @@ import { apiClient } from "@/lib/csrfClient";
 
 const primaryItems = [
   { name: "Explore", id: "explore", icon: Search },
-  { name: "Learn", id: "library", icon: BookOpen },
+  { name: "Planner", id: "study-plans", icon: CalendarCheck },
 ];
 
 const secondaryItems = [
+  { name: "AI Chat", id: "chat", icon: MessageCircle },
   { name: "Flashcards", id: "flashcards", icon: FileText },
   { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
   { name: "Career Growth", id: "career", icon: Briefcase },
@@ -91,10 +92,10 @@ export default function DashboardMobileNav() {
   }, [user]);
 
   const navigate = (id) => {
-    const params = new URLSearchParams(searchParams);
+    setMoreOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
     params.set("tab", id);
     router.push(`/dashboard?${params.toString()}`);
-    setMoreOpen(false);
   };
 
   return (
@@ -167,7 +168,7 @@ export default function DashboardMobileNav() {
 
             <div className="border-t border-border p-2 flex gap-2">
               <button
-                onClick={() => { navigate("profile"); }}
+                onClick={() => navigate("profile")}
                 className={`flex items-center justify-center gap-2 flex-1 p-3 rounded-xl transition-all duration-200 ${
                   activeContent === "profile"
                     ? "text-green-600 dark:text-green-400"
@@ -209,10 +210,10 @@ export default function DashboardMobileNav() {
             </button>
 
             <NavBtn
-              icon={MessageCircle}
-              label="AI Chat"
-              isActive={activeContent === "chat"}
-              onClick={() => navigate("chat")}
+              icon={BookOpen}
+              label="Learn"
+              isActive={activeContent === "library"}
+              onClick={() => navigate("library")}
             />
 
             <NavBtn

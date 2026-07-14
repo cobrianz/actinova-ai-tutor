@@ -25,6 +25,7 @@ import {
   Plus,
   Sparkles,
   Save,
+  CalendarCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -326,9 +327,9 @@ export default function StudyPlanViewer({ plan, studyPlanId, onBack, onDelete, s
       </button>
 
       {/* Header Card */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl border border-border/60 bg-card/80 backdrop-blur-sm">
-        <div className="relative p-6 md:p-8">
-          <div className="flex items-start justify-between gap-6">
+      <div className="relative mb-6 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-card/80 backdrop-blur-sm">
+        <div className="relative p-4 sm:p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4 sm:gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 uppercase tracking-wide">
@@ -348,7 +349,7 @@ export default function StudyPlanViewer({ plan, studyPlanId, onBack, onDelete, s
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight text-foreground" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 tracking-tight text-foreground" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                 {localPlan.title}
               </h1>
               {localPlan.overview && (
@@ -374,7 +375,7 @@ export default function StudyPlanViewer({ plan, studyPlanId, onBack, onDelete, s
 
             {/* Circular Progress */}
             <div className="flex-shrink-0">
-              <div className="relative w-20 h-20 md:w-24 md:h-24">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="36" fill="none" stroke="hsl(var(--border))" strokeWidth="5" />
                   <motion.circle
@@ -395,7 +396,7 @@ export default function StudyPlanViewer({ plan, studyPlanId, onBack, onDelete, s
           </div>
 
           {/* Stats row */}
-          <div className="flex items-center gap-4 mt-5 pt-4 border-t border-border/60">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-5 pt-4 border-t border-border/60">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span><strong className="text-foreground">{localPlan.completedTasks || 0}</strong>/{localPlan.totalTasks || 0} tasks</span>

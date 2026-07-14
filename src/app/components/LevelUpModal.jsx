@@ -2,18 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Zap, Award, BookOpen, Flame, Trophy, Database, Star, CalendarDays } from "lucide-react";
 import { celebrateLevelUp } from "@/lib/confetti";
 import { BADGES, getRarityColor } from "@/lib/gamification";
 
 const BADGE_ICONS = {
-  "1": "📖", "2": "🔥", "3": "🔥", "4": "🔥", "5": "🔥",
-  "6": "🧠", "7": "🧠", "8": "🧠",
-  "9": "🏆", "10": "🏆", "11": "🏆",
-  "12": "💾", "13": "💾", "14": "💾",
-  "15": "⭐", "16": "⭐", "17": "⭐",
-  "18": "⚡", "19": "⚡", "20": "⚡",
-  "21": "📅",
+  "1": BookOpen,
+  "2": Flame,
+  "3": Flame,
+  "4": Flame,
+  "5": Flame,
+  "6": Award,
+  "7": Award,
+  "8": Award,
+  "9": Trophy,
+  "10": Trophy,
+  "11": Trophy,
+  "12": Database,
+  "13": Database,
+  "14": Database,
+  "15": Star,
+  "16": Star,
+  "17": Star,
+  "18": Zap,
+  "19": Zap,
+  "20": Zap,
+  "21": CalendarDays,
 };
 
 export default function LevelUpModal({ show, level, newBadges = [], onClose }) {
@@ -82,7 +96,7 @@ export default function LevelUpModal({ show, level, newBadges = [], onClose }) {
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {newBadges.map((badge) => {
-                    const badgeDef = BADGES[badge.badgeId];
+                    const BadgeIcon = BADGE_ICONS[badge.icon] || Award;
                     return (
                       <div
                         key={badge.badgeId}
@@ -90,7 +104,7 @@ export default function LevelUpModal({ show, level, newBadges = [], onClose }) {
                           badge.rarity
                         )}`}
                       >
-                        <span>{BADGE_ICONS[badge.icon] || "🎖"}</span>
+                        <BadgeIcon className="w-4 h-4" />
                         <span className="text-xs font-medium">{badge.name}</span>
                       </div>
                     );

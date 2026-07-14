@@ -85,25 +85,25 @@ export default function BadgesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-500/10 rounded-xl">
-              <Trophy className="w-6 h-6 text-amber-500" />
+      <div className="rounded-xl border border-border/50 bg-card p-5">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-amber-500/10 rounded-lg">
+              <Trophy className="w-4 h-4 text-amber-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Achievements</h2>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h2 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--font-fraunces)" }}>Achievements</h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {earnedBadgesCount} / {ALL_BADGES.length} unlocked
               </p>
             </div>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+          <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
             {filters.map(f => (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                className={`px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition-colors ${
                   filter === f.id 
                     ? "bg-green-500 text-white" 
                     : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"

@@ -120,43 +120,39 @@ export default function PlanTemplates({ onUseTemplate, onBack }) {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h2
-            className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2.5"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            className="text-lg font-bold text-foreground flex items-center gap-2"
+            style={{ fontFamily: "var(--font-fraunces)" }}
           >
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-              <Layers className="w-4.5 h-4.5 text-purple-600 dark:text-purple-400" />
-            </div>
+            <Layers className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             Plan Templates
           </h2>
-          <p className="text-sm text-muted-foreground mt-1 ml-[46px]">
+          <p className="text-[11px] text-muted-foreground mt-0.5 ml-6">
             Pre-built study plans you can apply instantly
           </p>
         </div>
         <button
           onClick={onBack}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5 group"
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 group"
         >
-          <span className="group-hover:-translate-x-0.5 transition-transform">
-            &larr;
-          </span>
-          Back to Library
+          <span className="group-hover:-translate-x-0.5 transition-transform">&larr;</span>
+          Back
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-2 mb-5">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search templates..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm text-foreground text-sm placeholder-foreground/30 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/40 transition-all"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border/60 bg-card text-foreground text-[11px] placeholder-foreground/30 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/40 transition-all"
           />
         </div>
 
@@ -167,15 +163,13 @@ export default function PlanTemplates({ onUseTemplate, onBack }) {
               setShowCategoryDropdown(!showCategoryDropdown);
               setShowDifficultyDropdown(false);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/60 bg-card/80 text-sm text-foreground hover:bg-secondary/50 transition-colors min-w-[140px] justify-between"
+            className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-border/60 bg-card text-[11px] text-foreground hover:bg-secondary/50 transition-colors min-w-[100px] justify-between"
           >
-            <span className="flex items-center gap-2">
-              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="flex items-center gap-1.5">
+              <Filter className="w-3 h-3 text-muted-foreground" />
               {categoryFilter}
             </span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`}
-            />
+            <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
           </button>
           <AnimatePresence>
             {showCategoryDropdown && (
@@ -183,19 +177,14 @@ export default function PlanTemplates({ onUseTemplate, onBack }) {
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="absolute top-full mt-1 left-0 right-0 z-20 bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+                className="absolute top-full mt-1 left-0 right-0 z-20 bg-card border border-border rounded-lg shadow-lg overflow-hidden"
               >
                 {["All", ...planCategories].map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => {
-                      setCategoryFilter(cat);
-                      setShowCategoryDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 transition-colors ${
-                      categoryFilter === cat
-                        ? "text-purple-600 dark:text-purple-400 font-medium"
-                        : "text-foreground"
+                    onClick={() => { setCategoryFilter(cat); setShowCategoryDropdown(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-[11px] hover:bg-secondary/50 transition-colors ${
+                      categoryFilter === cat ? "text-purple-600 dark:text-purple-400 font-medium" : "text-foreground"
                     }`}
                   >
                     {cat}
@@ -213,17 +202,13 @@ export default function PlanTemplates({ onUseTemplate, onBack }) {
               setShowDifficultyDropdown(!showDifficultyDropdown);
               setShowCategoryDropdown(false);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/60 bg-card/80 text-sm text-foreground hover:bg-secondary/50 transition-colors min-w-[140px] justify-between"
+            className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-border/60 bg-card text-[11px] text-foreground hover:bg-secondary/50 transition-colors min-w-[100px] justify-between"
           >
-            <span className="flex items-center gap-2">
-              <BookOpen className="w-3.5 h-3.5 text-muted-foreground" />
-              {difficultyFilter === "All"
-                ? "All Levels"
-                : difficultyConfig[difficultyFilter]?.label}
+            <span className="flex items-center gap-1.5">
+              <BookOpen className="w-3 h-3 text-muted-foreground" />
+              {difficultyFilter === "All" ? "Levels" : difficultyConfig[difficultyFilter]?.label}
             </span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showDifficultyDropdown ? "rotate-180" : ""}`}
-            />
+            <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showDifficultyDropdown ? "rotate-180" : ""}`} />
           </button>
           <AnimatePresence>
             {showDifficultyDropdown && (
@@ -231,19 +216,14 @@ export default function PlanTemplates({ onUseTemplate, onBack }) {
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="absolute top-full mt-1 left-0 right-0 z-20 bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+                className="absolute top-full mt-1 left-0 right-0 z-20 bg-card border border-border rounded-lg shadow-lg overflow-hidden"
               >
                 {["All", ...planDifficulties].map((diff) => (
                   <button
                     key={diff}
-                    onClick={() => {
-                      setDifficultyFilter(diff);
-                      setShowDifficultyDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-secondary/50 transition-colors ${
-                      difficultyFilter === diff
-                        ? "text-purple-600 dark:text-purple-400 font-medium"
-                        : "text-foreground"
+                    onClick={() => { setDifficultyFilter(diff); setShowDifficultyDropdown(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-[11px] hover:bg-secondary/50 transition-colors ${
+                      difficultyFilter === diff ? "text-purple-600 dark:text-purple-400 font-medium" : "text-foreground"
                     }`}
                   >
                     {diff === "All"

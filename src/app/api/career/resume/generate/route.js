@@ -100,9 +100,24 @@ async function handlePost(request) {
 
   try {
     const body = await request.json();
-    const { role, resumeText } = body;
+    const { role, resumeText, template } = body;
     const trimmedRole = role?.trim() || "";
     const trimmedResumeText = resumeText?.trim() || "";
+    const templateId = template || "classic";
+
+    const templateHints = {
+      classic: "Use a traditional, formal tone with centered headers and serif-style language.",
+      modern: "Use clean, concise language with a modern professional tone.",
+      executive: "Use authoritative, high-level language appropriate for C-suite roles.",
+      minimal: "Use brief, streamlined wording. Keep sentences short and impactful.",
+      creative: "Use expressive, personality-driven language suitable for creative industries.",
+      technical: "Use precise, technical terminology with skills-focused descriptions.",
+      elegant: "Use refined, polished language with a sophisticated tone.",
+      bold: "Use strong, assertive language with high-impact action verbs.",
+      compact: "Use extremely concise, dense phrasing to fit maximum content.",
+      professional: "Use formal, corporate-appropriate language with structured bullet points.",
+    };
+    const templateHint = templateHints[templateId] || templateHints.classic;
 
     if (!trimmedRole && !trimmedResumeText) {
       return NextResponse.json({ error: "Role or existing resume text is required" }, { status: 400 });
@@ -113,6 +128,8 @@ Create a comprehensive, professional resume for a candidate${trimmedRole ? ` app
 ${trimmedResumeText
   ? `The user pasted this existing resume. Rebuild and improve it into a cleaner, stronger, more ATS-friendly resume while preserving truthful core details exactly where provided. Treat the pasted resume as the primary source of truth for name, email, phone, location, links, employers, projects, dates, and education:\n"""${trimmedResumeText}"""`
   : `If no source resume is provided, you may use the signed-in user's profile details only as a light fallback for name and email.`}
+
+Writing style for this template: ${templateHint}
 
 Provide the output in a structured JSON format.
 

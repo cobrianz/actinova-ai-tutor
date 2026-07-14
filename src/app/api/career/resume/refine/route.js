@@ -149,7 +149,22 @@ async function handlePost(request) {
 
     try {
         const body = await request.json();
-        const { resume, jobDescription, matchResult } = body;
+        const { resume, jobDescription, matchResult, template } = body;
+        const templateId = template || "classic";
+
+        const templateHints = {
+            classic: "Use a traditional, formal tone with centered headers and serif-style language.",
+            modern: "Use clean, concise language with a modern professional tone.",
+            executive: "Use authoritative, high-level language appropriate for C-suite roles.",
+            minimal: "Use brief, streamlined wording. Keep sentences short and impactful.",
+            creative: "Use expressive, personality-driven language suitable for creative industries.",
+            technical: "Use precise, technical terminology with skills-focused descriptions.",
+            elegant: "Use refined, polished language with a sophisticated tone.",
+            bold: "Use strong, assertive language with high-impact action verbs.",
+            compact: "Use extremely concise, dense phrasing to fit maximum content.",
+            professional: "Use formal, corporate-appropriate language with structured bullet points.",
+        };
+        const templateHint = templateHints[templateId] || templateHints.classic;
 
         if (!resume || !jobDescription?.trim() || !matchResult) {
             return NextResponse.json({ error: "Resume, job description, and match result are required" }, { status: 400 });
@@ -163,6 +178,8 @@ Focus on:
 1. Integrating the missing keywords: ${JSON.stringify(matchResult.keywordsMissing)}.
 2. Addressing these recommendations: ${JSON.stringify(matchResult.recommendations)}.
 3. Improving the impact of experience highlights based on the job description: "${jobDescription}".
+
+Writing style for this template: ${templateHint}
 
 Maintain the existing structure but improve the content wordings for better ATS scores and recruiter impact.
 Do not invent false employers, degrees, metrics, or contact links.

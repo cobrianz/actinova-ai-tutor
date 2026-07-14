@@ -174,13 +174,13 @@ const TestYourself = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 bg-background text-foreground min-h-full">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight flex items-center">
-          <BrainCircuit className="w-8 h-8 mr-3 text-green-500" />
+    <div className="px-0 py-6 bg-background text-foreground min-h-full">
+      <header className="mb-6">
+        <h1 className="text-xl font-bold tracking-tight flex items-center" style={{ fontFamily: "var(--font-fraunces)" }}>
+          <BrainCircuit className="w-5 h-5 mr-2 text-green-500" />
           Test Your Knowledge
         </h1>
-        <p className="text-lg text-muted-foreground mt-2">
+        <p className="text-xs text-muted-foreground mt-1">
           Challenge yourself with quizzes on various topics.
         </p>
         {adaptiveContext && (
@@ -192,131 +192,132 @@ const TestYourself = () => {
         )}
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Card
-          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-2.5 gap-2 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-0">
+            <CardTitle className="text-[11px] font-medium text-muted-foreground">
               Total Tests
             </CardTitle>
-            <HelpCircle className="w-6 h-6 text-primary/60" />
+            <HelpCircle className="w-4 h-4 text-primary/60" />
           </CardHeader>
-          <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="flex flex-row items-center justify-between pt-0">
+            <div className="text-lg font-bold text-foreground">
               {loading ? "..." : quizzes.length}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] text-muted-foreground">
               Assignments & Quizzes
             </p>
           </CardContent>
         </Card>
         <Card
-          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-2.5 gap-2 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-0">
+            <CardTitle className="text-[11px] font-medium text-muted-foreground">
               Pending
             </CardTitle>
-            <Clock className="w-6 h-6 text-lime-500/60" />
+            <Clock className="w-4 h-4 text-lime-500/60" />
           </CardHeader>
-          <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="flex flex-row items-center justify-between pt-0">
+            <div className="text-lg font-bold text-foreground">
               {loading ? "..." : quizzes.length}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] text-muted-foreground">
               Need completion
             </p>
           </CardContent>
         </Card>
         <Card
-          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-2.5 gap-2 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Completed Tests
+          <CardHeader className="flex flex-row items-center justify-between pb-0">
+            <CardTitle className="text-[11px] font-medium text-muted-foreground">
+              Completed
             </CardTitle>
-            <CheckCircle className="w-6 h-6 text-green-500/60" />
+            <CheckCircle className="w-4 h-4 text-green-500/60" />
           </CardHeader>
-          <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="flex flex-row items-center justify-between pt-0">
+            <div className="text-lg font-bold text-foreground">
               {loading ? "..." : performanceStats?.completedTests || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Out of {performanceStats?.totalTests || 0} tests
+            <p className="text-[10px] text-muted-foreground">
+              Out of {performanceStats?.totalTests || 0}
             </p>
           </CardContent>
         </Card>
         <Card
-          className={`bg-muted/50 border-border shadow-none py-3 gap-3 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`bg-muted/50 border-border shadow-none py-2.5 gap-2 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-1">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average Score
+          <CardHeader className="flex flex-row items-center justify-between pb-0">
+            <CardTitle className="text-[11px] font-medium text-muted-foreground">
+              Avg Score
             </CardTitle>
-            <Award className="w-6 h-6 text-teal-500/60" />
+            <Award className="w-4 h-4 text-teal-500/60" />
           </CardHeader>
-          <CardContent className="flex flex-row items-center justify-between">
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="flex flex-row items-center justify-between pt-0">
+            <div className="text-lg font-bold text-foreground">
               {loading ? "..." : `${performanceStats?.averageScore || 0}%`}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Across all completed tests
+            <p className="text-[10px] text-muted-foreground">
+              Across all tests
             </p>
           </CardContent>
         </Card>
       </div>
 
       <div
-        className={`bg-card p-6 rounded-3xl border border-border transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`bg-card p-4 rounded-xl border border-border transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <h2 className="text-2xl font-bold">Available Quizzes</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+          <h2 className="text-xs font-bold" style={{ fontFamily: "var(--font-fraunces)" }}>Available Quizzes</h2>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="mt-2 sm:mt-0 rounded-xl"
+            className="mt-2 sm:mt-0 rounded-lg px-2.5 py-1.5 text-[11px]"
           >
-            <Filter className="w-4 h-4 mr-2" />
+            <Filter className="w-3 h-3 mr-1.5" />
             Filters
           </Button>
         </div>
 
         {showFilters && (
-          <div className="mb-6 p-4 bg-muted/30 rounded-2xl border border-border">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                <label className="block text-[10px] font-medium text-muted-foreground mb-1">
                   Difficulty
                 </label>
                 <select
                   value={filterDifficulty}
                   onChange={(e) => setFilterDifficulty(e.target.value)}
-                  className="w-full px-4 py-2 border border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full px-2.5 py-1.5 border border-border rounded-lg bg-background text-foreground text-[11px] focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
-                  <option value="all">All Difficulties</option>
+                  <option value="all">All</option>
                   <option value="beginner">Beginner</option>
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                <label className="block text-[10px] font-medium text-muted-foreground mb-1">
                   Status
                 </label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-4 py-2 border border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full px-2.5 py-1.5 border border-border rounded-lg bg-background text-foreground text-[11px] focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
-                  <option value="all">All Tests</option>
+                  <option value="all">All</option>
                   <option value="pending">Pending</option>
                   <option value="completed">Completed</option>
                 </select>
               </div>
             </div>
             {(filterDifficulty !== "all" || filterStatus !== "all") && (
-              <div className="mt-4 flex gap-2">
+              <div className="mt-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -324,9 +325,9 @@ const TestYourself = () => {
                     setFilterDifficulty("all");
                     setFilterStatus("all");
                   }}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground text-[10px] h-6 px-2"
                 >
-                  Clear Filters
+                  Clear
                 </Button>
               </div>
             )}
@@ -373,27 +374,27 @@ const TestYourself = () => {
                     return (
                       <div
                         key={quiz._id}
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-2xl border border-border bg-card/50 hover:bg-muted/30 transition-all group"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-border bg-card/50 hover:bg-muted/30 transition-all group"
                       >
-                        <div className="mb-4 sm:mb-0">
-                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                        <div className="mb-3 sm:mb-0">
+                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors" style={{ fontFamily: "var(--font-fraunces)" }}>
                             {quiz.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             {quiz.course}
                           </p>
-                          <div className="flex items-center space-x-6 mt-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1.5">
-                              <FileText className="w-3.5 h-3.5 text-green-500" />
+                          <div className="flex items-center space-x-4 mt-2 text-[10px] text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <FileText className="w-3 h-3 text-green-500" />
                               {quiz.questions.length} questions
                             </span>
                             {quiz.createdAt && (
-                              <span className="flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-lime-500" />
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-lime-500" />
                                 {new Date(quiz.createdAt).toLocaleDateString()}
                               </span>
                             )}
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${quiz.difficulty === 'easy' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${quiz.difficulty === 'easy' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
                               quiz.difficulty === 'medium' ? 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300' :
                                 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
                               }`}>
@@ -405,7 +406,7 @@ const TestYourself = () => {
                           <Button
                             variant="default"
                             onClick={() => setSelectedQuiz(quiz)}
-                            className="w-full sm:w-auto rounded-lg px-4 py-1.5 font-bold text-xs"
+                            className="w-full sm:w-auto rounded-lg px-3 py-1.5 font-bold text-[11px]"
                           >
                             {(() => {
                               const completedKey = `quiz_completed_${quiz._id}`;
@@ -420,24 +421,24 @@ const TestYourself = () => {
                     );
                   })}
                   {totalPages > 1 && (
-                    <div className="flex justify-center mt-10 gap-2">
+                    <div className="flex justify-center mt-8 gap-1.5">
                       <button
                         onClick={() =>
                           setCurrentPage((prev) => Math.max(prev - 1, 1))
                         }
                         disabled={currentPage === 1}
-                        className="p-2 rounded-xl border border-border bg-card hover:bg-muted disabled:opacity-30 transition-all text-muted-foreground"
+                        className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-30 transition-all text-muted-foreground"
                       >
-                        <ChevronLeft size={20} />
+                        <ChevronLeft size={16} />
                       </button>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                           (page) => (
                             <button
                               key={page}
                               onClick={() => setCurrentPage(page)}
-                              className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === page
+                              className={`min-w-[28px] h-7 px-2 rounded-lg text-[10px] font-bold transition-all ${currentPage === page
                                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                                 : "bg-card border border-border text-muted-foreground hover:bg-muted"
                                 }`}
@@ -455,9 +456,9 @@ const TestYourself = () => {
                           )
                         }
                         disabled={currentPage === totalPages}
-                        className="p-2 rounded-xl border border-border bg-card hover:bg-muted disabled:opacity-30 transition-all text-muted-foreground"
+                        className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-30 transition-all text-muted-foreground"
                       >
-                        <ChevronRight size={20} />
+                        <ChevronRight size={16} />
                       </button>
                     </div>
                   )}
