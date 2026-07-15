@@ -128,12 +128,13 @@ async function handlePost(request) {
     let channels;
 
     if (isMpesa) {
-      // Convert USD cents to KES whole shillings, round up
+      // Convert USD cents to KES whole shillings, round up to the next 10 shillings
       const usdDollars = amountUsdCents / 100;
-      paystackAmount = await usdToKes(usdDollars);
+      const kesAmount = await usdToKes(usdDollars);
+      paystackAmount = kesAmount * 100; // Paystack expects smallest currency unit for KES
       currency = "KES";
       channels = ["mobile_money"];
-      metadata.kesAmount = paystackAmount;
+      metadata.kesAmount = kesAmount;
       metadata.exchangeRate = exchangeRate;
     } else {
       paystackAmount = amountUsdCents; // Paystack uses cents for USD

@@ -21,6 +21,7 @@ import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 import { CREDIT_PACKS } from "@/lib/planLimits";
+import { getUsdToKesRate } from "@/lib/currency";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -45,11 +46,27 @@ export default function ProfileContent() {
   const [editData, setEditData] = useState({ firstName: "", lastName: "" });
   const [payMethod, setPayMethod] = useState("card");
   const [activeTab, setActiveTab] = useState("overview");
+  const [kesRate, setKesRate] = useState(155);
+  const [kesRateLoading, setKesRateLoading] = useState(true);
 
   useEffect(() => {
     fetchProfileData();
     fetchAnalytics();
+    fetchKesRate();
   }, []);
+
+  const fetchKesRate = async () => {
+    try {
+      const rate = await getUsdToKesRate();
+      if (typeof rate === "number" && rate > 0) {
+        setKesRate(rate);
+      }
+    } catch (err) {
+      console.error("KES rate fetch error:", err);
+    } finally {
+      setKesRateLoading(false);
+    }
+  };
 
   const fetchProfileData = async () => {
     try {
@@ -367,7 +384,10 @@ export default function ProfileContent() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {CREDIT_PACKS.map((pack) => {
-                      const kesPrice = Math.ceil(pack.price * 155);
+                      let kesPrice = Math.ceil(Math.ceil(pack.price * 155) / 10) * 10;
+                      if (!kesRateLoading && kesRate > 0) {
+                        kesPrice = Math.ceil(Math.ceil(pack.price * kesRate) / 10) * 10;
+                      }
                       return (
                         <button
                           key={pack.id}
@@ -419,7 +439,7 @@ export default function ProfileContent() {
                         const date = entry.paidAt || entry.date;
                         return (
                           <div
-                            key={entry.reference || i}
+                            key={entry._id ? String(entry._id) : `${entry.reference || "billing"}-${i}`}
                             className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
                           >
                             <div className="flex items-center gap-4 min-w-0">

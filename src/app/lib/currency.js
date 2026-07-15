@@ -35,19 +35,20 @@ export async function getUsdToKesRate() {
 }
 
 /**
- * Convert USD to KES, rounding up to the nearest whole shilling.
+ * Convert USD to KES, rounding up to the next 10 shillings.
  * @param {number} usdAmount - Price in USD (e.g. 9.99)
- * @returns {Promise<number>} KES amount rounded up (e.g. 1549)
+ * @returns {Promise<number>} KES amount rounded up to the next 10 shillings (e.g. 1549 -> 1550)
  */
 export async function usdToKes(usdAmount) {
   const rate = await getUsdToKesRate();
-  return Math.ceil(usdAmount * rate);
+  const rawAmount = usdAmount * rate;
+  return Math.ceil(rawAmount / 10) * 10;
 }
 
 /**
  * Convert USD cents (as used by Paystack) to KES whole units.
  * @param {number} usdCents - Price in USD cents (e.g. 999 for $9.99)
- * @returns {Promise<number>} KES amount rounded up (e.g. 1549)
+ * @returns {Promise<number>} KES amount rounded up to the next 10 shillings (e.g. 1549 -> 1550)
  */
 export async function usdCentsToKes(usdCents) {
   return usdToKes(usdCents / 100);

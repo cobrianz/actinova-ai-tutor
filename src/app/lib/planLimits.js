@@ -8,9 +8,9 @@ export const PRODUCTS = [
 ];
 
 export const CREDIT_PACKS = [
-  { id: "starter", credits: 50, price: 9.99, popular: false },
-  { id: "popular", credits: 150, price: 19.99, popular: true },
-  { id: "pro", credits: 500, price: 49.99, popular: false },
+  { id: "starter", credits: 50, price: 10.0, popular: false },
+  { id: "popular", credits: 150, price: 25.0, popular: true },
+  { id: "pro", credits: 500, price: 90.0, popular: false },
 ];
 
 export const SIGNUP_CREDITS = 60;
