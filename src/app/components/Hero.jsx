@@ -132,14 +132,8 @@ export default function Hero({ handleGetStarted }) {
             className="max-w-4xl mx-auto mb-8"
           >
             <div className="flex flex-wrap items-center justify-center gap-3">
-              {[
-                { label: "Create courses from prompts", icon: GraduationCap },
-                { label: "Practice with AI quizzes", icon: Trophy },
-                { label: "Turn notes into polished reports", icon: FileText },
-                { label: "Build flashcards in seconds", icon: Sparkles },
-                { label: "Study with structured AI plans", icon: BookOpen },
-                { label: "Ship career-ready content faster", icon: FileText },
-              ].map((item) => {
+              {[]
+              .map((item) => {
                 const Icon = item.icon;
                 return (
                   <div

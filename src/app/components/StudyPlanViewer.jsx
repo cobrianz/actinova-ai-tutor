@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import {
   ChevronDown,
+  ChevronRight,
   CheckCircle2,
   Circle,
   Clock,
@@ -83,6 +84,7 @@ const WEEK_COLORS = [
 export default function StudyPlanViewer({ plan, studyPlanId, onBack, onDelete, setActiveContent }) {
   const router = useRouter();
   const [localPlan, setLocalPlan] = useState(plan);
+  const [viewMode, setViewMode] = useState("timeline");
   const [completing, setCompleting] = useState(null);
   const [editingDay, setEditingDay] = useState(null);
   const [editingTasks, setEditingTasks] = useState([]);

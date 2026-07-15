@@ -753,7 +753,7 @@ export function CreativeTemplate({ data, onUpdate, handleBlur, addSectionType })
 
     return (
         <div className="w-full">
-            <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 flex font-sans">
+            <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 flex font-sans overflow-x-auto">
                 <div className="w-64 shrink-0 p-6 text-white" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}dd)` }}>
                 <div className="mb-6">
                     <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold mb-3">
@@ -1430,7 +1430,7 @@ export function ProfessionalTemplate({ data, onUpdate, handleBlur, addSectionTyp
 
     return (
         <div className="w-full">
-            <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 flex font-sans">
+            <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 flex font-sans overflow-x-auto">
                 <div className="flex-1 p-8">
                 <header className="mb-6">
                     <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-3xl font-black text-slate-900 dark:text-white" style={{ color: accent }}>{displayName || "Your Name"}</Editable>

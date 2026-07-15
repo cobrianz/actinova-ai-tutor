@@ -12,7 +12,7 @@ import {
     GraduationCap, Star, UserCircle, Briefcase, Layout,
     User, Mail, Phone, MapPin, Globe, Linkedin, Github,
     Award, FolderOpen, Languages, Heart, Users, Wrench,
-    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, Settings
+    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, MoreHorizontal
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -765,7 +765,8 @@ const ResumeBuilder = () => {
     const [libraryCourses, setLibraryCourses] = useState([]);
     const [librarySearch, setLibrarySearch] = useState("");
     const [libraryLoading, setLibraryLoading] = useState(false);
-    const [showMobileActions, setShowMobileActions] = useState(false);
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const moreMenuRef = useRef(null);
     const [selectedTemplate, setSelectedTemplate] = useState("classic");
     const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
     const templateDropdownRef = useRef(null);
@@ -917,6 +918,17 @@ const ResumeBuilder = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [showTemplateDropdown]);
+
+    React.useEffect(() => {
+        if (!showMoreMenu) return;
+        const handleClickOutside = (e) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+                setShowMoreMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showMoreMenu]);
 
     React.useEffect(() => {
         if (user && !generatedResume && !resumeText.trim()) {
@@ -2084,7 +2096,7 @@ const ResumeBuilder = () => {
     );
 
     return (
-        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950 pb-28 md:pb-10">
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
                 <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
@@ -2588,102 +2600,119 @@ const ResumeBuilder = () => {
                 }
             ` }} />
 
-            {/* Floating Mobile Action Center Button */}
-            <div className="md:hidden fixed bottom-6 right-6 z-[60]">
-                <button
-                    onClick={() => setShowMobileActions(true)}
-                    className="w-14 h-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-                >
-                    <Settings className="w-6 h-6" />
-                </button>
-            </div>
-
-            {/* Mobile Action Center Drawer */}
-            {
-                showMobileActions && (
-                    <div className="md:hidden fixed inset-0 z-[100] flex flex-col justify-end">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobileActions(false)} />
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            className="relative bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 shadow-2xl border-t border-slate-200 dark:border-slate-800 max-h-[85vh] overflow-y-auto"
-                        >
-                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8" />
-
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white">Action Center</h3>
-                                <button onClick={() => setShowMobileActions(false)} className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                    <X size={20} />
+            {/* Mobile Fixed Bottom Bar */}
+            {showMoreMenu && (
+                <div className="md:hidden fixed inset-0 z-[70]">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowMoreMenu(false)} />
+                    <div
+                        ref={moreMenuRef}
+                        className="absolute bottom-20 left-4 right-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">More</span>
+                            <button onClick={() => setShowMoreMenu(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-2">
+                            <div className="grid grid-cols-3 gap-1">
+                                <button onClick={() => { setEditorTab('portfolio'); setShowMoreMenu(false); }}
+                                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                    <FolderOpen className="w-6 h-6" />
+                                    <span className="text-[10px] font-medium leading-tight text-center">Portfolios</span>
                                 </button>
-                            </div>
-
-                            {/* Navigation Tabs (Mobile) */}
-                            <div className="grid grid-cols-2 gap-3 mb-8">
-                                {[
-                                    { id: 'editor', label: 'Resume', icon: Edit2 },
-                                    { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
-                                    { id: 'application-letter', label: 'App Letter', icon: Target },
-                                    { id: 'portfolio', label: 'Portfolios', icon: FolderOpen }
-                                ].map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => { setEditorTab(tab.id); setShowMobileActions(false); }}
-                                        className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${editorTab === tab.id
-                                            ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600"
-                                            : "bg-slate-50 dark:bg-slate-800/50 border-transparent text-slate-500"
-                                            }`}
-                                    >
-                                        <tab.icon size={20} />
-                                        <span className="text-[10px] font-black">{tab.label}</span>
+                                <button onClick={() => { saveToDatabase(); setShowMoreMenu(false); }}
+                                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                    <Save className="w-6 h-6" />
+                                    <span className="text-[10px] font-medium leading-tight text-center">Save</span>
+                                </button>
+                                <button onClick={() => { setEditorTab('insights'); setShowMoreMenu(false); }}
+                                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-emerald-600">
+                                    <TrendingUp className="w-6 h-6" />
+                                    <span className="text-[10px] font-medium leading-tight text-center">Match to Job</span>
+                                </button>
+                                {editorTab === 'editor' && (
+                                    <button onClick={() => { setShowTemplateDropdown(!showTemplateDropdown); setShowMoreMenu(false); }}
+                                        className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                        <Layout className="w-6 h-6" />
+                                        <span className="text-[10px] font-medium leading-tight text-center">{getTemplateById(selectedTemplate).name}</span>
                                     </button>
-                                ))}
-                            </div>
-
-                            {/* Critical Actions */}
-                            <div className="space-y-4">
-                                <h4 className="text-[10px] font-black text-slate-400 mb-2">Actions</h4>
-
-                                <Button onClick={() => { handleNew(); setShowMobileActions(false); }} variant="outline" className="w-full py-7 rounded-2xl border-slate-200 text-slate-900 dark:text-white font-black text-xs">
-                                    <Plus size={16} className="mr-3" /> New {
-                                        editorTab === 'cover-letter' ? 'Cover Letter' :
-                                            editorTab === 'application-letter' ? 'Application' :
-                                                editorTab === 'portfolio' ? 'Project' : 'Resume'
-                                    }
-                                </Button>
-
-                                <Button onClick={() => { saveToDatabase(); setShowMobileActions(false); }} className="w-full py-7 rounded-2xl bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white font-black text-xs shadow-xl dark:shadow-none">
-                                    <Save size={16} className="mr-3" /> Save to Database
-                                </Button>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => { setEditorTab('insights'); setShowMobileActions(false); }}
-                                        className="py-7 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-600 font-black text-[10px]"
-                                    >
-                                        <TrendingUp size={16} className="mr-2" /> Match Job
-                                    </Button>
-                                    {false && <Button
-                                        variant="outline"
-                                        onClick={() => { exportToPDF(); setShowMobileActions(false); }}
-                                        className="py-7 rounded-2xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-[10px]"
-                                    >
-                                        <Download size={16} className="mr-2" /> Export PDF
-                                    </Button>}
-                                </div>
+                                )}
                                 {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => { exportToDOCX(); setShowMobileActions(false); }}
-                                        className="w-full py-7 rounded-2xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black text-[10px]"
-                                    >
-                                        <Download size={16} className="mr-2" /> {shouldShowPaidResumeExportLabel ? "Export DOCX $2.5" : "Export DOCX"}
-                                    </Button>
+                                    <button onClick={() => { exportToDOCX(); setShowMoreMenu(false); }}
+                                        className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                        <Download className="w-6 h-6" />
+                                        <span className="text-[10px] font-medium leading-tight text-center">Export DOCX</span>
+                                    </button>
                                 )}
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
-                )}
+                </div>
+            )}
+
+            {editorTab === 'editor' && showTemplateDropdown && (
+                <div className="md:hidden fixed inset-0 z-[75]">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowTemplateDropdown(false)} />
+                    <div
+                        ref={templateDropdownRef}
+                        className="absolute bottom-20 left-4 right-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">Choose Template</span>
+                            <button onClick={() => setShowTemplateDropdown(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto p-2 space-y-0.5">
+                            {RESUME_TEMPLATES.map((tpl) => (
+                                <button key={tpl.id} onClick={() => { setSelectedTemplate(tpl.id); setShowTemplateDropdown(false); }}
+                                    className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex items-center gap-3 ${selectedTemplate === tpl.id ? 'bg-green-50 dark:bg-green-900/20 ring-1 ring-green-200 dark:ring-green-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                    <div className="w-8 h-10 rounded-md border border-slate-200 dark:border-slate-700 shrink-0" style={{ background: `linear-gradient(135deg, ${tpl.accent}22, ${tpl.accent}44)` }}>
+                                        <div className="w-full h-1.5 rounded-t-md" style={{ background: tpl.accent }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.name}</span>
+                                            {selectedTemplate === tpl.id && <Check size={12} className="text-green-600" />}
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{tpl.description}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                <div className="flex items-center justify-around h-16 px-1">
+                    <button onClick={() => setEditorTab('editor')}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'editor' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <Edit2 className={`w-5 h-5 transition-all duration-200 ${editorTab === 'editor' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'editor' ? "currentColor" : "none"} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'editor' ? "font-bold" : "font-medium"}`}>Resume</span>
+                    </button>
+                    <button onClick={() => setEditorTab('cover-letter')}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'cover-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <FileText className={`w-5 h-5 transition-all duration-200 ${editorTab === 'cover-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'cover-letter' ? "currentColor" : "none"} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'cover-letter' ? "font-bold" : "font-medium"}`}>Cover</span>
+                    </button>
+                    <button onClick={handleNew}
+                        className="flex items-center justify-center -mt-3 w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200 shadow-lg">
+                        <Plus className="w-7 h-7 stroke-[2.5]" />
+                    </button>
+                    <button onClick={() => setEditorTab('application-letter')}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'application-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <Target className={`w-5 h-5 transition-all duration-200 ${editorTab === 'application-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'application-letter' ? "currentColor" : "none"} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'application-letter' ? "font-bold" : "font-medium"}`}>App Ltr</span>
+                    </button>
+                    <button onClick={() => setShowMoreMenu(!showMoreMenu)}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${showMoreMenu ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <MoreHorizontal className={`w-5 h-5 transition-all duration-200 ${showMoreMenu ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${showMoreMenu ? "font-bold" : "font-medium"}`}>More</span>
+                    </button>
+                </div>
+            </nav>
         </div>
     );
 };

@@ -1770,7 +1770,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume", templ
 export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", templateId = "classic") => {
     if (!resumeData) throw new Error("Resume data is required.");
 
-    const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Tab, TabStopPosition, TabStopType, LeaderType, Table, TableRow, TableCell, WidthType }, fileSaverModule] = await Promise.all([
+    const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType }, fileSaverModule] = await Promise.all([
         import("docx"),
         import("file-saver"),
     ]);
@@ -1806,7 +1806,6 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         if (Array.isArray(value)) {
             return value.map((item) => textValue(item)).filter(Boolean);
         }
-
         return textValue(value)
             .split(/\r?\n/)
             .map((item) => item.replace(/^[-*]\s*/, "").trim())
@@ -1829,303 +1828,532 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
     };
     const accentColor = templateAccents[templateId] || "166534";
 
-    const sectionHeading = (label) =>
-        new Paragraph({
-            heading: HeadingLevel.HEADING_2,
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 280, after: 120 },
-            border: {
-                bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" },
-            },
-            children: [
-                new TextRun({
-                    text: textValue(label).toUpperCase(),
-                    bold: true,
-                    color: accentColor,
-                    size: 24,
-                }),
-            ],
-        });
+    const fontFamily = {
+        classic: "Georgia",
+        modern: "Arial",
+        executive: "Times New Roman",
+        minimal: "Calibri",
+        creative: "Arial",
+        technical: "Arial",
+        elegant: "Georgia",
+        bold: "Arial",
+        compact: "Calibri",
+        professional: "Arial",
+    }[templateId] || "Arial";
 
-    const bulletParagraphs = (items) =>
+    const isCentered = ["classic", "executive", "elegant"].includes(templateId);
+
+    const textRun = (text, options = {}) => new TextRun({
+        text: textValue(text),
+        font: fontFamily,
+        size: options.size || 20,
+        color: options.color || "111827",
+        bold: options.bold ?? false,
+        italics: options.italics ?? false,
+    });
+
+    const createParagraph = (options = {}) => new Paragraph({
+        alignment: options.alignment || (isCentered ? AlignmentType.CENTER : AlignmentType.LEFT),
+        spacing: options.spacing || { after: 120, line: 360 },
+        children: options.children || [],
+        border: options.border || undefined,
+    });
+
+    const makeSectionHeading = (label, textColor = accentColor) => {
+        const borderStyle = {
+            classic: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" } },
+            executive: { bottom: { style: BorderStyle.DOUBLE, size: 8, color: textColor } },
+            minimal: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "E5E7EB" } },
+            modern: { bottom: { style: BorderStyle.SINGLE, size: 8, color: textColor } },
+            bold: { bottom: { style: BorderStyle.SINGLE, size: 12, color: textColor } },
+        }[templateId] || { bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" } };
+
+        return createParagraph({
+            spacing: { before: 280, after: 120 },
+            alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+            border: borderStyle,
+            children: [
+                textRun(textValue(label).toUpperCase(), {
+                    bold: true,
+                    color: textColor,
+                    size: 22,
+                })
+            ]
+        });
+    };
+
+    const bulletParagraphs = (items, textColor = "374151") =>
         items
             .map((item) => textValue(item))
             .filter(Boolean)
             .map(
                 (item) =>
                     new Paragraph({
-                        text: item,
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60, line: 320 },
                         bullet: { level: 0 },
-                        spacing: { after: 80, line: 360 },
+                        children: [textRun(item, { color: textColor })]
                     })
             );
 
     const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
 
-    const twoColumnTable = (leftParagraphs = [], rightParagraphs = [], options = {}) =>
-        new Table({
+    const entryHeaderRow = (leftText, rightText, leftColor = "111827", rightColor = "64748B") => {
+        return new Table({
             width: { size: 100, type: WidthType.PERCENTAGE },
             borders: {
-                top: noBorder,
-                bottom: noBorder,
-                left: noBorder,
-                right: noBorder,
-                insideHorizontal: noBorder,
-                insideVertical: noBorder,
+                top: noBorder, bottom: noBorder, left: noBorder, right: noBorder,
+                insideHorizontal: noBorder, insideVertical: noBorder,
             },
             rows: [
                 new TableRow({
                     children: [
                         new TableCell({
-                            width: { size: options.leftWidth || 78, type: WidthType.PERCENTAGE },
+                            width: { size: 70, type: WidthType.PERCENTAGE },
                             borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
-                            margins: { top: 0, bottom: 0, left: 0, right: 120 },
-                            children: leftParagraphs,
+                            children: [
+                                new Paragraph({
+                                    alignment: AlignmentType.LEFT,
+                                    spacing: { before: 100, after: 40 },
+                                    children: [textRun(leftText, { bold: true, color: leftColor, size: 22 })]
+                                })
+                            ]
                         }),
                         new TableCell({
-                            width: { size: options.rightWidth || 22, type: WidthType.PERCENTAGE },
+                            width: { size: 30, type: WidthType.PERCENTAGE },
                             borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
-                            margins: { top: 0, bottom: 0, left: 120, right: 0 },
-                            children: rightParagraphs.length > 0 ? rightParagraphs : [new Paragraph({ text: "" })],
-                        }),
-                    ],
-                }),
-            ],
+                            children: [
+                                new Paragraph({
+                                    alignment: AlignmentType.RIGHT,
+                                    spacing: { before: 100, after: 40 },
+                                    children: [textRun(rightText, { italics: true, color: rightColor, size: 18 })]
+                                })
+                            ]
+                        })
+                    ]
+                })
+            ]
         });
+    };
 
-    const entryHeaderTable = (leftText, rightText, options = {}) =>
-        twoColumnTable(
-            [
-                new Paragraph({
-                    spacing: options.spacing || { before: 120, after: 40 },
-                    children: [
-                        new TextRun({
-                            text: textValue(leftText),
-                            bold: options.bold ?? true,
-                            italics: options.italicsLeft ?? false,
-                            size: options.leftSize || 24,
-                            color: options.leftColor || "111827",
-                        }),
-                    ],
-                }),
-            ],
-            rightText ? [
-                new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    spacing: options.spacing || { before: 120, after: 40 },
-                    children: [
-                        new TextRun({
-                            text: textValue(rightText),
-                            bold: options.boldRight ?? false,
-                            italics: options.italicsRight ?? true,
-                            size: options.rightSize || 20,
-                            color: options.rightColor || "64748B",
-                        }),
-                    ],
-                }),
-            ] : [],
-            options
-        );
+    const personalInfo = data.personalInfo;
+    const fullName = textValue(personalInfo.fullName || personalInfo.name || "Your Name");
+    const jobTitle = textValue(personalInfo.jobTitle);
+    const contactItems = [
+        personalInfo.email,
+        personalInfo.phone,
+        personalInfo.location,
+        personalInfo.website,
+        personalInfo.linkedin,
+        personalInfo.github,
+    ].map((item) => textValue(item)).filter(Boolean);
 
-    const content = [];
-    const fullName = textValue(data.personalInfo.fullName || data.personalInfo.name || "Your Name");
-    const jobTitle = textValue(data.personalInfo.jobTitle);
-    const contactLine = [
-        data.personalInfo.email,
-        data.personalInfo.phone,
-        data.personalInfo.location,
-        data.personalInfo.website,
-        data.personalInfo.linkedin,
-        data.personalInfo.github,
-    ]
-        .map((item) => textValue(item))
-        .filter(Boolean)
-        .join(" | ");
+    const contactLine = contactItems.join("  |  ");
 
-    content.push(
-        new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 120 },
-            children: [
-                new TextRun({
-                    text: fullName,
-                    bold: true,
-                    size: 34,
-                    color: "111827",
-                }),
-            ],
-        })
-    );
+    const getPrimaryContent = (isSidebarLayout = false, sidebarTextColor = "111827") => {
+        const list = [];
 
-    if (jobTitle) {
-        content.push(
-            new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 100 },
-                children: [
-                    new TextRun({
-                        text: jobTitle,
-                        italics: true,
-                        size: 24,
-                        color: "475569",
+        if (!isSidebarLayout) {
+            if (templateId === "bold") {
+                list.push(
+                    new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        shading: { fill: accentColor },
+                                        margins: { top: 240, bottom: 240, left: 240, right: 240 },
+                                        children: [
+                                            new Paragraph({
+                                                alignment: AlignmentType.CENTER,
+                                                children: [textRun(fullName, { bold: true, size: 36, color: "FFFFFF" })]
+                                            }),
+                                            ...(jobTitle ? [
+                                                new Paragraph({
+                                                    alignment: AlignmentType.CENTER,
+                                                    spacing: { before: 60 },
+                                                    children: [textRun(jobTitle, { italics: true, size: 24, color: "E5E7EB" })]
+                                                })
+                                            ] : []),
+                                            ...(contactLine ? [
+                                                new Paragraph({
+                                                    alignment: AlignmentType.CENTER,
+                                                    spacing: { before: 80 },
+                                                    children: [textRun(contactLine, { size: 18, color: "D1D5DB" })]
+                                                })
+                                            ] : [])
+                                        ]
+                                    })
+                                ]
+                            })
+                        ]
                     }),
-                ],
-            })
-        );
-    }
-
-    if (contactLine) {
-        content.push(
-            new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 200 },
-                children: [
-                    new TextRun({
-                        text: contactLine,
-                        size: 20,
-                        color: "64748B",
-                    }),
-                ],
-            })
-        );
-    }
-
-    const summary = textValue(data.personalInfo.summary || data.summary);
-    if (summary) {
-        content.push(sectionHeading("Summary"));
-        content.push(
-            new Paragraph({
-                text: summary,
-                spacing: { after: 120, line: 360 },
-            })
-        );
-    }
-
-    if (data.experience.length > 0) {
-        content.push(sectionHeading("Experience"));
-        data.experience.forEach((item) => {
-            const title = textValue(item.title);
-            const subtitle = [item.company, item.location].map((value) => textValue(value)).filter(Boolean).join(" | ");
-            const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
-            if (title) {
-                content.push(entryHeaderTable(title, dateRange));
-            }
-            if (subtitle) {
-                content.push(new Paragraph({ text: subtitle, spacing: { after: 80 }, thematicBreak: false }));
-            }
-            content.push(...bulletParagraphs(normalizeList(item.description)));
-        });
-    }
-
-    if (data.education.length > 0) {
-        content.push(sectionHeading("Education"));
-        data.education.forEach((item) => {
-            const title = textValue(item.degree);
-            const subtitle = [item.school, item.location].map((value) => textValue(value)).filter(Boolean).join(" | ");
-            const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
-            if (title) {
-                content.push(entryHeaderTable(title, dateRange));
-            }
-            if (subtitle) {
-                content.push(new Paragraph({ text: subtitle, spacing: { after: 80 } }));
-            }
-            normalizeList(item.description).forEach((line) => {
-                content.push(new Paragraph({ text: line, spacing: { after: 80, line: 360 } }));
-            });
-        });
-    }
-
-    if (false && data.skills.length > 0) {
-        content.push(sectionHeading("Skills"));
-        content.push(
-            new Paragraph({
-                text: normalizeList(data.skills).join(" - "),
-                spacing: { after: 120, line: 360 },
-            })
-        );
-    }
-
-    if (data.projects.length > 0) {
-        content.push(sectionHeading("Projects"));
-        data.projects.forEach((item) => {
-            const title = textValue(item.name);
-            const subtitle = textValue(item.technologies);
-            const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
-            if (title) {
-                content.push(entryHeaderTable(title, dateRange));
-            }
-            if (subtitle) {
-                content.push(new Paragraph({ text: subtitle, spacing: { after: 80 } }));
-            }
-            content.push(...bulletParagraphs(normalizeList(item.description)));
-        });
-    }
-
-    if (data.certifications.length > 0) {
-        content.push(sectionHeading("Certifications"));
-        data.certifications.forEach((item) => {
-            const leftLine = [item.name, item.issuer].map((value) => textValue(value)).filter(Boolean).join(" | ");
-            if (leftLine || item.date) {
-                content.push(entryHeaderTable(leftLine, item.date, { spacing: { after: 100 }, bold: true, rightSize: 20 }));
-            }
-            normalizeList(item.url).forEach((value) => {
-                content.push(new Paragraph({ text: value, spacing: { after: 80, line: 360 } }));
-            });
-        });
-    }
-
-    if (data.awards.length > 0) {
-        content.push(sectionHeading("Awards"));
-        data.awards.forEach((item) => {
-            const leftLine = [item.title, item.org].map((value) => textValue(value)).filter(Boolean).join(" | ");
-            if (leftLine || item.date) {
-                content.push(entryHeaderTable(leftLine, item.date, { spacing: { after: 80 }, bold: true, rightSize: 20 }));
-            }
-            normalizeList(item.description).forEach((value) => {
-                content.push(new Paragraph({ text: value, spacing: { after: 80, line: 360 } }));
-            });
-        });
-    }
-
-    if (data.languages.length > 0) {
-        content.push(sectionHeading("Languages"));
-        content.push(
-            new Paragraph({
-                text: data.languages
-                    .map((item) => {
-                        if (typeof item === "string") return item;
-                        return [textValue(item.language), textValue(item.level)].filter(Boolean).join(" - ");
+                    createParagraph({ spacing: { after: 200 } })
+                );
+            } else {
+                list.push(
+                    createParagraph({
+                        alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+                        spacing: { after: 80 },
+                        children: [textRun(fullName, { bold: true, size: 32, color: accentColor })]
                     })
-                    .filter(Boolean)
-                    .join(" - "),
-                spacing: { after: 120, line: 360 },
-            })
-        );
-    }
+                );
 
-    if (data.skills.length > 0) {
-        content.push(sectionHeading("Skills"));
-        content.push(
-            new Paragraph({
-                text: normalizeList(data.skills).join(" - "),
-                spacing: { after: 120, line: 360 },
-            })
-        );
-    }
+                if (jobTitle) {
+                    list.push(
+                        createParagraph({
+                            alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+                            spacing: { after: 80 },
+                            children: [textRun(jobTitle, { italics: true, size: 22, color: "475569" })]
+                        })
+                    );
+                }
 
-    data.customSections.forEach((section) => {
-        const title = textValue(section.title || section.name);
-        const items = normalizeList(section.items || section.content || section.description);
-        if (!title || items.length === 0) return;
-        content.push(sectionHeading(title));
-        content.push(...bulletParagraphs(items));
-    });
+                if (contactLine) {
+                    list.push(
+                        createParagraph({
+                            alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+                            spacing: { after: 180 },
+                            children: [textRun(contactLine, { size: 18, color: "64748B" })]
+                        })
+                    );
+                }
+            }
+        } else {
+            list.push(
+                new Paragraph({
+                    alignment: AlignmentType.LEFT,
+                    spacing: { after: 60 },
+                    children: [textRun(fullName, { bold: true, size: 34, color: accentColor })]
+                })
+            );
+            if (jobTitle) {
+                list.push(
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 120 },
+                        children: [textRun(jobTitle, { italics: true, size: 22, color: "475569" })]
+                    })
+                );
+            }
+        }
+
+        const summary = textValue(personalInfo.summary || data.summary);
+        if (summary) {
+            list.push(makeSectionHeading("Summary"));
+            list.push(
+                createParagraph({
+                    alignment: AlignmentType.LEFT,
+                    spacing: { after: 120, line: 360 },
+                    children: [textRun(summary, { color: "374151" })]
+                })
+            );
+        }
+
+        if (data.experience.length > 0) {
+            list.push(makeSectionHeading("Experience"));
+            data.experience.forEach((item) => {
+                const title = textValue(item.title);
+                const subtitle = [item.company, item.location].map((value) => textValue(value)).filter(Boolean).join(" | ");
+                const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
+                if (title) {
+                    list.push(entryHeaderRow(title, dateRange));
+                }
+                if (subtitle) {
+                    list.push(
+                        new Paragraph({
+                            alignment: AlignmentType.LEFT,
+                            spacing: { after: 60 },
+                            children: [textRun(subtitle, { italics: true, color: "475569", size: 18 })]
+                        })
+                    );
+                }
+                list.push(...bulletParagraphs(normalizeList(item.description)));
+            });
+        }
+
+        if (data.education.length > 0) {
+            list.push(makeSectionHeading("Education"));
+            data.education.forEach((item) => {
+                const title = textValue(item.degree);
+                const subtitle = [item.school, item.location].map((value) => textValue(value)).filter(Boolean).join(" | ");
+                const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
+                if (title) {
+                    list.push(entryHeaderRow(title, dateRange));
+                }
+                if (subtitle) {
+                    list.push(
+                        new Paragraph({
+                            alignment: AlignmentType.LEFT,
+                            spacing: { after: 60 },
+                            children: [textRun(subtitle, { color: "475569", size: 18 })]
+                        })
+                    );
+                }
+                normalizeList(item.description).forEach((line) => {
+                    list.push(
+                        new Paragraph({
+                            alignment: AlignmentType.LEFT,
+                            spacing: { after: 60, line: 320 },
+                            children: [textRun(line, { color: "374151" })]
+                        })
+                    );
+                });
+            });
+        }
+
+        if (data.projects.length > 0) {
+            list.push(makeSectionHeading("Projects"));
+            data.projects.forEach((item) => {
+                const title = textValue(item.name);
+                const subtitle = textValue(item.technologies);
+                const dateRange = buildDateRange(item.startDate, item.endDate, item.dateRange);
+                if (title) {
+                    list.push(entryHeaderRow(title, dateRange));
+                }
+                if (subtitle) {
+                    list.push(
+                        new Paragraph({
+                            alignment: AlignmentType.LEFT,
+                            spacing: { after: 60 },
+                            children: [textRun(subtitle, { italics: true, color: "475569", size: 18 })]
+                        })
+                    );
+                }
+                list.push(...bulletParagraphs(normalizeList(item.description)));
+            });
+        }
+
+        data.customSections.forEach((section) => {
+            const title = textValue(section.title || section.name);
+            const items = normalizeList(section.items || section.content || section.description);
+            if (!title || items.length === 0) return;
+            list.push(makeSectionHeading(title));
+            list.push(...bulletParagraphs(items));
+        });
+
+        return list;
+    };
+
+    const getSidebarContent = (whiteText = false) => {
+        const list = [];
+        const textColor = whiteText ? "FFFFFF" : "374151";
+        const headingColor = whiteText ? "FFFFFF" : accentColor;
+
+        const sidebarHeading = (label) => new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 200, after: 80 },
+            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: whiteText ? "FFFFFF" : "D1D5DB" } },
+            children: [
+                textRun(textValue(label).toUpperCase(), { bold: true, color: headingColor, size: 20 })
+            ]
+        });
+
+        sidebarHeading("Contact");
+        contactItems.forEach((item) => {
+            list.push(
+                new Paragraph({
+                    alignment: AlignmentType.LEFT,
+                    spacing: { after: 60 },
+                    children: [textRun(item, { color: textColor, size: 18 })]
+                })
+            );
+        });
+
+        if (data.skills.length > 0) {
+            sidebarHeading("Skills");
+            normalizeList(data.skills).forEach((skill) => {
+                list.push(
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60 },
+                        children: [textRun(skill, { color: textColor, size: 18 })]
+                    })
+                );
+            });
+        }
+
+        if (data.languages.length > 0) {
+            sidebarHeading("Languages");
+            data.languages.forEach((lang) => {
+                const label = typeof lang === "string" ? lang : [textValue(lang.language), textValue(lang.level)].filter(Boolean).join(" - ");
+                list.push(
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60 },
+                        children: [textRun(label, { color: textColor, size: 18 })]
+                    })
+                );
+            });
+        }
+
+        if (data.certifications.length > 0) {
+            sidebarHeading("Certifications");
+            data.certifications.forEach((cert) => {
+                list.push(
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 40 },
+                        children: [textRun(cert.name, { bold: true, color: textColor, size: 18 })]
+                    }),
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60 },
+                        children: [textRun(`${cert.issuer || ""} ${cert.date || ""}`, { color: whiteText ? "E5E7EB" : "6B7280", size: 16 })]
+                    })
+                );
+            });
+        }
+
+        if (data.awards.length > 0) {
+            sidebarHeading("Awards");
+            data.awards.forEach((award) => {
+                list.push(
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 40 },
+                        children: [textRun(award.title, { bold: true, color: textColor, size: 18 })]
+                    }),
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60 },
+                        children: [textRun(`${award.org || ""} ${award.date || ""}`, { color: whiteText ? "E5E7EB" : "6B7280", size: 16 })]
+                    })
+                );
+            });
+        }
+
+        return list;
+    };
+
+    let documentChildren = [];
+
+    if (templateId === "creative" || templateId === "elegant") {
+        documentChildren = [
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                width: { size: 30, type: WidthType.PERCENTAGE },
+                                shading: { fill: accentColor },
+                                margins: { top: 360, bottom: 360, left: 360, right: 360 },
+                                children: getSidebarContent(true),
+                            }),
+                            new TableCell({
+                                width: { size: 70, type: WidthType.PERCENTAGE },
+                                margins: { top: 360, bottom: 360, left: 360, right: 360 },
+                                children: getPrimaryContent(true),
+                            })
+                        ]
+                    })
+                ]
+            })
+        ];
+    } else if (templateId === "professional") {
+        documentChildren = [
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                width: { size: 70, type: WidthType.PERCENTAGE },
+                                margins: { top: 360, bottom: 360, left: 360, right: 360 },
+                                children: getPrimaryContent(true),
+                            }),
+                            new TableCell({
+                                width: { size: 30, type: WidthType.PERCENTAGE },
+                                shading: { fill: "F3F4F6" },
+                                margins: { top: 360, bottom: 360, left: 360, right: 360 },
+                                children: getSidebarContent(false),
+                            })
+                        ]
+                    })
+                ]
+            })
+        ];
+    } else {
+        const primary = getPrimaryContent(false);
+        const secondary = [];
+
+        const appendHeading = (label) => makeSectionHeading(label);
+
+        if (data.skills.length > 0) {
+            secondary.push(appendHeading("Skills"));
+            secondary.push(
+                createParagraph({
+                    alignment: AlignmentType.LEFT,
+                    spacing: { after: 120, line: 360 },
+                    children: [textRun(normalizeList(data.skills).join("  •  "), { color: "374151" })]
+                })
+            );
+        }
+
+        if (data.languages.length > 0) {
+            secondary.push(appendHeading("Languages"));
+            const langText = data.languages
+                .map((lang) => typeof lang === "string" ? lang : [textValue(lang.language), textValue(lang.level)].filter(Boolean).join(" - "))
+                .join("  •  ");
+            secondary.push(
+                createParagraph({
+                    alignment: AlignmentType.LEFT,
+                    spacing: { after: 120, line: 360 },
+                    children: [textRun(langText, { color: "374151" })]
+                })
+            );
+        }
+
+        if (data.certifications.length > 0) {
+            secondary.push(appendHeading("Certifications"));
+            data.certifications.forEach((cert) => {
+                secondary.push(
+                    entryHeaderRow(cert.name, cert.date),
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60 },
+                        children: [textRun(cert.issuer, { italics: true, color: "475569", size: 18 })]
+                    })
+                );
+            });
+        }
+
+        if (data.awards.length > 0) {
+            secondary.push(appendHeading("Awards"));
+            data.awards.forEach((award) => {
+                secondary.push(
+                    entryHeaderRow(award.title, award.date),
+                    new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        spacing: { after: 60 },
+                        children: [textRun(award.org, { italics: true, color: "475569", size: 18 })]
+                    })
+                );
+            });
+        }
+
+        documentChildren = [...primary, ...secondary];
+    }
 
     const doc = new Document({
         sections: [
             {
-                properties: {},
-                children: content,
+                properties: {
+                    page: {
+                        margin: {
+                            top: templateId === "compact" ? 720 : 1440,
+                            bottom: templateId === "compact" ? 720 : 1440,
+                            left: templateId === "compact" ? 720 : 1440,
+                            right: templateId === "compact" ? 720 : 1440,
+                        }
+                    }
+                },
+                children: documentChildren,
             },
         ],
     });

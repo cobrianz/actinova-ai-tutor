@@ -51,7 +51,7 @@ export default function DashboardLayout({
               )}
             </main>
           </div>
-          <DashboardMobileNav />
+          {activeContent !== 'career' && <DashboardMobileNav />}
         </div>
       </ThemeProvider>
     </ProtectedRoute>
