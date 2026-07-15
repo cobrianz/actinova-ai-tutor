@@ -133,7 +133,15 @@ export default function ReportEditor({ reportId }) {
                     pendingTitlePageContentRef.current = r.titlePageContent;
                 }
                 if (r.references) {
-                    setAllReferences(r.references);
+                    // Deduplicate on load in case stored refs already have duplicates
+                    const seen = new Set();
+                    const deduped = r.references.filter(ref => {
+                        const norm = String(ref || "").trim().toLowerCase().replace(/\s+/g, " ");
+                        if (!norm || seen.has(norm)) return false;
+                        seen.add(norm);
+                        return true;
+                    });
+                    setAllReferences(deduped);
                 }
             } else {
                 toast.error("Report not found");
