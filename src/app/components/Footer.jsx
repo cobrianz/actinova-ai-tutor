@@ -28,7 +28,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#D2D7F8]/80 pt-24 pb-12 border-t-2 border-white backdrop-blur-xl relative overflow-hidden mt-12">
+    <footer className="bg-[#F2F1EC] pt-24 pb-12 border-t border-black/5 relative overflow-hidden mt-12">
       {/* Decorative Blur */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
@@ -57,7 +57,7 @@ export default function Footer() {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="w-10 h-10 rounded-xl bg-white/60 border-2 border-white flex items-center justify-center text-[#1a1a1a] hover:bg-white transition-all duration-300 shadow-sm"
+                    className="w-10 h-10 rounded-xl bg-white/80 border border-black/8 flex items-center justify-center text-[#1a1a1a] hover:bg-white transition-all duration-300 shadow-sm"
                   >
                     <Icon className="w-5 h-5" />
                   </Link>
@@ -106,7 +106,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-12 border-t-2 border-white/50 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="pt-12 border-t border-black/10 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-[#1a1a1a]/60 text-sm font-medium"
              style={{ fontFamily: "var(--font-fraunces)" }}>
             © {new Date().getFullYear()} Actirova AI Tutor. All rights reserved.
@@ -162,7 +162,7 @@ function NewsletterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-3 py-2 rounded-xl bg-white/60 border-2 border-white focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all text-xs text-[#1a1a1a] placeholder-[#1a1a1a]/40 backdrop-blur-md"
+              className="w-full px-3 py-2 rounded-xl bg-white/70 border border-black/10 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all text-xs text-[#1a1a1a] placeholder-[#1a1a1a]/40"
               disabled={status === "loading"}
             />
           </div>

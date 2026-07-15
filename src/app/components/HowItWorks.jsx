@@ -711,12 +711,12 @@ export default function HowItWorks() {
     <section
       id="how-it-works"
       ref={containerRef}
-      className="relative py-24 md:py-32 overflow-hidden bg-[#E8EBFD]"
+      className="relative py-24 md:py-32 overflow-hidden bg-[#F2F1EC]"
     >
       {/* Background Elements */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-100/40 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-green-100/40 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-100/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-green-100/20 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
