@@ -10,12 +10,31 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+const DOCUMENT_PROFILES = {
+    research_project: "Five chapters: Introduction, Literature Review, Methodology, Findings/Discussion, and Conclusion.",
+    research_proposal: "Chapters 1–3 in future tense: Introduction, Literature Review, Methodology, then a work plan.",
+    academic_essay: "A focused thesis, sequenced arguments with evidence, and a conclusion.",
+    literature_review: "Theme-by-theme synthesis, comparison of scholars, debates, and explicit research gaps.",
+    term_paper: "Course-relevant context followed by balanced explanation and critical analysis.",
+    business_report: "Executive summary, findings, analysis, recommendations, implementation, and risks.",
+    grant_proposal: "Need statement, SMART objectives, activities, evaluation, sustainability, and budget narrative.",
+    case_study: "Situation, diagnosis, alternatives, recommendation, implementation, and risks.",
+    business_plan: "Executive summary, market, operations, marketing, risks, and financial projections.",
+    dissertation: "Extended original research: Introduction, Literature Review, Methodology, Results, Discussion, and Conclusion with a clear scholarly contribution.",
+    capstone_project: "Applied project: problem definition, research, solution design, implementation, evaluation, and reflection.",
+    policy_brief: "Concise decision-maker format: issue, evidence, policy options, recommendation, implementation implications, and references.",
+    white_paper: "Authoritative format: executive summary, problem, evidence, approach, benefits, limitations, and next steps.",
+    feasibility_study: "Viability assessment covering market, technical, operational, legal, schedule, financial, and risk considerations.",
+    lab_report: "Scientific format: Abstract, Introduction, Method, Results, Discussion, limitations, Conclusion, and references.",
+    project_proposal: "Approval-ready plan: problem, objectives, scope, deliverables, timeline, resources/budget, risks, and monitoring.",
+};
+
 async function handlePost(request) {
     const user = request.user;
     const userId = user._id;
 
     try {
-        const { topic, type, length, difficulty, citationStyle, academicLevel, criticalDepth } = await request.json();
+        const { topic, type, length, difficulty, citationStyle, academicLevel, criticalDepth, researchQuestion, requirements, institution, includeToc, includeFigures } = await request.json();
 
         if (!topic?.trim()) {
             return NextResponse.json({ error: "Topic is required" }, { status: 400 });
@@ -40,6 +59,11 @@ Rules:
 - Academic Level: ${academicLevel || "Undergraduate"}.
 - Critical Depth: ${criticalDepth || "Moderate"}.
 - Formatting / Citation Style: ${citationStyle || "APA 7"}.
+- Institution/client requirements: ${institution || "Not specified"}.
+- Research question or outcome: ${researchQuestion || "Not specified"}.
+- Additional requirements: ${requirements || "None provided"}.
+- Include table of contents: ${includeToc ? "Yes" : "No"}; plan useful tables/figures: ${includeFigures ? "Yes" : "No"}.
+- Selected document profile: ${DOCUMENT_PROFILES[type] || "Formal structured document"}
 - Tone: Formal, objective academic tone. Use disciplinary terminology correctly.
 - Coherence: Ensure logical flow between sections.
 - Structural Rules:
@@ -90,6 +114,13 @@ Rules:
             length,
             difficulty,
             citationStyle: citationStyle || "APA",
+            academicLevel: academicLevel || "Undergraduate",
+            criticalDepth: criticalDepth || "Moderate",
+            researchQuestion: researchQuestion || "",
+            requirements: requirements || "",
+            institution: institution || "",
+            includeToc: Boolean(includeToc),
+            includeFigures: Boolean(includeFigures),
             outline: outlineData.outline,
             abstract: outlineData.abstract || "",
             sections: {}, // Will store generated content for each section
