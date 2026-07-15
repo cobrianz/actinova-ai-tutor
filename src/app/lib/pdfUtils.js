@@ -1770,7 +1770,7 @@ export const downloadResumeAsPDF = async (resumeData, fileName = "Resume", templ
 export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", templateId = "classic") => {
     if (!resumeData) throw new Error("Resume data is required.");
 
-    const [{ Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType }, fileSaverModule] = await Promise.all([
+    const [{ Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType, ShadingType, UnderlineType }, fileSaverModule] = await Promise.all([
         import("docx"),
         import("file-saver"),
     ]);
@@ -1779,10 +1779,9 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         fileSaverModule.default?.saveAs ||
         fileSaverModule.default;
 
-    if (typeof saveAs !== "function") {
-        throw new Error("File saver is unavailable");
-    }
+    if (typeof saveAs !== "function") throw new Error("File saver is unavailable");
 
+    // ── Normalise data ──────────────────────────────────────────────────────
     const data = {
         personalInfo: resumeData.personalInfo || {},
         summary: resumeData.summary || "",
@@ -1796,6 +1795,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         customSections: resumeData.customSections || [],
     };
 
+    // ── Helpers ─────────────────────────────────────────────────────────────
     const textValue = (value) => {
         if (value === null || value === undefined) return "";
         if (Array.isArray(value)) return value.filter(Boolean).join(", ");
@@ -1803,13 +1803,8 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
     };
 
     const normalizeList = (value) => {
-        if (Array.isArray(value)) {
-            return value.map((item) => textValue(item)).filter(Boolean);
-        }
-        return textValue(value)
-            .split(/\r?\n/)
-            .map((item) => item.replace(/^[-*]\s*/, "").trim())
-            .filter(Boolean);
+        if (Array.isArray(value)) return value.map((item) => textValue(item)).filter(Boolean);
+        return textValue(value).split(/\r?\n/).map((item) => item.replace(/^[-•*]\s*/, "").trim()).filter(Boolean);
     };
 
     const buildDateRange = (startDate, endDate, dateRange) => {
@@ -1817,47 +1812,73 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         if (combined) return combined;
         const start = textValue(startDate);
         const end = textValue(endDate);
-        if (start && end) return `${start} - ${end}`;
+        if (start && end) return `${start} – ${end}`;
         return start || end;
     };
 
-    const templateAccents = {
-        classic: "166534", modern: "059669", executive: "166534", minimal: "64748B",
-        creative: "7c3aed", technical: "0891b2", elegant: "92400e", bold: "dc2626",
-        compact: "475569", professional: "1d4ed8",
+    const ACCENTS = {
+        classic: "166534", modern: "059669", executive: "1E293B", minimal: "64748B",
+        creative: "7C3AED", technical: "0891B2", elegant: "92400E", bold: "DC2626",
+        compact: "475569", professional: "1D4ED8",
     };
-    const accentColor = templateAccents[templateId] || "166534";
+    const FONTS = {
+        classic: "Georgia", modern: "Arial", executive: "Times New Roman", minimal: "Calibri",
+        creative: "Arial", technical: "Courier New", elegant: "Georgia", bold: "Arial",
+        compact: "Calibri", professional: "Arial",
+    };
+    const accentColor = ACCENTS[templateId] || "166534";
+    const fontFamily = FONTS[templateId] || "Arial";
+    const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
 
-    const fontFamily = {
-        classic: "Georgia",
-        modern: "Arial",
-        executive: "Times New Roman",
-        minimal: "Calibri",
-        creative: "Arial",
-        technical: "Arial",
-        elegant: "Georgia",
-        bold: "Arial",
-        compact: "Calibri",
-        professional: "Arial",
-    }[templateId] || "Arial";
-
-    const isCentered = ["classic", "executive", "elegant"].includes(templateId);
-
-    const textRun = (text, options = {}) => new TextRun({
+    const tr = (text, opts = {}) => new TextRun({
         text: textValue(text),
-        font: fontFamily,
-        size: options.size || 20,
-        color: options.color || "111827",
-        bold: options.bold ?? false,
-        italics: options.italics ?? false,
+        font: opts.font || fontFamily,
+        size: opts.size || 20,
+        color: opts.color || "111827",
+        bold: opts.bold ?? false,
+        italics: opts.italics ?? false,
+        underline: opts.underline ? { type: UnderlineType.SINGLE } : undefined,
+        allCaps: opts.caps ?? false,
     });
 
-    const createParagraph = (options = {}) => new Paragraph({
-        alignment: options.alignment || (isCentered ? AlignmentType.CENTER : AlignmentType.LEFT),
-        spacing: options.spacing || { after: 120, line: 360 },
-        children: options.children || [],
-        border: options.border || undefined,
+    const para = (children, opts = {}) => new Paragraph({
+        ...opts,
+        alignment: opts.alignment || opts.align || AlignmentType.LEFT,
+        spacing: opts.spacing || { after: 100, line: 340 },
+        children: Array.isArray(children) ? children : [children],
     });
+
+    // Keep each template's visual alignment consistent between the preview and Word.
+    const isCentered = ["classic", "executive", "elegant"].includes(templateId);
+    const textRun = tr;
+    const createParagraph = ({ children = [], ...opts } = {}) => para(children, opts);
+
+    // ── Shared two-column table row (title left, date right) ────────────────
+    const twoColRow = (left, right, leftOpts = {}, rightOpts = {}) => new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder },
+        rows: [new TableRow({ children: [
+            new TableCell({
+                width: { size: 75, type: WidthType.PERCENTAGE },
+                borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                children: [para(tr(left, { bold: true, size: 21, ...leftOpts }), { spacing: { after: 40 } })],
+            }),
+            new TableCell({
+                width: { size: 25, type: WidthType.PERCENTAGE },
+                borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                children: [para(tr(right, { size: 18, color: "64748B", ...rightOpts }), { align: AlignmentType.RIGHT, spacing: { after: 40 } })],
+            }),
+        ]})],
+    });
+
+    // ── Bullet paragraphs ────────────────────────────────────────────────────
+    const bullets = (items, color = "374151") =>
+        normalizeList(items).map((line) => new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { after: 60, line: 320 },
+            bullet: { level: 0 },
+            children: [tr(line, { color })],
+        }));
 
     const makeSectionHeading = (label, textColor = accentColor) => {
         const borderStyle = {
@@ -1868,18 +1889,18 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
             bold: { bottom: { style: BorderStyle.SINGLE, size: 12, color: textColor } },
         }[templateId] || { bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" } };
 
-        return createParagraph({
+        return para(
+            [tr(textValue(label).toUpperCase(), {
+                bold: true,
+                color: textColor,
+                size: 22,
+            })],
+            {
             spacing: { before: 280, after: 120 },
-            alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+            align: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
             border: borderStyle,
-            children: [
-                textRun(textValue(label).toUpperCase(), {
-                    bold: true,
-                    color: textColor,
-                    size: 22,
-                })
-            ]
-        });
+            }
+        );
     };
 
     const bulletParagraphs = (items, textColor = "374151") =>
@@ -1892,11 +1913,9 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                         alignment: AlignmentType.LEFT,
                         spacing: { after: 60, line: 320 },
                         bullet: { level: 0 },
-                        children: [textRun(item, { color: textColor })]
+                        children: [tr(item, { color: textColor })]
                     })
             );
-
-    const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
 
     const entryHeaderRow = (leftText, rightText, leftColor = "111827", rightColor = "64748B") => {
         return new Table({
@@ -1915,7 +1934,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                                 new Paragraph({
                                     alignment: AlignmentType.LEFT,
                                     spacing: { before: 100, after: 40 },
-                                    children: [textRun(leftText, { bold: true, color: leftColor, size: 22 })]
+                                    children: [tr(leftText, { bold: true, color: leftColor, size: 22 })]
                                 })
                             ]
                         }),
@@ -1926,7 +1945,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                                 new Paragraph({
                                     alignment: AlignmentType.RIGHT,
                                     spacing: { before: 100, after: 40 },
-                                    children: [textRun(rightText, { italics: true, color: rightColor, size: 18 })]
+                                    children: [tr(rightText, { italics: true, color: rightColor, size: 18 })]
                                 })
                             ]
                         })
@@ -1950,11 +1969,11 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
 
     const contactLine = contactItems.join("  |  ");
 
-    const getPrimaryContent = (isSidebarLayout = false, sidebarTextColor = "111827") => {
+    const getPrimaryContent = (isSidebarLayout = false) => {
         const list = [];
 
         if (!isSidebarLayout) {
-            if (templateId === "bold") {
+            if (templateId === "bold" || templateId === "executive") {
                 list.push(
                     new Table({
                         width: { size: 100, type: WidthType.PERCENTAGE },
@@ -1963,12 +1982,12 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                             new TableRow({
                                 children: [
                                     new TableCell({
-                                        shading: { fill: accentColor },
+                                        shading: { fill: templateId === "executive" ? "1E293B" : accentColor },
                                         margins: { top: 240, bottom: 240, left: 240, right: 240 },
                                         children: [
                                             new Paragraph({
                                                 alignment: AlignmentType.CENTER,
-                                                children: [textRun(fullName, { bold: true, size: 36, color: "FFFFFF" })]
+                                                children: [textRun(fullName, { bold: true, size: 36, color: "FFFFFF", caps: templateId === "executive" })]
                                             }),
                                             ...(jobTitle ? [
                                                 new Paragraph({
@@ -2021,7 +2040,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                     );
                 }
             }
-        } else {
+        } else if (templateId !== "creative") {
             list.push(
                 new Paragraph({
                     alignment: AlignmentType.LEFT,
@@ -2137,10 +2156,23 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         return list;
     };
 
-    const getSidebarContent = (whiteText = false) => {
+    const getSidebarContent = (whiteText = false, includeIdentity = false) => {
         const list = [];
         const textColor = whiteText ? "FFFFFF" : "374151";
         const headingColor = whiteText ? "FFFFFF" : accentColor;
+
+        if (includeIdentity) {
+            list.push(
+                new Paragraph({
+                    spacing: { after: 60 },
+                    children: [textRun(fullName, { bold: true, size: 26, color: textColor })],
+                }),
+                ...(jobTitle ? [new Paragraph({
+                    spacing: { after: 180 },
+                    children: [textRun(jobTitle, { italics: true, size: 18, color: "E5E7EB" })],
+                })] : [])
+            );
+        }
 
         const sidebarHeading = (label) => new Paragraph({
             alignment: AlignmentType.LEFT,
@@ -2151,7 +2183,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
             ]
         });
 
-        sidebarHeading("Contact");
+        list.push(sidebarHeading("Contact"));
         contactItems.forEach((item) => {
             list.push(
                 new Paragraph({
@@ -2163,7 +2195,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         });
 
         if (data.skills.length > 0) {
-            sidebarHeading("Skills");
+            list.push(sidebarHeading("Skills"));
             normalizeList(data.skills).forEach((skill) => {
                 list.push(
                     new Paragraph({
@@ -2176,7 +2208,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         }
 
         if (data.languages.length > 0) {
-            sidebarHeading("Languages");
+            list.push(sidebarHeading("Languages"));
             data.languages.forEach((lang) => {
                 const label = typeof lang === "string" ? lang : [textValue(lang.language), textValue(lang.level)].filter(Boolean).join(" - ");
                 list.push(
@@ -2190,7 +2222,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         }
 
         if (data.certifications.length > 0) {
-            sidebarHeading("Certifications");
+            list.push(sidebarHeading("Certifications"));
             data.certifications.forEach((cert) => {
                 list.push(
                     new Paragraph({
@@ -2208,7 +2240,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         }
 
         if (data.awards.length > 0) {
-            sidebarHeading("Awards");
+            list.push(sidebarHeading("Awards"));
             data.awards.forEach((award) => {
                 list.push(
                     new Paragraph({
@@ -2230,7 +2262,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
 
     let documentChildren = [];
 
-    if (templateId === "creative" || templateId === "elegant") {
+    if (templateId === "creative") {
         documentChildren = [
             new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
@@ -2242,7 +2274,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                                 width: { size: 30, type: WidthType.PERCENTAGE },
                                 shading: { fill: accentColor },
                                 margins: { top: 360, bottom: 360, left: 360, right: 360 },
-                                children: getSidebarContent(true),
+                                children: getSidebarContent(true, true),
                             }),
                             new TableCell({
                                 width: { size: 70, type: WidthType.PERCENTAGE },
@@ -2269,9 +2301,9 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                             }),
                             new TableCell({
                                 width: { size: 30, type: WidthType.PERCENTAGE },
-                                shading: { fill: "F3F4F6" },
+                                shading: { fill: accentColor },
                                 margins: { top: 360, bottom: 360, left: 360, right: 360 },
-                                children: getSidebarContent(false),
+                                children: getSidebarContent(true),
                             })
                         ]
                     })
@@ -2281,6 +2313,16 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
     } else {
         const primary = getPrimaryContent(false);
         const secondary = [];
+
+        if (templateId === "modern") {
+            primary.unshift(
+                new Paragraph({
+                    spacing: { after: 180 },
+                    border: { top: { style: BorderStyle.SINGLE, size: 18, color: accentColor, space: 1 } },
+                    children: [],
+                })
+            );
+        }
 
         const appendHeading = (label) => makeSectionHeading(label);
 
