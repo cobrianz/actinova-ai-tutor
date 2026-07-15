@@ -97,7 +97,7 @@ export function ClassicTemplate({ data, onUpdate, handleBlur, addSectionType }) 
 
     return (
         <div className="p-8 md:p-12 bg-white dark:bg-slate-900 min-h-[1000px] relative text-slate-900 dark:text-slate-100 font-serif">
-            <header className="flex flex-col items-center text-center space-y-1 mb-8">
+            <header className="flex flex-col items-center text-center space-y-3 mb-8">
                 <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-5xl font-bold tracking-tight mb-2" style={{ letterSpacing: "0.02em" }}>
                     {displayName || "Your Name"}
                 </Editable>
@@ -296,14 +296,14 @@ export function ModernTemplate({ data, onUpdate, handleBlur, addSectionType }) {
         <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 font-sans">
             <div className="h-2" style={{ background: accent }} />
             <div className="px-10 py-8">
-                <header className="mb-8">
+                <header className="mb-8 flex flex-col gap-2">
                     <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-4xl font-black tracking-tight text-slate-900 dark:text-white" style={{ color: accent }}>
                         {displayName || "Your Name"}
                     </Editable>
-                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-lg text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-lg text-slate-500 dark:text-slate-400 font-medium">
                         {personalInfo.jobTitle || "Job Title"}
                     </Editable>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-[13px] text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-slate-500 dark:text-slate-400">
                         {getContactItems(personalInfo).map((item, i) => (
                             <div key={i} className={`flex items-center gap-1.5 ${!item.value ? "opacity-30" : ""}`}>
                                 <item.icon size={12} style={{ color: accent }} />
@@ -624,10 +624,10 @@ export function MinimalTemplate({ data, onUpdate, handleBlur, addSectionType }) 
 
     return (
         <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 font-sans px-14 py-10">
-            <header className="mb-10">
+            <header className="mb-10 flex flex-col gap-2">
                 <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-3xl font-light text-slate-900 dark:text-white tracking-wide">{displayName || "Your Name"}</Editable>
-                <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm text-slate-400 mt-1 tracking-widest uppercase">{personalInfo.jobTitle || "Job Title"}</Editable>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4 text-[12px] text-slate-400">
+                <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm text-slate-400 tracking-widest uppercase">{personalInfo.jobTitle || "Job Title"}</Editable>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-slate-400">
                     {getContactItems(personalInfo).map((item, i) => (
                         <div key={i} className={`flex items-center gap-1 ${!item.value ? "opacity-30" : ""}`}>
                             <item.icon size={10} />
@@ -760,7 +760,7 @@ export function CreativeTemplate({ data, onUpdate, handleBlur, addSectionType })
                         {(displayName || "YN").charAt(0)}
                     </div>
                     <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-lg font-bold leading-tight">{displayName || "Your Name"}</Editable>
-                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm text-white/70 mt-1">{personalInfo.jobTitle || "Job Title"}</Editable>
+                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm text-white/70 mt-2">{personalInfo.jobTitle || "Job Title"}</Editable>
                 </div>
 
                 <SideSectionTitle accent="white">Contact</SideSectionTitle>
@@ -929,10 +929,10 @@ export function TechnicalTemplate({ data, onUpdate, handleBlur, addSectionType }
 
     return (
         <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 font-mono text-[13px] px-10 py-8">
-            <header className="mb-8 border-b-2 pb-4" style={{ borderColor: accent }}>
+            <header className="mb-8 border-b-2 pb-4 flex flex-col gap-2" style={{ borderColor: accent }}>
                 <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-3xl font-bold text-slate-900 dark:text-white font-sans">{displayName || "Your Name"}</Editable>
-                <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm mt-1 font-sans" style={{ color: accent }}>{personalInfo.jobTitle || "Job Title"}</Editable>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[12px] text-slate-500 font-sans">
+                <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm font-sans" style={{ color: accent }}>{personalInfo.jobTitle || "Job Title"}</Editable>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-slate-500 font-sans">
                     {getContactItems(personalInfo).map((item, i) => (
                         <div key={i} className={`flex items-center gap-1.5 ${!item.value ? "opacity-30" : ""}`}>
                             <item.icon size={10} style={{ color: accent }} />
@@ -1053,7 +1053,7 @@ export function ElegantTemplate({ data, onUpdate, handleBlur, addSectionType }) 
 
     return (
         <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 font-serif px-12 py-10">
-            <header className="text-center mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
+            <header className="text-center mb-10 border-b border-slate-200 dark:border-slate-700 pb-8 flex flex-col items-center gap-2">
                 <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-4xl font-bold tracking-wide" style={{ color: accent }}>{displayName || "Your Name"}</Editable>
                 <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-base text-slate-500 mt-2 italic">{personalInfo.jobTitle || "Job Title"}</Editable>
                 <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mt-4 text-[12px] text-slate-500">
@@ -1184,7 +1184,7 @@ export function BoldTemplate({ data, onUpdate, handleBlur, addSectionType }) {
         <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 font-sans">
             <div className="px-10 py-8" style={{ background: `linear-gradient(135deg, #1a1a1a, #333)` }}>
                 <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-4xl font-black text-white tracking-tight uppercase">{displayName || "Your Name"}</Editable>
-                <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-lg font-light mt-1" style={{ color: accent }}>{personalInfo.jobTitle || "Job Title"}</Editable>
+                <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-lg font-light mt-3" style={{ color: accent }}>{personalInfo.jobTitle || "Job Title"}</Editable>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[12px] text-slate-400">
                     {getContactItems(personalInfo).map((item, i) => (
                         <div key={i} className={`flex items-center gap-1.5 ${!item.value ? "opacity-30" : ""}`}>
@@ -1308,7 +1308,7 @@ export function CompactTemplate({ data, onUpdate, handleBlur, addSectionType }) 
             <header className="mb-4 pb-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-end">
                 <div>
                     <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-2xl font-bold text-slate-900 dark:text-white">{displayName || "Your Name"}</Editable>
-                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm" style={{ color: accent }}>{personalInfo.jobTitle || "Job Title"}</Editable>
+                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm mt-2" style={{ color: accent }}>{personalInfo.jobTitle || "Job Title"}</Editable>
                 </div>
                 <div className="text-right text-[11px] text-slate-500 space-y-0.5">
                     {getContactItems(personalInfo).filter(c => c.value).map((item, i) => (
@@ -1432,9 +1432,9 @@ export function ProfessionalTemplate({ data, onUpdate, handleBlur, addSectionTyp
         <div className="w-full">
             <div className="bg-white dark:bg-slate-900 min-h-[1000px] text-slate-900 dark:text-slate-100 flex font-sans overflow-x-auto">
                 <div className="flex-1 p-8">
-                <header className="mb-6">
+                <header className="mb-6 flex flex-col gap-2">
                     <Editable onBlur={(e) => handleBlur("personalInfo", "fullName", e.target.innerText)} className="text-3xl font-black text-slate-900 dark:text-white" style={{ color: accent }}>{displayName || "Your Name"}</Editable>
-                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm text-slate-500 mt-1">{personalInfo.jobTitle || "Job Title"}</Editable>
+                    <Editable onBlur={(e) => handleBlur("personalInfo", "jobTitle", e.target.innerText)} className="text-sm text-slate-500">{personalInfo.jobTitle || "Job Title"}</Editable>
                 </header>
 
                 {(personalInfo.summary || data.summary) && (

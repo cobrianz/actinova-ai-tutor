@@ -8,17 +8,16 @@ export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    // Don't show if user already dismissed
+    if (localStorage.getItem('install-prompt-dismissed') === 'true') return;
+
     const handleBeforeInstallPrompt = (e) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later
       setDeferredPrompt(e);
-      // Show the install prompt
       setShowPrompt(true);
     };
 
     const handleAppInstalled = () => {
-      // Hide the install prompt
       setShowPrompt(false);
       setDeferredPrompt(null);
     };
@@ -34,19 +33,14 @@ export default function InstallPrompt() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-
-    // Show the install prompt
     deferredPrompt.prompt();
-
-    // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-
-    // Reset the deferred prompt
     setDeferredPrompt(null);
     setShowPrompt(false);
   };
 
   const handleDismiss = () => {
+    localStorage.setItem('install-prompt-dismissed', 'true');
     setShowPrompt(false);
   };
 

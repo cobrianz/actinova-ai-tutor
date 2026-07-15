@@ -1887,12 +1887,16 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
             minimal: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "E5E7EB" } },
             modern: { bottom: { style: BorderStyle.SINGLE, size: 8, color: textColor } },
             bold: { bottom: { style: BorderStyle.SINGLE, size: 12, color: textColor } },
+            elegant: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" } },
+            compact: { bottom: { style: BorderStyle.SINGLE, size: 2, color: "CBD5E1" } },
         }[templateId] || { bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" } };
+
+        const headingColor = templateId === "elegant" ? "92400E" : textColor;
 
         return para(
             [tr(textValue(label).toUpperCase(), {
                 bold: true,
-                color: textColor,
+                color: headingColor,
                 size: 22,
             })],
             {
@@ -1967,7 +1971,8 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
         personalInfo.github,
     ].map((item) => textValue(item)).filter(Boolean);
 
-    const contactLine = contactItems.join("  |  ");
+    const contactSeparator = templateId === "minimal" ? "  ·  " : templateId === "elegant" ? "  •  " : "  |  ";
+    const contactLine = contactItems.join(contactSeparator);
 
     const getPrimaryContent = (isSidebarLayout = false) => {
         const list = [];
@@ -2012,19 +2017,31 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                     createParagraph({ spacing: { after: 200 } })
                 );
             } else {
+                // Template-specific name paragraph styles
+                const nameStyleMap = {
+                    classic:      { align: AlignmentType.CENTER, font: "Georgia",      size: 36, bold: true,  color: "166534" },
+                    modern:       { align: AlignmentType.LEFT,   font: "Arial",        size: 34, bold: true,  color: "059669" },
+                    minimal:      { align: AlignmentType.LEFT,   font: "Calibri",      size: 28, bold: false, color: "334155" },
+                    technical:    { align: AlignmentType.LEFT,   font: "Courier New",  size: 30, bold: true,  color: "111827" },
+                    elegant:      { align: AlignmentType.CENTER, font: "Georgia",      size: 34, bold: true,  color: "92400E" },
+                    compact:      { align: AlignmentType.LEFT,   font: "Calibri",      size: 26, bold: true,  color: "475569" },
+                    professional: { align: AlignmentType.LEFT,   font: "Arial",        size: 32, bold: true,  color: "1D4ED8" },
+                };
+                const nameStyle = nameStyleMap[templateId] || { align: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT, font: fontFamily, size: 32, bold: true, color: accentColor };
+
                 list.push(
                     createParagraph({
-                        alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+                        alignment: nameStyle.align,
                         spacing: { after: 80 },
-                        children: [textRun(fullName, { bold: true, size: 32, color: accentColor })]
+                        children: [textRun(fullName, { bold: nameStyle.bold, size: nameStyle.size, color: nameStyle.color, font: nameStyle.font })]
                     })
                 );
 
                 if (jobTitle) {
                     list.push(
                         createParagraph({
-                            alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
-                            spacing: { after: 80 },
+                            alignment: nameStyle.align,
+                            spacing: { before: 120, after: 80 },
                             children: [textRun(jobTitle, { italics: true, size: 22, color: "475569" })]
                         })
                     );
@@ -2033,7 +2050,7 @@ export const downloadResumeAsDOCX = async (resumeData, fileName = "Resume", temp
                 if (contactLine) {
                     list.push(
                         createParagraph({
-                            alignment: isCentered ? AlignmentType.CENTER : AlignmentType.LEFT,
+                            alignment: nameStyle.align,
                             spacing: { after: 180 },
                             children: [textRun(contactLine, { size: 18, color: "64748B" })]
                         })

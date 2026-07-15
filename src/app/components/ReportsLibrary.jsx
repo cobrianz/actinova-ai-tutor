@@ -40,6 +40,8 @@ const DOCUMENT_TYPES = [
     { id: "feasibility_study", name: "Feasibility Study", pages: "8–40 pages", description: "Test market, technical, operational, legal, and financial viability.", icon: BriefcaseBusiness, sections: ["Project Overview", "Market", "Technical", "Operations", "Financials", "Recommendation"] },
     { id: "lab_report", name: "Laboratory Report", pages: "4–20 pages", description: "Scientific report with method, results, analysis, and limitations.", icon: BookOpen, sections: ["Abstract", "Introduction", "Method", "Results", "Discussion", "Conclusion"] },
     { id: "project_proposal", name: "Project Proposal", pages: "4–30 pages", description: "Scope, deliverables, timeline, resources, risks, and approval case.", icon: ListTree, sections: ["Problem", "Objectives", "Scope", "Deliverables", "Timeline", "Budget", "Risks"] },
+    { id: "annotated_bibliography", name: "Annotated Bibliography", pages: "2–20 pages", description: "Source-by-source citations with critical summaries and relevance notes.", icon: BookOpen, sections: ["Introduction", "Annotations", "Conclusion"] },
+    { id: "reflective_journal", name: "Reflective Journal", pages: "2–30 pages", description: "Personal critical reflection on experience, learning, and growth.", icon: ScrollTextIcon, sections: ["Experience", "Feelings", "Evaluation", "Analysis", "Conclusion", "Action Plan"] },
 ];
 
 const CREATOR_STEPS = ["Document Type", "Research Brief", "Structure", "Institution", "Review"];
@@ -185,7 +187,7 @@ function ReportCreator({ onCreated, onBack }) {
             </motion.button>
 
             <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-4xl">
                 {/* Centered header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -219,13 +221,13 @@ function ReportCreator({ onCreated, onBack }) {
                     </nav>
                     <div className="min-w-0 flex-1">
                 {step === 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6 -mx-1">
                         {DOCUMENT_TYPES.map((type) => {
                             const Icon = type.icon;
                             const active = reportType === type.id;
                             return <button key={type.id} type="button" onClick={() => setReportType(type.id)} className={`text-left rounded-xl border p-4 transition-all ${active ? "border-green-500 bg-green-50/70 ring-1 ring-green-200 dark:border-green-500 dark:bg-green-950/20" : "border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900"}`}>
-                                <div className="mb-2 flex items-center justify-between"><Icon size={17} className={active ? "text-green-600" : "text-slate-400"} /><span className="text-[10px] font-bold text-slate-400">{type.pages}</span></div>
-                                <p className="text-sm font-bold text-slate-800 dark:text-white">{type.name}</p><p className="mt-1 text-[11px] leading-relaxed text-slate-500">{type.description}</p>
+                                <div className="mb-2 flex items-center justify-between"><Icon size={16} className={active ? "text-green-600 shrink-0" : "text-slate-400 shrink-0"} /><span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400 text-right">{type.name}</span></div>
+                                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{type.description}</p>
                             </button>;
                         })}
                     </div>
@@ -315,22 +317,15 @@ function ReportCreator({ onCreated, onBack }) {
                     <button
                         onClick={() => step < CREATOR_STEPS.length - 1 ? setStep((current) => current + 1) : handleGenerate()}
                         disabled={(step === 1 && !topic.trim()) || (step === 4 && (!topic.trim() || isSubmitting))}
-                        className="relative flex items-center gap-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-8 py-3 rounded-2xl font-bold text-sm transition-all overflow-hidden shadow-lg shadow-green-500/20 hover:shadow-green-500/30 active:scale-[0.98]"
+                        className="relative flex items-center gap-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all overflow-hidden shadow-md shadow-green-500/20 hover:shadow-green-500/30 active:scale-[0.98]"
                     >
-                        {/* Shimmer on hover */}
-                        {!isSubmitting && topic.trim() && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-200%] hover:translate-x-[200%] transition-transform duration-700" />
-                        )}
                         {isSubmitting ? (
                             <>
-                                <Loader2 size={15} className="animate-spin" />
+                                <Loader2 size={14} className="animate-spin" />
                                 <span>Generating...</span>
                             </>
                         ) : (
-                            <>
-                                <Sparkles size={15} />
-                                <span>{step === CREATOR_STEPS.length - 1 ? "Generate document" : "Continue"}</span>
-                            </>
+                            <span>{step === CREATOR_STEPS.length - 1 ? "Generate document" : "Continue"}</span>
                         )}
                     </button>
                 </motion.div>

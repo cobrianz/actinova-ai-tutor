@@ -435,7 +435,7 @@ export default function Generate({ setActiveContent }) {
             style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
           >
             {friendlyName
-              ? `Welcome back, ${friendlyName}`
+              ? <>Welcome back, <span className="text-green-500">{friendlyName}</span></>
               : "What can I help you learn?"}
           </motion.h1>
 
@@ -598,22 +598,17 @@ export default function Generate({ setActiveContent }) {
           ].map((f) => (
             <motion.div
               key={f.id}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -2 }}
               onClick={() => setFormat(f.id)}
-              className={`backdrop-blur-lg border-2 p-4.5 rounded-2xl text-left transition-all cursor-pointer group relative overflow-hidden ${format === f.id 
-                ? "bg-green-50/70 dark:bg-green-500/10 border-green-600/30" 
-                : "bg-white/20 dark:bg-white/5 border-[#D2D7F8]/60 hover:bg-green-50/70 dark:hover:bg-white/10"}`}
+              className={`text-left rounded-xl border p-4 transition-all cursor-pointer ${format === f.id
+                ? "border-green-500 bg-green-50/70 ring-1 ring-green-200 dark:border-green-500 dark:bg-green-950/20"
+                : "border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900"}`}
             >
-              {/* Shine effect */}
-              <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 group-hover:left-[200%] transition-all duration-1000 ease-out" />
-              
-              <div className="relative z-10">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 transition-colors ${format === f.id ? "bg-[#1a1a1a] dark:bg-white border-[#1a1a1a] dark:border-white" : "bg-white/80 dark:bg-white/10 border-[#D2D7F8]/60"} border shadow-none`}>
-                  <f.icon className={`w-4.5 h-4.5 ${format === f.id ? "text-white" : "text-foreground"}`} />
-                </div>
-                <div className="text-[13px] font-bold text-foreground mb-1 leading-tight">{f.label}</div>
-                <div className="text-[11px] text-muted-foreground font-medium leading-normal">{f.sub}</div>
+              <div className="mb-2 flex items-center justify-between">
+                <f.icon size={16} className={format === f.id ? "text-green-600 shrink-0" : "text-slate-400 shrink-0"} />
+                <span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400 text-right">{f.label}</span>
               </div>
+              <p className="text-[11px] leading-relaxed text-slate-500">{f.sub}</p>
             </motion.div>
           ))}
         </div>

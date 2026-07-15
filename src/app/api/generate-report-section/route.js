@@ -34,59 +34,36 @@ async function handlePost(request) {
 
         const isCover = sectionTitle.toLowerCase().includes('cover') || sectionTitle.toLowerCase().includes('title');
 
-        const systemPrompt = `🎯 ROLE
-You are an academic writing engine. Your task is to write a specific section for a ${type} on the topic: "${topic}".
+        // Humanization layer (same as outline route)
+        const humanLayer = `You are an experienced writer producing a section of a ${type} for a real person with a real deadline.
+Write the way a sharp, slightly tired grad student or professional writes at 11pm when they actually know the material.
+Rules: vary sentence length on purpose; ban "Furthermore," "Moreover," "In today's world," "It is important to note that"; use concrete nouns and real numbers; let some claims stay appropriately uncertain; include at least one place weighing a counterargument or limitation; no em-dash chains, no rule-of-three adjective stacking, no rhetorical questions as transitions; match register to audience; do not fabricate sources, statistics, or quotes.\n\n`;
 
-📐 SECTION DETAILS
-- Title: ${sectionTitle}
-- Description: ${sectionDescription}
-- Academic Level: ${difficulty}
-- Citation Style: ${citationStyle || "APA 7"}
-- Target Word Count: Approximately ${(requestedPages || 1) * 275} words.
+        const systemPrompt = humanLayer + `Write the "${sectionTitle}" section of a ${type} on: "${topic}".
 
-📜 RULES
-- Writing Tone: Formal academic tone. Use appropriate disciplinary terminology.
-- Formatting: 
-    - **No markdown**.
-    - **No bullet symbols**.
-    - **No numbering** in headings or paragraphs.
-    - Each paragraph must be a separate string in an array.
-    - Do not include commentary outside JSON.
-    - Citation Style: Follow ${citationStyle || "APA 7"} exactly. You MUST provide REAL, credible IN-TEXT CITATIONS (e.g. (Smith, 2023) or [1]) inside the paragraph text wherever claims are made.
-    - These in-text citations MUST perfectly match the full bibliography entries provided in your 'references' array.
-    - **Existing References**: Here are the references already used in this report:
-      ${existingReferences && existingReferences.length > 0 ? existingReferences.map(r => `- ${r}`).join('\n      ') : 'None'}
-    - If you need to cite a source already mentioned above, YOU MUST REUSE the exact reference string and the same in-text citation format.
-    - **AUTHENTICITY**: You MUST cite REAL academic papers, books, or reputable news sources that actually exist. DO NOT hallucinate titles, autores, or DOIs. Use sources from Google Scholar, PubMed, arXiv, or major academic publishers.
-    - Do not use placeholders like "(Source, Year)".
-- Originality: Paraphrase conceptual explanations. Ensure content is original, but well-supported by the citations.
-- Exam/Assignment Prompts: If this section is answering a specific exam or assignment question, ensure the answer is comprehensive, accurate, and written at an A-grade level.
+Section description: ${sectionDescription}
+Target word count: ~${(requestedPages || 1) * 275} words.
 
-${isCover ? `
-📐 SPECIAL CASE: COVER PAGE
-Since this is a ${sectionTitle}, the JSON must include:
-- "title": Full academic title
-- "author": Student name
-- "institution": University name
-- "course": Course code and name
-- "date": Current date (Month Day, Year)
-- "paragraphs": A list of items to show on the cover page for visual verification.
-` : ''}
+Configuration:
+- Academic Level: ${difficulty}.
+- Citation Style: ${citationStyle || "APA 7"}.
 
-🔒 OUTPUT FORMAT: JSON only.
+Formatting Rules:
+- No markdown, no bullet symbols, no numbering in headings or paragraphs.
+- Each paragraph must be a separate string in the array (3-6 coherent sentences).
+- Include REAL in-text citations from Google Scholar, PubMed, arXiv, or major academic publishers.
+- Do NOT hallucinate titles, authors, or DOIs.
+- Existing references already used in this report (reuse exact strings if citing these sources):
+  ${existingReferences && existingReferences.length > 0 ? existingReferences.map(r => `- ${r}`).join('\n  ') : 'None'}
+- Do not use placeholder citations like "(Source, Year)".
+
+${isCover ? "SPECIAL CASE: COVER PAGE — JSON must include title, author, institution, course, date, and paragraphs listing items on the cover.\n" : ""}OUTPUT FORMAT: JSON only.
 {
   "heading": "${sectionTitle}",
-  "paragraphs": [
-    "First paragraph text...",
-    "Second paragraph text..."
-  ],
-  "references": [
-    "Reference 1 (APA/MLA style string)",
-    "Reference 2"
-  ]
+  "paragraphs": ["First paragraph text...", "Second paragraph text..."],
+  "references": ["Reference 1 (${citationStyle || "APA"} style)", "Reference 2"]
 }
-🚨 IMPORTANT: DO NOT include a "References" heading or list inside the paragraphs array. Use the "references" field only.
-`;
+DO NOT include a References heading inside the paragraphs array.`;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
@@ -99,17 +76,16 @@ Since this is a ${sectionTitle}, the JSON must include:
 
         // Quality Control Refinement Pass
         const refinementPrompt = `Review the following academic section for a ${type} report.
-Topic: ${topic}
-Heading: ${sectionTitle}
+Topic: ${topic} | Heading: ${sectionTitle}
 
 Tasks:
-- Ensure NO markdown, NO bullets, and NO numbering.
+- Ensure NO markdown, NO bullets, NO numbering.
 - Improve logical flow and transitions between paragraphs.
-- Strengthen academic tone and terminology accuracy.
-- Ensure formatting is exactly an array of paragraph strings.
-- VERIFY that in-text citations are present inside the paragraph strings and match the references list.
-- **CRITICAL**: Check that all references in the 'references' array look like real academic citations. If they look hallucinated or generic, rewrite them to be authentic and verifiable.
-- Ensure that if an existing reference was provided, it was used correctly.
+- Strengthen academic tone — remove any "Furthermore," "Moreover," "In today's world," or rhetorical-question transitions.
+- Vary sentence length: break up any sequences of similarly-lengthed sentences.
+- Ensure in-text citations are present inside paragraphs and match the references list.
+- Check all references look like real academic citations — rewrite any that look hallucinated.
+- If an existing reference was provided, ensure it was reused correctly.
 
 Data:
 ${JSON.stringify(sectionData, null, 2)}
@@ -117,13 +93,12 @@ ${JSON.stringify(sectionData, null, 2)}
 Existing References for Continuity:
 ${existingReferences && existingReferences.length > 0 ? JSON.stringify(existingReferences) : 'None'}
 
-Return the refined JSON in the same structure:
+Return refined JSON in the same structure:
 {
   "heading": "${sectionTitle}",
   "paragraphs": ["Refined paragraph 1", "..."],
   "references": ["Ref 1", "Ref 2"]
-}
-`;
+}`;
 
         const refinement = await openai.chat.completions.create({
             model: "gpt-4o",

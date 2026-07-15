@@ -910,13 +910,11 @@ const ResumeBuilder = () => {
 
     React.useEffect(() => {
         if (!showTemplateDropdown) return;
-        const handleClickOutside = (e) => {
-            if (templateDropdownRef.current && !templateDropdownRef.current.contains(e.target)) {
-                setShowTemplateDropdown(false);
-            }
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") setShowTemplateDropdown(false);
         };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
     }, [showTemplateDropdown]);
 
     React.useEffect(() => {
@@ -2153,34 +2151,44 @@ const ResumeBuilder = () => {
                                 {getTemplateById(selectedTemplate).name}
                                 <ChevronDown size={12} className={`transition-transform ${showTemplateDropdown ? 'rotate-180' : ''}`} />
                             </button>
-                            {showTemplateDropdown && (
-                                <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[100] overflow-hidden">
-                                    <div className="p-3 border-b border-slate-100 dark:border-slate-800">
-                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2">Choose Template</p>
-                                    </div>
-                                    <div className="max-h-80 overflow-y-auto p-2 space-y-1">
-                                        {RESUME_TEMPLATES.map((tpl) => (
-                                            <button
-                                                key={tpl.id}
-                                                onClick={() => { setSelectedTemplate(tpl.id); setShowTemplateDropdown(false); }}
-                                                className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex items-start gap-3 ${selectedTemplate === tpl.id ? 'bg-green-50 dark:bg-green-900/20 ring-1 ring-green-200 dark:ring-green-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                            >
-                                                <div className="w-8 h-10 rounded-md border border-slate-200 dark:border-slate-700 shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, ${tpl.accent}22, ${tpl.accent}44)` }}>
-                                                    <div className="w-full h-1.5 rounded-t-md" style={{ background: tpl.accent }} />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.name}</span>
-                                                        {selectedTemplate === tpl.id && <Check size={12} className="text-green-600" />}
-                                                    </div>
-                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{tpl.description}</p>
-                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 capitalize mt-0.5 inline-block">{tpl.category}</span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
+                        </div>
+                    )}
+                    {/* Template picker — fixed overlay so no parent clips it */}
+                    {editorTab === 'editor' && showTemplateDropdown && (
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center" onClick={() => setShowTemplateDropdown(false)}>
+                            <div className="absolute inset-0 bg-black/30" />
+                            <div
+                                className="relative w-[92vw] max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Choose Template</p>
+                                    <button onClick={() => setShowTemplateDropdown(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                                        <X size={16} />
+                                    </button>
                                 </div>
-                            )}
+                                <div className="max-h-[60vh] overflow-y-auto p-2 space-y-1">
+                                    {RESUME_TEMPLATES.map((tpl) => (
+                                        <button
+                                            key={tpl.id}
+                                            onClick={() => { setSelectedTemplate(tpl.id); setShowTemplateDropdown(false); }}
+                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex items-start gap-3 ${selectedTemplate === tpl.id ? 'bg-green-50 dark:bg-green-900/20 ring-1 ring-green-200 dark:ring-green-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                        >
+                                            <div className="w-8 h-10 rounded-md border border-slate-200 dark:border-slate-700 shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, ${tpl.accent}22, ${tpl.accent}44)` }}>
+                                                <div className="w-full h-1.5 rounded-t-md" style={{ background: tpl.accent }} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.name}</span>
+                                                    {selectedTemplate === tpl.id && <Check size={12} className="text-green-600" />}
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{tpl.description}</p>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 capitalize mt-0.5 inline-block">{tpl.category}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                     {false && <Button variant="outline" onClick={exportToPDF} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
@@ -2237,50 +2245,56 @@ const ResumeBuilder = () => {
                                                     <FolderOpen className="mr-2 text-green-500" /> From Library
                                                 </Button>
                                                 {showLibraryPicker && (
-                                                    <div className="absolute top-full left-0 w-80 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden">
-                                                        <div className="p-3 border-b border-slate-100 dark:border-slate-800">
-                                                            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                                                <GraduationCap size={14} className="text-slate-400 shrink-0" />
-                                                                <input
-                                                                    autoFocus
-                                                                    value={librarySearch}
-                                                                    onChange={e => {
-                                                                        setLibrarySearch(e.target.value);
-                                                                        setLibraryLoading(true);
-                                                                        clearTimeout(window._libSearchTimer);
-                                                                        window._libSearchTimer = setTimeout(() => {
-                                                                            apiClient.get(`/api/library?type=course&limit=30&search=${encodeURIComponent(e.target.value)}`).then(r => r.json()).then(d => setLibraryCourses(d.items || [])).catch(() => { }).finally(() => setLibraryLoading(false));
-                                                                        }, 350);
-                                                                    }}
-                                                                    placeholder="Search your courses..."
-                                                                    className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
-                                                                />
-                                                                {libraryLoading && <Loader2 size={13} className="animate-spin text-slate-400 shrink-0" />}
-                                                            </div>
-                                                        </div>
-                                                        <div className="overflow-y-auto max-h-60 p-2 space-y-1">
-                                                            {libraryLoading && libraryCourses.length === 0 ? (
-                                                                <p className="text-xs text-slate-400 text-center py-6">Loading courses...</p>
-                                                            ) : libraryCourses.length === 0 ? (
-                                                                <p className="text-xs text-slate-400 text-center py-6 italic">No courses found</p>
-                                                            ) : libraryCourses.map(course => (
-                                                                <button key={course.id}
-                                                                    onClick={() => {
-                                                                        setShowLibraryPicker(false);
-                                                                        handleGenerateFromLibrary(course.title, course);
-                                                                    }}
-                                                                    className="w-full text-left px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors group">
-                                                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-green-700 truncate">{course.title}</p>
-                                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                                        <span className="text-[10px] text-slate-400 capitalize">{course.category}</span>
-                                                                        <span className="text-slate-200 dark:text-slate-700">·</span>
-                                                                        <span className="text-[10px] text-slate-400 capitalize">{course.difficulty}</span>
-                                                                    </div>
+                                                    <div className="fixed inset-0 z-[9999] flex items-center justify-center" onClick={() => setShowLibraryPicker(false)}>
+                                                        <div className="absolute inset-0 bg-black/40" />
+                                                        <div className="relative w-[92vw] max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                                                            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">From Library</p>
+                                                                <button onClick={() => setShowLibraryPicker(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                                                                    <X size={16} />
                                                                 </button>
-                                                            ))}
-                                                        </div>
-                                                        <div className="p-2 border-t border-slate-100 dark:border-slate-800">
-                                                            <button onClick={() => setShowLibraryPicker(false)} className="w-full text-xs text-slate-400 hover:text-slate-600 py-1.5 text-center">Cancel</button>
+                                                            </div>
+                                                            <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                                                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                                                                    <GraduationCap size={14} className="text-slate-400 shrink-0" />
+                                                                    <input
+                                                                        autoFocus
+                                                                        value={librarySearch}
+                                                                        onChange={e => {
+                                                                            setLibrarySearch(e.target.value);
+                                                                            setLibraryLoading(true);
+                                                                            clearTimeout(window._libSearchTimer);
+                                                                            window._libSearchTimer = setTimeout(() => {
+                                                                                apiClient.get(`/api/library?type=course&limit=30&search=${encodeURIComponent(e.target.value)}`).then(r => r.json()).then(d => setLibraryCourses(d.items || [])).catch(() => { }).finally(() => setLibraryLoading(false));
+                                                                            }, 350);
+                                                                        }}
+                                                                        placeholder="Search your courses..."
+                                                                        className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                                                                    />
+                                                                    {libraryLoading && <Loader2 size={13} className="animate-spin text-slate-400 shrink-0" />}
+                                                                </div>
+                                                            </div>
+                                                            <div className="overflow-y-auto flex-1 p-2 space-y-1">
+                                                                {libraryLoading && libraryCourses.length === 0 ? (
+                                                                    <p className="text-xs text-slate-400 text-center py-6">Loading courses...</p>
+                                                                ) : libraryCourses.length === 0 ? (
+                                                                    <p className="text-xs text-slate-400 text-center py-6 italic">No courses found</p>
+                                                                ) : libraryCourses.map(course => (
+                                                                    <button key={course.id}
+                                                                        onClick={() => {
+                                                                            setShowLibraryPicker(false);
+                                                                            handleGenerateFromLibrary(course.title, course);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors group">
+                                                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-green-700 truncate">{course.title}</p>
+                                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                                            <span className="text-[10px] text-slate-400 capitalize">{course.category}</span>
+                                                                            <span className="text-slate-200 dark:text-slate-700">·</span>
+                                                                            <span className="text-[10px] text-slate-400 capitalize">{course.difficulty}</span>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -2292,7 +2306,7 @@ const ResumeBuilder = () => {
                                 (() => {
                                     const TemplateComponent = TEMPLATE_COMPONENTS[selectedTemplate] || TEMPLATE_COMPONENTS.classic;
                                     return (
-                                        <div id="resume-preview">
+                                        <div id="resume-preview" data-template={selectedTemplate}>
                                             <TemplateComponent
                                                 data={currentResumeData}
                                                 handleBlur={templateHandleBlur}

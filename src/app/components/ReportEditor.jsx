@@ -887,15 +887,21 @@ export default function ReportEditor({ reportId }) {
                 // Immediately update offsets
                 updateHeaderOffsets();
 
-                // Global Reference Aggregation
+                // Global Reference Aggregation — deduplicate by normalized string
+                const normalizeRef = (r) => String(r || "").trim().toLowerCase().replace(/\s+/g, " ");
                 let finalRefs = allReferences;
                 if (sectionData.references && sectionData.references.length > 0) {
-                    const newRefs = [...allReferences];
+                    const existingNormalized = new Set(allReferences.map(normalizeRef));
+                    const merged = [...allReferences];
                     sectionData.references.forEach(ref => {
-                        if (!newRefs.includes(ref)) newRefs.push(ref);
+                        const norm = normalizeRef(ref);
+                        if (norm && !existingNormalized.has(norm)) {
+                            existingNormalized.add(norm);
+                            merged.push(ref.trim());
+                        }
                     });
-                    finalRefs = newRefs;
-                    setAllReferences(newRefs);
+                    finalRefs = merged;
+                    setAllReferences(merged);
                 }
 
                 const updatedSections = { ...report.sections, [section.id]: true };
@@ -1066,6 +1072,7 @@ export default function ReportEditor({ reportId }) {
             const titlePageBlocks = titlePageRef.current ? serializeEditorBlocks(titlePageRef.current) : [];
             const res = await apiClient.post("/api/generate-doc", {
                 title: report.title,
+                type: report.type,
                 author: authorName,
                 institution: institution,
                 course: courseName,
@@ -1184,11 +1191,40 @@ export default function ReportEditor({ reportId }) {
         },
     ];
 
+    const getDocumentStyles = () => {
+        const type = report?.type || 'academic_essay';
+        const styles = {
+            // Academic types — double-spaced, serif, formal
+            research_project:       { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            dissertation:           { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            research_proposal:      { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            academic_essay:         { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            literature_review:      { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            term_paper:             { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            capstone_project:       { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 700 },
+            annotated_bibliography: { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '2.0', padding: '2.54cm', headerWeight: 600 },
+            reflective_journal:     { fontFamily: 'Georgia, serif', fontSize: '12pt', lineHeight: '1.8', padding: '2.54cm', headerWeight: 600 },
+            lab_report:             { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2.54cm', headerWeight: 700 },
+            // Business/professional types — single-spaced, sans-serif
+            business_report:        { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            business_plan:          { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            grant_proposal:         { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            case_study:             { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            policy_brief:           { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            white_paper:            { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            feasibility_study:      { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+            project_proposal:       { fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.5', padding: '2cm', headerWeight: 700 },
+        };
+        return styles[type] || styles.academic_essay;
+    };
+
+    const docStyle = getDocumentStyles();
+
     return (
-        <div className="flex w-full h-[calc(100vh-68px)] bg-background overflow-hidden font-inter">
+        <div className="flex w-full h-[calc(100vh-68px)] bg-[#F2F1EC] dark:bg-slate-950 overflow-hidden">
 
             {/* Main Content Area */}
-            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative scrollbar-hide h-full pb-40 w-full px-2 md:px-0 bg-slate-100 dark:bg-slate-950">
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative h-full pb-40 w-full bg-[#F2F1EC] dark:bg-slate-950">
 
                 {/* Document Page Wrapper */}
                 <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-8" >
@@ -1207,13 +1243,12 @@ export default function ReportEditor({ reportId }) {
                         <div className="document-container relative bg-transparent w-full max-w-full md:max-w-[280mm] mb-32 flex flex-col items-center gap-7" >
 
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-200 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
-                                boxShadow: '0 30px 100px rgba(15,23,42,0.14), 0 0 1px rgba(15,23,42,0.15)',
-                                padding: 'clamp(1rem, 5vw, 1.5cm)',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+                                padding: `clamp(1rem, 5vw, ${docStyle.padding})`,
                                 minHeight: '29.7cm'
-                            }
-                            }
+                            }}
                         >
                             <div
                                 ref={titlePageRef}
@@ -1223,28 +1258,22 @@ export default function ReportEditor({ reportId }) {
                                 suppressContentEditableWarning={true}
                                 className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 h-full"
                                 style={{
-                                    fontFamily: selectedFontFamily
+                                    fontFamily: selectedFontFamily !== 'Inter, system-ui, sans-serif' ? selectedFontFamily : docStyle.fontFamily
                                 }}
                             />
                         </div>
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-200 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
-                                boxShadow: '0 30px 100px rgba(15,23,42,0.14), 0 0 1px rgba(15,23,42,0.15)',
-                                padding: 'clamp(1rem, 5vw, 1.5cm)'
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+                                padding: `clamp(1rem, 5vw, ${docStyle.padding})`
                             }}
                         >
                             <div className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 min-h-[29.7cm]"
                                 style={{
-                                    fontFamily: selectedFontFamily,
-                                    fontSize: {
-                                        "1": "10px",
-                                        "2": "12px",
-                                        "3": "16px",
-                                        "4": "18px",
-                                        "5": "24px"
-                                    }[selectedFontSize] || "16px",
-                                    lineHeight: selectedLineHeight,
+                                    fontFamily: selectedFontFamily !== 'Inter, system-ui, sans-serif' ? selectedFontFamily : docStyle.fontFamily,
+                                    fontSize: { "1": "10px", "2": "12px", "3": "14px", "4": "16px", "5": "18px" }[selectedFontSize] || docStyle.fontSize,
+                                    lineHeight: selectedLineHeight !== '2.0' ? selectedLineHeight : docStyle.lineHeight,
                                     wordSpacing: '0.05em'
                                 }}
                                 ref={editorRef}
@@ -1259,10 +1288,10 @@ export default function ReportEditor({ reportId }) {
                             />
                         </div>
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto border border-slate-200 dark:border-slate-700 w-full max-w-full md:max-w-[260mm]"
+                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
-                                boxShadow: '0 30px 100px rgba(15,23,42,0.14), 0 0 1px rgba(15,23,42,0.15)',
-                                padding: 'clamp(1rem, 5vw, 1.5cm)',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+                                padding: `clamp(1rem, 5vw, ${docStyle.padding})`,
                                 minHeight: '29.7cm'
                             }}
                         >
@@ -1285,7 +1314,7 @@ export default function ReportEditor({ reportId }) {
                         </div>
                         </div>
 
-                        <aside className="hidden xl:block sticky top-16 w-[280px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+                        <aside className="hidden xl:block sticky top-16 w-[280px] rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
                             <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 bg-slate-50 dark:bg-slate-950">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
@@ -1296,14 +1325,14 @@ export default function ReportEditor({ reportId }) {
                                         <button
                                             onClick={handleManualSave}
                                             disabled={saving}
-                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                                             title="Save Changes"
                                         >
                                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                         </button>
                                         <button
                                             onClick={exportAsDOCX}
-                                            className="flex h-8 w-8 items-center justify-center border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                             title="Download Word (.docx)"
                                         >
                                             <Download className="h-4 w-4" />
@@ -1323,19 +1352,19 @@ export default function ReportEditor({ reportId }) {
                                             value={customSectionTitle}
                                             onChange={(e) => setCustomSectionTitle(e.target.value)}
                                             placeholder="Section title"
-                                            className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                            className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
                                         />
                                         <textarea
                                             value={customSectionDescription}
                                             onChange={(e) => setCustomSectionDescription(e.target.value)}
                                             placeholder="What should this section include?"
                                             rows={3}
-                                            className="w-full resize-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                            className="w-full resize-none rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
                                         />
                                         <select
                                             value={customSectionPlacement}
                                             onChange={(e) => setCustomSectionPlacement(e.target.value)}
-                                            className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+                                            className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
                                         >
                                             {customSectionPositionOptions.map((option) => (
                                                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -1346,7 +1375,7 @@ export default function ReportEditor({ reportId }) {
                                                 <button
                                                     key={pages}
                                                     onClick={() => setCustomSectionPages(pages)}
-                                                    className={`flex-1 border px-2 py-1.5 text-xs font-semibold transition-all ${customSectionPages === pages ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"}`}
+                                                    className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-semibold transition-all ${customSectionPages === pages ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"}`}
                                                 >
                                                     {pages}p
                                                 </button>
@@ -1355,7 +1384,7 @@ export default function ReportEditor({ reportId }) {
                                         <button
                                             onClick={handleGenerateCustomSection}
                                             disabled={!!generatingSection}
-                                            className="flex w-full items-center justify-center gap-2 bg-emerald-600 px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-60"
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-60"
                                         >
                                             <Plus className="h-3.5 w-3.5" />
                                             Generate Section
@@ -1381,14 +1410,14 @@ export default function ReportEditor({ reportId }) {
                                                     }
                                                     scrollToSection(item.id);
                                                 }}
-                                                className="border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
                                             >
                                                 Open
                                             </button>
                                             <button
                                                 onClick={item.onGenerate}
                                                 disabled={item.generating}
-                                                className={`ml-auto px-3 py-1.5 text-xs font-semibold text-white transition-all ${item.generating
+                                                className={`ml-auto rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all ${item.generating
                                                     ? "bg-slate-400"
                                                     : item.hasContent
                                                         ? "bg-slate-700 hover:bg-slate-800"
