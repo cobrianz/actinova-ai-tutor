@@ -5,17 +5,10 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Sparkles,
   BookOpen,
-  FileText,
   ChevronDown,
-  Lightbulb,
-  AlertTriangle,
-  ScrollText,
-
-  Lock,
   GraduationCap,
   ArrowRight,
   Trophy,
-  CalendarCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
@@ -39,9 +32,6 @@ export default function Generate({ setActiveContent }) {
   const [quizCount, setQuizCount] = useState(10);
   const [quizDifficulty, setQuizDifficulty] = useState("medium");
 
-  const [reportType, setReportType] = useState("report");
-  const [reportLength, setReportLength] = useState("medium");
-  const [citationStyle, setCitationStyle] = useState("APA");
   const [showLoader, setShowLoader] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,10 +134,8 @@ export default function Generate({ setActiveContent }) {
   // Format → product ID mapping for credit/access checks
   const formatProductMap = {
     course: 'course_generation',
-    report: 'report_generation',
     flashcards: 'flashcard_generation',
     quiz: 'exam_generation',
-    'study-plan': 'study_plan_generation',
   };
   const formatProductId = formatProductMap[format] || 'course_generation';
   const formatProduct = PRODUCTS.find(p => p.id === formatProductId);
@@ -165,15 +153,11 @@ export default function Generate({ setActiveContent }) {
   const courseLimitInfo = formatLimit("courses");
   const flashcardsLimitInfo = formatLimit("flashcards");
   const quizzesLimitInfo = formatLimit("quizzes");
-  const reportsLimitInfo = formatLimit("reports");
-  const studyPlansLimitInfo = formatLimit("studyPlans");
 
   const currentFormatAtLimit = () => {
     if (format === "course") return courseLimitInfo.atLimit;
     if (format === "flashcards") return flashcardsLimitInfo.atLimit;
     if (format === "quiz") return quizzesLimitInfo.atLimit;
-    if (format === "report") return reportsLimitInfo.atLimit;
-    if (format === "study-plan") return studyPlansLimitInfo.atLimit;
     return false;
   };
 
@@ -364,110 +348,6 @@ export default function Generate({ setActiveContent }) {
       return;
     }
 
-    // Handle study plan generation directly
-    if (format === "study-plan") {
-      setShowLoader(true);
-      setIsSubmitting(true);
-
-      try {
-        const response = await apiClient.post("/api/study-plan", {
-          topic: subject,
-          goal: "skill-upgrade",
-          weeks: 4,
-          difficulty,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          if (response.status === 429) {
-            toast.error(errorData.message || "Insufficient credits for study plan generation.");
-            setShowLoader(false);
-            setIsSubmitting(false);
-            return;
-          }
-          throw new Error(errorData.error || "Failed to generate study plan");
-        }
-
-        const data = await response.json();
-
-        // Notify usage update
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("usageUpdated"));
-        }
-
-        toast.success("Study plan generated successfully!");
-
-        // Redirect to study plans tab
-        setActiveContent("study-plans");
-
-      } catch (error) {
-        console.error("Study plan generation failed:", error);
-        toast.error(error.message || "Failed to generate study plan");
-      } finally {
-        setTimeout(() => {
-          setShowLoader(false);
-          setIsSubmitting(false);
-        }, 500);
-      }
-      return;
-    }
-
-    // Handle report generation directly
-    if (format === "report") {
-      setShowLoader(true);
-      setIsSubmitting(true);
-
-      try {
-        const response = await apiClient.post("/api/generate-report-outline", {
-          topic: subject,
-          type: reportType,
-          length: reportLength,
-          difficulty: difficulty,
-          citationStyle: citationStyle
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          if (response.status === 429) {
-            toast.error(
-              `Monthly report limit reached (${errorData.used || 0}/${errorData.limit || 1}). Upgrade to Pro for more reports.`,
-              { duration: 6000 }
-            );
-            setShowLoader(false);
-            setIsSubmitting(false);
-            return;
-          }
-          throw new Error(errorData.error || "Failed to generate report outline");
-        }
-
-        const data = await response.json();
-
-        // Notify usage update
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("usageUpdated"));
-        }
-
-        toast.success("Report outline generated!");
-
-        // Redirect to report editor with the new report ID
-        if (data.reportId) {
-          router.push(`/reports/${data.reportId}`);
-        }
-
-      } catch (error) {
-        console.error("Report generation failed:", error);
-        toast.error(error.message || "Failed to generate report");
-        setShowLoader(false);
-        setIsSubmitting(false);
-      } finally {
-        setTimeout(() => {
-          setShowLoader(false);
-          setIsSubmitting(false);
-        }, 500);
-      }
-      return;
-    }
-
     // Navigate to learn page where generation will happen
     // Loader will stay visible during navigation and be cleared by LearnContent
     setShowLoader(true);
@@ -565,7 +445,7 @@ export default function Generate({ setActiveContent }) {
             transition={{ delay: 0.1 }}
             className="text-muted-foreground text-xs md:text-sm max-w-xl mx-auto leading-relaxed"
           >
-            Enter a topic below to generate a personalized course, flashcards, quiz, or study plan
+            Enter a topic below to generate a personalized course, flashcards, or quiz
           </motion.p>
           
           {/* Limit warning for non-premium users on current format */}
@@ -578,8 +458,6 @@ export default function Generate({ setActiveContent }) {
               {format === "course" && `Course limit reached (${courseLimitInfo.used}/${courseLimitInfo.limit}).`}
               {format === "flashcards" && `Flashcard limit reached (${flashcardsLimitInfo.used}/${flashcardsLimitInfo.limit}).`}
               {format === "quiz" && `Quiz limit reached (${quizzesLimitInfo.used}/${quizzesLimitInfo.limit}).`}
-              {format === "report" && `Report limit reached (${reportsLimitInfo.used}/${reportsLimitInfo.limit}).`}
-              {format === "study-plan" && `Study plan limit reached (${studyPlansLimitInfo.used}/${studyPlansLimitInfo.limit}).`}
               {" "}<button onClick={() => setShowUpgradeModal(true)} className="underline font-bold hover:text-destructive/80 transition-colors">Upgrade to Pro</button> for more.
             </motion.div>
           )}
@@ -610,7 +488,7 @@ export default function Generate({ setActiveContent }) {
                   e.target.style.height = "auto";
                   e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
                 }}
-                placeholder={format === "report" ? "Paste your assignment prompt or research topic here..." : "What do you want to learn today?"}
+                placeholder="What do you want to learn today?"
                 className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm text-foreground placeholder-foreground/30 resize-none h-20 hide-scrollbar"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -619,18 +497,18 @@ export default function Generate({ setActiveContent }) {
                   }
                 }}
                 autoFocus
-                maxLength={format === "report" ? 5000 : 500}
+                maxLength={500}
               />
               
               {/* Character Count/Limit indicator */}
               <div className="absolute top-4 right-4 text-[10px] sm:text-xs font-bold text-foreground/20">
-                {localTopic.length}/{format === "report" ? 5000 : 500}
+                {localTopic.length}/500
               </div>
 
               {/* Subject specific indicator if any */}
               <div className="mt-2 flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground font-medium">
                 <Sparkles className="w-3 h-3 text-green-500" />
-                <span>AI will prioritize detail for better {format === "report" ? "reports" : "courses"}.</span>
+                <span>AI will prioritize detail for better courses.</span>
               </div>
             </div>
 
@@ -712,13 +590,11 @@ export default function Generate({ setActiveContent }) {
         </motion.div>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto mb-16 px-4 sm:px-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-16 px-4 sm:px-0">
           {[
             { id: "course", label: "Course", sub: "Create a study plan to course", icon: BookOpen },
             { id: "flashcards", label: "Flashcards", sub: "Explain complex topic to flashcards", icon: Sparkles },
             { id: "quiz", label: "Practice Quiz", icon: Trophy, sub: "Test your knowledge with a quiz" },
-            { id: "report", label: "Report", sub: "Professional report or essay", icon: FileText, pro: true },
-            { id: "study-plan", label: "Study Plan", sub: "Personalized weekly schedule", icon: CalendarCheck },
           ].map((f) => (
             <motion.div
               key={f.id}
@@ -738,50 +614,10 @@ export default function Generate({ setActiveContent }) {
                 <div className="text-[13px] font-bold text-foreground mb-1 leading-tight">{f.label}</div>
                 <div className="text-[11px] text-muted-foreground font-medium leading-normal">{f.sub}</div>
               </div>
-              {f.pro && !isPremium && (
-                <div className="absolute top-2 right-2">
-                  <Lock className="w-3 h-3 text-[#1a1a1a]/30" />
-                </div>
-              )}
             </motion.div>
           ))}
         </div>
 
-        {format === "report" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 animate-fade-in max-w-4xl mx-auto">
-            {[
-              { label: "Type", value: reportType, setter: setReportType, options: [
-                { v: "report", l: "Formal Report" },
-                { v: "essay", l: "Academic Essay" },
-                { v: "article", l: "Technical Article" },
-              ]},
-              { label: "Length", value: reportLength, setter: setReportLength, options: [
-                { v: "short", l: "Short (3-5 sections)" },
-                { v: "medium", l: "Medium (6-10 sections)" },
-                { v: "long", l: "Long (11-15 sections)" },
-              ]},
-              { label: "Style", value: citationStyle, setter: setCitationStyle, options: [
-                { v: "APA", l: "APA Style" },
-                { v: "MLA", l: "MLA Style" },
-                { v: "Chicago", l: "Chicago Style" },
-              ]},
-            ].map((group) => (
-              <div key={group.label} className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#1a1a1a]/40 tracking-widest px-1">{group.label}</span>
-                <div className="relative">
-                  <select
-                    value={group.value}
-                    onChange={(e) => group.setter(e.target.value)}
-                    className="w-full appearance-none bg-white dark:bg-white/5 font-bold text-xs text-foreground px-4 py-3 rounded-2xl border border-[#D2D7F8]/70 pr-10 focus:outline-none hover:bg-gray-50 dark:hover:bg-white/10 transition-colors cursor-pointer shadow-none"
-                  >
-                    {group.options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#1a1a1a]/40 pointer-events-none" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
         <div>
