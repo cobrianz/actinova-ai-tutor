@@ -1,0 +1,450 @@
+===================================================================
+ACTIROVA — GENERATION WIZARD FIELD SPEC (ALL 18 PAPER TYPES)
+Steps, input fields, credit costs, and AI prompt assembly
+===================================================================
+
+-------------------------------------------------------------------
+SECTION A — UNIVERSAL WIZARD STRUCTURE (5 steps, same shape as your
+current screenshots: Journal Type -> ... -> ... -> ... -> Review)
+-------------------------------------------------------------------
+
+STEP 1 — PAPER TYPE
+  Card grid, single-select. (Already built — 18 cards, one per type.)
+
+STEP 2 — CORE BRIEF  (universal sub-fields + type-specific sub-fields)
+  Universal fields present on every type:
+    - Topic / Subject            [text input, required, max 200 chars]
+        placeholder: "What is this paper about?"
+    - Field / Discipline          [text input or dropdown, required]
+        placeholder: "e.g. Marketing, Nursing, Computer Science, Law"
+    - Academic / Professional Level   [dropdown, required]
+        options: High School | Undergraduate | Graduate/Master's |
+                 Doctoral | Professional/Business
+  Type-specific fields: listed per type in Section C below.
+
+STEP 3 — STRUCTURE & APPROACH  (fully type-specific)
+  Fields listed per type in Section C below. Covers methodology,
+  angle, framework, options, financial assumptions, etc.
+
+STEP 4 — SOURCES & REQUIREMENTS  (universal fields + type-specific)
+  Universal fields present on every type:
+    - Sources / Materials Provided   [textarea, optional, max 5000 chars]
+        placeholder: "Paste any sources, data, readings, or reference
+        materials you want used. Leave blank if none."
+    - Citation Style                 [dropdown, required]
+        options: APA 7 | MLA 9 | Harvard | Chicago | IEEE | Vancouver |
+                 Not Applicable
+    - Additional Instructions / Constraints  [textarea, optional, max 3000 chars]
+        placeholder: "Paste marking criteria, must-include points,
+        tone preferences, or anything else the writer should know."
+  Type-specific fields (where noted): listed per type in Section C.
+
+STEP 5 — REVIEW  (universal, same for every type)
+    - Page Count       [number input, required, user-entered — no
+        type-locked min/max; the user decides how long the paper is]
+        placeholder: "How many pages?"
+        (optional: show a soft suggested range per type as helper text
+        only, e.g. "Most Research Projects run 20-70 pages" — this is
+        guidance, not a limit; user can enter any value)
+    - Word Count (auto)     [read-only display]
+        = Page Count x 500 (academic) or x 550 (business/professional
+        types — flag per type below)
+    - Credit Cost (auto)    [read-only display]
+        = Page Count x 2.5 credits  (see Section B)
+    - Summary panel        [read-only, echoes every field from Steps 2-4]
+    - [Generate] button    -> submits assembled prompt to AI
+
+-------------------------------------------------------------------
+SECTION B — CREDIT SYSTEM
+-------------------------------------------------------------------
+  Base rate:        50 credits = $10.00  ->  1 credit = $0.20
+  Cost per page:     2.5 credits/page  ->  $0.50/page
+  Formula:           total_credits = page_count x 2.5
+                     total_usd     = total_credits x 0.20
+
+  There is no fixed page range or credit table per type. The user
+  types in the exact page count they want on the Review step, for
+  ANY paper type, and cost is calculated live from that single input:
+
+      credits = page_count x 2.5
+      usd     = credits x 0.20
+
+  Example live-calculation reference (applies to every type, since the
+  formula is type-agnostic — only the page count entered changes it):
+
+  Pages entered     Credits     USD
+  ----------------- ----------- ----------
+  2                  5.0         $1.00
+  5                  12.5        $2.50
+  10                 25.0        $5.00
+  20                 50.0        $10.00
+  40                 100.0       $20.00
+  70                 175.0       $35.00
+  100                250.0       $50.00
+  150                375.0       $75.00
+
+  Round displayed credits to nearest 0.5 for the user-facing UI if you
+  don't want to show fractional credits (e.g. 62.5 -> 62.5 or 63).
+
+  Optional UX nicety: show a small greyed-out "typical range" hint
+  under the Page Count field per type (e.g. "Most users pick 20-70
+  pages for this type") purely as a suggestion — it should not block
+  or clamp what the user enters.
+
+-------------------------------------------------------------------
+SECTION C — PER-TYPE FIELD SPECS
+Each block: page range, Step 2 type-specific fields, Step 3 fields,
+Step 4 type-specific additions, then the prompt assembly line.
+"Prompt assembly" = Shared Humanization Layer + that type's System
+Prompt (from the Actirova Document Library doc) + variables mapped
+from the fields below.
+-------------------------------------------------------------------
+
+[1] RESEARCH PROJECT
+STEP 2 extra fields:
+  - Research Problem / Question       [textarea, 1000 chars]
+      "What real-world problem or question is this project addressing?"
+  - Number of Chapters/Objectives     [number input, default 4]
+STEP 3 fields:
+  - Preferred Methodology             [dropdown]
+      options: Qualitative | Quantitative | Mixed Methods | Let AI decide
+  - Data Source                       [dropdown]
+      options: Primary (surveys/interviews) | Secondary (existing data) |
+               Both | Not applicable / theoretical
+  - Theoretical Framework (if any)    [text input, optional]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #1 + {TOPIC}=Topic, {LEVEL}=Academic Level,
+  {FIELD}=Discipline, plus Research Problem, Methodology, Data Source,
+  Theoretical Framework injected into Chapters 1 & 3 instructions.
+
+-------------------------------------------------------------------
+[2] RESEARCH PROPOSAL
+STEP 2 extra fields:
+  - Research Problem / Question       [textarea, 1000 chars]
+  - Study Population / Context        [text input]
+      "Who or what will the study focus on?"
+STEP 3 fields:
+  - Proposed Methodology              [dropdown: Qualitative | Quantitative |
+      Mixed Methods | Let AI decide]
+  - Timeline for Proposed Study        [text input] "e.g. 6 months, 1 year"
+  - Ethical Considerations to Flag     [textarea, optional]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #2 + {TOPIC}, {FIELD} + enforce future/conditional tense
+  rule + Methodology/Timeline/Ethics injected into relevant sections.
+
+-------------------------------------------------------------------
+[3] ACADEMIC ESSAY
+STEP 2 extra fields:
+  - Essay Prompt / Question           [textarea, 800 chars, required]
+  - Thesis Direction (optional)       [text input]
+      "If you already have a position, state it here. Leave blank to
+      let the writer develop one."
+STEP 3 fields:
+  - Number of Main Arguments           [number input, default 3]
+  - Include Counterargument Section?   [toggle: Yes/No, default Yes]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #3 + {TOPIC} + Thesis Direction (if provided, lock it;
+  if blank, instruct AI to develop one) + argument count.
+
+-------------------------------------------------------------------
+[4] LITERATURE REVIEW
+STEP 2 extra fields:
+  - Review Focus / Research Question   [textarea, 800 chars]
+  - Time Range of Literature            [text input] "e.g. 2015–2025"
+STEP 3 fields:
+  - Number of Themes                    [number input, default 4]
+  - Known Debates to Include (optional) [textarea]
+STEP 4 extra fields: (none beyond universal — Sources field here is
+  especially important; flag to user that supplying real sources
+  improves accuracy)
+PROMPT ASSEMBLY:
+  System Prompt #4 + {TOPIC} + Time Range + Theme Count + Debates.
+
+-------------------------------------------------------------------
+[5] TERM PAPER
+STEP 2 extra fields:
+  - Course Name / Number                [text input]
+  - Assignment Prompt / Question         [textarea, 800 chars]
+STEP 3 fields:
+  - Course Concepts/Theories to Apply    [textarea]
+      "List any specific theories, models, or concepts from the course
+      that must be used."
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #5 + {TOPIC}, {COURSE_LEVEL}=Academic Level,
+  {SUBJECT}=Discipline + Concepts list injected into analysis section.
+
+-------------------------------------------------------------------
+[6] BUSINESS REPORT
+STEP 2 extra fields:
+  - Business Situation / Issue          [textarea, 1000 chars]
+  - Target Audience                      [text input]
+      "e.g. Board of Directors, Client, Department Head"
+STEP 3 fields:
+  - Key Questions the Report Must Answer [textarea]
+  - Data/Metrics Available (optional)    [textarea]
+STEP 4 extra fields: (none beyond universal; Citation Style may default
+  to "Not Applicable")
+PROMPT ASSEMBLY:
+  System Prompt #6 + {TOPIC/SITUATION}, {AUDIENCE} + Key Questions +
+  Data injected into Findings section.
+Word count note: use 550 words/page (business format).
+
+-------------------------------------------------------------------
+[7] GRANT PROPOSAL
+STEP 2 extra fields:
+  - Project Description                  [textarea, 1000 chars]
+  - Funder Name/Type                      [text input]
+      "e.g. NIH, local foundation, corporate CSR program"
+STEP 3 fields:
+  - Total Funding Requested                [number/currency input]
+  - Key Objectives (up to 5)               [repeatable text inputs]
+  - Population/Community Served            [text input]
+STEP 4 extra fields:
+  - Budget Categories (optional)           [textarea]
+      "List major budget line items if known, e.g. Staffing, Materials,
+      Evaluation."
+PROMPT ASSEMBLY:
+  System Prompt #7 + {PROJECT}, {FUNDER TYPE} + Objectives -> SMART
+  reformatting instruction + Budget categories injected into Budget
+  Narrative.
+Word count note: 550 words/page.
+
+-------------------------------------------------------------------
+[8] CASE STUDY
+STEP 2 extra fields:
+  - Case Background                       [textarea, 1200 chars, required]
+      "Describe the company/situation being analyzed."
+  - Core Problem to Diagnose               [textarea]
+STEP 3 fields:
+  - Number of Options to Compare            [number input, default 3]
+  - Decision Criteria (optional)            [textarea]
+      "What should the recommendation be judged against — cost, speed,
+      risk, etc.?"
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #8 + {SITUATION/COMPANY} + Option Count + Decision
+  Criteria injected into Options Analysis section.
+
+-------------------------------------------------------------------
+[9] BUSINESS PLAN
+STEP 2 extra fields:
+  - Business/Venture Description          [textarea, 1200 chars]
+  - Target Market                          [text input]
+STEP 3 fields:
+  - Revenue Model                          [text input]
+      "e.g. subscription, one-time sale, commission"
+  - Funding Requested (if any)             [number/currency input, optional]
+  - Key Financial Assumptions (optional)   [textarea]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #9 + {BUSINESS/VENTURE} + Target Market + Revenue Model
+  + Financial Assumptions injected into Financial Plan section.
+Word count note: 550 words/page.
+
+-------------------------------------------------------------------
+[10] DISSERTATION
+STEP 2 extra fields:
+  - Research Problem & Contribution Claim  [textarea, 1200 chars]
+  - Discipline/Sub-field                    [text input]
+STEP 3 fields:
+  - Methodology                             [dropdown: Qualitative |
+      Quantitative | Mixed Methods | Theoretical/Conceptual]
+  - Theoretical Framework                    [text input]
+  - Known Limitations to Address (optional)  [textarea]
+STEP 4 extra fields: (none beyond universal — Sources field strongly
+  recommended for this type; add helper text: "Dissertations benefit
+  most from real literature — paste key sources if you have them.")
+PROMPT ASSEMBLY:
+  System Prompt #10 + {TOPIC}, {FIELD} + Contribution Claim + Framework
+  + Methodology.
+
+-------------------------------------------------------------------
+[11] CAPSTONE PROJECT
+STEP 2 extra fields:
+  - Project Description                    [textarea, 1200 chars]
+  - Problem Being Solved                    [textarea]
+STEP 3 fields:
+  - Design/Development Approach             [textarea]
+      "What was built, designed, or delivered?"
+  - Evaluation Criteria for Success          [textarea]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #11 + {PROJECT}, {FIELD} + Design Approach + Evaluation
+  Criteria injected into Design and Evaluation sections.
+
+-------------------------------------------------------------------
+[12] POLICY BRIEF
+STEP 2 extra fields:
+  - Policy Issue                            [textarea, 800 chars, required]
+  - Target Decision-Maker/Audience           [text input]
+      "e.g. City Council, Legislative Staffer, Agency Director"
+STEP 3 fields:
+  - Number of Policy Options to Present       [number input, default 3]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #12 + {ISSUE}, {AUDIENCE} + Option Count.
+Word count note: 550 words/page.
+
+-------------------------------------------------------------------
+[13] WHITE PAPER
+STEP 2 extra fields:
+  - Problem/Topic                           [textarea, 1000 chars]
+  - Proposed Solution/Approach               [textarea]
+STEP 3 fields:
+  - Target Audience                          [text input]
+  - Case Examples to Include (optional)       [textarea]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #13 + {TOPIC/PROBLEM}, {SOLUTION/APPROACH}, {AUDIENCE}
+  + Case Examples.
+
+-------------------------------------------------------------------
+[14] FEASIBILITY STUDY
+STEP 2 extra fields:
+  - Project Description                     [textarea, 1200 chars]
+STEP 3 fields:
+  - Dimensions to Assess                     [multi-select, default all]
+      options: Market | Technical | Operational | Legal/Regulatory |
+               Financial
+  - Known Risks/Concerns (optional)          [textarea]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #14 + {PROJECT} + Dimensions selected + Known Risks
+  injected as flags into relevant dimension sections.
+
+-------------------------------------------------------------------
+[15] LABORATORY REPORT
+STEP 2 extra fields:
+  - Experiment Title/Topic                  [text input, required]
+  - Hypothesis                               [textarea]
+STEP 3 fields:
+  - Materials & Equipment Used                [textarea]
+  - Procedure Summary                         [textarea]
+  - Raw Data/Results (optional)                [textarea]
+      "Paste any actual measurements or data collected."
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #15 + {TOPIC/EXPERIMENT}, {FIELD} + Hypothesis +
+  Materials/Procedure + Raw Data (if supplied, use exactly; if not,
+  instruct AI to generate plausible illustrative data and label it
+  as such).
+
+-------------------------------------------------------------------
+[16] PROJECT PROPOSAL
+STEP 2 extra fields:
+  - Project Description                     [textarea, 1000 chars]
+  - Approver/Stakeholder                     [text input]
+      "e.g. Steering Committee, Client, Manager"
+STEP 3 fields:
+  - Key Deliverables                         [textarea]
+  - Estimated Timeline                       [text input] "e.g. 3 months"
+  - Resources Needed (optional)              [textarea]
+STEP 4 extra fields: (none beyond universal)
+PROMPT ASSEMBLY:
+  System Prompt #16 + {PROJECT}, {APPROVER} + Deliverables + Timeline +
+  Resources.
+Word count note: 550 words/page.
+
+-------------------------------------------------------------------
+[17] ANNOTATED BIBLIOGRAPHY
+STEP 2 extra fields:
+  - Research Topic/Question                 [textarea, 800 chars]
+  - Number of Sources to Annotate             [number input, default 10]
+STEP 3 fields:
+  - Source Selection Criteria (optional)      [textarea]
+      "What kinds of sources should count — peer-reviewed only, mix of
+      academic and industry, etc.?"
+STEP 4 extra fields:
+  - Paste Actual Sources (strongly recommended) [textarea, 5000 chars]
+      "Paste citations, links, or texts of sources to annotate. If left
+      blank, flag to user that AI cannot fabricate real citations —
+      require this field before allowing submission, or clearly warn
+      the user that output will be illustrative/placeholder only."
+PROMPT ASSEMBLY:
+  System Prompt #17 + {TOPIC}, {NUMBER}=Source Count,
+  {CITATION_STYLE}=Step4 dropdown + real sources injected verbatim if
+  provided (do not let AI invent citations).
+
+-------------------------------------------------------------------
+[18] REFLECTIVE JOURNAL
+STEP 2 "EXPERIENCE" fields:
+  - Experience to Reflect On                 [textarea, 5000 chars, required]
+      "Describe the experience, placement, course, or event..."
+  - Learning or Change                        [text input]
+      "What question, growth area, or change should the reflection
+      explore?"
+STEP 3 "REFLECTION PLAN" fields:
+  - Reflective Model                          [dropdown]
+      options: Gibbs' Reflective Cycle | Kolb's Experiential Learning |
+               Rolfe's Framework | Free-form / No specific model
+  - Tone                                       [dropdown]
+      options: Personal & Informal | Professional & Reflective |
+               Academic Reflective
+STEP 4 "PLACEMENT DETAILS" fields:
+  - Organization / Placement Site              [text input, optional]
+  - Role / Position                            [text input, optional]
+  - Duration                                    [text input, optional]
+      "e.g. 6-week placement, one semester"
+  - Additional Instructions/Requirements        [textarea, optional]
+      (universal field, kept here to match your existing screenshot flow)
+PROMPT ASSEMBLY:
+  System Prompt #18 + {EXPERIENCE}, {TIMEFRAME}=Duration,
+  {REFLECTIVE_MODEL} + Learning/Change question + Placement context
+  woven into the opening section + Tone applied throughout.
+Note: Citation Style defaults to "Not Applicable" for this type unless
+the user's field explicitly requires theory citations (allow override).
+
+-------------------------------------------------------------------
+SECTION D — MASTER ASSEMBLY LOGIC (pseudo-code for your backend)
+-------------------------------------------------------------------
+
+  function buildFinalPrompt(paperType, step2Fields, step3Fields,
+                             step4Fields, pageCount):
+
+      wordsPerPage = (paperType in ["Business Report","Grant Proposal",
+                       "Business Plan","Policy Brief","Project Proposal"])
+                       ? 550 : 500
+      wordCount   = pageCount * wordsPerPage
+      credits     = pageCount * 2.5
+      usd         = credits * 0.20
+
+      prompt = SHARED_HUMANIZATION_LAYER
+                 .replace("{DOCUMENT_TYPE}", paperType)
+                 .replace("{PAGE_RANGE}", pageCount)
+                 .replace("{WORD_RANGE}", wordCount)
+
+      prompt += SYSTEM_PROMPT[paperType]
+                 .replace(each "{VARIABLE}" with matching field value
+                          from step2Fields / step3Fields / step4Fields)
+
+      if step4Fields.sources is not empty:
+          prompt += "\nUse ONLY these provided sources for citations:\n"
+                     + step4Fields.sources
+      else if paperType requires real citations (Annotated Bibliography,
+              Dissertation, Literature Review, Research Project/Proposal):
+          prompt += "\nNo sources were provided. Do not fabricate
+                     citations, statistics, or quotes — flag this
+                     limitation instead."
+
+      prompt += "\nCitation style: " + step4Fields.citationStyle
+      prompt += "\nAdditional requirements: " + step4Fields.instructions
+
+      return {prompt, wordCount, credits, usd}
+
+  On [Generate] click:
+      1. Validate all required fields are filled.
+      2. Compute credits via formula above; show final confirm modal
+         ("This will cost X credits (~$Y). Continue?").
+      3. Deduct credits from user balance only after successful AI
+         response (or hold/escrow at submit, refund on failure).
+      4. Submit assembled prompt to generation model.
+      5. Stream/display output; log actual word count vs. target for
+         QA (flag if output misses target by >15%).
+
+===================================================================
+END OF SPEC
+===================================================================

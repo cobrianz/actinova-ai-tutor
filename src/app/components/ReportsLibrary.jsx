@@ -46,6 +46,47 @@ const DOCUMENT_TYPES = [
 
 const CREATOR_STEPS = ["Document Type", "Research Brief", "Structure", "Institution", "Review"];
 
+const PAPER_WORKFLOWS = {
+    academic_essay: { steps: ["Essay Type", "Essay Brief", "Argument & Length", "Course Details", "Review"], topicLabel: "ESSAY QUESTION OR TOPIC", topicPlaceholder: "Paste the essay question or describe the position you need to argue...", outcomeLabel: "THESIS OR CENTRAL ARGUMENT", outcomePlaceholder: "What specific position should the essay defend?", requirementsLabel: "ESSAY REQUIREMENTS" },
+    business_report: { steps: ["Report Type", "Business Context", "Scope & Length", "Organisation", "Review"], topicLabel: "BUSINESS SITUATION", topicPlaceholder: "Describe the decision, issue, company, or client situation...", outcomeLabel: "DECISION OR RECOMMENDATION", outcomePlaceholder: "What decision should this report help the reader make?", requirementsLabel: "DATA, AUDIENCE & CONSTRAINTS" },
+    research_proposal: { steps: ["Proposal Type", "Study Brief", "Study Design", "Institution", "Review"], topicLabel: "PROPOSED STUDY", topicPlaceholder: "Describe the study you want to propose...", outcomeLabel: "RESEARCH QUESTION OR HYPOTHESIS", outcomePlaceholder: "What will this study investigate?", requirementsLabel: "PROPOSAL REQUIREMENTS" },
+    grant_proposal: { steps: ["Proposal Type", "Funding Brief", "Project Scope", "Organisation", "Review"], topicLabel: "PROJECT OR PROGRAMME", topicPlaceholder: "Describe the project seeking funding...", outcomeLabel: "FUNDER & FUNDING OUTCOME", outcomePlaceholder: "Who is the funder and what support is being requested?", requirementsLabel: "BUDGET, ELIGIBILITY & REQUIREMENTS" },
+    case_study: { steps: ["Case Type", "Case Brief", "Options & Length", "Organisation", "Review"], topicLabel: "CASE OR SITUATION", topicPlaceholder: "Describe the company, event, or situation to analyse...", outcomeLabel: "DECISION TO RECOMMEND", outcomePlaceholder: "What decision or problem should the case resolve?", requirementsLabel: "CASE MATERIAL & CONSTRAINTS" },
+    reflective_journal: { steps: ["Journal Type", "Experience", "Reflection Plan", "Placement Details", "Review"], topicLabel: "EXPERIENCE TO REFLECT ON", topicPlaceholder: "Describe the experience, placement, course, or event...", outcomeLabel: "LEARNING OR CHANGE", outcomePlaceholder: "What question, growth area, or change should the reflection explore?", requirementsLabel: "REFLECTIVE MODEL & REQUIREMENTS" },
+};
+
+const getPaperWorkflow = (type) => {
+    return {
+        steps: ["Paper Type", "Core Brief", "Structure & Approach", "Sources & Requirements", "Review"],
+        topicLabel: "TOPIC / SUBJECT",
+        topicPlaceholder: "What is this paper about?",
+        outcomeLabel: "RESEARCH QUESTION OR PRIMARY OUTCOME",
+        outcomePlaceholder: "What should this document establish, explain, or enable?",
+        requirementsLabel: "ADDITIONAL REQUIREMENTS",
+    };
+};
+
+const PAPER_SPECS = {
+    research_project: { pages: [20, 70], brief: [["researchProblem", "Research problem / question", "textarea"], ["objectives", "Number of chapters / objectives", "number"]], approach: [["methodology", "Preferred methodology", "select", ["Qualitative", "Quantitative", "Mixed Methods", "Let AI decide"]], ["dataSource", "Data source", "select", ["Primary", "Secondary", "Both", "Theoretical"]], ["framework", "Theoretical framework", "text"]] },
+    research_proposal: { pages: [10, 40], brief: [["researchProblem", "Research problem / question", "textarea"], ["population", "Study population / context", "text"]], approach: [["methodology", "Proposed methodology", "select", ["Qualitative", "Quantitative", "Mixed Methods", "Let AI decide"]], ["timeline", "Study timeline", "text"], ["ethics", "Ethical considerations", "textarea"]] },
+    academic_essay: { pages: [2, 25], brief: [["essayPrompt", "Essay prompt / question", "textarea"], ["thesis", "Thesis direction", "text"]], approach: [["arguments", "Number of main arguments", "number"], ["counterargument", "Include counterargument", "select", ["Yes", "No"]]] },
+    literature_review: { pages: [6, 50], brief: [["reviewQuestion", "Review focus / research question", "textarea"], ["timeRange", "Literature time range", "text"]], approach: [["themes", "Number of themes", "number"], ["debates", "Known debates to include", "textarea"]] },
+    term_paper: { pages: [5, 40], brief: [["course", "Course name / number", "text"], ["assignment", "Assignment prompt / question", "textarea"]], approach: [["concepts", "Course concepts / theories to apply", "textarea"]] },
+    business_report: { pages: [5, 50], business: true, brief: [["situation", "Business situation / issue", "textarea"], ["audience", "Target audience", "text"]], approach: [["keyQuestions", "Key questions the report must answer", "textarea"], ["metrics", "Data / metrics available", "textarea"]] },
+    grant_proposal: { pages: [4, 40], business: true, brief: [["project", "Project description", "textarea"], ["funder", "Funder name / type", "text"]], approach: [["funding", "Total funding requested", "text"], ["objectives", "Key objectives", "textarea"], ["population", "Population / community served", "text"]] },
+    case_study: { pages: [4, 40], business: true, brief: [["background", "Case background", "textarea"], ["problem", "Core problem to diagnose", "textarea"]], approach: [["options", "Number of options to compare", "number"], ["criteria", "Decision criteria", "textarea"]] },
+    business_plan: { pages: [8, 50], business: true, brief: [["venture", "Business / venture description", "textarea"], ["market", "Target market", "text"]], approach: [["revenue", "Revenue model", "text"], ["funding", "Funding requested", "text"], ["assumptions", "Financial assumptions", "textarea"]] },
+    dissertation: { pages: [50, 150], brief: [["contribution", "Research problem & contribution claim", "textarea"], ["subfield", "Discipline / sub-field", "text"]], approach: [["methodology", "Methodology", "select", ["Qualitative", "Quantitative", "Mixed Methods", "Theoretical / Conceptual"]], ["framework", "Theoretical framework", "text"], ["limitations", "Known limitations", "textarea"]] },
+    capstone_project: { pages: [20, 80], brief: [["project", "Project description", "textarea"], ["problem", "Problem being solved", "textarea"]], approach: [["approach", "Design / development approach", "textarea"], ["evaluation", "Evaluation criteria for success", "textarea"]] },
+    policy_brief: { pages: [2, 12], business: true, brief: [["issue", "Policy issue", "textarea"], ["audience", "Target decision-maker / audience", "text"]], approach: [["options", "Number of policy options", "number"]] },
+    white_paper: { pages: [6, 30], business: true, brief: [["problem", "Problem / topic", "textarea"], ["solution", "Proposed solution / approach", "textarea"]], approach: [["audience", "Target audience", "text"], ["examples", "Case examples to include", "textarea"]] },
+    feasibility_study: { pages: [8, 40], business: true, brief: [["project", "Project description", "textarea"]], approach: [["dimensions", "Dimensions to assess", "textarea"], ["risks", "Known risks / concerns", "textarea"]] },
+    lab_report: { pages: [4, 20], brief: [["experiment", "Experiment title / topic", "text"], ["hypothesis", "Hypothesis", "textarea"]], approach: [["materials", "Materials & equipment", "textarea"], ["procedure", "Procedure summary", "textarea"], ["results", "Raw data / results", "textarea"]] },
+    project_proposal: { pages: [4, 30], business: true, brief: [["project", "Project description", "textarea"], ["approver", "Approver / stakeholder", "text"]], approach: [["deliverables", "Key deliverables", "textarea"], ["timeline", "Estimated timeline", "text"], ["resources", "Resources needed", "textarea"]] },
+    annotated_bibliography: { pages: [3, 20], brief: [["question", "Research topic / question", "textarea"], ["sourceCount", "Number of sources to annotate", "number"]], approach: [["criteria", "Source selection criteria", "textarea"]] },
+    reflective_journal: { pages: [2, 15], brief: [["experience", "Experience to reflect on", "textarea"], ["learning", "Learning or change", "text"]], approach: [["model", "Reflective model", "select", ["Gibbs' Reflective Cycle", "Kolb's Experiential Learning", "Rolfe's Framework", "Free-form"]], ["tone", "Tone", "select", ["Personal & Informal", "Professional & Reflective", "Academic Reflective"]]] },
+};
+
 function ReportCreator({ onCreated, onBack }) {
     const { user, hasPurchased } = useAuth();
     const router = useRouter();
@@ -64,6 +105,7 @@ function ReportCreator({ onCreated, onBack }) {
     const [topic, setTopic] = useState(draft?.topic ?? "");
     const [reportType, setReportType] = useState(draft?.reportType ?? "research_project");
     const [reportLength, setReportLength] = useState(draft?.reportLength ?? "medium");
+    const [targetPages, setTargetPages] = useState(draft?.targetPages ?? 5);
     const [citationStyle, setCitationStyle] = useState(draft?.citationStyle ?? "APA");
     const [difficulty, setDifficulty] = useState(draft?.difficulty ?? "beginner");
     const [step, setStep] = useState(draft?.step ?? 0);
@@ -77,13 +119,25 @@ function ReportCreator({ onCreated, onBack }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [discipline, setDiscipline] = useState(draft?.discipline ?? "");
+    const [sources, setSources] = useState(draft?.sources ?? "");
+    const [typeFields, setTypeFields] = useState(draft?.typeFields ?? {});
+    const workflow = getPaperWorkflow(reportType);
+    const paperSpec = PAPER_SPECS[reportType] || PAPER_SPECS.academic_essay;
+    const wordsPerPage = paperSpec.business ? 550 : 500;
+    const updateTypeField = (key, value) => setTypeFields((current) => ({ ...current, [key]: value }));
+    const renderTypeFields = (fields = []) => fields.map(([key, label, kind, options]) => (
+        <label key={key} className="block text-[11px] font-bold tracking-widest text-slate-500">{label.toUpperCase()}
+            {kind === "textarea" ? <textarea value={typeFields[key] || ""} onChange={(e) => updateTypeField(key, e.target.value)} rows={3} maxLength={1500} className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" /> : kind === "select" ? <select value={typeFields[key] || options?.[0] || ""} onChange={(e) => updateTypeField(key, e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900">{options?.map((option) => <option key={option}>{option}</option>)}</select> : <input type={kind === "number" ? "number" : "text"} value={typeFields[key] || ""} onChange={(e) => updateTypeField(key, e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" />}
+        </label>
+    ));
 
     // Persist draft to sessionStorage whenever fields change
     useEffect(() => {
         try {
-            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ topic, reportType, reportLength, citationStyle, difficulty, step, researchQuestion, requirements, institution, academicLevel, criticalDepth, includeToc, includeFigures }));
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ topic, reportType, reportLength, targetPages, citationStyle, difficulty, step, researchQuestion, requirements, institution, academicLevel, criticalDepth, includeToc, includeFigures, discipline, sources, typeFields }));
         } catch { /* ignore */ }
-    }, [topic, reportType, reportLength, citationStyle, difficulty, step, researchQuestion, requirements, institution, academicLevel, criticalDepth, includeToc, includeFigures]);
+    }, [topic, reportType, reportLength, targetPages, citationStyle, difficulty, step, researchQuestion, requirements, institution, academicLevel, criticalDepth, includeToc, includeFigures, discipline, sources, typeFields]);
 
     const clearDraft = () => {
         try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
@@ -100,6 +154,7 @@ function ReportCreator({ onCreated, onBack }) {
                 topic: topic.trim(),
                 type: reportType,
                 length: reportLength,
+                targetPages: Number(targetPages),
                 difficulty,
                 citationStyle,
                 academicLevel,
@@ -109,6 +164,9 @@ function ReportCreator({ onCreated, onBack }) {
                 institution: institution.trim(),
                 includeToc,
                 includeFigures,
+                discipline: discipline.trim(),
+                sources: sources.trim(),
+                typeFields,
             });
 
             if (!response.ok) {
@@ -203,16 +261,16 @@ function ReportCreator({ onCreated, onBack }) {
                         className="text-3xl font-black text-slate-900 dark:text-white mb-2"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                     >
-                        New Report
+                        New Report or Essay
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        Generate an AI-structured research document
+                        Set the format, brief, and exact writing target for your document
                     </p>
                 </motion.div>
 
                 <div className="flex flex-col md:flex-row gap-6">
                     <nav className="md:w-44 shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
-                        {CREATOR_STEPS.map((label, index) => (
+                        {workflow.steps.map((label, index) => (
                             <button key={label} type="button" onClick={() => setStep(index)} className={`flex items-center gap-2 text-left whitespace-nowrap rounded-lg px-2.5 py-2 text-[11px] transition-colors ${step === index ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
                                 <span className={`grid h-5 w-5 place-items-center rounded-full border text-[9px] font-bold ${step === index ? "border-green-600 bg-white text-green-700" : step > index ? "border-green-600 bg-green-600 text-white" : "border-slate-200 text-slate-400 dark:border-slate-700"}`}>{step > index ? <Check size={11} /> : index + 1}</span>
                                 {label}
@@ -241,28 +299,28 @@ function ReportCreator({ onCreated, onBack }) {
                     className={step === 1 ? "mb-5" : "hidden"}
                 >
                     <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-widest px-1 mb-2">
-                        TOPIC / ASSIGNMENT PROMPT
+                        {workflow.topicLabel}
                     </label>
                     <textarea
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
-                        placeholder="Paste your assignment prompt or research topic here..."
+                        placeholder={workflow.topicPlaceholder}
                         rows={5}
-                        maxLength={5000}
+                        maxLength={200}
                         className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400 transition-all resize-none"
                         onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleGenerate(); }}
                         autoFocus
                     />
                     <div className="flex items-center justify-between mt-1.5 px-1">
                         <span className="text-[10px] text-slate-400">Press Ctrl+Enter to generate</span>
-                        <span className={`text-[10px] font-medium ${topic.length > 4500 ? "text-amber-500" : "text-slate-400"}`}>
-                            {topic.length}/5000
+                        <span className={`text-[10px] font-medium ${topic.length > 180 ? "text-amber-500" : "text-slate-400"}`}>
+                            {topic.length}/200
                         </span>
                     </div>
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-widest px-1 mt-5 mb-2">RESEARCH QUESTION OR OUTCOME</label>
-                    <input value={researchQuestion} onChange={(e) => setResearchQuestion(e.target.value)} maxLength={800} placeholder="What should this document answer, prove, or enable?" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" />
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-widest px-1 mt-5 mb-2">ASSIGNMENT REQUIREMENTS</label>
-                    <textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} rows={3} maxLength={3000} placeholder="Paste marking criteria, required sources, constraints, or instructions..." className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" />
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-widest px-1 mt-5 mb-2">{workflow.outcomeLabel}</label>
+                    <input value={researchQuestion} onChange={(e) => setResearchQuestion(e.target.value)} maxLength={800} placeholder={workflow.outcomePlaceholder} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" />
+                    <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2"><label className="text-[11px] font-bold tracking-widest text-slate-500">FIELD / DISCIPLINE<input value={discipline} onChange={(e) => setDiscipline(e.target.value)} required placeholder="e.g. Marketing, Nursing, Law" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" /></label><label className="text-[11px] font-bold tracking-widest text-slate-500">ACADEMIC / PROFESSIONAL LEVEL<select value={academicLevel} onChange={(e) => setAcademicLevel(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900"><option>High School</option><option>Undergraduate</option><option>Graduate/Master&apos;s</option><option>Doctoral</option><option>Professional/Business</option></select></label></div>
+                    <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">{renderTypeFields(paperSpec.brief)}</div>
                 </motion.div>
 
                 {/* Options grid */}
@@ -300,11 +358,13 @@ function ReportCreator({ onCreated, onBack }) {
                     ))}
                 </motion.div>
 
-                {step === 2 && <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"><div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200"><ListTree size={15} className="text-green-600" /> Included structure</div><div className="mt-3 flex flex-wrap gap-2">{(DOCUMENT_TYPES.find((item) => item.id === reportType)?.sections || []).map((section) => <span key={section} className="rounded-md bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600 shadow-sm dark:bg-slate-900 dark:text-slate-300">{section}</span>)}</div><label className="mt-4 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={includeToc} onChange={(e) => setIncludeToc(e.target.checked)} className="accent-green-600" /> Include a table of contents</label><label className="mt-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={includeFigures} onChange={(e) => setIncludeFigures(e.target.checked)} className="accent-green-600" /> Plan tables and figures where they add value</label></div>}
+                {step === 2 && <><div className="mb-4 rounded-2xl border border-green-200 bg-green-50/70 p-4 dark:border-green-900 dark:bg-green-950/20"><div className="flex flex-wrap items-end justify-between gap-3"><label className="block text-[11px] font-bold tracking-widest text-green-800 dark:text-green-300">NUMBER OF PAGES<input type="number" min="1" max="150" value={targetPages} onChange={(e) => setTargetPages(Math.min(150, Math.max(1, Number(e.target.value) || 1)))} className="mt-2 block w-28 rounded-xl border border-green-200 bg-white px-3 py-2 text-base font-bold text-slate-800 outline-none focus:border-green-500 dark:border-green-800 dark:bg-slate-900 dark:text-white" /></label><div className="text-right"><p className="text-[10px] font-bold uppercase tracking-widest text-green-700 dark:text-green-300">Writing target</p><p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{(Number(targetPages || 0) * 275).toLocaleString()} <span className="text-sm font-bold text-slate-500">words</span></p><p className="text-[11px] text-slate-500">275 words per page</p></div></div></div><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"><div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200"><ListTree size={15} className="text-green-600" /> Included structure</div><div className="mt-3 flex flex-wrap gap-2">{(DOCUMENT_TYPES.find((item) => item.id === reportType)?.sections || []).map((section) => <span key={section} className="rounded-md bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600 shadow-sm dark:bg-slate-900 dark:text-slate-300">{section}</span>)}</div><label className="mt-4 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={includeToc} onChange={(e) => setIncludeToc(e.target.checked)} className="accent-green-600" /> Include a table of contents</label><label className="mt-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"><input type="checkbox" checked={includeFigures} onChange={(e) => setIncludeFigures(e.target.checked)} className="accent-green-600" /> Plan tables and figures where they add value</label></div></>}
 
-                {step === 3 && <div className="space-y-4 mb-6"><div><label className="block text-[11px] font-bold tracking-widest text-slate-500 mb-2">INSTITUTION OR CLIENT</label><input value={institution} onChange={(e) => setInstitution(e.target.value)} placeholder="e.g. University of Nairobi, Faculty of Business" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><label className="text-[11px] font-bold tracking-widest text-slate-500">ACADEMIC LEVEL<select value={academicLevel} onChange={(e) => setAcademicLevel(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium normal-case tracking-normal dark:border-slate-700 dark:bg-slate-900"><option>Undergraduate</option><option>Masters</option><option>Doctoral</option><option>Professional</option></select></label><label className="text-[11px] font-bold tracking-widest text-slate-500">ANALYTICAL DEPTH<select value={criticalDepth} onChange={(e) => setCriticalDepth(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium normal-case tracking-normal dark:border-slate-700 dark:bg-slate-900"><option>Foundational</option><option>Moderate</option><option>Advanced</option></select></label></div></div>}
+                {step === 2 && <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">{renderTypeFields(paperSpec.approach)}</div>}
 
-                {step === 4 && <div className="mb-6 rounded-2xl border border-green-200 bg-green-50/60 p-5 dark:border-green-900 dark:bg-green-950/20"><p className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-300">Ready to create</p><h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">{DOCUMENT_TYPES.find((item) => item.id === reportType)?.name}</h2><p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{topic || "Add a research brief before generating."}</p><dl className="mt-4 grid grid-cols-2 gap-3 text-xs"><div><dt className="text-slate-400">Citation style</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{citationStyle}</dd></div><div><dt className="text-slate-400">Level</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{academicLevel}</dd></div><div><dt className="text-slate-400">Contents</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{includeToc ? "Included" : "Not included"}</dd></div><div><dt className="text-slate-400">Institution</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{institution || "Not specified"}</dd></div></dl></div>}
+                {step === 3 && <div className="mb-6 space-y-4"><label className="block text-[11px] font-bold tracking-widest text-slate-500">SOURCES / MATERIALS PROVIDED<textarea value={sources} onChange={(e) => setSources(e.target.value)} rows={5} maxLength={5000} placeholder="Paste sources, data, readings, or reference materials. Leave blank if none." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" /></label><label className="block text-[11px] font-bold tracking-widest text-slate-500">CITATION STYLE<select value={citationStyle} onChange={(e) => setCitationStyle(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal normal-case tracking-normal dark:border-slate-700 dark:bg-slate-900"><option>APA 7</option><option>MLA 9</option><option>Harvard</option><option>Chicago</option><option>IEEE</option><option>Vancouver</option><option>Not Applicable</option></select></label><label className="block text-[11px] font-bold tracking-widest text-slate-500">ADDITIONAL INSTRUCTIONS / CONSTRAINTS<textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} rows={4} maxLength={3000} placeholder="Paste marking criteria, must-include points, tone preferences, or constraints." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" /></label></div>}
+
+                {step === 4 && <div className="mb-6 rounded-2xl border border-green-200 bg-green-50/60 p-5 dark:border-green-900 dark:bg-green-950/20"><p className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-300">Review & cost</p><h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">{DOCUMENT_TYPES.find((item) => item.id === reportType)?.name}</h2><p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{topic || "Add a core brief before generating."}</p><dl className="mt-4 grid grid-cols-2 gap-3 text-xs"><div><dt className="text-slate-400">Writing target</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{targetPages} pages / {targetPages * wordsPerPage} words</dd></div><div><dt className="text-slate-400">Estimated cost</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{targetPages * 2.5} credits · ${(targetPages * 0.5).toFixed(2)}</dd></div><div><dt className="text-slate-400">Citation style</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{citationStyle}</dd></div><div><dt className="text-slate-400">Discipline</dt><dd className="font-bold text-slate-700 dark:text-slate-200">{discipline || "Not specified"}</dd></div></dl></div>}
 
                 {/* Generate button */}
                 <motion.div
@@ -315,8 +375,8 @@ function ReportCreator({ onCreated, onBack }) {
                 >
                     <button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0} className="flex items-center gap-1.5 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 disabled:opacity-0"><ChevronLeft size={15} /> Back</button>
                     <button
-                        onClick={() => step < CREATOR_STEPS.length - 1 ? setStep((current) => current + 1) : handleGenerate()}
-                        disabled={(step === 1 && !topic.trim()) || (step === 4 && (!topic.trim() || isSubmitting))}
+                        onClick={() => step < workflow.steps.length - 1 ? setStep((current) => current + 1) : handleGenerate()}
+                        disabled={(step === 1 && !topic.trim()) || (step === workflow.steps.length - 1 && (!topic.trim() || isSubmitting))}
                         className="relative flex items-center gap-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all overflow-hidden shadow-md shadow-green-500/20 hover:shadow-green-500/30 active:scale-[0.98]"
                     >
                         {isSubmitting ? (
@@ -325,7 +385,7 @@ function ReportCreator({ onCreated, onBack }) {
                                 <span>Generating...</span>
                             </>
                         ) : (
-                            <span>{step === CREATOR_STEPS.length - 1 ? "Generate document" : "Continue"}</span>
+                            <span>{step === workflow.steps.length - 1 ? "Generate document" : "Continue"}</span>
                         )}
                     </button>
                 </motion.div>

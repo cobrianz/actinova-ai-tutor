@@ -5,7 +5,7 @@ import {
     Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify,
     List, ListOrdered, Save, Download, FileText,
     Sparkles, Loader2, CheckCircle2,
-    Plus, PanelRight, X, Table2
+    Plus, X, Table2, ArrowLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -46,7 +46,7 @@ export default function ReportEditor({ reportId }) {
     const [sectionLengths, setSectionLengths] = useState({});
     const [zoom, setZoom] = useState(100);
     const [headerOffsets, setHeaderOffsets] = useState({});
-    const [showOutline, setShowOutline] = useState(true);
+    const [showOutline, setShowOutline] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const editorRef = useRef(null);
     const titlePageRef = useRef(null);
@@ -663,41 +663,41 @@ export default function ReportEditor({ reportId }) {
         if (isAPA) {
             return `
                 <div id="title-page" style="text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 20cm; padding-top: 5cm; color: ${textColor};">
-                    <h1 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 2rem; line-height: 2; text-align: center;">${reportData.title || "Untitled Report"}</h1>
-                    <div style="line-height: 2;">
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${institution || "University Name"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${courseName || "Course Title"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${authorName || "Instructor"}</p>
-                        <p style="font-size: 1rem; margin-bottom: 0px;">${submissionDate || "Date"}</p>
+                    <h1 style="font-weight: bold; margin-bottom: 2rem; text-align: center;">${reportData.title || "Untitled Report"}</h1>
+                    <div>
+                        <p style="margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
+                        <p style="margin-bottom: 0px;">${institution || "University Name"}</p>
+                        <p style="margin-bottom: 0px;">${courseName || "Course Title"}</p>
+                        <p style="margin-bottom: 0px;">${authorName || "Instructor"}</p>
+                        <p style="margin-bottom: 0px;">${submissionDate || "Date"}</p>
                     </div>
                 </div>
             `;
         } else if (isMLA) {
             return `
-                <div id="title-page" style="text-align: left; padding-top: 1cm; line-height: 2; color: ${textColor};">
+                <div id="title-page" style="text-align: left; padding-top: 1cm; color: ${textColor};">
                     <p style="margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
                     <p style="margin-bottom: 0px;">${authorName || "Instructor"}</p>
                     <p style="margin-bottom: 0px;">${courseName || "Course Title"}</p>
                     <p style="margin-bottom: 2rem;">${submissionDate || "Date"}</p>
-                    <h1 style="font-size: 1.25rem; font-weight: normal; text-align: center; margin-top: 3rem; margin-bottom: 2rem;">${reportData.title || "Untitled Report"}</h1>
+                    <h1 style="font-weight: normal; text-align: center; margin-top: 3rem; margin-bottom: 2rem;">${reportData.title || "Untitled Report"}</h1>
                 </div>
             `;
         } else if (isChicago) {
             return `
                 <div id="title-page" style="text-align: center; display: flex; flex-direction: column; justify-content: space-between; min-height: 22cm; padding: 4cm 0; color: ${textColor};">
-                    <h1 style="font-size: 1.35rem; font-weight: bold; margin-bottom: 4rem; line-height: 2; text-align: center;">${reportData.title || "Untitled Report"}</h1>
-                    <div style="line-height: 2; margin-top: auto;">
-                        <p style="font-size: 1.1rem; margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
-                        <p style="font-size: 1.1rem; margin-bottom: 0.px;">${courseName || "Course Title"}</p>
-                        <p style="font-size: 1.1rem; margin-bottom: 0px;">${submissionDate || "Date"}</p>
+                    <h1 style="font-weight: bold; margin-bottom: 4rem; text-align: center;">${reportData.title || "Untitled Report"}</h1>
+                    <div style="margin-top: auto;">
+                        <p style="margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
+                        <p style="margin-bottom: 0px;">${courseName || "Course Title"}</p>
+                        <p style="margin-bottom: 0px;">${submissionDate || "Date"}</p>
                     </div>
                 </div>
             `;
         } else {
             return `
-                <div id="title-page" style="text-align: center; padding-top: 5cm; line-height: 2; color: ${textColor};">
-                    <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 2rem; text-align: center;">${reportData.title || "Untitled Report"}</h1>
+                <div id="title-page" style="text-align: center; padding-top: 5cm; color: ${textColor};">
+                    <h1 style="font-weight: 800; margin-bottom: 2rem; text-align: center;">${reportData.title || "Untitled Report"}</h1>
                     <p style="font-weight: bold; margin-bottom: 0px;">${studentName || loggedInUserName || "Student Name"}</p>
                     <p style="margin-bottom: 0px;">${institution || "University Name"}</p>
                     <p style="margin-bottom: 0px;">${courseName || "Course Title"}</p>
@@ -1229,23 +1229,44 @@ export default function ReportEditor({ reportId }) {
     const docStyle = getDocumentStyles();
 
     return (
-        <div className="flex w-full h-[calc(100vh-68px)] bg-[#F2F1EC] dark:bg-slate-950 overflow-hidden">
+        <div className="flex flex-col w-full h-[calc(100vh-68px)] bg-[#F2F1EC] dark:bg-slate-950 overflow-hidden">
+
+            {/* Narrow Top Bar */}
+            <div className="flex items-center justify-between w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-3 md:px-5 h-12 flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                    <button
+                        onClick={() => router.push("/dashboard?tab=reports-library")}
+                        className="flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                    <h1 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">{report.title || "Untitled document"}</h1>
+                    <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex-shrink-0">{String(report.type || "document").replace(/_/g, " ")}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="hidden sm:inline text-[11px] text-slate-400">{saving ? "Saving…" : lastSaved ? "Saved" : ""}</span>
+                    <button
+                        onClick={handleManualSave}
+                        disabled={saving}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+                    >
+                        <Save className="h-3.5 w-3.5" /> Save
+                    </button>
+                    <button
+                        onClick={exportAsDOCX}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
+                    >
+                        <Download className="h-3.5 w-3.5" /> Export
+                    </button>
+                </div>
+            </div>
 
             {/* Main Content Area */}
-            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative h-full pb-40 w-full bg-[#F2F1EC] dark:bg-slate-950">
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative pb-40 w-full bg-[#F2F1EC] dark:bg-slate-950">
 
                 {/* Document Page Wrapper */}
                 <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-8" >
-                    <div className="mb-4 flex w-full max-w-[1600px] justify-end px-3 md:px-4 lg:px-10 xl:hidden">
-                        <button
-                            onClick={() => setShowOutline(true)}
-                            className="inline-flex items-center gap-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-                        >
-                            <PanelRight className="h-4 w-4" />
-                            <span>Outline</span>
-                        </button>
-                    </div>
-
                     <div className="flex w-full max-w-[1600px] items-start justify-center gap-6 px-0 md:px-4 lg:px-10">
                         {/* Multi-page visualization container */}
                         <div className="document-container relative bg-transparent w-full max-w-full md:max-w-[280mm] mb-32 flex flex-col items-center gap-7" >
@@ -1266,18 +1287,21 @@ export default function ReportEditor({ reportId }) {
                                 suppressContentEditableWarning={true}
                                 className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 h-full"
                                 style={{
-                                    fontFamily: selectedFontFamily !== 'Inter, system-ui, sans-serif' ? selectedFontFamily : docStyle.fontFamily
+                                    fontFamily: selectedFontFamily !== 'Inter, system-ui, sans-serif' ? selectedFontFamily : docStyle.fontFamily,
+                                    fontSize: { "1": "10px", "2": "12px", "3": "14px", "4": "16px", "5": "18px" }[selectedFontSize] || docStyle.fontSize,
+                                    lineHeight: selectedLineHeight !== '2.0' ? selectedLineHeight : docStyle.lineHeight,
+                                    wordSpacing: '0.05em'
                                 }}
                             />
                         </div>
                         <div
-                            className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
+                            className="document-page editor-paper bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
                                 boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
                                 padding: `clamp(1rem, 5vw, ${docStyle.padding})`
                             }}
                         >
-                            <div className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0 min-h-[29.7cm]"
+                            <div className="prose dark:prose-invert prose-slate max-w-none outline-none relative z-0"
                                 style={{
                                     fontFamily: selectedFontFamily !== 'Inter, system-ui, sans-serif' ? selectedFontFamily : docStyle.fontFamily,
                                     fontSize: { "1": "10px", "2": "12px", "3": "14px", "4": "16px", "5": "18px" }[selectedFontSize] || docStyle.fontSize,
@@ -1316,13 +1340,19 @@ export default function ReportEditor({ reportId }) {
                                     onFocus={() => setActiveEditable(referencesRef.current)}
                                     onInput={handleEditorInput}
                                     suppressContentEditableWarning={true}
-                                    className="space-y-6 prose dark:prose-invert max-w-none flex-1 outline-none min-h-[500px] references-container"
+                                    className="prose dark:prose-invert prose-slate max-w-none flex-1 outline-none min-h-[500px] references-container"
+                                    style={{
+                                        fontFamily: selectedFontFamily !== 'Inter, system-ui, sans-serif' ? selectedFontFamily : docStyle.fontFamily,
+                                        fontSize: { "1": "10px", "2": "12px", "3": "14px", "4": "16px", "5": "18px" }[selectedFontSize] || docStyle.fontSize,
+                                        lineHeight: selectedLineHeight !== '2.0' ? selectedLineHeight : docStyle.lineHeight,
+                                        wordSpacing: '0.05em'
+                                    }}
                                 />
                             </div>
                         </div>
                         </div>
 
-                        <aside className="hidden xl:block sticky top-16 w-[280px] rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+                        <aside className="hidden sticky top-16 w-[280px] rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
                             <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 bg-slate-50 dark:bg-slate-950">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
@@ -1593,14 +1623,14 @@ export default function ReportEditor({ reportId }) {
             {
                 toolbar.visible && (
                     <div
-                        className="fixed z-[100] -translate-x-1/2 -translate-y-full mb-2 selection-toolbar-container flex flex-wrap items-center gap-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xl p-1 animate-in fade-in zoom-in duration-200 max-w-[min(90vw,520px)]"
+                        className="fixed z-[100] -translate-x-1/2 -translate-y-full selection-toolbar-container flex max-w-[min(92vw,620px)] flex-wrap items-center gap-1 rounded-2xl border border-emerald-100 bg-white/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur dark:border-emerald-900/60 dark:bg-slate-900/95 animate-in fade-in zoom-in duration-200"
                         style={{ left: toolbar.x, top: toolbar.y }}
                     >
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-0.5 rounded-xl bg-slate-50 p-0.5 dark:bg-slate-800">
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("bold")}
-                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Bold"
                             >
                                 <Bold className="w-3.5 h-3.5" />
@@ -1608,7 +1638,7 @@ export default function ReportEditor({ reportId }) {
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("italic")}
-                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Italic"
                             >
                                 <Italic className="w-3.5 h-3.5" />
@@ -1616,7 +1646,7 @@ export default function ReportEditor({ reportId }) {
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("underline")}
-                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Underline"
                             >
                                 <Underline className="w-3.5 h-3.5" />
@@ -1624,7 +1654,7 @@ export default function ReportEditor({ reportId }) {
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("formatBlock", "h2")}
-                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 items-center justify-center rounded-lg border border-transparent px-2 text-[11px] font-bold text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Heading"
                             >
                                 H
@@ -1632,7 +1662,7 @@ export default function ReportEditor({ reportId }) {
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("justifyLeft")}
-                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Align Left"
                             >
                                 <AlignLeft className="w-3.5 h-3.5" />
@@ -1640,7 +1670,7 @@ export default function ReportEditor({ reportId }) {
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("justifyCenter")}
-                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Align Center"
                             >
                                 <AlignCenter className="w-3.5 h-3.5" />
@@ -1648,19 +1678,19 @@ export default function ReportEditor({ reportId }) {
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => applySelectionCommand("justifyRight")}
-                                className="flex h-7 w-7 items-center justify-center border border-transparent text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:bg-white hover:shadow-sm dark:text-slate-200 dark:hover:bg-slate-700"
                                 title="Align Right"
                             >
                                 <AlignRight className="w-3.5 h-3.5" />
                             </button>
                         </div>
-                        <div className="mx-0.5 h-5 w-px bg-slate-200" />
-                        <div className="flex items-center gap-0.5">
+                        <div className="mx-1 h-6 w-px bg-slate-200 dark:bg-slate-700" />
+                        <div className="flex items-center gap-0.5 rounded-xl bg-emerald-50 p-0.5 dark:bg-emerald-950/50">
                             <button
                                 onMouseDown={preventFocus}
                                 onClick={() => handleRewriteSelection("regenerate")}
                                 disabled={isRewriting}
-                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-lg border border-transparent px-2 text-[11px] font-bold text-emerald-800 transition-colors hover:bg-white hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
                                 title="Regenerate"
                             >
                                 {isRewriting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Redo"}
@@ -1669,7 +1699,7 @@ export default function ReportEditor({ reportId }) {
                                 onMouseDown={preventFocus}
                                 onClick={() => handleRewriteSelection("shorten")}
                                 disabled={isRewriting}
-                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-lg border border-transparent px-2 text-[11px] font-bold text-emerald-800 transition-colors hover:bg-white hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
                                 title="Shorten"
                             >
                                 Short
@@ -1678,7 +1708,7 @@ export default function ReportEditor({ reportId }) {
                                 onMouseDown={preventFocus}
                                 onClick={() => handleRewriteSelection("expand")}
                                 disabled={isRewriting}
-                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-lg border border-transparent px-2 text-[11px] font-bold text-emerald-800 transition-colors hover:bg-white hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
                                 title="Expand"
                             >
                                 Expand
@@ -1687,7 +1717,7 @@ export default function ReportEditor({ reportId }) {
                                 onMouseDown={preventFocus}
                                 onClick={() => handleRewriteSelection("reparaphrase")}
                                 disabled={isRewriting}
-                                className="flex h-7 items-center justify-center border border-transparent px-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-lg border border-transparent px-2 text-[11px] font-bold text-emerald-800 transition-colors hover:bg-white hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
                                 title="Rephrase"
                             >
                                 Reword
@@ -1751,10 +1781,14 @@ export default function ReportEditor({ reportId }) {
             page-break-after: auto;
             break-after: auto;
           }
+          .editor-paper { background-image: none !important; }
         }
         
         .document-page * {
           page-break-inside: avoid;
+        }
+
+        .editor-paper {
         }
 
         @keyframes progress-loading {
@@ -1784,7 +1818,7 @@ export default function ReportEditor({ reportId }) {
         .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
           font-weight: 700 !important;
           color: var(--report-text-color) !important;
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: inherit !important;
           letter-spacing: -0.01em;
         }
 
@@ -1823,16 +1857,7 @@ export default function ReportEditor({ reportId }) {
           text-align: center !important;
         }
 
-        .references-container p {
-          font-size: 0.95rem;
-        }
-
         @media (max-width: 640px) {
-          .references-container p {
-            font-size: 10px !important;
-            line-height: 1.5 !important;
-            margin-bottom: 0.5rem !important;
-          }
           .prose h1 { font-size: 1.5rem; margin-top: 1.5rem; }
           .prose h2 { font-size: 1.25rem; margin-top: 1.25rem; }
           .prose h3 { font-size: 1.1rem; margin-top: 1rem; }

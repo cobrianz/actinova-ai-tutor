@@ -51,8 +51,7 @@ Configuration:
 Formatting Rules:
 - No markdown, no bullet symbols, no numbering in headings or paragraphs.
 - Each paragraph must be a separate string in the array (3-6 coherent sentences).
-- Include REAL in-text citations from Google Scholar, PubMed, arXiv, or major academic publishers.
-- Do NOT hallucinate titles, authors, or DOIs.
+- Do not invent citations, statistics, quotes, authors, titles, or DOIs. If no verified user-supplied sources are available, write without citations and return an empty references array.
 - Existing references already used in this report (reuse exact strings if citing these sources):
   ${existingReferences && existingReferences.length > 0 ? existingReferences.map(r => `- ${r}`).join('\n  ') : 'None'}
 - Do not use placeholder citations like "(Source, Year)".

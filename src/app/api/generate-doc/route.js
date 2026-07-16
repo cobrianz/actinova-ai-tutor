@@ -23,6 +23,14 @@ const PAGE_MARGIN = {
     left: 1440,
 };
 
+function getDocumentFormat(type = "") {
+    const businessTypes = ["business_report", "business_plan", "grant_proposal", "case_study", "policy_brief", "white_paper", "feasibility_study", "project_proposal"];
+    if (businessTypes.includes(type)) return { font: "Arial", size: 22, line: 276, alignment: AlignmentType.LEFT, headingSize: 28 };
+    if (type === "lab_report") return { font: "Arial", size: 22, line: 360, alignment: AlignmentType.LEFT, headingSize: 28 };
+    if (type === "reflective_journal") return { font: "Georgia", size: 24, line: 432, alignment: AlignmentType.LEFT, headingSize: 30 };
+    return { font: "Times New Roman", size: 24, line: 480, alignment: AlignmentType.JUSTIFIED, headingSize: 28 };
+}
+
 const normalizeText = (value = "") =>
     String(value || "")
         .replace(/<[^>]+>/g, " ")
@@ -214,10 +222,11 @@ function buildTitlePage({
     ];
 }
 
-function buildBodyChildren({ contentBlocks, references, citationStyle }) {
+function buildBodyChildren({ contentBlocks, references, citationStyle, type }) {
     const children = [];
     const normalizedBlocks = Array.isArray(contentBlocks) ? contentBlocks : [];
     const normalizedReferences = normalizeList(references);
+    const format = getDocumentFormat(type);
 
     normalizedBlocks.forEach((block) => {
         if (!block || typeof block !== "object") return;
@@ -276,7 +285,8 @@ function buildBodyChildren({ contentBlocks, references, citationStyle }) {
 
         if (block.type === "paragraph") {
             children.push(paragraphFromRuns(block.runs || [], {
-                alignment: mapAlignment(block.alignment, AlignmentType.JUSTIFIED),
+                alignment: mapAlignment(block.alignment, format.alignment),
+                spacing: { after: 160, line: format.line },
             }));
         }
     });
@@ -306,6 +316,7 @@ async function handlePost(request) {
     const body = await request.json();
     const {
         title,
+        type,
         author,
         institution,
         course,
@@ -323,6 +334,7 @@ async function handlePost(request) {
     }
 
     const safeTitle = normalizeText(title);
+    const format = getDocumentFormat(type);
     const document = new Document({
         creator: "Actinova AI Tutor",
         title: safeTitle,
@@ -331,11 +343,11 @@ async function handlePost(request) {
             default: {
                 document: {
                     run: {
-                        font: "Times New Roman",
-                        size: 24,
+                        font: format.font,
+                        size: format.size,
                     },
                     paragraph: {
-                        spacing: { line: 480 },
+                        spacing: { line: format.line },
                     },
                 },
             },
@@ -347,12 +359,12 @@ async function handlePost(request) {
                     next: "Normal",
                     quickFormat: true,
                     run: {
-                        font: "Times New Roman",
-                        size: 28,
+                        font: format.font,
+                        size: format.headingSize,
                         bold: true,
                     },
                     paragraph: {
-                        spacing: { before: 200, after: 180, line: 480 },
+                        spacing: { before: 200, after: 180, line: format.line },
                     },
                 },
             ],
@@ -418,6 +430,7 @@ async function handlePost(request) {
                     contentBlocks,
                     references,
                     citationStyle,
+                    type,
                 }),
             },
         ],

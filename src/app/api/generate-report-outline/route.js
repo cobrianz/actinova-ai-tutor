@@ -166,7 +166,7 @@ async function handlePost(request) {
     const userId = user._id;
 
     try {
-        const { topic, type, length, difficulty, citationStyle, academicLevel, criticalDepth, researchQuestion, requirements, institution, includeToc, includeFigures } = await request.json();
+        const { topic, type, length, targetPages, difficulty, citationStyle, academicLevel, criticalDepth, researchQuestion, requirements, institution, includeToc, includeFigures, discipline, sources, typeFields } = await request.json();
 
         if (!topic?.trim()) {
             return NextResponse.json({ error: "Topic is required" }, { status: 400 });
@@ -181,8 +181,12 @@ async function handlePost(request) {
             );
         }
 
-        const pageRange = length === "short" ? "3–5" : length === "long" ? "11–15" : "6–10";
-        const wordRange = length === "short" ? "1,500–2,500" : length === "long" ? "5,500–7,500" : "3,000–5,000";
+        const normalizedPages = Math.min(150, Math.max(1, Number(targetPages) || (length === "short" ? 4 : length === "long" ? 12 : 8)));
+        const businessTypes = ["business_report", "grant_proposal", "case_study", "business_plan", "policy_brief", "white_paper", "feasibility_study", "project_proposal"];
+        const wordsPerPage = businessTypes.includes(type) ? 550 : 500;
+        const totalWords = normalizedPages * wordsPerPage;
+        const pageRange = String(normalizedPages);
+        const wordRange = totalWords.toLocaleString();
 
         const systemPrompt = [
             humanizationLayer(type, pageRange, wordRange),
@@ -195,8 +199,11 @@ Configuration:
 - Critical Depth: ${criticalDepth || "Moderate"}.
 - Citation Style: ${citationStyle || "APA 7"}.
 - Institution: ${institution || "Not specified"}.
+- Field / discipline: ${discipline || "Not specified"}.
 - Research question / outcome: ${researchQuestion || "Not specified"}.
 - Additional requirements: ${requirements || "None"}.
+- Source materials supplied by the user: ${sources || "None"}. Use only these sources for citations; do not invent any.
+- Type-specific brief and approach: ${JSON.stringify(typeFields || {})}.
 - Table of contents: ${includeToc ? "Yes" : "No"}; plan tables/figures: ${includeFigures ? "Yes" : "No"}.
 - Document profile: ${DOCUMENT_PROFILES[type] || "Formal structured document"}
 
@@ -206,7 +213,7 @@ Structural Rules:
 - Include a "Cover" section and an "Abstract" section at the start.
 - Include "Introduction" and "Conclusion" sections.
 - For each section provide a short heading and a detailed description of sub-topics to cover.
-- Specify the target word count per section to meet the overall length: ${length}.
+- The document is exactly ${normalizedPages} pages, with a total target of ${totalWords} words. Actirova uses ${wordsPerPage} words per page for this document type. Assign targetWords to every section so the total is approximately ${totalWords}; exclude the cover page from the allocation.
 
 OUTPUT FORMAT: JSON only.
 {
@@ -233,6 +240,16 @@ OUTPUT FORMAT: JSON only.
         });
 
         const outlineData = JSON.parse(completion.choices[0].message.content);
+        const contentSections = (outlineData.outline || []).filter((section) => !section.isCover);
+        const providedWords = contentSections.reduce((total, section) => total + (Number(section.targetWords) || 0), 0);
+        const evenAllocation = Math.max(125, Math.floor(totalWords / Math.max(1, contentSections.length)));
+        outlineData.outline = (outlineData.outline || []).map((section, index) => ({
+            ...section,
+            id: section.id || String(index + 1).padStart(2, "0"),
+            targetWords: section.isCover ? 0 : (providedWords > 0
+                ? Math.max(125, Math.round((Number(section.targetWords) || evenAllocation) * totalWords / providedWords))
+                : evenAllocation),
+        }));
 
         const { db } = await connectToDatabase();
 
@@ -242,6 +259,9 @@ OUTPUT FORMAT: JSON only.
             topic,
             type,
             length,
+            targetPages: normalizedPages,
+            targetWords: totalWords,
+            wordsPerPage,
             difficulty,
             citationStyle: citationStyle || "APA",
             academicLevel: academicLevel || "Undergraduate",
@@ -320,7 +340,7 @@ Configuration:
 - Critical Depth: ${criticalDepth || "Moderate"}.
 - Citation Style: ${citationStyle || "APA 7"}.
 
-Rules: No markdown, no bullets, no numbering. Each paragraph must be a coherent block of 3-6 sentences. Include REAL in-text citations from Google Scholar, PubMed, arXiv, or major publishers. DO NOT hallucinate titles, authors, or DOIs.
+Rules: No markdown, no bullets, no numbering. Each paragraph must be a coherent block of 3-6 sentences. Do not invent citations, statistics, quotes, authors, titles, or DOIs. If the user has not supplied verifiable sources, return an empty references array and write without citations.
 
 OUTPUT FORMAT: JSON only.
 {
