@@ -122,6 +122,7 @@ function ReportCreator({ onCreated, onBack }) {
     const [discipline, setDiscipline] = useState(draft?.discipline ?? "");
     const [sources, setSources] = useState(draft?.sources ?? "");
     const [typeFields, setTypeFields] = useState(draft?.typeFields ?? {});
+    const [aiFilling, setAiFilling] = useState(false);
     const workflow = getPaperWorkflow(reportType);
     const paperSpec = PAPER_SPECS[reportType] || PAPER_SPECS.academic_essay;
     const wordsPerPage = paperSpec.business ? 550 : 500;
@@ -141,6 +142,40 @@ function ReportCreator({ onCreated, onBack }) {
 
     const clearDraft = () => {
         try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    };
+
+    const handleAiFill = async () => {
+        if (!topic.trim() || aiFilling) return;
+        setAiFilling(true);
+        const toastId = toast.loading("AI is suggesting fields...");
+        try {
+            const res = await apiClient.post("/api/ai-fill-report-fields", {
+                topic: topic.trim(),
+                type: reportType,
+            });
+            if (!res.ok) throw new Error("AI fill failed");
+            const { data } = await res.json();
+
+            // Only fill EMPTY fields — never overwrite user input
+            if (data.academicLevel && !academicLevel) setAcademicLevel(data.academicLevel);
+            if (data.criticalDepth && !criticalDepth) setCriticalDepth(data.criticalDepth);
+
+            if (data.typeFields) {
+                setTypeFields(prev => {
+                    const next = { ...prev };
+                    Object.entries(data.typeFields).forEach(([key, value]) => {
+                        if (value && !next[key]) next[key] = value;
+                    });
+                    return next;
+                });
+            }
+
+            toast.success("Fields populated — review and adjust", { id: toastId });
+        } catch (err) {
+            toast.error(err.message || "AI fill failed", { id: toastId });
+        } finally {
+            setAiFilling(false);
+        }
     };
 
     const handleGenerate = async () => {
@@ -186,10 +221,11 @@ function ReportCreator({ onCreated, onBack }) {
 
             const data = await response.json();
             if (typeof window !== "undefined") window.dispatchEvent(new Event("usageUpdated"));
-            toast.success("Report outline generated!");
             clearDraft();
+            setShowLoader(false);
+            setIsSubmitting(false);
             if (data.reportId) {
-                router.push(`/reports/${data.reportId}`);
+                router.push(`/reports/${data.reportId}?generate=1`);
             }
         } catch (error) {
             console.error("Report generation failed:", error);
@@ -317,6 +353,17 @@ function ReportCreator({ onCreated, onBack }) {
                             {topic.length}/200
                         </span>
                     </div>
+                    {topic.trim().length >= 10 && (
+                        <button
+                            type="button"
+                            onClick={handleAiFill}
+                            disabled={aiFilling}
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/20 px-3 py-1.5 text-[10px] font-bold text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-950/40 transition-all disabled:opacity-50"
+                        >
+                            {aiFilling ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                            {aiFilling ? "Filling..." : "Auto-fill with AI"}
+                        </button>
+                    )}
                     <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-widest px-1 mt-5 mb-2">{workflow.outcomeLabel}</label>
                     <input value={researchQuestion} onChange={(e) => setResearchQuestion(e.target.value)} maxLength={800} placeholder={workflow.outcomePlaceholder} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" />
                     <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2"><label className="text-[11px] font-bold tracking-widest text-slate-500">FIELD / DISCIPLINE<input value={discipline} onChange={(e) => setDiscipline(e.target.value)} required placeholder="e.g. Marketing, Nursing, Law" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900" /></label><label className="text-[11px] font-bold tracking-widest text-slate-500">ACADEMIC / PROFESSIONAL LEVEL<select value={academicLevel} onChange={(e) => setAcademicLevel(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-900"><option>High School</option><option>Undergraduate</option><option>Graduate/Master&apos;s</option><option>Doctoral</option><option>Professional/Business</option></select></label></div>
@@ -376,7 +423,11 @@ function ReportCreator({ onCreated, onBack }) {
                     <button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0} className="flex items-center gap-1.5 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 disabled:opacity-0"><ChevronLeft size={15} /> Back</button>
                     <button
                         onClick={() => step < workflow.steps.length - 1 ? setStep((current) => current + 1) : handleGenerate()}
-                        disabled={(step === 1 && !topic.trim()) || (step === workflow.steps.length - 1 && (!topic.trim() || isSubmitting))}
+                        disabled={
+                            (step === 0 && !reportType) ||
+                            (step === 1 && (!topic.trim() || !discipline.trim())) ||
+                            (step === workflow.steps.length - 1 && (!topic.trim() || !discipline.trim() || isSubmitting))
+                        }
                         className="relative flex items-center gap-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all overflow-hidden shadow-md shadow-green-500/20 hover:shadow-green-500/30 active:scale-[0.98]"
                     >
                         {isSubmitting ? (
@@ -505,14 +556,14 @@ export default function ReportsLibrary({ setActiveContent }) {
                             return (
                                 <motion.div key={report._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                                     onClick={() => router.push(`/reports/${report._id}`)}
-                                    className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden">
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer overflow-hidden">
 
-                                    <div className="flex items-start gap-3 mb-3">
+                                    <div className="flex items-center justify-between gap-3">
                                         <div className={`w-9 h-9 ${colors.bg} rounded-lg flex items-center justify-center shrink-0`}>
                                             <ScrollText size={16} className={colors.text} />
                                         </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 leading-snug group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors" style={{ fontFamily: "var(--font-fraunces)" }}>
+                                        <div className="min-w-0 flex-1 text-right">
+                                            <h3 className="font-semibold text-sm text-slate-500 dark:text-slate-400 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
                                                 {report.title || "Untitled Research"}
                                             </h3>
                                             <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
@@ -521,22 +572,19 @@ export default function ReportsLibrary({ setActiveContent }) {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                                            <span className="text-[10px] font-bold text-slate-500 capitalize">{report.type || "Report"}</span>
-                                            {report.citationStyle && (
-                                                <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-full">{report.citationStyle}</span>
-                                            )}
+                                    <div className="mt-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                            <span className="capitalize font-medium">{report.type?.replace(/_/g, " ") || "Report"}</span>
+                                            <span>·</span>
+                                            <span>{report.targetWords ? `${report.targetWords.toLocaleString()} words` : report.targetPages ? `${(report.targetPages * 275).toLocaleString()} words` : "—"}</span>
+                                            {report.citationStyle && <><span>·</span><span>{report.citationStyle}</span></>}
                                         </div>
-                                        <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                                            <Clock size={10} />
-                                            {new Date(report.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-green-600 dark:text-green-400 group-hover:translate-x-1 transition-transform">
-                                        Open Document <ExternalLink size={10} />
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); router.push(`/reports/${report._id}`); }}
+                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                                        >
+                                            Open <ExternalLink size={11} />
+                                        </button>
                                     </div>
                                 </motion.div>
                             );

@@ -57,7 +57,7 @@ export default function Navbar({ toggleSidebar }) {
             
             {!isFlutterApp() && (
               <Link href="/" className="flex items-center group/logo hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-lg bg-white border border-[#D2D7F8]/30 flex items-center justify-center overflow-hidden p-1 shadow-none">
+                <div className="w-4 h-4 flex items-center justify-center overflow-hidden">
                   <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
                 </div>
               </Link>

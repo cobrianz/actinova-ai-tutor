@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import {
     AlignmentType,
     Document,
-    Footer,
+    Header,
     HeadingLevel,
     Packer,
+    PageNumber,
     Paragraph,
     Table,
     TableCell,
@@ -23,7 +24,11 @@ const PAGE_MARGIN = {
     left: 1440,
 };
 
-function getDocumentFormat(type = "") {
+function getDocumentFormat(type = "", citationStyle = "") {
+    const citationMode = getCitationMode(citationStyle);
+    if (["APA", "MLA", "CHICAGO"].includes(citationMode)) {
+        return { font: "Times New Roman", size: 24, line: 480, alignment: AlignmentType.LEFT, headingSize: 28 };
+    }
     const businessTypes = ["business_report", "business_plan", "grant_proposal", "case_study", "policy_brief", "white_paper", "feasibility_study", "project_proposal"];
     if (businessTypes.includes(type)) return { font: "Arial", size: 22, line: 276, alignment: AlignmentType.LEFT, headingSize: 28 };
     if (type === "lab_report") return { font: "Arial", size: 22, line: 360, alignment: AlignmentType.LEFT, headingSize: 28 };
@@ -95,7 +100,7 @@ function buildRuns(runs = [], base = {}) {
             if (!text.trim()) return null;
             return new TextRun({
                 text,
-                bold: run?.bold ?? base.bold,
+                bold: base.forceBold ? true : (run?.bold ?? base.bold),
                 italics: run?.italics ?? base.italics,
                 underline: run?.underline ? { type: UnderlineType.SINGLE } : undefined,
             });
@@ -112,7 +117,7 @@ function paragraphFromRuns(runs = [], overrides = {}) {
     });
 }
 
-function sectionHeading(text, pageBreakBefore = false, level = 1, runs = null, alignment = AlignmentType.LEFT) {
+function sectionHeading(text, pageBreakBefore = false, level = 1, runs = null, alignment = AlignmentType.LEFT, line = 480) {
     const headingMap = {
         1: HeadingLevel.HEADING_1,
         2: HeadingLevel.HEADING_2,
@@ -120,11 +125,38 @@ function sectionHeading(text, pageBreakBefore = false, level = 1, runs = null, a
     };
     return new Paragraph({
         text: runs ? undefined : normalizeText(text),
-        children: runs ? buildRuns(runs, { bold: true }) : undefined,
+        children: runs ? buildRuns(runs, { bold: true, forceBold: true }) : undefined,
         heading: headingMap[level] || HeadingLevel.HEADING_1,
         alignment,
         pageBreakBefore,
-        spacing: { before: 200, after: 180, line: 480 },
+        keepNext: true,
+        spacing: { before: 240, after: 180, line },
+    });
+}
+
+function buildMlaHeading({ name, author, course, date, title }) {
+    const safeDate = normalizeText(date) || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    return [
+        new Paragraph({ text: normalizeText(name) || "Student Name", spacing: { after: 0, line: 480 } }),
+        new Paragraph({ text: normalizeText(author) || "Instructor Name", spacing: { after: 0, line: 480 } }),
+        new Paragraph({ text: normalizeText(course) || "Course", spacing: { after: 0, line: 480 } }),
+        new Paragraph({ text: safeDate, spacing: { after: 0, line: 480 } }),
+        new Paragraph({ text: normalizeText(title) || "Untitled Document", alignment: AlignmentType.CENTER, spacing: { after: 0, line: 480 } }),
+    ];
+}
+
+function buildPageHeader({ citationStyle, name }) {
+    const mode = getCitationMode(citationStyle);
+    const surname = normalizeText(name).split(/\s+/).filter(Boolean).at(-1) || "Student";
+    const prefix = mode === "MLA" ? `${surname} ` : "";
+    return new Header({
+        children: [
+            new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                spacing: { after: 0 },
+                children: [new TextRun({ children: [prefix, PageNumber.CURRENT] })],
+            }),
+        ],
     });
 }
 
@@ -139,7 +171,8 @@ function buildTitlePage({
     titlePageContent,
     titlePageBlocks,
 }) {
-    if (Array.isArray(titlePageBlocks) && titlePageBlocks.length > 0) {
+    const mode = getCitationMode(citationStyle);
+    if (mode === "ACADEMIC" && Array.isArray(titlePageBlocks) && titlePageBlocks.length > 0) {
         return titlePageBlocks
             .map((block) => {
                 if (block?.type === "heading") {
@@ -164,7 +197,7 @@ function buildTitlePage({
     }
 
     const customLines = extractHtmlLines(titlePageContent);
-    if (customLines.length > 0) {
+    if (mode === "ACADEMIC" && customLines.length > 0) {
         return customLines.map((line, index) =>
             new Paragraph({
                 children: [
@@ -179,7 +212,6 @@ function buildTitlePage({
         );
     }
 
-    const mode = getCitationMode(citationStyle);
     const safeTitle = normalizeText(title) || "Untitled Document";
     const safeName = normalizeText(name) || "Student Name";
     const safeAuthor = normalizeText(author) || "Instructor Name";
@@ -200,7 +232,7 @@ function buildTitlePage({
             new Paragraph({ text: safeCourse, spacing: { after: 120, line: 480 } }),
             new Paragraph({ text: safeDate, spacing: { after: 360, line: 480 } }),
             new Paragraph({
-                children: [new TextRun({ text: safeTitle, bold: true })],
+                children: [new TextRun({ text: safeTitle, bold: false })],
                 alignment: AlignmentType.CENTER,
                 spacing: { after: 360, line: 480 },
             }),
@@ -210,7 +242,7 @@ function buildTitlePage({
     return [
         new Paragraph({ text: "", spacing: { after: 720 } }),
         new Paragraph({
-            children: [new TextRun({ text: safeTitle, bold: true })],
+            children: [new TextRun({ text: safeTitle, bold: mode === "APA" })],
             alignment: AlignmentType.CENTER,
             spacing: { after: 520, line: 480 },
         }),
@@ -226,14 +258,14 @@ function buildBodyChildren({ contentBlocks, references, citationStyle, type }) {
     const children = [];
     const normalizedBlocks = Array.isArray(contentBlocks) ? contentBlocks : [];
     const normalizedReferences = normalizeList(references);
-    const format = getDocumentFormat(type);
+    const format = getDocumentFormat(type, citationStyle);
 
     normalizedBlocks.forEach((block) => {
         if (!block || typeof block !== "object") return;
 
         if (block.type === "heading") {
             children.push(
-                sectionHeading("", false, block.level || 1, block.runs || [], mapAlignment(block.alignment, AlignmentType.LEFT))
+                sectionHeading("", false, block.level || 1, block.runs || [], mapAlignment(block.alignment, AlignmentType.LEFT), format.line)
             );
             return;
         }
@@ -251,7 +283,7 @@ function buildBodyChildren({ contentBlocks, references, citationStyle, type }) {
                                 level: 0,
                             }
                             : undefined,
-                        spacing: { after: 120, line: 480 },
+                        spacing: { after: 0, line: format.line },
                     })
                 );
             });
@@ -271,7 +303,7 @@ function buildBodyChildren({ contentBlocks, references, citationStyle, type }) {
                                 new TableCell({
                                     children: [paragraphFromRuns(cell?.runs || [], {
                                         alignment: mapAlignment(cell?.alignment || block.alignment, AlignmentType.LEFT),
-                                        spacing: { after: 0, line: 360 },
+                                        spacing: { after: 0, line: format.line },
                                     })],
                                 })
                             ),
@@ -294,8 +326,8 @@ function buildBodyChildren({ contentBlocks, references, citationStyle, type }) {
     if (normalizedReferences.length > 0) {
         const mode = getCitationMode(citationStyle);
         const referenceLayout = getReferenceLayout(citationStyle);
-        const headingText = mode === "MLA" ? "Works Cited" : "References";
-        children.push(sectionHeading(headingText, true));
+        const headingText = mode === "MLA" ? "Works Cited" : mode === "CHICAGO" ? "Bibliography" : "References";
+        children.push(sectionHeading(headingText, true, 1, null, AlignmentType.CENTER, format.line));
         normalizedReferences.forEach((reference) => {
             children.push(
                 new Paragraph({
@@ -303,7 +335,7 @@ function buildBodyChildren({ contentBlocks, references, citationStyle, type }) {
                     hanging: referenceLayout === "hanging" ? 360 : undefined,
                     indent: referenceLayout === "inline" ? { left: 0, hanging: 0 } : undefined,
                     alignment: AlignmentType.LEFT,
-                    spacing: { after: 160, line: 480 },
+                    spacing: { after: 160, line: format.line },
                 })
             );
         });
@@ -334,7 +366,10 @@ async function handlePost(request) {
     }
 
     const safeTitle = normalizeText(title);
-    const format = getDocumentFormat(type);
+    const citationMode = getCitationMode(citationStyle);
+    const format = getDocumentFormat(type, citationStyle);
+    const pageHeader = buildPageHeader({ citationStyle, name });
+    const bodyChildren = buildBodyChildren({ contentBlocks, references, citationStyle, type });
     const document = new Document({
         creator: "Actinova AI Tutor",
         title: safeTitle,
@@ -364,8 +399,27 @@ async function handlePost(request) {
                         bold: true,
                     },
                     paragraph: {
-                        spacing: { before: 200, after: 180, line: format.line },
+                        keepNext: true,
+                        spacing: { before: 240, after: 180, line: format.line },
                     },
+                },
+                {
+                    id: "Heading2",
+                    name: "Heading 2",
+                    basedOn: "Normal",
+                    next: "Normal",
+                    quickFormat: true,
+                    run: { font: format.font, size: Math.max(24, format.headingSize - 2), bold: true },
+                    paragraph: { keepNext: true, spacing: { before: 200, after: 140, line: format.line } },
+                },
+                {
+                    id: "Heading3",
+                    name: "Heading 3",
+                    basedOn: "Normal",
+                    next: "Normal",
+                    quickFormat: true,
+                    run: { font: format.font, size: format.size, bold: true },
+                    paragraph: { keepNext: true, spacing: { before: 160, after: 100, line: format.line } },
                 },
             ],
         },
@@ -384,13 +438,23 @@ async function handlePost(request) {
                 },
             ],
         },
-        sections: [
+        sections: citationMode === "MLA" ? [
+            {
+                properties: { page: { margin: PAGE_MARGIN } },
+                headers: { default: pageHeader },
+                children: [
+                    ...buildMlaHeading({ title, author, course, name, date }),
+                    ...bodyChildren,
+                ],
+            },
+        ] : [
             {
                 properties: {
                     page: {
                         margin: PAGE_MARGIN,
                     },
                 },
+                headers: { default: pageHeader },
                 children: buildTitlePage({
                     title,
                     author,
@@ -409,29 +473,8 @@ async function handlePost(request) {
                         margin: PAGE_MARGIN,
                     },
                 },
-                footers: {
-                    default: new Footer({
-                        children: [
-                            new Paragraph({
-                                alignment: AlignmentType.CENTER,
-                                children: [
-                                    new TextRun({
-                                        text: normalizeText(name) || safeTitle,
-                                        italics: true,
-                                        size: 20,
-                                        color: "64748B",
-                                    }),
-                                ],
-                            }),
-                        ],
-                    }),
-                },
-                children: buildBodyChildren({
-                    contentBlocks,
-                    references,
-                    citationStyle,
-                    type,
-                }),
+                headers: { default: pageHeader },
+                children: bodyChildren,
             },
         ],
     });

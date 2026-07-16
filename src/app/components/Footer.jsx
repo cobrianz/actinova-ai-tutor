@@ -37,7 +37,7 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-white border-2 border-white flex items-center justify-center rounded-xl p-1 overflow-hidden pointer-events-none shadow-sm">
+              <div className="w-6 h-6 flex items-center justify-center overflow-hidden pointer-events-none">
                 <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold tracking-tight text-[#1a1a1a]"
@@ -57,7 +57,7 @@ export default function Footer() {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="w-10 h-10 rounded-xl bg-white/80 border border-black/8 flex items-center justify-center text-[#1a1a1a] hover:bg-white transition-all duration-300 shadow-sm"
+                    className="w-10 h-10 flex items-center justify-center text-[#1a1a1a] hover:text-green-500 transition-colors duration-300"
                   >
                     <Icon className="w-5 h-5" />
                   </Link>
@@ -168,7 +168,7 @@ function NewsletterForm() {
           </div>
           <button
             disabled={status === "loading"}
-            className="w-full px-3 py-2 bg-white border-2 border-white text-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-green-50 transition-all disabled:opacity-50 shadow-sm"
+            className="w-full px-3 py-2 bg-green-500 text-white rounded-xl font-bold text-xs hover:bg-green-600 transition-all disabled:opacity-50"
           >
             {status === "loading" ? "Subscribing..." : "Subscribe"}
           </button>

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { setSafeInnerHTML } from "@/../lib/sanitizer";
 import UpgradeModal from "./UpgradeModal";
@@ -25,6 +25,8 @@ const stripHtmlText = (value = "") =>
 
 export default function ReportEditor({ reportId }) {
     const { user, isEnterprise, hasPurchased } = useAuth();
+    const searchParams = useSearchParams();
+    const shouldAutoGenerate = searchParams.get("generate") === "1";
     const loggedInUserName =
         user?.name ||
         [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -32,6 +34,7 @@ export default function ReportEditor({ reportId }) {
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generatingSection, setGeneratingSection] = useState(null);
+    const [streamingPenPos, setStreamingPenPos] = useState(null); // {x, y} or null
     const [generatingAbstract, setGeneratingAbstract] = useState(false);
     const [saving, setSaving] = useState(false);
     const [selectedFontFamily, setSelectedFontFamily] = useState("Inter, system-ui, sans-serif");
@@ -50,6 +53,9 @@ export default function ReportEditor({ reportId }) {
     const [lastSaved, setLastSaved] = useState(null);
     const editorRef = useRef(null);
     const titlePageRef = useRef(null);
+    const autoGenerationStartedRef = useRef(false);
+    const completedSectionsRef = useRef({});
+    const generateSectionRef = useRef(null);
     const referencesRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const saveTimeoutRef = useRef(null);
@@ -104,6 +110,72 @@ export default function ReportEditor({ reportId }) {
         return editorRef.current || titlePageRef.current || referencesRef.current;
     }, []);
 
+    const parseSseStream = useCallback(async (response, { onChunk }) => {
+        const reader = response?.body?.getReader?.();
+        if (!reader) throw new Error("Streaming not supported");
+
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        let fullText = "";
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            while (true) {
+                let idx = buffer.indexOf("\n\n");
+                let sepLen = 2;
+                const idxCrlf = buffer.indexOf("\r\n\r\n");
+                if (idxCrlf !== -1 && (idxCrlf < idx || idx === -1)) {
+                    idx = idxCrlf;
+                    sepLen = 4;
+                }
+                if (idx === -1) break;
+
+                const frame = buffer.slice(0, idx);
+                buffer = buffer.slice(idx + sepLen);
+
+                if (!frame.trim()) continue;
+                if (frame.startsWith(":")) continue;
+
+                let eventName = "message";
+                const dataLines = [];
+                frame.split(/\r?\n/).forEach((line) => {
+                    if (line.startsWith("event:")) {
+                        eventName = line.slice(6).trim();
+                    } else if (line.startsWith("data:")) {
+                        dataLines.push(line.slice(5).trimStart());
+                    }
+                });
+
+                const dataStr = dataLines.join("\n");
+
+                if (eventName === "chunk") {
+                    try {
+                        const parsed = JSON.parse(dataStr);
+                        const delta = parsed?.text || "";
+                        if (delta) {
+                            fullText += delta;
+                            onChunk?.(fullText, delta);
+                        }
+                    } catch (_) {}
+                } else if (eventName === "error") {
+                    try {
+                        const parsed = JSON.parse(dataStr);
+                        throw new Error(parsed?.error || "stream_failed");
+                    } catch (e) {
+                        throw e instanceof Error ? e : new Error("stream_failed");
+                    }
+                } else if (eventName === "done") {
+                    return { content: fullText, data: JSON.parse(dataStr) };
+                }
+            }
+        }
+        return { content: fullText, data: {} };
+    }, []);
+
     const fetchReport = useCallback(async () => {
         try {
             const res = await apiClient.get(`/api/reports/${reportId}`);
@@ -111,6 +183,7 @@ export default function ReportEditor({ reportId }) {
                 const data = await res.json();
                 const r = data.report;
                 setReport(r);
+                completedSectionsRef.current = r.sections || {};
                 pendingReportRef.current = r; // save for after editor mounts
                 // Restore metadata from DB
                 if (r.authorName && r.authorName !== "Research Author") setAuthorName(r.authorName);
@@ -177,15 +250,9 @@ export default function ReportEditor({ reportId }) {
         const content = pendingContentRef.current;
 
         if (content) {
-            // Clean up content if it still has the title-page (migration)
-            const temp = document.createElement('div');
-            setSafeInnerHTML(temp, content);
-            const existingTitlePage = temp.querySelector('#title-page');
-            const existingBreak = temp.querySelector('.title-page-break');
-            if (existingTitlePage) existingTitlePage.remove();
-            if (existingBreak) existingBreak.remove();
-
-            setSafeInnerHTML(editorRef.current, temp.innerHTML);
+            // Clean up content: remove title-page, references, and abstract artifacts
+            const cleaned = stripTitleAndRefsFromBody(content);
+            setSafeInnerHTML(editorRef.current, cleaned);
             pendingContentRef.current = null;
         }
 
@@ -272,6 +339,29 @@ export default function ReportEditor({ reportId }) {
         };
     }, [handleSelection]);
 
+    const stripTitleAndRefsFromBody = useCallback((rawHtml) => {
+        const temp = document.createElement('div');
+        setSafeInnerHTML(temp, rawHtml);
+        temp.querySelector('#title-page')?.remove();
+        temp.querySelector('.title-page-break')?.remove();
+        temp.querySelectorAll('h2').forEach(h2 => {
+            const txt = h2.textContent.trim().toLowerCase();
+            if (txt === 'title page' || txt === 'cover' || txt === 'cover page' || txt === 'references') {
+                let node = h2;
+                while (node) {
+                    const next = node.nextElementSibling;
+                    node.remove();
+                    if (!next || next.tagName === 'H2') break;
+                    node = next;
+                }
+            }
+        });
+        // Also strip a leading standalone "references" paragraph/text
+        const fc = temp.firstElementChild;
+        if (fc && fc.textContent.trim().toLowerCase() === 'references') fc.remove();
+        return temp.innerHTML;
+    }, []);
+
     const saveReport = useCallback(async (contentOverride = null, sectionsOverride = null, referencesOverride = null) => {
         if (!editorRef.current && !contentOverride) return false;
         if (saveInFlightRef.current) return false;
@@ -280,6 +370,8 @@ export default function ReportEditor({ reportId }) {
         setSaving(true);
         try {
             const content = contentOverride || editorRef.current.innerHTML;
+            const cleanedContent = stripTitleAndRefsFromBody(content);
+
             const titlePageContent = titlePageRef.current ? titlePageRef.current.innerHTML : '';
             const sections = sectionsOverride || report?.sections;
             const references = referencesOverride || (
@@ -291,7 +383,7 @@ export default function ReportEditor({ reportId }) {
             );
 
             const res = await apiClient.patch(`/api/reports/${reportId}`, {
-                fullContent: content,
+                fullContent: cleanedContent,
                 titlePageContent,
                 sections,
                 references,
@@ -788,7 +880,7 @@ export default function ReportEditor({ reportId }) {
                 citationStyle: citationStyle || "APA 7",
                 criticalDepth: report.criticalDepth || "Moderate",
                 requestedPages: 1,
-                existingContent: editorRef.current.innerHTML,
+                existingContent: stripTitleAndRefsFromBody(editorRef.current.innerHTML),
                 existingReferences: allReferences
             });
 
@@ -836,7 +928,7 @@ export default function ReportEditor({ reportId }) {
                 // Save abstract to database
                 await apiClient.patch(`/api/reports/${reportId}`, {
                     abstract: abstractText,
-                    fullContent: editorRef.current.innerHTML
+                    fullContent: stripTitleAndRefsFromBody(editorRef.current.innerHTML)
                 });
 
                 await saveReport(editorRef.current.innerHTML, report.sections);
@@ -855,7 +947,9 @@ export default function ReportEditor({ reportId }) {
         const toastId = toast.loading(`Drafting "${section.title}"...`);
 
         try {
-            const res = await apiClient.post("/api/generate-report-section", {
+            const isTitlePage = section.title.toLowerCase().includes('title') || section.title.toLowerCase().includes('cover');
+
+            const requestBody = {
                 reportId,
                 sectionId: section.id,
                 sectionTitle: section.title,
@@ -866,64 +960,199 @@ export default function ReportEditor({ reportId }) {
                 citationStyle: citationStyle || "APA 7",
                 criticalDepth: report.criticalDepth || "Moderate",
                 requestedPages: sectionLengths[section.id] || 1,
-                existingContent: editorRef.current.innerHTML,
-                existingReferences: allReferences
+                existingContent: stripTitleAndRefsFromBody(editorRef.current.innerHTML),
+                existingReferences: allReferences,
+                stream: true,
+            };
+
+            const res = await apiClient.post("/api/generate-report-section", requestBody, {
+                headers: { Accept: "text/event-stream" },
             });
 
-            if (!res.ok) throw new Error("Generation failed");
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || "Generation failed");
+            }
 
-            const data = await res.json();
-            const sectionData = data.data;
+            const contentType = res.headers.get("content-type") || "";
 
-            if (editorRef.current && sectionData) {
-                const isTitlePage = section.title.toLowerCase().includes('title') || section.title.toLowerCase().includes('cover');
+            if (contentType.includes("text/event-stream")) {
+                // Streaming mode
+                let lastReferences = [];
+                let loaderCleared = false;
+                let prevParagraphCount = 0;
+
+                const { content, data: doneData } = await parseSseStream(res, {
+                    onChunk: (fullText) => {
+                        // Clear loader on first chunk so user sees streaming immediately
+                        if (!loaderCleared) {
+                            loaderCleared = true;
+                            setGeneratingSection(null);
+                            toast.success("Writing...", { id: toastId, duration: 2000 });
+                        }
+
+                        if (isTitlePage) {
+                            // For title page, stream content into titlePageRef
+                            if (titlePageRef.current) {
+                                const html = `<div id="title-page" style="text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 20cm; padding-top: 5cm;">${fullText.split(/\n\n+/).filter(p => p.trim()).map(p => `<p style="margin-bottom: 0.5rem;">${p}</p>`).join('')}</div>`;
+                                setSafeInnerHTML(titlePageRef.current, html);
+                            }
+                        } else if (editorRef.current) {
+                            const paragraphs = fullText.split(/\n\n+/).filter(p => p.trim());
+                            const existing = editorRef.current.querySelector(`[data-generated-section-id="${section.id}"]`);
+
+                            if (!existing) {
+                                // First chunk — create the section wrapper with heading + first paragraphs
+                                const html = `<div data-generated-section-id="${section.id}"><h2 data-section-id="${section.id}" style="font-weight: bold; font-size: 1.75rem; margin-top: 2rem; margin-bottom: 1.25rem;">${section.title}</h2>${paragraphs.map(p => `<p style="margin-bottom: 1.75rem; text-align: justify;">${p}</p>`).join('')}</div>`;
+                                insertSectionIntoEditor(section, html, report.outline || []);
+                                prevParagraphCount = paragraphs.length;
+                            } else if (paragraphs.length > prevParagraphCount) {
+                                // Only append NEW paragraphs (not rebuild everything)
+                                const newParagraphs = paragraphs.slice(prevParagraphCount);
+                                const heading = existing.querySelector('h2');
+                                newParagraphs.forEach(p => {
+                                    const pEl = document.createElement('p');
+                                    pEl.style.marginBottom = '1.75rem';
+                                    pEl.style.textAlign = 'justify';
+                                    pEl.textContent = p;
+                                    existing.appendChild(pEl);
+                                });
+                                prevParagraphCount = paragraphs.length;
+                            } else if (paragraphs.length === prevParagraphCount && paragraphs.length > 0) {
+                                // Same paragraph count — update last paragraph text (word-by-word growth)
+                                const lastP = existing.querySelectorAll('p');
+                                if (lastP.length > 0) {
+                                    lastP[lastP.length - 1].textContent = paragraphs[paragraphs.length - 1];
+                                }
+                            }
+                            updateHeaderOffsets();
+
+                            // Update pen position to bottom of editor
+                            try {
+                                const rect = editorRef.current.getBoundingClientRect();
+                                setStreamingPenPos({ x: rect.left + 60, y: Math.min(rect.bottom - 20, window.innerHeight - 100) });
+                            } catch (_) {}
+                        }
+                    },
+                });
+
+                setStreamingPenPos(null); // Clear pen when done
+
+                lastReferences = doneData?.references || [];
 
                 if (isTitlePage) {
-                    // Match generated text to metadata fields if possible
-                    if (sectionData.title) setReport(prev => ({ ...prev, title: sectionData.title }));
-                    if (sectionData.author) setStudentName(sectionData.author);
-                    if (sectionData.institution) setInstitution(sectionData.institution);
-                    if (sectionData.course) setCourseName(sectionData.course);
-                    if (sectionData.date) setSubmissionDate(sectionData.date);
+                    // Parse the streamed title page content to extract fields
+                    const lines = content.split(/\n+/).filter(l => l.trim());
+                    if (lines.length > 0) setReport(prev => ({ ...prev, title: lines[0].trim() }));
+                    if (lines.length > 1) setStudentName(lines[1].trim());
+                    if (lines.length > 2) setInstitution(lines[2].trim());
+                    if (lines.length > 3) setCourseName(lines[3].trim());
+                    if (lines.length > 4) setSubmissionDate(lines[4].trim());
 
-                    toast.success("Cover metadata updated!");
+                    const updatedSections = { ...completedSectionsRef.current, [section.id]: true };
+                    completedSectionsRef.current = updatedSections;
+                    setReport(prev => ({ ...prev, sections: updatedSections }));
+                    await saveReport(editorRef.current?.innerHTML || '', updatedSections, allReferences);
+                    toast.success("Cover page generated!", { id: toastId });
                 } else {
-                    const html = buildSectionHTML(section, sectionData);
-                    insertSectionIntoEditor(section, html, report.outline || []);
+                    // Merge references
+                    const normalizeRef = (r) => String(r || "").trim().toLowerCase().replace(/\s+/g, " ");
+                    let finalRefs = allReferences;
+                    if (lastReferences.length > 0) {
+                        const existingNormalized = new Set(allReferences.map(normalizeRef));
+                        const merged = [...allReferences];
+                        lastReferences.forEach(ref => {
+                            const norm = normalizeRef(ref);
+                            if (norm && !existingNormalized.has(norm)) {
+                                existingNormalized.add(norm);
+                                merged.push(ref.trim());
+                            }
+                        });
+                        finalRefs = merged;
+                        setAllReferences(merged);
+                    }
+
+                    const updatedSections = { ...completedSectionsRef.current, [section.id]: true };
+                    completedSectionsRef.current = updatedSections;
+                    setReport((previous) => ({ ...previous, sections: updatedSections }));
+
+                    await saveReport(editorRef.current.innerHTML, updatedSections, finalRefs);
+                    toast.success(`"${section.title}" completed`, { id: toastId });
                 }
+            } else {
+                // Fallback: non-streaming JSON response
+                const data = await res.json();
+                const sectionData = data.data;
 
-                // Immediately update offsets
-                updateHeaderOffsets();
+                if (editorRef.current && sectionData) {
+                    if (isTitlePage) {
+                        if (sectionData.title) setReport(prev => ({ ...prev, title: sectionData.title }));
+                        if (sectionData.author) setStudentName(sectionData.author);
+                        if (sectionData.institution) setInstitution(sectionData.institution);
+                        if (sectionData.course) setCourseName(sectionData.course);
+                        if (sectionData.date) setSubmissionDate(sectionData.date);
+                        toast.success("Cover metadata updated!", { id: toastId });
+                    } else {
+                        const html = buildSectionHTML(section, sectionData);
+                        insertSectionIntoEditor(section, html, report.outline || []);
+                    }
 
-                // Global Reference Aggregation — deduplicate by normalized string
-                const normalizeRef = (r) => String(r || "").trim().toLowerCase().replace(/\s+/g, " ");
-                let finalRefs = allReferences;
-                if (sectionData.references && sectionData.references.length > 0) {
-                    const existingNormalized = new Set(allReferences.map(normalizeRef));
-                    const merged = [...allReferences];
-                    sectionData.references.forEach(ref => {
-                        const norm = normalizeRef(ref);
-                        if (norm && !existingNormalized.has(norm)) {
-                            existingNormalized.add(norm);
-                            merged.push(ref.trim());
-                        }
-                    });
-                    finalRefs = merged;
-                    setAllReferences(merged);
+                    updateHeaderOffsets();
+
+                    const normalizeRef = (r) => String(r || "").trim().toLowerCase().replace(/\s+/g, " ");
+                    let finalRefs = allReferences;
+                    if (sectionData.references && sectionData.references.length > 0) {
+                        const existingNormalized = new Set(allReferences.map(normalizeRef));
+                        const merged = [...allReferences];
+                        sectionData.references.forEach(ref => {
+                            const norm = normalizeRef(ref);
+                            if (norm && !existingNormalized.has(norm)) {
+                                existingNormalized.add(norm);
+                                merged.push(ref.trim());
+                            }
+                        });
+                        finalRefs = merged;
+                        setAllReferences(merged);
+                    }
+
+                    const updatedSections = { ...completedSectionsRef.current, [section.id]: true };
+                    completedSectionsRef.current = updatedSections;
+                    setReport((previous) => ({ ...previous, sections: updatedSections }));
+
+                    await saveReport(editorRef.current.innerHTML, updatedSections, finalRefs);
+                    toast.success(`"${section.title}" completed`, { id: toastId });
                 }
-
-                const updatedSections = { ...report.sections, [section.id]: true };
-                setReport({ ...report, sections: updatedSections });
-
-                await saveReport(editorRef.current.innerHTML, updatedSections, finalRefs);
-                toast.success(`"${section.title}" completed`, { id: toastId });
             }
         } catch (error) {
+            setStreamingPenPos(null);
             toast.error(error.message || "Generation failed", { id: toastId });
         } finally {
             setGeneratingSection(null);
+            setStreamingPenPos(null);
         }
     };
+
+    generateSectionRef.current = generateSection;
+
+    useEffect(() => {
+        if (!shouldAutoGenerate || autoGenerationStartedRef.current || !report || !editorRef.current) return;
+
+        const pendingSections = (report.outline || []).filter(
+            (section) => !section.isCover && !report.sections?.[section.id]
+        );
+        if (pendingSections.length === 0) return;
+
+        autoGenerationStartedRef.current = true;
+        router.replace(`/reports/${reportId}`);
+
+        const streamDocument = async () => {
+            for (const section of pendingSections) {
+                await generateSectionRef.current?.(section);
+            }
+        };
+
+        streamDocument();
+    }, [shouldAutoGenerate, report, reportId, router]);
 
     const applyEditorFontFamily = (fontFamily) => {
         setSelectedFontFamily(fontFamily);
@@ -1171,6 +1400,14 @@ export default function ReportEditor({ reportId }) {
     ];
     const outlineItems = [
         {
+            id: "title_page",
+            title: "Title Page",
+            description: "Cover page with title, author, institution",
+            generating: generatingSection === "title_page",
+            hasContent: !!report.sections?.["title_page"],
+            onGenerate: () => generateSection({ id: "title_page", title: "Title Page", description: "Generate a cover page with title, author name, institution, course, instructor, and date" }),
+        },
+        {
             id: "abstract",
             title: "Abstract",
             description: "Summary of the document",
@@ -1229,41 +1466,57 @@ export default function ReportEditor({ reportId }) {
     const docStyle = getDocumentStyles();
 
     return (
-        <div className="flex flex-col w-full h-[calc(100vh-68px)] bg-[#F2F1EC] dark:bg-slate-950 overflow-hidden">
+        <div className="relative flex flex-col w-full h-[calc(100vh-68px)] bg-[#F2F1EC] dark:bg-slate-950 overflow-hidden">
+            {/* Dotted background */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(15,23,42,0.22)_1px,_transparent_1px)] [background-size:20px_20px] opacity-100 dark:hidden" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(255,255,255,0.07)_1px,_transparent_1px)] [background-size:20px_20px] opacity-0 dark:opacity-100 hidden dark:block" />
+            </div>
 
-            {/* Narrow Top Bar */}
-            <div className="flex items-center justify-between w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-3 md:px-5 h-12 flex-shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
+            {/* Animated pen icon during streaming */}
+            {streamingPenPos && (
+                <div
+                    className="fixed z-[100] pointer-events-none transition-all duration-300 ease-out"
+                    style={{ left: streamingPenPos.x, top: streamingPenPos.y }}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-emerald-500 drop-shadow-lg animate-pulse">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M15 5l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping" />
+                </div>
+            )}
+
+            {/* Narrow Top Bar - Floating */}
+            <div className="fixed top-[68px] left-0 lg:left-[240px] right-0 z-50 flex items-center justify-center h-10 mt-2">
+                <div className="flex items-center justify-between gap-3 w-full max-w-[800px] px-6 py-1 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm rounded-b-xl">
                     <button
                         onClick={() => router.push("/dashboard?tab=reports-library")}
-                        className="flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="h-3.5 w-3.5" /> Back to reports
                     </button>
-                    <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
-                    <h1 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">{report.title || "Untitled document"}</h1>
-                    <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex-shrink-0">{String(report.type || "document").replace(/_/g, " ")}</span>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="hidden sm:inline text-[11px] text-slate-400">{saving ? "Saving…" : lastSaved ? "Saved" : ""}</span>
-                    <button
-                        onClick={handleManualSave}
-                        disabled={saving}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
-                    >
-                        <Save className="h-3.5 w-3.5" /> Save
-                    </button>
-                    <button
-                        onClick={exportAsDOCX}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
-                    >
-                        <Download className="h-3.5 w-3.5" /> Export
-                    </button>
+                    <h1 className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200 text-center min-w-0">{report.title || "Untitled document"}</h1>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={handleManualSave}
+                            disabled={saving}
+                            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-white disabled:opacity-50"
+                        >
+                            <Save className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            onClick={exportAsDOCX}
+                            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-emerald-600 dark:text-emerald-400 transition-colors hover:text-emerald-700 dark:hover:text-emerald-300"
+                        >
+                            <Download className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative pb-40 w-full bg-[#F2F1EC] dark:bg-slate-950">
+            <div ref={scrollContainerRef} className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden relative pt-10 pb-40 w-full">
 
                 {/* Document Page Wrapper */}
                 <div className="w-full flex-1 flex flex-col items-center pt-6 md:pt-8" >
@@ -1274,7 +1527,7 @@ export default function ReportEditor({ reportId }) {
                         <div
                             className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+
                                 padding: `clamp(1rem, 5vw, ${docStyle.padding})`,
                                 minHeight: '29.7cm'
                             }}
@@ -1297,7 +1550,7 @@ export default function ReportEditor({ reportId }) {
                         <div
                             className="document-page editor-paper bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+
                                 padding: `clamp(1rem, 5vw, ${docStyle.padding})`
                             }}
                         >
@@ -1322,7 +1575,7 @@ export default function ReportEditor({ reportId }) {
                         <div
                             className="document-page bg-white dark:bg-slate-900 relative overflow-hidden transition-all duration-300 pointer-events-auto w-full max-w-full md:max-w-[210mm] rounded-sm"
                             style={{
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07), 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+
                                 padding: `clamp(1rem, 5vw, ${docStyle.padding})`,
                                 minHeight: '29.7cm'
                             }}

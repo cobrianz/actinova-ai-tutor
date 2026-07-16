@@ -83,7 +83,7 @@ export default function HeroNavbar({ handleGetStarted }) {
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
           {/* Logo */}
           <Link href="/" onClick={() => setActiveItem("")} className="flex items-center gap-2 group/logo flex-shrink-0">
-            <div className="w-8 h-8 rounded-full bg-white border border-black/10 flex items-center justify-center transition-transform group-hover/logo:scale-105 overflow-hidden p-1">
+            <div className="w-6 h-6 flex items-center justify-center transition-transform group-hover/logo:scale-105 overflow-hidden">
               <img src="/logo.png" alt="Actirova Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-lg font-semibold tracking-tight text-[#1a1a1a]" style={{ fontFamily: "var(--font-fraunces)" }}>

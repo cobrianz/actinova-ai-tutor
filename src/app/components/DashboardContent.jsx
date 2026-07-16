@@ -120,7 +120,7 @@ export default function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  const activeContent = searchParams.get("tab") || "analytics";
+  const activeContent = searchParams.get("tab") || "generate";
   const isChat = activeContent === "chat";
 
   const setActiveContent = (tab) => {

@@ -181,8 +181,8 @@ async function handlePost(request) {
             );
         }
 
-        const normalizedPages = Math.min(150, Math.max(1, Number(targetPages) || (length === "short" ? 4 : length === "long" ? 12 : 8)));
-        const businessTypes = ["business_report", "grant_proposal", "case_study", "business_plan", "policy_brief", "white_paper", "feasibility_study", "project_proposal"];
+        const normalizedPages = Math.max(1, Number(targetPages) || (length === "short" ? 4 : length === "long" ? 12 : 8));
+        const businessTypes = ["business_report", "grant_proposal", "business_plan", "policy_brief", "project_proposal"];
         const wordsPerPage = businessTypes.includes(type) ? 550 : 500;
         const totalWords = normalizedPages * wordsPerPage;
         const pageRange = String(normalizedPages);
@@ -269,6 +269,9 @@ OUTPUT FORMAT: JSON only.
             researchQuestion: researchQuestion || "",
             requirements: requirements || "",
             institution: institution || "",
+            discipline: discipline || "",
+            sources: sources || "",
+            typeFields: typeFields || {},
             includeToc: Boolean(includeToc),
             includeFigures: Boolean(includeFigures),
             outline: outlineData.outline,
@@ -284,7 +287,16 @@ OUTPUT FORMAT: JSON only.
 
         // Track API Usage for Reports
         const { trackAPIUsage } = await import("@/lib/planMiddleware");
-        await trackAPIUsage(user._id, "generate-report-outline", { itemType: "report_generation", creditCost: 25 });
+        await trackAPIUsage(user._id, "generate-report-outline", { itemType: "report_generation", creditCost: normalizedPages * 2.5 });
+
+        // The editor streams each section after navigation, allowing the user to see
+        // the document being written instead of waiting for every section here.
+        return NextResponse.json({
+            success: true,
+            reportId,
+            outline: outlineData.outline,
+            fullContent: "",
+        });
 
         // ─── Generate full content for each section ───
         const reportSections = {};
@@ -324,7 +336,7 @@ OUTPUT FORMAT: JSON only.
         for (const section of outlineData.outline) {
             if (section.isCover) {
                 reportSections[section.id] = { heading: section.heading, paragraphs: [section.title], references: [] };
-                contentParts.push(`<h2>${section.heading}</h2><p>${section.title}</p>`);
+                // Don't add cover to contentParts — it belongs in titlePageContent, not body
                 continue;
             }
 
@@ -405,13 +417,11 @@ Return refined JSON in the same structure:
             }
         }
 
-        // Add references section
+        // Don't add references to contentParts — they belong on the references page, not body
         if (allReferences.length > 0) {
-            const uniqueRefs = [...new Set(allReferences)];
-            contentParts.push(`<h2>References</h2>`);
-            for (const ref of uniqueRefs) {
-                contentParts.push(`<p>${ref}</p>`);
-            }
+            var uniqueRefs = [...new Set(allReferences)];
+            allReferences.length = 0;
+            allReferences.push(...uniqueRefs);
         }
 
         // Update report with generated content

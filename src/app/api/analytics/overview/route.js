@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { buildAdaptiveInsights } from "@/lib/adaptiveInsights";
-import { deriveCourseProgressSummary } from "@/lib/analyticsOverview";
 
 function getStreakCurrent(streak) {
   if (!streak) return 0;
@@ -17,12 +15,6 @@ function getStreakLongest(streak) {
   return streak.longest || 0;
 }
 
-function toObjectId(str) {
-  if (!str) return null;
-  if (str instanceof ObjectId) return str;
-  const s = String(str);
-  return ObjectId.isValid(s) ? new ObjectId(s) : null;
-}
 
 async function handleGet(request) {
   const authUser = request.user;
@@ -73,9 +65,9 @@ async function handleGet(request) {
       .toArray()
       .catch(() => []),
 
-    // Flashcard stats
+    // Flashcard stats — try both ObjectId and string userId
     db.collection("cardSets")
-      .find({ userId: user._id }, { projection: { cards: 1 } })
+      .find({ $or: [{ userId: user._id }, { userId: user._id.toString() }] }, { projection: { cards: 1 } })
       .toArray()
       .catch(() => []),
 
@@ -147,27 +139,61 @@ async function handleGet(request) {
     ).length;
   }
 
-  // Course progress — use actual user enrollment records plus library/module data
-  const courseIds = courses
-    .map((c) => toObjectId(c.courseId))
-    .filter(Boolean);
-
+  // Course progress — use same query as Library API (userId match on library collection)
+  const userObjId = user._id;
   let libDocs = [];
-  if (courseIds.length > 0) {
-    libDocs = await db.collection("library")
-      .find({ _id: { $in: courseIds } })
-      .project({ title: 1, topic: 1, totalLessons: 1, modules: 1, userId: 1 })
-      .toArray()
-      .catch(() => []);
-  }
+  libDocs = await db.collection("library")
+    .find({ $or: [{ userId: userObjId }, { enrolled: userObjId }] })
+    .project({ title: 1, topic: 1, originalTopic: 1, totalLessons: 1, modules: 1, userId: 1, difficulty: 1, level: 1 })
+    .toArray()
+    .catch(() => []);
 
-  const courseProgressSummary = deriveCourseProgressSummary({
-    libraryDocs: libDocs,
-    userCourses: courses,
+  // Build progress map from user.courses (same as Library API progressMap)
+  const progressMap = new Map();
+  courses.forEach((c) => {
+    progressMap.set(String(c.courseId), {
+      progress: c.progress || 0,
+      completed: c.completed || false,
+      completedLessons: new Set(c.completedLessons || []),
+    });
   });
-  const courseProgress = courseProgressSummary.courseProgress;
-  const completedCourses = courseProgressSummary.completedCourses;
-  const totalCourses = courseProgressSummary.totalCourses;
+
+  // Derive courseProgress using Library API's logic
+  const courseProgressList = libDocs.map((c) => {
+    const cp = progressMap.get(String(c._id)) || { progress: 0, completed: false, completedLessons: new Set() };
+
+    let trueCompletedCount = 0;
+    let trueTotalLessons = 0;
+    const modules = c.modules || [];
+    modules.forEach((module, moduleIndex) => {
+      if (module.lessons) {
+        trueTotalLessons += module.lessons.length;
+        module.lessons.forEach((lesson, lessonIndex) => {
+          const lessonId = lesson.id || `${module.id || moduleIndex + 1}-${lessonIndex}`;
+          if (lesson.completed || cp.completedLessons.has(lessonId)) {
+            trueCompletedCount++;
+          }
+        });
+      }
+    });
+
+    const dynamicProgress = trueTotalLessons > 0 ? Math.round((trueCompletedCount / trueTotalLessons) * 100) : 0;
+    const calculatedProgress = Math.max(cp.progress, dynamicProgress);
+
+    return {
+      id: String(c._id),
+      title: c.title || c.topic || c.originalTopic || "Course",
+      progress: calculatedProgress,
+      completedLessons: trueCompletedCount || cp.completedLessons.size,
+      totalLessons: c.totalLessons || trueTotalLessons || 0,
+      completed: cp.completed || calculatedProgress >= 100,
+      difficulty: c.difficulty || c.level || "beginner",
+    };
+  });
+
+  const totalCourses = courseProgressList.length;
+  const completedCourses = courseProgressList.filter((c) => c.completed).length;
+  const courseProgress = courseProgressList.slice(0, 6);
 
   // Study time
   const totalStudyMinutes = Math.round(
