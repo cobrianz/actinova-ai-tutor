@@ -258,11 +258,7 @@ function ReportCreator({ onCreated, onBack }) {
 
     return (
         <div className="px-0 py-6">
-            {showLoader && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-xs">
-                    <ActirovaLoader text="report" />
-                </div>
-            )}
+            {showLoader && <ActirovaLoader text="report" />}
             <UpgradeModal
                 isOpen={showUpgradeModal}
                 onClose={() => setShowUpgradeModal(false)}

@@ -17,6 +17,7 @@ const primaryItems = [
 
 const secondaryItems = [
   { name: "AI Chat", id: "chat", icon: MessageCircle },
+  { name: "Chat with PDF", id: "chat-pdf", icon: FileText },
   { name: "Flashcards", id: "flashcards", icon: FileText },
   { name: "Reports & Essays", id: "reports-library", icon: ScrollText },
   { name: "Career Growth", id: "career", icon: Briefcase },

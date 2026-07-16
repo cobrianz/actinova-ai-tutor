@@ -2,7 +2,9 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
-import { withAPIRateLimit, trackAPIUsage } from "@/lib/planMiddleware";
+import { withAPIRateLimit, trackAPIUsage, checkAPILimit } from "@/lib/planMiddleware";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import CareerHistory from "@/models/CareerHistory";
 import dbConnect from "@/lib/dbConnect";
 
@@ -19,6 +21,15 @@ async function handlePost(request) {
     const { courseName, category, difficulty, description } = body;
 
     const role = courseName || "Software Developer";
+
+    // Credit check
+    const { db } = await connectToDatabase();
+    const userDoc = await db.collection("users").findOne({ _id: typeof userId === "string" ? new ObjectId(userId) : userId });
+    const creditCheck = await checkAPILimit(db, userDoc, "career_tools");
+    if (!creditCheck.allowed) {
+      return NextResponse.json({ error: "Insufficient credits", credits: creditCheck.credits, creditCost: creditCheck.creditCost }, { status: 429 });
+    }
+
     const categoryLine = category ? `Category: ${category}.` : "";
     const difficultyLine = difficulty ? `Difficulty level: ${difficulty}.` : "";
     const descLine = description ? `Course description: "${description}".` : "";

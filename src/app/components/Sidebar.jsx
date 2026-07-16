@@ -30,6 +30,7 @@ const NAV_GROUPS = [
     items: [
       { name: "New Session", id: "generate", icon: Plus },
       { name: "AI Chat", id: "chat", icon: MessageCircle, premium: true },
+      { name: "Chat with PDF", id: "chat-pdf", icon: FileText, premium: true },
     ],
   },
   {

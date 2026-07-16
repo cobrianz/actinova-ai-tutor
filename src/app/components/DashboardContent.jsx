@@ -7,6 +7,7 @@ import Generate from "./Generate";
 import Library from "./Library";
 import PremiumCourses from "./PremiumCourses";
 import Chat from "./Chat";
+import ChatWithPDF from "./ChatWithPDF";
 import FlashcardsLibrary from "./FlashcardsLibrary";
 import TestYourself from "./TestYourself";
 import ReportsLibrary from "./ReportsLibrary";
@@ -122,6 +123,7 @@ export default function DashboardContent() {
 
   const activeContent = searchParams.get("tab") || "generate";
   const isChat = activeContent === "chat";
+  const isPdfChat = activeContent === "chat-pdf";
 
   const setActiveContent = (tab) => {
     const params = new URLSearchParams(searchParams);
@@ -139,6 +141,7 @@ export default function DashboardContent() {
     "reports-library": ReportsLibrary,
     "premium-courses": PremiumCourses,
     chat: Chat,
+    "chat-pdf": ChatWithPDF,
     profile: ProfileContent,
     career: CareerGrowth,
     "study-plans": StudyPlanLibrary,
@@ -149,10 +152,10 @@ export default function DashboardContent() {
   return (
     <div
       className={`relative min-h-full bg-background ${
-        isChat ? "lg:h-[calc(100vh-64px)] h-[calc(100vh-128px)] overflow-hidden" : "overflow-hidden"
+        (isChat || isPdfChat) ? "lg:h-[calc(100vh-64px)] h-[calc(100vh-128px)] overflow-hidden" : "overflow-hidden"
       }`}
     >
-      {!isChat && (
+      {!(isChat || isPdfChat) && (
         <div className="absolute inset-0 z-0 pointer-events-none">
           <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(15,23,42,0.22)_1px,_transparent_1px)] [background-size:20px_20px] opacity-100 dark:hidden" />
           <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(255,255,255,0.65),_rgba(255,255,255,0.18))] dark:hidden" />
@@ -162,12 +165,12 @@ export default function DashboardContent() {
       )}
       <div
         className={
-          isChat
+          (isChat || isPdfChat)
             ? "w-full h-full relative z-10"
             : "max-w-[110rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide relative z-10"
         }
         style={
-          isChat
+          (isChat || isPdfChat)
             ? {}
             : {
                 scrollbarWidth: "none",
@@ -175,7 +178,7 @@ export default function DashboardContent() {
               }
         }
       >
-        {!isChat && (
+        {!(isChat || isPdfChat) && (
           <style jsx>{`
             .scrollbar-hide::-webkit-scrollbar {
               display: none;
@@ -183,7 +186,7 @@ export default function DashboardContent() {
           `}</style>
         )}
 
-        <div className={isChat ? "h-full" : "grid grid-cols-1 gap-4 sm:gap-6"}>
+        <div className={(isChat || isPdfChat) ? "h-full" : "grid grid-cols-1 gap-4 sm:gap-6"}>
           <div className="w-full h-full">
             {ContentComponent ? (
               <ContentComponent

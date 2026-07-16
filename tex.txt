@@ -9,3 +9,4 @@ obad 100
 jafe 20 
 someone 50
 me 100
+gideon 100
