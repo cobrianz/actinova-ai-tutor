@@ -3,7 +3,7 @@
 import {
   Search, BookOpen, Plus, MessageCircle, MoreHorizontal,
   FileText, ScrollText, Briefcase, HelpCircle, Star,
-  User, LogOut, X, TrendingUp, Coins, CalendarCheck
+  User, LogOut, X, TrendingUp, Coins, CalendarCheck, GraduationCap
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -23,6 +23,7 @@ const secondaryItems = [
   { name: "Career Growth", id: "career", icon: Briefcase },
   { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
   { name: "Premium", id: "premium-courses", icon: Star },
+  { name: "Classrooms", id: "classrooms", icon: GraduationCap },
 ];
 
 function NavBtn({ icon: Icon, label, isActive, onClick }) {

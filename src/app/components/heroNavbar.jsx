@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import { useRouter, usePathname } from "next/navigation";
@@ -41,6 +41,9 @@ export default function HeroNavbar({ handleGetStarted }) {
     { href: "#features", label: "Features", isAnchor: true },
     { href: "/blog", label: "Blog", isAnchor: false },
     { href: "/about", label: "About", isAnchor: false },
+    ...(user?.role === "instructor" || user?.role === "admin"
+      ? [{ href: "/dashboard?tab=classrooms", label: "Classrooms", isAnchor: false, icon: GraduationCap }]
+      : []),
   ];
 
   const handleNavClick = (e, href, isAnchor) => {
@@ -101,12 +104,13 @@ export default function HeroNavbar({ handleGetStarted }) {
                   href={link.href}
                   onClick={(e) => link.isAnchor && handleNavClick(e, link.href, true)}
                   className={cn(
-                    "text-[13px] font-medium px-4 py-2 rounded-full transition-all relative",
+                    "text-[13px] font-medium px-4 py-2 rounded-full transition-all relative flex items-center gap-1.5",
                     isActive 
                       ? "bg-black text-white" 
                       : "text-[#475569] hover:text-[#0f172a] hover:bg-black/5"
                   )}
                 >
+                  {link.icon && <link.icon className="w-3.5 h-3.5" />}
                   {link.label}
                 </Link>
               );
@@ -178,7 +182,10 @@ export default function HeroNavbar({ handleGetStarted }) {
                   onClick={(e) => link.isAnchor && handleNavClick(e, link.href, true)}
                   className="block text-lg font-medium text-foreground hover:text-primary transition-colors"
                 >
-                  {link.label}
+                  <span className="flex items-center gap-2">
+                    {link.icon && <link.icon className="w-5 h-5" />}
+                    {link.label}
+                  </span>
                 </Link>
               ))}
               <div className="pt-4 border-t border-border-accent flex flex-col gap-4">

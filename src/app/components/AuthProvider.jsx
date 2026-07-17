@@ -302,10 +302,18 @@ export function AuthProvider({ children }) {
     }
   };
   
-  const loginWithGoogle = async (tokenData) => {
+  const loginWithGoogle = async (tokenData, options = {}) => {
     try {
       setError(null);
       setLoading(true);
+
+      const payload = typeof tokenData === "string"
+        ? { credential: tokenData }
+        : { accessToken: tokenData.access_token };
+
+      if (options.role) {
+        payload.role = options.role;
+      }
 
       const res = await fetch("/api/login/google", {
         method: "POST",
@@ -313,11 +321,7 @@ export function AuthProvider({ children }) {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(
-          typeof tokenData === "string" 
-            ? { credential: tokenData } 
-            : { accessToken: tokenData.access_token }
-        ),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();

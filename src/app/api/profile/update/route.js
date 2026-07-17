@@ -110,6 +110,7 @@ async function handlePost(request) {
     ageGroup,
     educationLevel,
     learningStyle,
+    role,
   } = updates;
 
   const updateFields = {};
@@ -132,6 +133,9 @@ async function handlePost(request) {
   if (educationLevel !== undefined)
     updateFields.educationLevel = educationLevel;
   if (learningStyle !== undefined) updateFields.learningStyle = learningStyle;
+  if (role !== undefined && ["student", "instructor"].includes(role)) {
+    updateFields.role = role;
+  }
 
   if (generatedPremiumCourse) {
     addToSet["generatedPremiumCourses"] = {
@@ -206,6 +210,7 @@ async function handlePost(request) {
       onboardingCompleted: !!updatedUser.onboardingCompleted,
       emailVerified: !!updatedUser.emailVerified,
       status: updatedUser.status,
+      role: updatedUser.role || "student",
       usage: await getTrackedUsageSummary(db, updatedUser),
     },
   });

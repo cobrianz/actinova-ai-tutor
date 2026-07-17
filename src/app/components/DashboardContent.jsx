@@ -15,6 +15,7 @@ import ProfileContent from "./ProfileContent";
 import CareerGrowth from "./CareerGrowth";
 import DashboardOverview from "./DashboardOverview";
 import StudyPlanLibrary from "./StudyPlanLibrary";
+import ClassroomDashboard from "./ClassroomDashboard";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
@@ -145,6 +146,7 @@ export default function DashboardContent() {
     profile: ProfileContent,
     career: CareerGrowth,
     "study-plans": StudyPlanLibrary,
+    classrooms: ClassroomDashboard,
   };
 
   const ContentComponent = routeComponents[activeContent] || routeComponents.home;

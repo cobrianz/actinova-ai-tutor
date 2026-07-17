@@ -12,7 +12,8 @@ const client = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
 export async function POST(request) {
   try {
-    const { credential, accessToken: googleAccessToken } = await request.json();
+    const { credential, accessToken: googleAccessToken, role } = await request.json();
+    const requestedRole = role === "instructor" ? "instructor" : "student";
 
     if (!credential && !googleAccessToken) {
       return NextResponse.json({ error: "Google credential or access token is required" }, { status: 400 });
@@ -63,7 +64,7 @@ export async function POST(request) {
         googleId,
         emailVerified: true, // Google emails are already verified
         status: "active",
-        role: "student",
+        role: requestedRole,
         onboardingCompleted: false,
         isPremium: false,
         streak: 0,

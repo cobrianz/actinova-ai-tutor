@@ -5,6 +5,7 @@ import {
   Sun,
   Menu,
   Home,
+  GraduationCap,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -73,6 +74,19 @@ export default function Navbar({ toggleSidebar }) {
               >
                 Dashboard
               </Link>
+              {(user?.role === "instructor" || user?.role === "admin") && (
+                <Link
+                  href="/dashboard?tab=classrooms"
+                  className={`text-sm font-medium hover:text-primary transition-colors flex items-center gap-1 ${
+                    pathname === "/dashboard" && typeof window !== "undefined" && window.location.search.includes("tab=classrooms")
+                      ? "text-primary"
+                      : "text-foreground"
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  Classrooms
+                </Link>
+              )}
             </nav>
           </div>
 

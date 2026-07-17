@@ -18,6 +18,8 @@ export async function POST(request) {
   let { firstName, lastName, email, password, confirmPassword, acceptTerms } =
     body;
 
+  const requestedRole = body.role === "instructor" ? "instructor" : "student";
+
   // Sanitize inputs
   firstName = firstName?.trim();
   lastName = lastName?.trim();
@@ -104,7 +106,7 @@ export async function POST(request) {
       name: `${firstName} ${lastName}`,
       email,
       password: await hashPassword(password),
-      role: "student",
+      role: requestedRole,
       status: "pending", // requires email verification
       emailVerificationToken: verificationToken,
       emailVerificationCode: verificationCode,

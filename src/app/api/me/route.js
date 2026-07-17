@@ -51,6 +51,7 @@ async function handleGet(request) {
     level: user.level || 1,
     courses: user.courses || [],
     isPremium: user.isPremium || false,
+    role: user.role || "student",
     usage,
   };
 

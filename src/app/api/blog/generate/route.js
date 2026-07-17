@@ -41,7 +41,15 @@ async function ensureAdmin(req) {
       } catch { }
     }
   }
-  if (!decoded || decoded.role !== "admin") {
+  if (!decoded) {
+    throw new Error("unauthorized");
+  }
+  // Check role from database instead of potentially stale JWT
+  const { connectToDatabase } = await import("@/lib/mongodb");
+  const { db } = await connectToDatabase();
+  const { ObjectId } = await import("mongodb");
+  const user = await db.collection("users").findOne({ _id: new ObjectId(decoded.id) });
+  if (!user || user.role !== "admin") {
     throw new Error("unauthorized");
   }
   return decoded;

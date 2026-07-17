@@ -15,6 +15,9 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  GraduationCap,
+  BookMarked,
+  Users,
 } from "lucide-react";
 
 export default function SignupPage() {
@@ -32,13 +35,14 @@ export default function SignupPage() {
     confirmPassword: "",
     acceptTerms: false
   });
+  const [selectedRole, setSelectedRole] = useState("student");
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      const result = await loginWithGoogle(tokenResponse);
+      const result = await loginWithGoogle(tokenResponse, { role: selectedRole });
       if (result.success) {
         toast.success("Welcome aboard!");
-        router.push("/dashboard");
+        router.push("/onboarding");
       } else {
         toast.error(result.error || "Google login failed");
       }
@@ -75,7 +79,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const result = await signup(formData);
+      const result = await signup({ ...formData, role: selectedRole });
       if (result.success) {
         toast.success("Account created! Please check your email for verification.");
         if (result.requiresVerification) {
@@ -117,6 +121,38 @@ export default function SignupPage() {
           <p className="text-sm text-gray-500 mt-1.5 font-medium">
             Fill in your details to get started
           </p>
+        </div>
+
+        {/* Role Selector */}
+        <div>
+          <label className="text-sm font-semibold text-gray-700 block mb-2">I am a...</label>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: "student", label: "Student", desc: "Learn with AI courses", icon: GraduationCap },
+              { id: "instructor", label: "Instructor", desc: "Teach and manage classes", icon: BookMarked },
+            ].map(({ id, label, desc, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setSelectedRole(id)}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                  selectedRole === id
+                    ? "border-green-500 bg-green-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  selectedRole === id ? "bg-green-500 text-white" : "bg-gray-100 text-gray-500"
+                }`}>
+                  <Icon className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${selectedRole === id ? "text-green-700" : "text-gray-900"}`}>{label}</p>
+                  <p className="text-[11px] text-gray-500">{desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         <form onSubmit={handleEmailSignup} className="space-y-4">

@@ -32,381 +32,35 @@ import { toast } from "sonner";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 
-const onboardingSteps = [
+const studentSteps = [
   {
     id: "interests",
     title: "What are you interested in learning?",
-    description:
-      "Select all topics that interest you. We'll personalize your learning experience.",
+    description: "Select all topics that interest you. We'll personalize your experience.",
     icon: Heart,
     fields: [
-      {
-        id: "programming",
-        label: "Programming & Development",
-        icon: Code,
-        category: "Technology",
-      },
-      {
-        id: "design",
-        label: "Design & Creative Arts",
-        icon: Palette,
-        category: "Design",
-      },
-      {
-        id: "business",
-        label: "Business & Entrepreneurship",
-        icon: Briefcase,
-        category: "Business",
-      },
-      {
-        id: "data-science",
-        label: "Data Science & Analytics",
-        icon: TrendingUp,
-        category: "Data Science",
-      },
-      {
-        id: "ai-ml",
-        label: "AI & Machine Learning",
-        icon: Brain,
-        category: "AI & ML",
-      },
-      {
-        id: "music",
-        label: "Music & Audio",
-        icon: Music,
-        category: "Creative",
-      },
-      {
-        id: "photography",
-        label: "Photography & Videography",
-        icon: Camera,
-        category: "Creative",
-      },
-      {
-        id: "gaming",
-        label: "Game Development",
-        icon: Gamepad2,
-        category: "Technology",
-      },
-      {
-        id: "writing",
-        label: "Writing & Literature",
-        icon: BookOpen,
-        category: "Humanities",
-      },
-      {
-        id: "languages",
-        label: "Foreign Languages",
-        icon: MessageSquare,
-        category: "Languages",
-      },
-      {
-        id: "science",
-        label: "Natural Sciences",
-        icon: FlaskRound,
-        category: "Science",
-      },
-      {
-        id: "math",
-        label: "Mathematics",
-        icon: Calculator,
-        category: "Mathematics",
-      },
-      {
-        id: "history",
-        label: "History & Social Studies",
-        icon: Clock,
-        category: "Humanities",
-      },
-      {
-        id: "health",
-        label: "Health & Wellness",
-        icon: Heart,
-        category: "Health",
-      },
-      {
-        id: "finance",
-        label: "Finance & Investing",
-        icon: DollarSign,
-        category: "Business",
-      },
-      {
-        id: "cooking",
-        label: "Cooking & Culinary Arts",
-        icon: ChefHat,
-        category: "Lifestyle",
-      },
-      {
-        id: "fitness",
-        label: "Fitness & Exercise",
-        icon: Heart,
-        category: "Health",
-      },
-      {
-        id: "meditation",
-        label: "Meditation & Mindfulness",
-        icon: Brain,
-        category: "Health",
-      },
-      {
-        id: "gardening",
-        label: "Gardening & Horticulture",
-        icon: BookOpen,
-        category: "Lifestyle",
-      },
-      {
-        id: "crafts",
-        label: "Arts & Crafts",
-        icon: Palette,
-        category: "Creative",
-      },
-      {
-        id: "psychology",
-        label: "Psychology & Mental Health",
-        icon: Brain,
-        category: "Health",
-      },
-      {
-        id: "philosophy",
-        label: "Philosophy & Ethics",
-        icon: BookOpen,
-        category: "Humanities",
-      },
-      {
-        id: "economics",
-        label: "Economics & Finance",
-        icon: DollarSign,
-        category: "Business",
-      },
-      {
-        id: "marketing",
-        label: "Marketing & Advertising",
-        icon: TrendingUp,
-        category: "Business",
-      },
-      {
-        id: "project-management",
-        label: "Project Management",
-        icon: Briefcase,
-        category: "Business",
-      },
-      {
-        id: "leadership",
-        label: "Leadership & Management",
-        icon: User,
-        category: "Business",
-      },
-      {
-        id: "public-speaking",
-        label: "Public Speaking & Communication",
-        icon: MessageSquare,
-        category: "Business",
-      },
-      {
-        id: "entrepreneurship",
-        label: "Entrepreneurship & Startups",
-        icon: Briefcase,
-        category: "Business",
-      },
-      {
-        id: "real-estate",
-        label: "Real Estate & Property",
-        icon: DollarSign,
-        category: "Business",
-      },
-      {
-        id: "investing",
-        label: "Investing & Trading",
-        icon: DollarSign,
-        category: "Business",
-      },
-      {
-        id: "accounting",
-        label: "Accounting & Bookkeeping",
-        icon: Calculator,
-        category: "Business",
-      },
-      {
-        id: "law",
-        label: "Law & Legal Studies",
-        icon: BookOpen,
-        category: "Humanities",
-      },
-      {
-        id: "politics",
-        label: "Politics & Government",
-        icon: BookOpen,
-        category: "Humanities",
-      },
-      {
-        id: "sociology",
-        label: "Sociology & Anthropology",
-        icon: Users,
-        category: "Humanities",
-      },
-      {
-        id: "geography",
-        label: "Geography & Travel",
-        icon: BookOpen,
-        category: "Humanities",
-      },
-      {
-        id: "religion",
-        label: "Religion & Theology",
-        icon: BookOpen,
-        category: "Humanities",
-      },
-      {
-        id: "art-history",
-        label: "Art History & Appreciation",
-        icon: Palette,
-        category: "Creative",
-      },
-      {
-        id: "dance",
-        label: "Dance & Movement",
-        icon: Music,
-        category: "Creative",
-      },
-      {
-        id: "theater",
-        label: "Theater & Acting",
-        icon: Users,
-        category: "Creative",
-      },
-      {
-        id: "fashion",
-        label: "Fashion & Style",
-        icon: Palette,
-        category: "Creative",
-      },
-      {
-        id: "interior-design",
-        label: "Interior Design",
-        icon: Palette,
-        category: "Design",
-      },
-      {
-        id: "architecture",
-        label: "Architecture",
-        icon: Briefcase,
-        category: "Design",
-      },
-      {
-        id: "engineering",
-        label: "Engineering",
-        icon: FlaskRound,
-        category: "Science",
-      },
-      {
-        id: "medicine",
-        label: "Medicine & Healthcare",
-        icon: Heart,
-        category: "Health",
-      },
-      {
-        id: "nursing",
-        label: "Nursing & Caregiving",
-        icon: Heart,
-        category: "Health",
-      },
-      {
-        id: "nutrition",
-        label: "Nutrition & Dietetics",
-        icon: Heart,
-        category: "Health",
-      },
-      {
-        id: "veterinary",
-        label: "Veterinary Science",
-        icon: Heart,
-        category: "Health",
-      },
-      {
-        id: "astronomy",
-        label: "Astronomy & Space",
-        icon: FlaskRound,
-        category: "Science",
-      },
-      {
-        id: "geology",
-        label: "Geology & Earth Sciences",
-        icon: FlaskRound,
-        category: "Science",
-      },
-      {
-        id: "environmental",
-        label: "Environmental Science",
-        icon: FlaskRound,
-        category: "Science",
-      },
-      {
-        id: "agriculture",
-        label: "Agriculture & Farming",
-        icon: BookOpen,
-        category: "Science",
-      },
-      {
-        id: "aviation",
-        label: "Aviation & Piloting",
-        icon: TrendingUp,
-        category: "Technology",
-      },
-      {
-        id: "automotive",
-        label: "Automotive & Mechanics",
-        icon: Briefcase,
-        category: "Technology",
-      },
-      {
-        id: "construction",
-        label: "Construction & Trades",
-        icon: Briefcase,
-        category: "Technology",
-      },
-      {
-        id: "electrician",
-        label: "Electrical Work",
-        icon: Briefcase,
-        category: "Technology",
-      },
-      {
-        id: "plumbing",
-        label: "Plumbing & HVAC",
-        icon: Briefcase,
-        category: "Technology",
-      },
-      {
-        id: "welding",
-        label: "Welding & Metalwork",
-        icon: Briefcase,
-        category: "Technology",
-      },
-      {
-        id: "woodworking",
-        label: "Woodworking & Carpentry",
-        icon: Briefcase,
-        category: "Technology",
-      },
+      { id: "programming", label: "Programming & Development", icon: Code, category: "Technology" },
+      { id: "design", label: "Design & Creative Arts", icon: Palette, category: "Design" },
+      { id: "business", label: "Business & Entrepreneurship", icon: Briefcase, category: "Business" },
+      { id: "data-science", label: "Data Science & Analytics", icon: TrendingUp, category: "Data Science" },
+      { id: "ai-ml", label: "AI & Machine Learning", icon: Brain, category: "AI & ML" },
+      { id: "writing", label: "Writing & Literature", icon: BookOpen, category: "Humanities" },
+      { id: "languages", label: "Foreign Languages", icon: MessageSquare, category: "Languages" },
+      { id: "science", label: "Natural Sciences", icon: FlaskRound, category: "Science" },
+      { id: "math", label: "Mathematics", icon: Calculator, category: "Mathematics" },
+      { id: "finance", label: "Finance & Investing", icon: DollarSign, category: "Business" },
+      { id: "health", label: "Health & Wellness", icon: Heart, category: "Health" },
+      { id: "engineering", label: "Engineering", icon: FlaskRound, category: "Science" },
     ],
   },
   {
     id: "age-group",
     title: "What's your age group?",
-    description:
-      "This helps us tailor content appropriate for your age and experience level.",
+    description: "This helps us tailor content appropriate for you.",
     icon: User,
     fields: [
-      {
-        id: "under-18",
-        label: "Under 18",
-        description: "Student or young learner",
-      },
-      {
-        id: "18-24",
-        label: "18-24",
-        description: "Young adult, college student",
-      },
+      { id: "under-18", label: "Under 18", description: "Student or young learner" },
+      { id: "18-24", label: "18-24", description: "Young adult, college student" },
       { id: "25-34", label: "25-34", description: "Early career professional" },
       { id: "35-44", label: "35-44", description: "Mid-career professional" },
       { id: "45-54", label: "45-54", description: "Experienced professional" },
@@ -414,110 +68,28 @@ const onboardingSteps = [
     ],
   },
   {
-    id: "education-level",
-    title: "What's your current education level?",
-    description:
-      "Help us recommend courses that match your background knowledge.",
-    icon: GraduationCap,
-    fields: [
-      {
-        id: "high-school",
-        label: "High School",
-        description: "Currently in high school or equivalent",
-      },
-      {
-        id: "some-college",
-        label: "Some College",
-        description: "Started college but didn't complete",
-      },
-      {
-        id: "associates",
-        label: "Associate's Degree",
-        description: "2-year degree completed",
-      },
-      {
-        id: "bachelors",
-        label: "Bachelor's Degree",
-        description: "4-year degree completed",
-      },
-      {
-        id: "masters",
-        label: "Master's Degree",
-        description: "Graduate degree completed",
-      },
-      {
-        id: "phd",
-        label: "PhD or Higher",
-        description: "Doctorate or advanced degree",
-      },
-      {
-        id: "self-taught",
-        label: "Self-Taught",
-        description: "Learned through personal projects",
-      },
-    ],
-  },
-  {
     id: "skill-level",
     title: "What's your current skill level?",
-    description: "Help us recommend courses at the right difficulty for you.",
+    description: "Help us recommend courses at the right difficulty.",
     icon: TrendingUp,
     fields: [
       { id: "beginner", label: "Beginner", description: "Just starting out" },
-      {
-        id: "intermediate",
-        label: "Intermediate",
-        description: "Some experience",
-      },
-      {
-        id: "advanced",
-        label: "Advanced",
-        description: "Looking to master skills",
-      },
+      { id: "intermediate", label: "Intermediate", description: "Some experience" },
+      { id: "advanced", label: "Advanced", description: "Looking to master" },
     ],
   },
   {
     id: "goals",
     title: "What are your learning goals?",
-    description: "Select what you want to achieve (you can choose multiple).",
+    description: "Select what you want to achieve.",
     icon: BookOpen,
     fields: [
-      {
-        id: "career-change",
-        label: "Career Change",
-        description: "Switch to a new field",
-      },
-      {
-        id: "skill-upgrade",
-        label: "Skill Upgrade",
-        description: "Advance in current role",
-      },
-      {
-        id: "personal-project",
-        label: "Personal Project",
-        description: "Build something new",
-      },
-      {
-        id: "certification",
-        label: "Get Certified",
-        description: "Earn credentials",
-      },
+      { id: "career-change", label: "Career Change", description: "Switch to a new field" },
+      { id: "skill-upgrade", label: "Skill Upgrade", description: "Advance in current role" },
+      { id: "certification", label: "Get Certified", description: "Earn credentials" },
       { id: "hobby", label: "Hobby & Fun", description: "Learn for enjoyment" },
-      {
-        id: "startup",
-        label: "Start a Business",
-        description: "Entrepreneurship goals",
-      },
-      {
-        id: "teaching",
-        label: "Teach Others",
-        description: "Share knowledge with others",
-      },
-      {
-        id: "research",
-        label: "Academic Research",
-        description: "Conduct research or studies",
-      },
+      { id: "research", label: "Academic Research", description: "Conduct research" },
+      { id: "teaching", label: "Teach Others", description: "Share knowledge" },
     ],
   },
   {
@@ -526,166 +98,168 @@ const onboardingSteps = [
     description: "This helps us suggest courses that fit your schedule.",
     icon: Clock,
     fields: [
-      { id: "1-3", label: "1-3 hours/week", description: "Light learning" },
-      { id: "4-7", label: "4-7 hours/week", description: "Moderate pace" },
-      {
-        id: "8-15",
-        label: "8-15 hours/week",
-        description: "Intensive learning",
-      },
-      {
-        id: "15+",
-        label: "15+ hours/week",
-        description: "Full-time commitment",
-      },
+      { id: "1-3", label: "1-3 hrs/week", description: "Light learning" },
+      { id: "4-7", label: "4-7 hrs/week", description: "Moderate pace" },
+      { id: "8-15", label: "8-15 hrs/week", description: "Intensive" },
+      { id: "15+", label: "15+ hrs/week", description: "Full-time" },
+    ],
+  },
+];
+
+const instructorSteps = [
+  {
+    id: "teaching-subject",
+    title: "What subject do you teach?",
+    description: "Tell us what you'll be teaching so we can tailor your instructor tools.",
+    icon: BookOpen,
+    fields: [
+      { id: "programming", label: "Programming & CS", icon: Code, category: "Technology" },
+      { id: "design", label: "Design & Arts", icon: Palette, category: "Design" },
+      { id: "business", label: "Business & Management", icon: Briefcase, category: "Business" },
+      { id: "data-science", label: "Data Science", icon: TrendingUp, category: "Data Science" },
+      { id: "ai-ml", label: "AI & Machine Learning", icon: Brain, category: "AI & ML" },
+      { id: "science", label: "Science & Research", icon: FlaskRound, category: "Science" },
+      { id: "math", label: "Mathematics", icon: Calculator, category: "Mathematics" },
+      { id: "languages", label: "Languages", icon: MessageSquare, category: "Languages" },
+      { id: "health", label: "Health & Medicine", icon: Heart, category: "Health" },
+      { id: "other", label: "Other", icon: BookOpen, category: "Other" },
+    ],
+  },
+  {
+    id: "teaching-level",
+    title: "What level do you teach?",
+    description: "This helps us customize your classroom tools.",
+    icon: GraduationCap,
+    fields: [
+      { id: "high-school", label: "High School" },
+      { id: "college", label: "College / University" },
+      { id: "bootcamp", label: "Bootcamp / Workshop" },
+      { id: "corporate", label: "Corporate Training" },
+      { id: "online", label: "Online Courses" },
+      { id: "tutoring", label: "Private Tutoring" },
+    ],
+  },
+  {
+    id: "class-size",
+    title: "How many students do you typically teach?",
+    description: "This helps us plan your classroom capacity.",
+    icon: Users,
+    fields: [
+      { id: "1-10", label: "1-10", description: "Small group" },
+      { id: "11-30", label: "11-30", description: "Medium class" },
+      { id: "31-100", label: "31-100", description: "Large class" },
+      { id: "100+", label: "100+", description: "Lecture hall" },
+    ],
+  },
+  {
+    id: "goals",
+    title: "What are your teaching goals?",
+    description: "Select what you want to achieve with Actirova.",
+    icon: Lightbulb,
+    fields: [
+      { id: "create-courses", label: "Create Courses", description: "Generate AI courses for students" },
+      { id: "manage-classrooms", label: "Manage Classrooms", description: "Track student progress" },
+      { id: "assessments", label: "Build Assessments", description: "Quizzes and assignments" },
+      { id: "content", label: "Generate Content", description: "Flashcards, notes, reports" },
+      { id: "collaborate", label: "Collaborate", description: "Work with other instructors" },
     ],
   },
 ];
 
 export default function Onboarding({ onComplete }) {
   const router = useRouter();
-  const { setUserData } = useAuth();
+  const { user, setUserData } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState("");
-  const [selectedEducationLevel, setSelectedEducationLevel] = useState("");
   const [selectedSkillLevel, setSelectedSkillLevel] = useState("");
   const [selectedGoals, setSelectedGoals] = useState([]);
   const [selectedTimeCommitment, setSelectedTimeCommitment] = useState("");
+  const [selectedTeachingSubject, setSelectedTeachingSubject] = useState("");
+  const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("");
+  const [selectedClassSize, setSelectedClassSize] = useState("");
+  const [customSubject, setCustomSubject] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const role = user?.role || "student";
+  const onboardingSteps = role === "instructor" ? instructorSteps : studentSteps;
 
   const currentStepData = onboardingSteps[currentStep];
   const isLastStep = currentStep === onboardingSteps.length - 1;
   const canProceed = () => {
     switch (currentStepData.id) {
-      case "interests":
-        return selectedInterests.length > 0;
-      case "age-group":
-        return selectedAgeGroup !== "";
-      case "education-level":
-        return selectedEducationLevel !== "";
-      case "skill-level":
-        return selectedSkillLevel !== "";
-      case "goals":
-        return selectedGoals.length > 0;
-      case "time-commitment":
-        return selectedTimeCommitment !== "";
-      default:
-        return false;
+      case "interests": return selectedInterests.length > 0;
+      case "age-group": return selectedAgeGroup !== "";
+      case "skill-level": return selectedSkillLevel !== "";
+      case "goals": return selectedGoals.length > 0;
+      case "time-commitment": return selectedTimeCommitment !== "";
+      case "teaching-subject": return selectedTeachingSubject === "other" ? customSubject.trim().length > 0 : selectedTeachingSubject !== "";
+      case "teaching-level": return selectedTeachingLevel !== "";
+      case "class-size": return selectedClassSize !== "";
+      default: return false;
     }
   };
 
   const handleFieldToggle = (fieldId) => {
     switch (currentStepData.id) {
       case "interests":
-        setSelectedInterests((prev) =>
-          prev.includes(fieldId)
-            ? prev.filter((id) => id !== fieldId)
-            : [...prev, fieldId]
-        );
+        setSelectedInterests((prev) => prev.includes(fieldId) ? prev.filter((id) => id !== fieldId) : [...prev, fieldId]);
         break;
       case "goals":
-        setSelectedGoals((prev) =>
-          prev.includes(fieldId)
-            ? prev.filter((id) => id !== fieldId)
-            : [...prev, fieldId]
-        );
-        break;
-      default:
+        setSelectedGoals((prev) => prev.includes(fieldId) ? prev.filter((id) => id !== fieldId) : [...prev, fieldId]);
         break;
     }
   };
 
   const handleFieldSelect = (fieldId) => {
     switch (currentStepData.id) {
-      case "age-group":
-        setSelectedAgeGroup(fieldId);
-        break;
-      case "education-level":
-        setSelectedEducationLevel(fieldId);
-        break;
-      case "skill-level":
-        setSelectedSkillLevel(fieldId);
-        break;
-      case "time-commitment":
-        setSelectedTimeCommitment(fieldId);
-        break;
-      default:
-        break;
+      case "age-group": setSelectedAgeGroup(fieldId); break;
+      case "skill-level": setSelectedSkillLevel(fieldId); break;
+      case "time-commitment": setSelectedTimeCommitment(fieldId); break;
+      case "teaching-subject": setSelectedTeachingSubject(fieldId); break;
+      case "teaching-level": setSelectedTeachingLevel(fieldId); break;
+      case "class-size": setSelectedClassSize(fieldId); break;
     }
   };
 
   const handleNext = () => {
-    if (!canProceed()) {
-      toast.error("Please make a selection to continue");
-      return;
-    }
-    if (isLastStep) {
-      handleComplete();
-    } else {
-      setCurrentStep((prev) => prev + 1);
-    }
+    if (!canProceed()) { toast.error("Please make a selection"); return; }
+    if (isLastStep) { handleComplete(); } else { setCurrentStep((prev) => prev + 1); }
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    if (currentStep > 0) setCurrentStep((prev) => prev - 1);
   };
 
   const handleComplete = async () => {
     setIsSaving(true);
     try {
-
-      // Get interest categories from the interests step
-      const interestsStep = onboardingSteps.find(
-        (step) => step.id === "interests"
-      );
-      const interestCategories = selectedInterests
-        .map((id) => {
-          const interest = interestsStep?.fields.find((f) => f.id === id);
-          return interest?.category;
-        })
-        .filter(Boolean);
+      const interestsStep = onboardingSteps.find((s) => s.id === "interests");
+      const interestCategories = selectedInterests.map((id) => interestsStep?.fields.find((f) => f.id === id)?.category).filter(Boolean);
 
       const profileData = {
+        role,
         interests: selectedInterests,
         interestCategories: [...new Set(interestCategories)],
         ageGroup: selectedAgeGroup,
-        educationLevel: selectedEducationLevel,
         skillLevel: selectedSkillLevel,
         goals: selectedGoals,
         timeCommitment: selectedTimeCommitment,
+        teachingSubject: selectedTeachingSubject === "other" ? customSubject.trim() : selectedTeachingSubject,
         onboardingCompleted: true,
       };
 
-
-
       const response = await apiClient.post("/api/profile/update", profileData);
-
-
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("[Onboarding] Error response:", errorData);
         throw new Error(errorData.error || "Failed to save profile");
       }
-
       const data = await response.json();
-
-
-      // Update the user state in AuthProvider
       setUserData(data.user);
-
-      toast.success("Profile saved! Let's start learning!");
-      if (onComplete) {
-        onComplete();
-      } else {
-        router.push("/dashboard");
-      }
+      toast.success(role === "instructor" ? "Instructor profile saved!" : "Profile saved! Let's start learning!");
+      onComplete ? onComplete() : router.push("/dashboard");
     } catch (error) {
-      console.error("[Onboarding] Error saving profile:", error);
-      toast.error(error.message || "Failed to save profile. Please try again.");
+      toast.error(error.message || "Failed to save profile");
     } finally {
       setIsSaving(false);
     }
@@ -695,123 +269,80 @@ export default function Onboarding({ onComplete }) {
 
   return (
     <div className="relative flex flex-col min-h-screen overflow-hidden bg-background text-foreground">
-      {/* Decorative dots - Subtle background elements */}
-      <div className="absolute top-10 left-10 w-16 h-16 bg-primary/5 rounded-full blur-xl"></div>
-      <div className="absolute top-32 right-20 w-20 h-20 bg-primary/5 rounded-full blur-xl"></div>
-      <div className="absolute bottom-20 left-32 w-24 h-24 bg-primary/5 rounded-full blur-xl"></div>
-      <div className="absolute bottom-32 right-16 w-16 h-16 bg-primary/5 rounded-full blur-xl"></div>
+      <div className="absolute top-10 left-10 w-16 h-16 bg-green-500/5 rounded-full blur-xl"></div>
+      <div className="absolute bottom-20 right-16 w-20 h-20 bg-green-500/5 rounded-full blur-xl"></div>
 
-      {/* Main content */}
       <motion.div
-        className="relative z-10 flex flex-col flex-1 w-full max-w-6xl mx-auto"
+        className="relative z-10 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 min-h-screen"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
       >
         {/* Header */}
-        <div className="p-8 pb-4 text-center">
-          <div className="flex flex-col items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4 transition-transform hover:scale-110 shadow-sm border border-primary/20">
-              <IconComponent className="w-8 h-8" />
+        <div className="pb-3 text-center w-full">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-10 h-10 bg-green-500/10 text-green-600 rounded-xl flex items-center justify-center">
+              <IconComponent className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl font-heading mb-2">
-                {currentStepData.title}
-              </h2>
-              <p className="text-base font-medium text-muted-foreground">
-                Step {currentStep + 1} of {onboardingSteps.length}
-              </p>
-            </div>
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-foreground">{currentStepData.title}</h2>
+              <p className="text-xs text-muted-foreground">Step {currentStep + 1} of {onboardingSteps.length}</p>
           </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-secondary rounded-full h-1.5 max-w-xs mx-auto overflow-hidden">
+          {currentStepData.id === "teaching-subject" && selectedTeachingSubject === "other" && (
+            <div className="mt-3 max-w-xs mx-auto">
+              <input
+                type="text"
+                value={customSubject}
+                onChange={(e) => setCustomSubject(e.target.value)}
+                placeholder="e.g. Music Theory, Culinary Arts..."
+                className="w-full px-3 py-2 text-xs rounded-xl border border-green-500 bg-card text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-green-500/20"
+              />
+            </div>
+          )}
+        </div>
+          <div className="w-full bg-secondary rounded-full h-1 max-w-xs mx-auto overflow-hidden">
             <motion.div
-              className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]"
-              initial={{ width: 0 }}
-              animate={{
-                width: `${((currentStep + 1) / onboardingSteps.length) * 100}%`,
-              }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="bg-green-500 h-full rounded-full"
+              animate={{ width: `${((currentStep + 1) / onboardingSteps.length) * 100}%` }}
+              transition={{ duration: 0.4 }}
             />
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-8 pt-2 overflow-y-auto hide-scrollbar">
-          <p className="max-w-3xl mx-auto mb-10 text-lg leading-relaxed text-center text-muted-foreground">
-            {currentStepData.description}
-          </p>
-
-          <div className="flex flex-wrap gap-3 justify-center items-center">
-            {currentStepData.fields.map((field, index) => {
-              const isSelected =
-                currentStepData.id === "interests"
-                  ? selectedInterests.includes(field.id)
-                  : currentStepData.id === "goals"
-                    ? selectedGoals.includes(field.id)
-                    : currentStepData.id === "age-group"
-                      ? selectedAgeGroup === field.id
-                      : currentStepData.id === "education-level"
-                        ? selectedEducationLevel === field.id
-                        : currentStepData.id === "skill-level"
-                          ? selectedSkillLevel === field.id
-                          : selectedTimeCommitment === field.id;
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground text-center mb-4">{currentStepData.description}</p>
+          <div className="flex flex-wrap gap-2 justify-center mb-4">
+            {currentStepData.fields.map((field) => {
+              const isSelected = currentStepData.id === "interests" || currentStepData.id === "goals"
+                  ? (currentStepData.id === "interests" ? selectedInterests : selectedGoals).includes(field.id)
+                  : currentStepData.id === "age-group" ? selectedAgeGroup === field.id
+                  : currentStepData.id === "skill-level" ? selectedSkillLevel === field.id
+                  : currentStepData.id === "time-commitment" ? selectedTimeCommitment === field.id
+                  : currentStepData.id === "teaching-subject" ? selectedTeachingSubject === field.id
+                  : currentStepData.id === "teaching-level" ? selectedTeachingLevel === field.id
+                  : selectedClassSize === field.id;
 
               const FieldIcon = field.icon;
-
               return (
                 <motion.button
                   key={field.id}
                   onClick={() => {
-                    if (
-                      currentStepData.id === "interests" ||
-                      currentStepData.id === "goals"
-                    ) {
+                    if (currentStepData.id === "interests" || currentStepData.id === "goals") {
                       handleFieldToggle(field.id);
                     } else {
                       handleFieldSelect(field.id);
                     }
                   }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`p-4 rounded-full border-2 transition-all text-center ${isSelected
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:border-primary/50"
-                    }`}
+                  whileTap={{ scale: 0.97 }}
+                  className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all flex items-center gap-2 ${
+                    isSelected
+                      ? "border-green-500 bg-green-500/10 text-green-700 dark:text-green-400"
+                      : "border-border bg-card hover:border-green-300 dark:hover:border-green-600 text-muted-foreground"
+                  }`}
                 >
-                  <div className="flex items-center justify-center space-x-3">
-                    {FieldIcon && (
-                      <div
-                        className={`p-2 rounded-full ${isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-muted-foreground"
-                          }`}
-                      >
-                        <FieldIcon className="w-5 h-5" />
-                      </div>
-                    )}
-                    <div className="flex-1 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <h3
-                          className={`font-semibold ${isSelected
-                            ? "text-primary"
-                            : "text-foreground"
-                            }`}
-                        >
-                          {field.label}
-                        </h3>
-                        {isSelected && (
-                          <Check className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      {field.description && (
-                        <p className="text-xs text-muted-foreground mt-1 text-center">
-                          {field.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  {FieldIcon && <FieldIcon className="w-3.5 h-3.5" />}
+                  <span>{field.label}</span>
+                  {isSelected && <Check className="w-3 h-3 text-green-500" />}
                 </motion.button>
               );
             })}
@@ -819,23 +350,21 @@ export default function Onboarding({ onComplete }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-8 border-t border-border/50">
+        <div className="flex items-center justify-between w-full pt-4 pb-2">
           <button
             onClick={handleBack}
             disabled={currentStep === 0}
-            className="px-6 py-2.5 text-sm font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             Back
           </button>
           <button
             onClick={handleNext}
             disabled={!canProceed() || isSaving}
-            className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-all active:scale-95 shadow-lg shadow-primary/20"
+            className="px-4 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-all active:scale-95"
           >
-            <span className="text-sm tracking-wide uppercase">
-              {isLastStep ? (isSaving ? "Saving..." : "Finish Profile") : "Continue"}
-            </span>
-            {!isLastStep && <ChevronRight className="w-5 h-5" />}
+            {isLastStep ? (isSaving ? "Saving..." : "Finish") : "Continue"}
+            {!isLastStep && <ChevronRight className="w-3.5 h-3.5" />}
           </button>
         </div>
       </motion.div>
