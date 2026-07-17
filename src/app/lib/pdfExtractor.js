@@ -1,8 +1,14 @@
-import * as pdfjsLib from "pdfjs-dist";
-import { createWorker } from "tesseract.js";
+let pdfjsLib = null;
 
-// Configure pdf.js to use the static worker bundle served from /public
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+async function getPdfJs() {
+  if (!pdfjsLib) {
+    pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+  }
+  return pdfjsLib;
+}
+
+import { createWorker } from "tesseract.js";
 
 // ---------------------------------------------------------------------------
 // Tesseract.js worker singleton — lazily initialised, reused within a call
@@ -60,6 +66,8 @@ export class PdfExtractorError extends Error {
  * @throws {PdfExtractorError} Typed errors: "password", "corrupt", "page_limit"
  */
 export async function extractPdfText(file, callbacks = {}) {
+  const pdfjsLib = await getPdfJs();
+
   // Step 1: Read file as ArrayBuffer
   const arrayBuffer = await file.arrayBuffer();
 

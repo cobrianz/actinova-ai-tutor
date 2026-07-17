@@ -4,19 +4,16 @@ import { useState, useEffect, useMemo } from "react";
 import {
   BookOpen,
   Users,
-  Clock,
-  Star,
   TrendingUp,
   Search,
   Filter,
   ChevronLeft,
   ChevronRight,
-  Bookmark,
+  ArrowRight,
   Sparkles,
   X,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +22,28 @@ import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 import UpgradeModal from "./UpgradeModal";
 import { PRODUCTS } from "@/lib/planLimits";
+
+const DIFF_COLORS = {
+  beginner:     { bg: "bg-emerald-500/10", icon: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500", border: "hover:border-emerald-300 dark:hover:border-emerald-600", text: "text-emerald-600 dark:text-emerald-400" },
+  intermediate: { bg: "bg-amber-500/10",   icon: "text-amber-600 dark:text-amber-400",   dot: "bg-amber-500",   border: "hover:border-amber-300 dark:hover:border-amber-600",   text: "text-amber-600 dark:text-amber-400" },
+  advanced:     { bg: "bg-red-500/10",     icon: "text-red-600 dark:text-red-400",        dot: "bg-red-500",     border: "hover:border-red-300 dark:hover:border-red-600",       text: "text-red-600 dark:text-red-400" },
+};
+
+const CAT_COLORS = {
+  blue:   { bg: "bg-blue-500/10",    icon: "text-blue-600 dark:text-blue-400",    dot: "bg-blue-500",    border: "hover:border-blue-300 dark:hover:border-blue-600" },
+  purple: { bg: "bg-violet-500/10",  icon: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500",  border: "hover:border-violet-300 dark:hover:border-violet-600" },
+  orange: { bg: "bg-orange-500/10",  icon: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500",  border: "hover:border-orange-300 dark:hover:border-orange-600" },
+  green:  { bg: "bg-green-500/10",   icon: "text-green-600 dark:text-green-400",  dot: "bg-green-500",   border: "hover:border-green-300 dark:hover:border-green-600" },
+  indigo: { bg: "bg-indigo-500/10",  icon: "text-indigo-600 dark:text-indigo-400", dot: "bg-indigo-500",  border: "hover:border-indigo-300 dark:hover:border-indigo-600" },
+  pink:   { bg: "bg-pink-500/10",    icon: "text-pink-600 dark:text-pink-400",     dot: "bg-pink-500",    border: "hover:border-pink-300 dark:hover:border-pink-600" },
+  red:    { bg: "bg-rose-500/10",    icon: "text-rose-600 dark:text-rose-400",      dot: "bg-rose-500",    border: "hover:border-rose-300 dark:hover:border-rose-600" },
+  cyan:   { bg: "bg-cyan-500/10",    icon: "text-cyan-600 dark:text-cyan-400",      dot: "bg-cyan-500",    border: "hover:border-cyan-300 dark:hover:border-cyan-600" },
+  teal:   { bg: "bg-teal-500/10",    icon: "text-teal-600 dark:text-teal-400",      dot: "bg-teal-500",    border: "hover:border-teal-300 dark:hover:border-teal-600" },
+  yellow: { bg: "bg-yellow-500/10",  icon: "text-yellow-600 dark:text-yellow-400",  dot: "bg-yellow-500",  border: "hover:border-yellow-300 dark:hover:border-yellow-600" },
+  rose:   { bg: "bg-rose-500/10",    icon: "text-rose-600 dark:text-rose-400",      dot: "bg-rose-500",    border: "hover:border-rose-300 dark:hover:border-rose-600" },
+  lime:   { bg: "bg-lime-500/10",    icon: "text-lime-600 dark:text-lime-400",      dot: "bg-lime-500",    border: "hover:border-lime-300 dark:hover:border-lime-600" },
+};
+const DEFAULT_CAT_COLOR = CAT_COLORS.green;
 
 const staticCategories = [
   {
@@ -1344,36 +1363,48 @@ export default function Explore() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredTrendingTopics.map((topic, i) => (
-                  <div key={i} className="group relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer" onClick={() => handleGenerateCourse(topic)}>
-                    <div className="h-1.5 bg-gradient-to-r from-green-500 via-emerald-500 to-lime-500" />
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2.5">
-                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${topic.difficulty === 'beginner' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' :
-                          topic.difficulty === 'intermediate' ? 'bg-lime-50 text-lime-600 dark:bg-lime-900/20 dark:text-lime-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
-                          }`}>{topic.difficulty || 'Beginner'}</span>
-                        <TrendingUp className="w-3.5 h-3.5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                {filteredTrendingTopics.map((topic, i) => {
+                  const c = DIFF_COLORS[topic.difficulty] || DIFF_COLORS.beginner;
+                  return (
+                    <div key={i} className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 ${c.border} transition-all duration-200 cursor-pointer flex flex-col`} onClick={() => handleGenerateCourse(topic)}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}>
+                          <TrendingUp size={16} className={c.icon} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className={`font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-slate-900 dark:group-hover:text-white transition-colors min-w-0`}>
+                            {topic.title}
+                          </h3>
+                        </div>
+                        <span className={`shrink-0 px-1.5 py-0.5 text-[9px] font-semibold rounded-full ${c.bg} ${c.text}`}>{topic.difficulty || 'Beginner'}</span>
                       </div>
-                      <h3 className="text-[13px] font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-green-600 transition-colors leading-snug" style={{ fontFamily: "var(--font-fraunces)" }}>{topic.title}</h3>
-                      <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed line-clamp-2">{topic.description}</p>
+
+                      {topic.description && (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 flex-1">
+                          {topic.description}
+                        </p>
+                      )}
+
                       {topic.whyTrending && (
-                        <div className="flex items-center gap-1 text-[10px] text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20 rounded-md px-2 py-1 mb-2.5">
+                        <div className="flex items-center gap-1 text-[10px] text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20 rounded-md px-2 py-1 mb-3">
                           <span>🔥</span> <span className="truncate">{topic.whyTrending}</span>
                         </div>
                       )}
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {topic.tags?.slice(0, 3).map((tag, j) => (
-                          <span key={j} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-medium rounded">{tag}</span>
-                        ))}
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                          <span className="font-medium">{topic.tags?.length || 0} tags</span>
+                        </div>
+                        <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
+                          disabled={generatingCourse === topic.title}
+                          className={`font-bold ${c.text} flex items-center gap-1 group-hover:translate-x-0.5 transition-transform disabled:opacity-50`}>
+                          {generatingCourse === topic.title ? <><div className={`w-3 h-3 border-2 ${c.bg} border-t-current rounded-full animate-spin`} /> Generating...</> : <>Generate <Sparkles className="w-3 h-3" /></>}
+                        </button>
                       </div>
-                      <button onClick={e => { e.stopPropagation(); handleGenerateCourse(topic); }}
-                        disabled={generatingCourse === topic.title}
-                        className={`w-full ${getButtonColorStyles()} disabled:opacity-50 py-1.5 px-3 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all border-none`}>
-                        {generatingCourse === topic.title ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles className="w-3 h-3" /> Generate</>}
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
@@ -1411,38 +1442,41 @@ export default function Explore() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => (
-                    <div key={i} className="group relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-0.5 transition-all duration-300">
-                      <div className="h-1.5 bg-gradient-to-r from-green-500 to-emerald-500" />
-                      {!userIsPremium && (
-                        <div className="absolute top-3.5 right-3 bg-lime-100 text-lime-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-0.5"><span className="text-[9px]">⭐</span> Pro</div>
-                      )}
-                      <div className="p-4">
-                        <div className="flex items-center gap-2.5 mb-3">
-                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 flex items-center justify-center group-hover:from-green-500 group-hover:to-teal-600 group-hover:scale-110 transition-all duration-300">
-                            <BookOpen className="w-4 h-4 text-green-600 dark:text-green-400 group-hover:text-white transition-colors" />
+                  {filteredCategories.slice(0, visibleCategoriesCount).map((category, i) => {
+                    const c = CAT_COLORS[category.color] || DEFAULT_CAT_COLOR;
+                    return (
+                      <div key={i} className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 ${c.border} transition-all duration-200 flex flex-col`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}>
+                            <BookOpen size={16} className={c.icon} />
                           </div>
-                          <div className="min-w-0">
-                            <h3 className="text-[13px] font-bold text-slate-900 dark:text-white truncate" style={{ fontFamily: "var(--font-fraunces)" }}>{category.name}</h3>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 min-w-0">
+                              {category.name}
+                            </h3>
                             <p className="text-[10px] text-slate-500 font-medium">{category.count || 0} specializations</p>
                           </div>
                         </div>
-                        <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed line-clamp-2">{category.description}</p>
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {category.topics.slice(0, 3).map((topic, j) => (
-                            <span key={j} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-medium rounded">{topic}</span>
-                          ))}
-                          {category.topics.length > 3 && (
-                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 text-[9px] rounded">+{category.topics.length - 3}</span>
-                          )}
+
+                        {category.description && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mb-3 flex-1">
+                            {category.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                            <span className="font-medium">{category.topics?.length || 0} topics</span>
+                          </div>
+                          <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
+                            className={`font-bold ${c.text} flex items-center gap-1 group-hover:translate-x-0.5 transition-transform disabled:opacity-50`}>
+                            {exploringCategory === category.name ? <><div className={`w-3 h-3 border-2 ${c.bg} border-t-current rounded-full animate-spin`} /> Exploring...</> : <>Explore <ArrowRight className="w-3 h-3 -rotate-45" /></>}
+                          </button>
                         </div>
-                        <button onClick={() => handleExploreCategory(category)} disabled={exploringCategory === category.name}
-                          className={`w-full ${getButtonColorStyles()} py-1.5 px-3 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all border-none disabled:opacity-50`}>
-                          {exploringCategory === category.name ? <><div className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Exploring...</> : <><Sparkles className="w-3 h-3" /> Explore</>}
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {visibleCategoriesCount < filteredCategories.length && (
@@ -1557,75 +1591,56 @@ export default function Explore() {
 
             {!minimizedSections.has(generatedSet.id) && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {generatedSet.courses.map((course, index) => (
-                  <div
-                    key={index}
-                    className="group relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    <div className="h-1.5 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" />
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2.5">
-                        <span
-                          className={`px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${course.difficulty === "beginner"
-                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
-                            : course.difficulty === "intermediate"
-                              ? "bg-lime-50 text-lime-600 dark:bg-lime-900/20 dark:text-lime-400"
-                              : "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
-                            }`}
-                        >
+                {generatedSet.courses.map((course, index) => {
+                  const c = DIFF_COLORS[course.difficulty] || DIFF_COLORS.beginner;
+                  return (
+                    <div
+                      key={index}
+                      className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 ${c.border} transition-all duration-200 flex flex-col`}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}>
+                          <BookOpen size={16} className={c.icon} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 min-w-0">
+                            {course.title}
+                          </h3>
+                        </div>
+                        <span className={`shrink-0 px-1.5 py-0.5 text-[9px] font-semibold rounded-full ${c.bg} ${c.text}`}>
                           {course.difficulty || "Beginner"}
                         </span>
                       </div>
 
-                      <h3 className="text-[13px] font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-green-600 transition-colors leading-snug" style={{ fontFamily: "var(--font-fraunces)" }}>
-                        {course.title}
-                      </h3>
+                      {course.description && (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 flex-1">
+                          {course.description}
+                        </p>
+                      )}
 
-                      <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed line-clamp-2">
-                        {course.description}
-                      </p>
-
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-2.5">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
                           <span className="font-medium">{course.estimatedDuration || "6 weeks"}</span>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateCourse(course);
+                          }}
+                          disabled={generatingCourse === course.title}
+                          className={`font-bold ${c.text} flex items-center gap-1 group-hover:translate-x-0.5 transition-transform disabled:opacity-50`}
+                        >
+                          {generatingCourse === course.title ? (
+                            <><div className={`w-3 h-3 border-2 ${c.bg} border-t-current rounded-full animate-spin`} /> Generating...</>
+                          ) : (
+                            <>Generate <Sparkles className="w-3 h-3" /></>
+                          )}
+                        </button>
                       </div>
-
-                      <div className="flex items-center flex-wrap gap-1 mb-3">
-                        {course.tags?.slice(0, 3).map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-medium rounded"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleGenerateCourse(course);
-                        }}
-                        disabled={generatingCourse === course.title}
-                        className={`w-full ${getButtonColorStyles()} py-1.5 px-3 rounded-lg transition-all text-[11px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 border-none`}
-                      >
-                        {generatingCourse === course.title ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white"></div>
-                            <span>Generating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-3 h-3" />
-                            <span>Generate</span>
-                          </>
-                        )}
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

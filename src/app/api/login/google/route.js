@@ -178,6 +178,7 @@ export async function POST(request) {
       success: true,
       message: "Successfully authenticated with Google",
       user: safeUser,
+      tokens: { accessToken, refreshToken },
     });
 
   } catch (error) {

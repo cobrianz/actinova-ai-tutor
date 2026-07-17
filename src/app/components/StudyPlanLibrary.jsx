@@ -18,6 +18,7 @@ import {
   Link,
   Copy,
   Check,
+  Trash2,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
@@ -39,6 +40,9 @@ export default function StudyPlanLibrary({ setActiveContent }) {
   const [shareUrl, setShareUrl] = useState("");
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchPlans = useCallback(async () => {
     setLoading(true);
@@ -575,6 +579,32 @@ export default function StudyPlanLibrary({ setActiveContent }) {
     }
   };
 
+  const handleDeleteClick = (plan, e) => {
+    e.stopPropagation();
+    setPlanToDelete(plan);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!planToDelete) return;
+    setDeleteLoading(true);
+    try {
+      const res = await apiClient.delete(`/api/study-plan/${planToDelete._id}`);
+      if (res.ok) {
+        setPlans((prev) => prev.filter((p) => p._id !== planToDelete._id));
+        toast.success("Study plan deleted");
+        setShowDeleteModal(false);
+        setPlanToDelete(null);
+      } else {
+        toast.error("Failed to delete plan");
+      }
+    } catch {
+      toast.error("Failed to delete study plan");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const filteredPlans = plans.filter(
     (p) =>
       p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -683,15 +713,22 @@ export default function StudyPlanLibrary({ setActiveContent }) {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="p-6 rounded-2xl border border-border/40 bg-card/50 animate-pulse">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-muted" />
+            <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 animate-pulse">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800" />
                 <div className="flex-1">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-3/4 mb-2" />
                 </div>
+                <div className="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800" />
               </div>
-              <div className="h-2 bg-muted rounded-full w-full mt-4" />
+              <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/2 mb-3" />
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex gap-1.5">
+                  <div className="h-3 w-12 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="h-3 w-14 bg-slate-100 dark:bg-slate-800 rounded" />
+                </div>
+                <div className="h-3 w-14 bg-slate-100 dark:bg-slate-800 rounded" />
+              </div>
             </div>
           ))}
         </div>
@@ -743,104 +780,66 @@ export default function StudyPlanLibrary({ setActiveContent }) {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="group rounded-xl sm:rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:border-green-500/30 cursor-pointer"
+                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer flex flex-col"
                 onClick={() => handleViewPlan(plan._id)}
               >
-                <div className="p-3.5 sm:p-5">
-                  {/* Top row: icon + title + difficulty */}
-                  <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${
-                      plan.completed
-                        ? "bg-green-500 text-white"
-                        : "bg-green-500/10 text-green-600 dark:text-green-400"
-                    }`}>
-                      {plan.completed ? <Trophy className="w-4 h-4 sm:w-5 sm:h-5" /> : <CalendarCheck className="w-4 h-4 sm:w-5 sm:h-5" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-foreground line-clamp-2 text-balance">{plan.title}</h3>
-                      {plan.overview && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{plan.overview}</p>
-                      )}
-                    </div>
-                    <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${d.bg} ${d.color}`}>
-                      {d.label}
-                    </span>
+                {/* Top row: icon + title + delete */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                    plan.completed
+                      ? "bg-green-500 text-white"
+                      : "bg-green-500/10"
+                  }`}>
+                    {plan.completed
+                      ? <Trophy size={16} className={plan.completed ? "text-white" : "text-green-600 dark:text-green-400"} />
+                      : <CalendarCheck size={16} className="text-green-600 dark:text-green-400" />}
                   </div>
+                  <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors min-w-0 flex-1">
+                    {plan.title}
+                  </h3>
+                  <button
+                    onClick={(e) => handleDeleteClick(plan, e)}
+                    className="shrink-0 p-1.5 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
 
-                  {/* Meta row */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 text-xs text-muted-foreground mb-3 sm:mb-4">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {plan.durationWeeks}w
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {totalTasks} tasks
-                    </span>
-                    {plan.selectedCourseNames?.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <GraduationCap className="w-3 h-3" />
-                        {plan.selectedCourseNames.length} course{plan.selectedCourseNames.length > 1 ? "s" : ""}
-                      </span>
-                    )}
+                {/* Overview */}
+                {plan.overview && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mb-3">
+                    {plan.overview}
+                  </p>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <span className="font-medium">{plan.durationWeeks}w</span>
+                    <span>·</span>
+                    <span>{totalTasks} tasks</span>
+                    <span>·</span>
+                    <span>{progress}%</span>
                   </div>
-
-                  {/* Progress bar */}
-                  <div className="mb-3 sm:mb-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] text-muted-foreground">
-                        {completedTasks} of {totalTasks} completed
-                      </span>
-                      <span className="text-[11px] font-semibold text-foreground">{progress}%</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                      <motion.div
-                        className={`h-1.5 rounded-full ${plan.completed ? "bg-green-500" : "bg-green-500"}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ duration: 0.6, delay: idx * 0.05 }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-1 sm:gap-1.5">
-                    {plan.completed ? (
-                      <button
-                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium border border-green-500/20 flex items-center justify-center gap-1.5"
-                      >
-                        <Trophy size={12} />
-                        Review
-                      </button>
-                    ) : isInProgress ? (
-                      <button
-                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Zap size={12} />
-                        Continue
-                      </button>
-                    ) : (
-                      <button
-                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <BookOpen size={12} />
-                        Start
-                      </button>
-                    )}
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={(e) => handleExportPlan(plan, e)}
-                      className="p-1.5 rounded-lg border border-border text-muted-foreground hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/30 transition-colors"
-                      title="Export study plan"
+                      className="text-slate-400 hover:text-green-500 transition-colors"
+                      title="Export"
                     >
-                      <Download size={13} />
+                      <Download size={12} />
                     </button>
                     <button
                       onClick={(e) => handleSharePlan(plan, e)}
-                      className="p-1.5 rounded-lg border border-border text-muted-foreground hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/30 transition-colors"
-                      title="Share study plan"
+                      className="text-slate-400 hover:text-blue-500 transition-colors"
+                      title="Share"
                     >
-                      <Share2 size={13} />
+                      <Share2 size={12} />
                     </button>
+                    <span className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                      Open <ArrowRight size={10} className="-rotate-45" />
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -917,6 +916,38 @@ export default function StudyPlanLibrary({ setActiveContent }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Modal */}
+      {showDeleteModal && planToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl w-full max-w-sm shadow-2xl border border-border">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Delete Study Plan</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Are you sure you want to delete &quot;{planToDelete.title}&quot;? This cannot be undone.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowDeleteModal(false); setPlanToDelete(null); }}
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleteLoading}
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                  {deleteLoading ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

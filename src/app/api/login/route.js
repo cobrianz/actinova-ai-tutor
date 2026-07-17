@@ -245,6 +245,10 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       message: "Welcome back!",
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
       user: {
         ...safeUser,
         usage: { used: 0 },

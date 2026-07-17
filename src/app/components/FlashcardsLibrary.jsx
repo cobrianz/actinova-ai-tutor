@@ -9,10 +9,10 @@ import { PRODUCTS } from "@/lib/planLimits";
 import {
   Trash2,
   Plus,
-  BookOpen,
   Sparkles,
   Bookmark,
   ArrowLeft,
+  ArrowRight,
   Eye,
   Brain,
   Layers,
@@ -84,63 +84,52 @@ function StatsBar({ flashcards, bookmarkedCount }) {
 function FlashcardSetCard({ card, isBookmarked, onBookmark, onStudy, onDelete }) {
   const diff = (card.difficulty || card.level || "beginner").toLowerCase();
   const diffConfig = {
-    beginner: { label: "Beginner", color: "text-green-500", bg: "bg-green-500/10" },
-    intermediate: { label: "Intermediate", color: "text-amber-500", bg: "bg-amber-500/10" },
-    advanced: { label: "Advanced", color: "text-red-500", bg: "bg-red-500/10" },
+    beginner: { label: "Beginner", color: "text-green-500", bg: "bg-green-500/10", dot: "bg-green-500" },
+    intermediate: { label: "Intermediate", color: "text-amber-500", bg: "bg-amber-500/10", dot: "bg-amber-500" },
+    advanced: { label: "Advanced", color: "text-red-500", bg: "bg-red-500/10", dot: "bg-red-500" },
   };
   const d = diffConfig[diff] || diffConfig.beginner;
   const total = card.totalCards ?? (Array.isArray(card.cards) ? card.cards.length : 0);
 
   return (
-    <div className="group rounded-2xl border border-border bg-card overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/30">
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Sparkles size={18} className="text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-semibold text-foreground line-clamp-2 text-balance">
-                {card.title}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {card.topic || "Interactive flashcards"}
-              </p>
-            </div>
-          </div>
-          <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${d.bg} ${d.color}`}>
-            {d.label}
-          </span>
+    <div className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 flex flex-col">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${d.bg}`}>
+          <Brain size={16} className={d.color} />
         </div>
+        <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors min-w-0 flex-1">
+          {card.title}
+        </h3>
+        <button
+          onClick={() => onDelete(card)}
+          className="shrink-0 p-1.5 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
+      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mb-3">
+        {card.topic || "Interactive flashcards"}
+      </p>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-          <Sparkles size={12} />
+      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${d.dot}`} />
+          <span className="font-medium">{d.label}</span>
+          <span>·</span>
           <span>{total} cards</span>
         </div>
-
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onStudy(card)}
-                className="flex-1 py-1.5 px-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <BookOpen size={14} />
-            Study
-          </button>
-          <button
             onClick={() => onBookmark(card._id)}
-            className={`p-1.5 rounded-lg border transition-colors ${
-              isBookmarked
-                ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
-                : "text-muted-foreground border-border hover:bg-muted"
-            }`}
+            className={`transition-colors ${isBookmarked ? "text-amber-500" : "text-slate-400 hover:text-amber-400"}`}
           >
-            <Bookmark size={16} className={isBookmarked ? "fill-current" : ""} />
+            <Bookmark size={12} className={isBookmarked ? "fill-current" : ""} />
           </button>
           <button
-            onClick={() => onDelete(card)}
-            className="p-1.5 rounded-lg border border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-colors"
+            onClick={() => onStudy(card)}
+            className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
           >
-            <Trash2 size={14} />
+            Study <ArrowRight size={10} className="-rotate-45" />
           </button>
         </div>
       </div>

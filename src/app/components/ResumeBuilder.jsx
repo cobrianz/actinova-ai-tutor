@@ -12,10 +12,52 @@ import {
     GraduationCap, Star, UserCircle, Briefcase, Layout,
     User, Mail, Phone, MapPin, Globe, Linkedin, Github,
     Award, FolderOpen, Languages, Heart, Users, Wrench,
-    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, MoreHorizontal
+    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, MoreHorizontal,
+    UploadCloud
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
+
+// ─── Client-side PDF/DOCX text extraction ─────────────────────────────────────
+import { unzipSync, strFromU8 } from "fflate";
+
+async function extractTextFromPDF(file) {
+    // Dynamic import keeps pdfjs-dist out of the SSR bundle
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map((item) => item.str).join(" "));
+    }
+    return pages.join("\n\n").trim();
+}
+
+async function extractTextFromDOCX(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    const files = unzipSync(data);
+    const docXml = files["word/document.xml"];
+    if (!docXml) throw new Error("Invalid DOCX file");
+    const xml = strFromU8(docXml);
+    const texts = [];
+    const re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+    let match;
+    while ((match = re.exec(xml)) !== null) {
+        texts.push(match[1]);
+    }
+    return texts.join(" ").trim();
+}
+
+async function extractResumeText(file) {
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (ext === "pdf") return extractTextFromPDF(file);
+    if (ext === "docx") return extractTextFromDOCX(file);
+    throw new Error("Unsupported file type. Please upload a PDF or DOCX file.");
+}
 import {
     downloadLetterAsDOCX,
     downloadLetterAsPDF,
@@ -236,6 +278,76 @@ function InputField({ label, value, onChange, placeholder, icon: Icon, type = "t
                     <input type={type} value={value} onChange={onChange} placeholder={placeholder} className={`${baseClass} ${Icon ? "pl-10" : ""}`} />
                 )}
             </div>
+        </div>
+    );
+}
+
+function ResumeFileUpload({ onResumeText }) {
+    const [dragOver, setDragOver] = useState(false);
+    const [extracting, setExtracting] = useState(false);
+    const [error, setError] = useState(null);
+    const fileRef = useRef(null);
+
+    const handleFile = async (file) => {
+        if (!file) return;
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!["pdf", "docx"].includes(ext)) {
+            setError("Only PDF and DOCX files are supported.");
+            return;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+            setError("File exceeds the 20 MB limit.");
+            return;
+        }
+        setError(null);
+        setExtracting(true);
+        try {
+            const text = await extractResumeText(file);
+            if (!text || text.length < 10) {
+                setError("Could not extract text from this file. It may be image-based or empty.");
+                return;
+            }
+            onResumeText(text);
+            toast.success(`Resume extracted from ${file.name}`);
+        } catch (err) {
+            console.error("Resume extraction error:", err);
+            setError(err.message || "Failed to extract text from file.");
+        } finally {
+            setExtracting(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div
+                role="button"
+                tabIndex={0}
+                aria-label="Upload resume file (PDF or DOCX)"
+                onClick={() => fileRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileRef.current?.click(); } }}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); }}
+                className={`flex items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-4 cursor-pointer transition-all
+                    focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400
+                    ${dragOver
+                        ? "border-green-400 bg-green-50 dark:bg-green-900/10"
+                        : "border-slate-200 dark:border-slate-700 hover:border-green-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    }`}
+            >
+                <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" onChange={(e) => handleFile(e.target.files?.[0])} />
+                {extracting ? (
+                    <Loader2 size={18} className="text-green-500 animate-spin shrink-0" />
+                ) : (
+                    <UploadCloud size={18} className={`shrink-0 ${dragOver ? "text-green-500" : "text-slate-400"}`} />
+                )}
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {extracting ? "Extracting text…" : "Or upload PDF / DOCX to auto-fill"}
+                </span>
+            </div>
+            {error && (
+                <p className="text-xs text-red-500 dark:text-red-400 px-1">{error}</p>
+            )}
         </div>
     );
 }
@@ -2038,63 +2150,55 @@ const ResumeBuilder = () => {
         toast.success("Copied to clipboard!");
     };
 
-    const renderHistoryCard = (item) => (
-        <div key={item._id} onClick={() => loadHistoryItem(item)}
-            className="bg-white dark:bg-slate-900/50 border-2 border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer hover:border-green-400 dark:hover:border-green-600 hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[220px]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-green-500/10 transition-colors" />
-            <div className="flex justify-between items-start mb-4 relative z-10">
-                <div className="flex items-center gap-2">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.type === 'cover-letter' || item.type === 'application-letter' || item.type === 'portfolio'
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                        : 'bg-green-50 dark:bg-green-900/20'
-                        }`}>
-                        {item.type === 'cover-letter' ? <FileText size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                            item.type === 'application-letter' ? <Target size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                                item.type === 'portfolio' ? <FolderOpen size={18} className="text-emerald-600 dark:text-emerald-400" /> :
-                                    <Edit2 size={18} className="text-green-600 dark:text-green-400" />}
+    const CARD_COLORS = {
+        resume:              { bg: "bg-green-50 dark:bg-green-900/20",  icon: "text-green-600 dark:text-green-400",  dot: "bg-green-500" },
+        "cover-letter":      { bg: "bg-blue-50 dark:bg-blue-900/20",    icon: "text-blue-600 dark:text-blue-400",    dot: "bg-blue-500" },
+        "application-letter":{ bg: "bg-violet-50 dark:bg-violet-900/20", icon: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500" },
+        portfolio:           { bg: "bg-amber-50 dark:bg-amber-900/20",  icon: "text-amber-600 dark:text-amber-400",  dot: "bg-amber-500" },
+    };
+    const CARD_ICONS = { resume: Edit2, "cover-letter": FileText, "application-letter": Target, portfolio: FolderOpen };
+
+    const renderHistoryCard = (item) => {
+        const colors = CARD_COLORS[item.type] || CARD_COLORS.resume;
+        const Icon = CARD_ICONS[item.type] || FileText;
+        return (
+            <div key={item._id} onClick={() => loadHistoryItem(item)}
+                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className={`w-9 h-9 ${colors.bg} rounded-lg flex items-center justify-center shrink-0`}>
+                        <Icon size={16} className={colors.icon} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-400 capitalize">{item.type || "Document"}</span>
-                        <span className="text-xs font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span>
-                    </div>
+                    <button onClick={(e) => deleteHistoryItem(e, item._id)}
+                        className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
+                        <Trash2 size={13} />
+                    </button>
                 </div>
-                <button onClick={e => deleteHistoryItem(e, item._id)} className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors opacity-100">
-                    <Trash2 size={14} />
-                </button>
-            </div>
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 line-clamp-1 border-b border-slate-50 dark:border-slate-800 pb-3 relative z-10">
-                {item.title || "Untitled Document"}
-            </h4>
-            <div className="flex-1 relative z-10">
-                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 italic">
-                    {item.type === 'cover-letter' ? `Cover letter for ${item.data?.company || 'Company'}` :
-                        item.type === 'application-letter' ? `Application letter for ${item.data?.company || 'Company'}` :
-                            item.type === 'portfolio' ? `${item.data?.prompts?.length || 0} Project Ideas` :
-                                item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft..."}
+                <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors mb-1">
+                    {item.title || "Untitled Document"}
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 flex-1">
+                    {item.type === "cover-letter" ? `Cover letter for ${item.data?.company || "Company"}`
+                        : item.type === "application-letter" ? `Application letter for ${item.data?.company || "Company"}`
+                        : item.type === "portfolio" ? `${item.data?.prompts?.length || 0} project ideas`
+                        : item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft"}
                 </p>
-            </div>
-            <div className="mt-4 pt-4 flex justify-between items-center relative z-10 text-[10px] font-black">
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-500">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Saved
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                        <span className="capitalize font-medium">{item.type?.replace(/-/g, " ") || "Document"}</span>
+                        <span>·</span>
+                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                     </div>
-                    {item.type === "resume" && item.metadata?.exportPaid && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full text-emerald-700 dark:text-emerald-300">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            paid
-                        </div>
-                    )}
+                    <span className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                        Open <ArrowRight size={10} className="-rotate-45" />
+                    </span>
                 </div>
-                <span className="text-green-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    Open document <ArrowRight size={12} />
-                </span>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
-        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen bg-slate-50 dark:bg-slate-950 pb-28 md:pb-10">
+        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen pb-28 md:pb-10">
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
                 <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
@@ -2226,6 +2330,7 @@ const ResumeBuilder = () => {
                                             placeholder="Paste the full resume here and the AI will restructure it into a new editable resume."
                                             rows={8}
                                         />
+                                        <ResumeFileUpload onResumeText={setResumeText} />
                                         <div className="flex gap-3">
                                             <Button onClick={handleGenerate} disabled={isGenerating || (!jobDescription.trim() && !resumeText.trim())} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl">
                                                 {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}

@@ -4,12 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
-  Clock,
   Star,
   Search,
   Grid,
   List,
-  Play,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -22,6 +20,7 @@ import {
   BarChart3,
   TrendingUp,
   Crown,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -640,34 +639,50 @@ export default function Library({ setActiveContent }) {
                     visible: { opacity: 1, scale: 1, y: 0 },
                   }}
                   whileHover={{ y: -4 }}
-                  className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:border-green-300 dark:hover:border-green-600 transition-all duration-200"
                 >
-                  <div className="h-2 bg-secondary">
+                  <div className="h-1 bg-slate-100 dark:bg-slate-800">
                     <div
-                      className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-1000"
+                      className="h-full bg-green-500 transition-all duration-1000"
                       style={{ width: `${course.progress}%` }}
                     />
                   </div>
 
-                  <div className="p-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-4 sm:gap-0">
-                      <div className="flex-1 min-w-0">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          {course.premiumAccessExpiresAt && (
-                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-                              paid
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-semibold text-foreground line-clamp-2" style={{ fontFamily: "var(--font-fraunces)" }}>
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                        <BookOpen size={16} className="text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors min-w-0">
                           {course.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {course.description}
-                        </p>
                       </div>
-
-                      <div className="flex gap-1 sm:ml-4">
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={() => handlePin(course.id)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                          title={course.isPinned ? "Unpin" : "Pin (max 3)"}
+                        >
+                          <Pin size={13} className={course.isPinned ? "fill-amber-500 text-amber-500" : ""} />
+                        </button>
+                        {(() => {
+                          if (course.format !== "course") return false;
+                          const hasActiveCourseUnlock = Boolean(
+                            course.premiumAccessExpiresAt &&
+                              new Date(course.premiumAccessExpiresAt) > new Date()
+                          );
+                          if (hasActiveCourseUnlock) return false;
+                          return !isPremium || (isAtCourseUsageLimit && !isEnterprise);
+                        })() && (
+                          <button
+                            onClick={() => handleMakePremium(course)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                            title="Make premium ($6)"
+                          >
+                            <Crown size={13} />
+                          </button>
+                        )}
                         {course.format !== "questions" && course.format !== "flashcards" && (
                           <button
                             onClick={() => {
@@ -677,96 +692,42 @@ export default function Library({ setActiveContent }) {
                               }
                               handleDownload(course);
                             }}
-                            className={`p-2 rounded-lg transition-colors ${isPremium ? (course.progress === 100 ? "hover:bg-secondary" : "opacity-60 cursor-not-allowed") : "opacity-50 cursor-not-allowed"}`}
+                            className={`p-1.5 rounded-lg transition-colors ${isPremium ? (course.progress === 100 ? "text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20" : "opacity-40 cursor-not-allowed") : "opacity-40 cursor-not-allowed"}`}
                             title={!isPremium ? "Pro Feature: Download PDF" : (course.progress === 100 ? "Download PDF" : "Complete course to download")}
                           >
-                            <Download className="w-4 h-4" />
+                            <Download size={13} />
                           </button>
                         )}
-                        <button
-                          onClick={() => handlePin(course.id)}
-                          className="p-2 hover:bg-secondary rounded"
-                          title={course.isPinned ? "Unpin" : "Pin (max 3)"}
-                        >
-                          <Pin
-                            className={`w-4 h-4 ${course.isPinned ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`}
-                          />
-                        </button>
+                      </div>
+                    </div>
 
-                        {(() => {
-                          if (course.format !== "course") return false;
+                    {course.description && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mb-3">
+                        {course.description}
+                      </p>
+                    )}
 
-                          const hasActiveCourseUnlock = Boolean(
-                            course.premiumAccessExpiresAt &&
-                              new Date(course.premiumAccessExpiresAt) > new Date()
-                          );
-                          if (hasActiveCourseUnlock) return false;
-
-                          // Show the crown when the user needs to pay to unlock premium generation:
-                          // - Free users
-                          // - Pro users that hit usage cap (Enterprise is unlimited)
-                          return !isPremium || (isAtCourseUsageLimit && !isEnterprise);
-                        })() && (
-                          <button
-                            onClick={() => handleMakePremium(course)}
-                            className="p-2 hover:bg-secondary rounded"
-                            title="Make premium ($6)"
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <span className="font-medium">{course.completedLessons}/{course.totalLessons}</span>
+                        <span>·</span>
+                        <span>{course.estimatedTime}</span>
+                        <span>·</span>
+                        <span>{course.progress}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!isPremium && !course.isGenerated ? (
+                          <span className="text-slate-300 dark:text-slate-600 text-[10px]">Locked</span>
+                        ) : (
+                          <Link
+                            href={`/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`}
+                            className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                           >
-                            <Crown className="w-4 h-4 text-amber-600 dark:text-amber-300" />
-                          </button>
+                            {course.progress === 100 ? "Review" : "Continue"} <ArrowRight size={10} className="-rotate-45" />
+                          </Link>
                         )}
-
                       </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 sm:gap-3 text-sm text-muted-foreground mb-4">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="w-4 h-4" />
-                        {course.completedLessons}/{course.totalLessons}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {course.estimatedTime}
-                      </span>
-                      <span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-[10px] sm:text-xs">
-                        {course.difficulty || "Beginner"}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                      <div className="text-sm flex-1">
-                        <div className="flex justify-between mb-1">
-                          <span>Progress</span>
-                          <span>{course.progress}%</span>
-                        </div>
-                        <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-green-500 rounded-full transition-all duration-1000"
-                            style={{ width: `${course.progress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {!isPremium && !course.isGenerated ? (
-                        <span className="flex items-center justify-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg text-sm font-medium whitespace-nowrap cursor-not-allowed">
-                          Not available
-                        </span>
-                      ) : (
-                        <Link
-                          href={`/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-[#1a1a1a] text-white rounded-lg hover:bg-black text-xs font-medium whitespace-nowrap"
-                        >
-                          <Play className="w-4 h-4" />
-                          {course.progress === 100 ? "Review" : "Continue"}
-                        </Link>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between mt-3 text-[10px] sm:text-xs font-medium">
-                      <span className="text-red-500/80 dark:text-red-400/80">
-                        Last accessed:{" "}
-                        {new Date(course.lastAccessed).toLocaleDateString()}
-                      </span>
                     </div>
                   </div>
                 </motion.div>

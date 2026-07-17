@@ -17,6 +17,7 @@ import {
   Home,
   CalendarCheck,
   ChevronRight,
+  BarChart2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -54,7 +55,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Reports & Essays", id: "reports-library", icon: ScrollText, premium: true },
       { name: "Career Growth", id: "career", icon: Briefcase, premium: true, showLock: false },
-      { name: "Analytics", id: "analytics", icon: Home },
+      { name: "Analytics", id: "analytics", icon: BarChart2 },
     ],
   },
 ];
