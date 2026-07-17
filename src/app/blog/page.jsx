@@ -110,13 +110,13 @@ export default function BlogPage() {
                     transition={{ duration: 0.5 }}
                 >
                     <h1
-                        className="text-2xl md:text-3xl font-bold text-[#0f172a] mb-3 tracking-tight"
+                        className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 tracking-tight"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                         Learning Insights & Tips
                     </h1>
                     <p
-                        className="text-sm md:text-base text-[#0f172a]/65 max-w-xl mx-auto"
+                        className="text-sm md:text-base text-slate-500 max-w-xl mx-auto"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                         Discover the latest trends in education, learning strategies, and
@@ -132,32 +132,30 @@ export default function BlogPage() {
                     transition={{ duration: 0.5, delay: 0.1 }}
                 >
                     <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search articles..."
-                            className="w-full pl-9 pr-3 py-2 border border-black/10 rounded-lg bg-white text-sm text-[#0f172a] placeholder-[#0f172a]/40 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
                             style={{ fontFamily: "var(--font-fraunces)" }}
                         />
                     </div>
 
                     <div className="flex flex-wrap gap-1.5">
                         {categories.map((category) => (
-                            <motion.button
+                            <button
                                 key={category.value}
                                 onClick={() => setSelectedCategory(category.value)}
-                                whileHover={{ scale: 1.03 }}
-                                whileTap={{ scale: 0.97 }}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${selectedCategory === category.value
-                                    ? "bg-green-500 text-white"
-                                    : "bg-white text-[#0f172a]/60 hover:bg-white/80 border border-black/10"
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCategory === category.value
+                                    ? "bg-green-600 text-white"
+                                    : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
                                 }`}
                                 style={{ fontFamily: "var(--font-fraunces)" }}
                             >
                                 {category.name} ({category.count})
-                            </motion.button>
+                            </button>
                         ))}
                     </div>
                 </motion.div>
@@ -171,11 +169,11 @@ export default function BlogPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                         >
-                            <div className="relative overflow-hidden rounded-2xl border border-white bg-white/80 backdrop-blur-xl shadow-sm">
+                            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
                                 <div className="relative p-6 md:p-10 flex flex-col lg:flex-row gap-8 items-center">
                                     <div className="flex-1">
                                         <motion.div
-                                            className="inline-flex items-center gap-1.5 mb-4 px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-600 rounded-full"
+                                            className="inline-flex items-center gap-1.5 mb-4 px-2.5 py-1 bg-green-500/10 text-green-600 rounded-full"
                                             whileHover={{ scale: 1.03 }}
                                         >
                                             <TrendingUp className="w-3 h-3" />
@@ -188,14 +186,14 @@ export default function BlogPage() {
                                         </motion.div>
 
                                         <h2
-                                            className="text-xl md:text-2xl lg:text-3xl font-bold text-[#0f172a] mb-3 leading-tight"
+                                            className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800 mb-3 leading-tight"
                                             style={{ fontFamily: "var(--font-fraunces)" }}
                                         >
                                             {featuredPost.title}
                                         </h2>
 
                                         <p
-                                            className="text-sm text-[#0f172a]/60 mb-6 leading-relaxed max-w-xl line-clamp-3"
+                                            className="text-sm text-slate-500 mb-6 leading-relaxed max-w-xl line-clamp-3"
                                             style={{ fontFamily: "var(--font-fraunces)" }}
                                         >
                                             {featuredPost.excerpt}
@@ -203,7 +201,7 @@ export default function BlogPage() {
 
                                         <div className="flex flex-wrap items-center gap-4 mb-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                                                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
                                                     {featuredPost.author?.avatar ? (
                                                         <img src={featuredPost.author.avatar} alt={featuredPost.author.name} className="w-full h-full rounded-full object-cover" />
                                                     ) : (
@@ -212,7 +210,7 @@ export default function BlogPage() {
                                                 </div>
                                                 <div>
                                                     <p
-                                                        className="text-xs font-bold text-[#0f172a]"
+                                                        className="text-xs font-bold text-slate-700"
                                                         style={{ fontFamily: "var(--font-fraunces)" }}
                                                     >
                                                         {featuredPost.author?.name || "Admin"}
@@ -221,11 +219,11 @@ export default function BlogPage() {
                                             </div>
 
                                             <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-1 text-xs text-[#0f172a]/50">
+                                                <div className="flex items-center gap-1 text-xs text-slate-400">
                                                     <Calendar className="w-3 h-3" />
                                                     <span style={{ fontFamily: "var(--font-fraunces)" }}>{featuredPost.date}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1 text-xs text-[#0f172a]/50">
+                                                <div className="flex items-center gap-1 text-xs text-slate-400">
                                                     <Clock className="w-3 h-3" />
                                                     <span style={{ fontFamily: "var(--font-fraunces)" }}>{featuredPost.readTime}</span>
                                                 </div>
@@ -235,7 +233,7 @@ export default function BlogPage() {
                                         <div className="flex items-center gap-3">
                                             <Link
                                                 href={`/blog/${featuredPost.slug || featuredPost._id}`}
-                                                className="inline-flex items-center gap-2 bg-green-500 text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-green-600 transition-all shadow-sm"
+                                                className="inline-flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-green-700 transition-all"
                                                 style={{ fontFamily: "var(--font-fraunces)" }}
                                             >
                                                 <span>Start Reading</span>
@@ -255,7 +253,7 @@ export default function BlogPage() {
                                                         toast.success("Link copied to clipboard!");
                                                     }
                                                 }}
-                                                className="p-2.5 bg-white hover:bg-green-50 text-[#0f172a]/60 rounded-full transition-all border border-black/10"
+                                                className="p-2.5 bg-white hover:bg-green-50 text-slate-400 rounded-full transition-all border border-slate-200"
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
                                             >
@@ -284,20 +282,24 @@ export default function BlogPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                                    className="bg-[#F8F8F5] rounded-2xl overflow-hidden border border-black/[0.04]"
+                                    className="bg-white rounded-xl overflow-hidden border border-slate-200 animate-pulse"
                                 >
-                                    <div className="h-1 bg-gray-200 animate-pulse" />
-                                    <div className="p-5">
-                                        <div className="h-3 bg-gray-100 rounded-full mb-3 animate-pulse w-16" />
-                                        <div className="h-4 bg-gray-200 rounded mb-2 animate-pulse" />
-                                        <div className="h-4 bg-gray-200 rounded mb-3 animate-pulse w-3/4" />
-                                        <div className="space-y-1.5 mb-4">
-                                            <div className="h-3 bg-gray-100 rounded animate-pulse" />
-                                            <div className="h-3 bg-gray-100 rounded animate-pulse w-5/6" />
+                                    <div className="h-40 bg-slate-100" />
+                                    <div className="p-4">
+                                        <div className="flex items-center gap-2 mb-2.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                            <div className="h-2.5 bg-slate-200 rounded-full w-16" />
                                         </div>
-                                        <div className="flex items-center gap-2 pt-3 border-t border-black/5">
-                                            <div className="w-6 h-6 bg-gray-100 rounded-full animate-pulse" />
-                                            <div className="h-3 bg-gray-100 rounded animate-pulse w-20" />
+                                        <div className="h-3.5 bg-slate-200 rounded mb-1.5" />
+                                        <div className="h-3.5 bg-slate-200 rounded mb-2 w-3/4" />
+                                        <div className="h-2.5 bg-slate-100 rounded mb-1" />
+                                        <div className="h-2.5 bg-slate-100 rounded w-5/6 mb-4" />
+                                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-slate-100 rounded-full" />
+                                                <div className="h-2.5 bg-slate-100 rounded w-16" />
+                                            </div>
+                                            <div className="h-2.5 bg-slate-100 rounded w-10" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -318,12 +320,9 @@ export default function BlogPage() {
                                     <motion.article
                                         key={post.slug || post._id}
                                         variants={itemVariants}
-                                        whileHover={{ y: -4 }}
-                                        className="group bg-[#F8F8F5] rounded-2xl overflow-hidden border border-black/[0.04] hover:border-green-500/25 hover:shadow-lg hover:shadow-green-500/5 transition-all duration-300"
+                                        whileHover={{ y: -2 }}
+                                        className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-green-300 transition-all duration-200 flex flex-col"
                                     >
-                                        {/* Top accent bar */}
-                                        <div className="h-0.5 bg-gradient-to-r from-green-400 to-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
                                         {/* Thumbnail */}
                                         {post.thumbnailUrl && (
                                             <div className="relative h-40 overflow-hidden">
@@ -332,24 +331,21 @@ export default function BlogPage() {
                                                     alt={post.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                                             </div>
                                         )}
 
-                                        <div className="p-5">
+                                        <div className="p-4 flex flex-col flex-1">
                                             {/* Category + trending */}
-                                            <div className="flex items-center gap-2 mb-3">
+                                            <div className="flex items-center gap-2 mb-2.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                                 <span
-                                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-600 border border-green-500/15 uppercase tracking-wider"
+                                                    className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider"
                                                     style={{ fontFamily: "var(--font-fraunces)" }}
                                                 >
                                                     {post.category}
                                                 </span>
                                                 {post.trending && (
-                                                    <span
-                                                        className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/15 flex items-center gap-1"
-                                                        style={{ fontFamily: "var(--font-fraunces)" }}
-                                                    >
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
                                                         <TrendingUp className="w-2.5 h-2.5" />
                                                         Trending
                                                     </span>
@@ -358,7 +354,7 @@ export default function BlogPage() {
 
                                             {/* Title */}
                                             <h3
-                                                className="text-base font-bold text-[#0f172a] mb-2 line-clamp-2 leading-snug group-hover:text-green-600 transition-colors"
+                                                className="text-sm font-bold text-slate-800 mb-1.5 line-clamp-2 leading-snug group-hover:text-green-700 transition-colors"
                                                 style={{ fontFamily: "var(--font-fraunces)" }}
                                             >
                                                 {post.title}
@@ -366,31 +362,16 @@ export default function BlogPage() {
 
                                             {/* Excerpt */}
                                             <p
-                                                className="text-xs text-[#0f172a]/50 mb-4 line-clamp-2 leading-relaxed"
+                                                className="text-[11px] text-slate-500 mb-4 line-clamp-2 leading-relaxed flex-1"
                                                 style={{ fontFamily: "var(--font-fraunces)" }}
                                             >
                                                 {post.excerpt}
                                             </p>
 
-                                            {/* Tags */}
-                                            {(post.tags || []).length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5 mb-4">
-                                                    {(post.tags || []).slice(0, 3).map((tag) => (
-                                                        <span
-                                                            key={tag}
-                                                            className="px-2 py-0.5 rounded-full text-[10px] bg-black/[0.04] text-[#0f172a]/40 font-medium"
-                                                            style={{ fontFamily: "var(--font-fraunces)" }}
-                                                        >
-                                                            {tag}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-
                                             {/* Footer */}
-                                            <div className="flex items-center justify-between pt-3 border-t border-black/[0.04]">
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                                                 <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="w-6 h-6 rounded-full bg-green-500/10 border border-green-500/15 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                                                         {post.author?.avatar ? (
                                                             <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
                                                         ) : (
@@ -399,55 +380,27 @@ export default function BlogPage() {
                                                     </div>
                                                     <div className="min-w-0">
                                                         <span
-                                                            className="text-[11px] font-bold text-[#0f172a] leading-tight block truncate"
+                                                            className="text-[11px] font-semibold text-slate-600 leading-tight block truncate"
                                                             style={{ fontFamily: "var(--font-fraunces)" }}
                                                         >
                                                             {post.author?.name || "Admin"}
                                                         </span>
-                                                        <span
-                                                            className="text-[10px] text-[#0f172a]/35 leading-tight block"
-                                                            style={{ fontFamily: "var(--font-fraunces)" }}
-                                                        >
-                                                            {post.date}
-                                                        </span>
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                                            <Calendar className="w-2.5 h-2.5" />
+                                                            <span>{post.date}</span>
+                                                            <span>·</span>
+                                                            <Clock className="w-2.5 h-2.5" />
+                                                            <span>{post.readTime}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <span
-                                                        className="text-[10px] text-[#0f172a]/30 hidden sm:inline"
-                                                        style={{ fontFamily: "var(--font-fraunces)" }}
-                                                    >
-                                                        {post.readTime}
-                                                    </span>
-                                                    <motion.button
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            if (navigator.share) {
-                                                                navigator.share({
-                                                                    title: post.title,
-                                                                    text: post.excerpt,
-                                                                    url: `${window.location.origin}/blog/${post.slug}`,
-                                                                }).catch(() => { });
-                                                            } else {
-                                                                navigator.clipboard.writeText(`${window.location.origin}/blog/${post.slug}`);
-                                                                toast.success("Link copied!");
-                                                            }
-                                                        }}
-                                                        className="p-1.5 hover:bg-green-50 rounded-lg transition-colors text-[#0f172a]/25 hover:text-green-600"
-                                                        title="Share article"
-                                                        whileHover={{ scale: 1.1 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                    >
-                                                        <Share2 className="w-3 h-3" />
-                                                    </motion.button>
-                                                    <Link
-                                                        href={`/blog/${post.slug || post._id}`}
-                                                        className="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
-                                                    >
-                                                        <ArrowRight className="w-3 h-3" />
-                                                    </Link>
-                                                </div>
+                                                <Link
+                                                    href={`/blog/${post.slug || post._id}`}
+                                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-green-600 hover:text-green-700 transition-colors flex-shrink-0"
+                                                >
+                                                    Read <ArrowRight className="w-3 h-3 -rotate-45" />
+                                                </Link>
                                             </div>
                                         </div>
                                     </motion.article>
@@ -464,15 +417,15 @@ export default function BlogPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <Search className="w-12 h-12 text-[#0f172a]/20 mx-auto mb-3" />
+                        <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                         <h3
-                            className="text-base font-bold text-[#0f172a] mb-1"
+                            className="text-base font-bold text-slate-800 mb-1"
                             style={{ fontFamily: "var(--font-fraunces)" }}
                         >
                             No articles found
                         </h3>
                         <p
-                            className="text-xs text-[#0f172a]/50 mb-4"
+                            className="text-xs text-slate-500 mb-4"
                             style={{ fontFamily: "var(--font-fraunces)" }}
                         >
                             {searchQuery
@@ -484,7 +437,7 @@ export default function BlogPage() {
                                 setSearchQuery("");
                                 setSelectedCategory("all");
                             }}
-                            className="bg-green-500 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-600 transition-colors"
+                            className="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-700 transition-colors"
                             style={{ fontFamily: "var(--font-fraunces)" }}
                         >
                             Clear Filters
@@ -494,19 +447,19 @@ export default function BlogPage() {
 
                 {/* Newsletter Signup */}
                 <motion.div
-                    className="mt-16 bg-[#F2F1EC] rounded-2xl p-6 text-center"
+                    className="mt-16 bg-slate-100 rounded-xl p-6 text-center"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                 >
                     <h2
-                        className="text-lg font-bold text-[#0f172a] mb-2"
+                        className="text-lg font-bold text-slate-800 mb-2"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                         Stay Updated with Learning Insights
                     </h2>
                     <p
-                        className="text-xs text-[#0f172a]/55 mb-4 max-w-md mx-auto"
+                        className="text-xs text-slate-500 mb-4 max-w-md mx-auto"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                         Get the latest articles, learning tips, and educational insights
@@ -548,7 +501,7 @@ function NewsletterForm() {
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-sm mx-auto">
             {status === "success" ? (
                 <div
-                    className="w-full p-2 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 text-xs font-medium"
+                    className="w-full p-2 bg-green-500/10 text-green-600 text-xs font-medium rounded-lg"
                     style={{ fontFamily: "var(--font-fraunces)" }}
                 >
                     Subscribed successfully!
@@ -560,13 +513,13 @@ function NewsletterForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email"
-                        className="flex-1 px-3 py-2 border border-black/10 rounded-lg bg-white text-xs text-[#0f172a] placeholder-[#0f172a]/40 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                        className="flex-1 px-3 py-2 border border-slate-200 rounded-lg bg-white text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                         disabled={status === "loading"}
                     />
                     <button
                         disabled={status === "loading"}
-                        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-xs font-bold disabled:opacity-50"
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-xs font-bold disabled:opacity-50"
                         style={{ fontFamily: "var(--font-fraunces)" }}
                     >
                         {status === "loading" ? "..." : "Subscribe"}
