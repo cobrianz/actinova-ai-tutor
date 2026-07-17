@@ -18,6 +18,7 @@ export default function DashboardLayout({
   setActiveContent,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hideDashboardNav, setHideDashboardNav] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen((prev) => !prev);
@@ -37,21 +38,23 @@ export default function DashboardLayout({
           </div>
           <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
           <div className="flex flex-1 overflow-hidden relative z-10">
-            <div className="hidden lg:flex flex-shrink-0 relative h-full z-50">
-              <Sidebar
-                setActiveContent={setActiveContent}
-                sidebarOpen={sidebarOpen}
-                setSidebarOpen={setSidebarOpen}
-                activeContent={activeContent}
-              />
-            </div>
+            {!hideDashboardNav && (
+              <div className="hidden lg:flex flex-shrink-0 relative h-full z-50">
+                <Sidebar
+                  setActiveContent={setActiveContent}
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                  activeContent={activeContent}
+                />
+              </div>
+            )}
             <main className="flex-1 overflow-auto pb-16 md:pb-0">
               {React.Children.map(children, (child) =>
-                React.cloneElement(child, { sidebarOpen, setSidebarOpen })
+                React.cloneElement(child, { sidebarOpen, setSidebarOpen, setHideDashboardNav, hideDashboardNav })
               )}
             </main>
           </div>
-          {activeContent !== 'career' && <DashboardMobileNav />}
+          {activeContent !== 'career' && !hideDashboardNav && <DashboardMobileNav />}
         </div>
       </ThemeProvider>
     </ProtectedRoute>

@@ -8,7 +8,7 @@ import Enrollment from "@/models/Enrollment";
 async function handleDelete(request, { params }) {
   await connectToDatabase();
   const user = request.user;
-  const { id } = params;
+  const { id } = await params;
   const { searchParams } = new URL(request.url);
   const studentId = searchParams.get("studentId");
 

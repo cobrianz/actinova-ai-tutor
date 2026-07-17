@@ -54,7 +54,7 @@ function fireCelebration() {
   });
 }
 
-export default function DashboardContent() {
+export default function DashboardContent({ setHideDashboardNav, hideDashboardNav }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fetchUser } = useAuth();
@@ -169,7 +169,9 @@ export default function DashboardContent() {
         className={
           (isChat || isPdfChat)
             ? "w-full h-full relative z-10"
-            : "max-w-[110rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide relative z-10"
+            : hideDashboardNav
+              ? "w-full h-full relative z-10"
+              : "max-w-[110rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 lg:py-12 scrollbar-hide relative z-10"
         }
         style={
           (isChat || isPdfChat)
@@ -194,6 +196,7 @@ export default function DashboardContent() {
               <ContentComponent
                 key={`${activeContent}-${searchParams.get("tool") || ""}`}
                 setActiveContent={setActiveContent}
+                setHideDashboardNav={setHideDashboardNav}
               />
             ) : (
               <div className="text-center text-gray-600 dark:text-gray-400">

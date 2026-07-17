@@ -164,6 +164,7 @@ async function handleGet(request) {
           instructorId: c.instructorId.toString(),
           studentCount,
           assignmentCount,
+          isInstructor: true,
         };
       })
     );
@@ -204,6 +205,7 @@ async function handleGet(request) {
         instructorId: c.instructorId.toString(),
         assignmentCount,
         dueAssignments,
+        isInstructor: false,
       };
     })
   );

@@ -10,7 +10,7 @@ import User from "@/models/User";
 async function handleGet(request, { params }) {
   await connectToDatabase();
   const user = request.user;
-  const { id } = params;
+  const { id } = await params;
 
   const classroom = await Classroom.findById(id).lean();
   if (!classroom) {

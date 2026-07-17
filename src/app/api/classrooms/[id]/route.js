@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 async function handleDelete(request, { params }) {
   await connectToDatabase();
   const user = request.user;
-  const { id } = params;
+  const { id } = await params;
 
   const classroom = await Classroom.findById(id).lean();
   if (!classroom) {
@@ -39,7 +39,7 @@ async function handleDelete(request, { params }) {
 async function handlePatch(request, { params }) {
   await connectToDatabase();
   const user = request.user;
-  const { id } = params;
+  const { id } = await params;
   const body = await request.json();
 
   const classroom = await Classroom.findById(id).lean();
