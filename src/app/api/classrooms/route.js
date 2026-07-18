@@ -33,6 +33,13 @@ async function handlePost(request) {
     );
   }
 
+  if (startDate && new Date(startDate) < new Date(new Date().toDateString())) {
+    return NextResponse.json(
+      { error: "Start date cannot be in the past", code: "VALIDATION_ERROR" },
+      { status: 400 }
+    );
+  }
+
   const classroom = await Classroom.create({
     instructorId: user._id,
     name: name.trim(),
@@ -41,7 +48,7 @@ async function handlePost(request) {
     inviteCode: generateInviteCode(),
     maxStudents: maxStudents || 50,
     semester: semester?.trim() || "",
-    academicLevel: academicLevel || "college",
+    academicLevel: academicLevel || "undergraduate",
     gradingScheme: gradingScheme || "percentage",
     prerequisites: prerequisites || [],
     syllabus: syllabus?.trim() || "",

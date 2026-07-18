@@ -13,6 +13,10 @@ import {
   Award,
   CreditCard,
   Smartphone,
+  GraduationCap,
+  Users,
+  TrendingUp,
+  BookOpen,
 } from "lucide-react";
 import NotificationSettings from "./NotificationSettings";
 import BadgesPage from "./BadgesPage";
@@ -48,11 +52,14 @@ export default function ProfileContent() {
   const [activeTab, setActiveTab] = useState("overview");
   const [kesRate, setKesRate] = useState(155);
   const [kesRateLoading, setKesRateLoading] = useState(true);
+  const [teachingStats, setTeachingStats] = useState(null);
+  const isInstructor = user?.role === "instructor" || user?.role === "admin";
 
   useEffect(() => {
     fetchProfileData();
     fetchAnalytics();
     fetchKesRate();
+    if (isInstructor) fetchTeachingStats();
   }, []);
 
   const fetchKesRate = async () => {
@@ -94,6 +101,26 @@ export default function ProfileContent() {
       }
     } catch (err) {
       console.error("Analytics fetch error:", err);
+    }
+  };
+
+  const fetchTeachingStats = async () => {
+    try {
+      const res = await apiClient.get("/api/classrooms");
+      const data = await res.json();
+      if (data.success && data.classrooms) {
+        const classrooms = data.classrooms;
+        const totalStudents = classrooms.reduce((sum, c) => sum + (c.studentCount || 0), 0);
+        const activeClassrooms = classrooms.filter((c) => c.isActive).length;
+        setTeachingStats({
+          totalClassrooms: classrooms.length,
+          activeClassrooms,
+          totalStudents,
+          recentClassrooms: classrooms.slice(0, 3),
+        });
+      }
+    } catch (err) {
+      console.error("Teaching stats fetch error:", err);
     }
   };
 
@@ -179,15 +206,36 @@ export default function ProfileContent() {
                 </div>
               </div>
               <div className="flex gap-6 px-6 py-4 rounded-xl bg-muted/50 border border-border/50">
-                <div className="text-center">
-                  <div className="text-base font-bold text-foreground">{profileData?.usage?.used || 0}</div>
-                  <div className="text-xs text-muted-foreground">Generations</div>
-                </div>
-                <div className="w-px bg-border" />
-                <div className="text-center">
-                  <div className="text-base font-bold text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
-                  <div className="text-xs text-muted-foreground">Courses</div>
-                </div>
+                {isInstructor && teachingStats ? (
+                  <>
+                    <div className="text-center">
+                      <div className="text-base font-bold text-green-600">{teachingStats.totalClassrooms}</div>
+                      <div className="text-xs text-muted-foreground">Classrooms</div>
+                    </div>
+                    <div className="w-px bg-border" />
+                    <div className="text-center">
+                      <div className="text-base font-bold text-blue-600">{teachingStats.totalStudents}</div>
+                      <div className="text-xs text-muted-foreground">Students</div>
+                    </div>
+                    <div className="w-px bg-border" />
+                    <div className="text-center">
+                      <div className="text-base font-bold text-purple-600">{profileData?.usage?.used || 0}</div>
+                      <div className="text-xs text-muted-foreground">Generations</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center">
+                      <div className="text-base font-bold text-foreground">{profileData?.usage?.used || 0}</div>
+                      <div className="text-xs text-muted-foreground">Generations</div>
+                    </div>
+                    <div className="w-px bg-border" />
+                    <div className="text-center">
+                      <div className="text-base font-bold text-foreground">{profileData?.usage?.details?.courses?.used || 0}</div>
+                      <div className="text-xs text-muted-foreground">Courses</div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -232,6 +280,48 @@ export default function ProfileContent() {
 
               {activeTab === "overview" && (
                 <div className="space-y-8">
+                  {/* ── Teaching Stats (Instructors) ── */}
+                  {isInstructor && teachingStats && (
+                    <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h2 className="text-sm font-bold text-foreground flex items-center gap-2" style={{ fontFamily: "var(--font-fraunces)" }}>
+                            <GraduationCap size={16} className="text-green-500" /> Teaching Overview
+                          </h2>
+                          <p className="text-sm text-muted-foreground mt-1">Your classroom activity at a glance</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 mb-6">
+                        {[
+                          { label: "Classrooms", value: teachingStats.totalClassrooms, icon: BookOpen, color: "text-green-500", bg: "bg-green-50 dark:bg-green-500/10" },
+                          { label: "Active", value: teachingStats.activeClassrooms, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
+                          { label: "Students", value: teachingStats.totalStudents, icon: Users, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-500/10" },
+                        ].map(({ label, value, icon: Icon, color, bg }, i) => (
+                          <div key={i} className={`${bg} rounded-xl p-4 text-center`}>
+                            <Icon className={`w-5 h-5 ${color} mx-auto mb-2`} />
+                            <p className={`text-xl font-bold ${color}`}>{value}</p>
+                            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {teachingStats.recentClassrooms?.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recent Classrooms</p>
+                          {teachingStats.recentClassrooms.map((c) => (
+                            <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard?tab=classrooms&classroom=${c.id}`)}>
+                              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><GraduationCap className="w-4 h-4 text-green-500" /></div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-foreground truncate">{c.name}</p>
+                                <p className="text-[10px] text-muted-foreground">{c.studentCount || 0} students · {c.subject || "No subject"}</p>
+                              </div>
+                              <span className={`w-2 h-2 rounded-full ${c.isActive ? "bg-green-400" : "bg-slate-300"}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* ── Personal Info ── */}
               <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-6">

@@ -25,4 +25,4 @@ async function handlePost(request, { params }) {
   return NextResponse.json({ success: true, announcement: classroom.announcements[classroom.announcements.length - 1] });
 }
 
-export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth, handlePost);
+export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePost);

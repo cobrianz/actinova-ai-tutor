@@ -49,8 +49,8 @@ const classroomSchema = new mongoose.Schema(
     },
     academicLevel: {
       type: String,
-      enum: ["high_school", "college", "graduate", "bootcamp", "corporate", "other"],
-      default: "college",
+      enum: ["highschool", "undergraduate", "graduate", "phd", "professional"],
+      default: "undergraduate",
     },
     schedule: {
       days: [{ type: String, enum: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] }],
@@ -60,7 +60,7 @@ const classroomSchema = new mongoose.Schema(
     },
     gradingScheme: {
       type: String,
-      enum: ["percentage", "letter", "pass_fail", "points", "none"],
+      enum: ["percentage", "letter", "passfail", "gpa"],
       default: "percentage",
     },
     prerequisites: [{
@@ -91,6 +91,31 @@ const classroomSchema = new mongoose.Schema(
     },
     startDate: { type: Date, default: null },
     durationWeeks: { type: Number, default: 0, min: 0, max: 52 },
+    modules: [{
+      title: { type: String, required: true },
+      description: { type: String, default: "" },
+      weekNumber: { type: Number, required: true },
+      lessons: [{
+        title: { type: String, required: true },
+        description: { type: String, default: "" },
+        duration: { type: Number, default: 60 },
+        type: { type: String, enum: ["lecture", "lab", "reading", "video", "activity"], default: "lecture" },
+        objectives: [{ type: String }],
+        materials: [{ type: String }],
+      }],
+    }],
+    forkedContent: [{
+      contentType: { type: String, enum: ["course", "quiz", "flashcard"], required: true },
+      contentId: { type: mongoose.Schema.Types.ObjectId, required: true },
+      title: { type: String, required: true },
+      description: { type: String, default: "" },
+      weekNumber: { type: Number, default: 0 },
+      unlocked: { type: Boolean, default: true },
+      availableFrom: { type: Date, default: null },
+      availableUntil: { type: Date, default: null },
+      forkedAt: { type: Date, default: Date.now },
+      meta: { type: mongoose.Schema.Types.Mixed, default: {} },
+    }],
   },
   { timestamps: true }
 );

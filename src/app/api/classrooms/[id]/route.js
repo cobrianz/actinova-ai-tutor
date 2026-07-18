@@ -52,6 +52,14 @@ async function handlePatch(request, { params }) {
   }
 
   const { name, description, subject, maxStudents, semester, academicLevel, gradingScheme, prerequisites, syllabus, schedule, startDate, durationWeeks, settings } = body;
+
+  if (startDate && new Date(startDate) < new Date(new Date().toDateString())) {
+    return NextResponse.json(
+      { error: "Start date cannot be in the past", code: "VALIDATION_ERROR" },
+      { status: 400 }
+    );
+  }
+
   const update = {};
   if (name !== undefined) update.name = name.trim();
   if (description !== undefined) update.description = description.trim();

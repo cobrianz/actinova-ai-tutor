@@ -54,7 +54,7 @@ function fireCelebration() {
   });
 }
 
-export default function DashboardContent({ setHideDashboardNav, hideDashboardNav }) {
+export default function DashboardContent({ setHideDashboardNav, hideDashboardNav, classroomSidebarCollapsed, setClassroomSidebarCollapsed }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fetchUser } = useAuth();
@@ -153,8 +153,12 @@ export default function DashboardContent({ setHideDashboardNav, hideDashboardNav
 
   return (
     <div
-      className={`relative min-h-full bg-background ${
-        (isChat || isPdfChat) ? "lg:h-[calc(100vh-64px)] h-[calc(100vh-128px)] overflow-hidden" : "overflow-hidden"
+      className={`relative bg-background ${
+        (isChat || isPdfChat)
+          ? "lg:h-[calc(100vh-64px)] h-[calc(100vh-128px)] overflow-hidden"
+          : hideDashboardNav
+            ? "h-full overflow-hidden"
+            : "min-h-full overflow-hidden"
       }`}
     >
       {!(isChat || isPdfChat) && (
@@ -197,6 +201,8 @@ export default function DashboardContent({ setHideDashboardNav, hideDashboardNav
                 key={`${activeContent}-${searchParams.get("tool") || ""}`}
                 setActiveContent={setActiveContent}
                 setHideDashboardNav={setHideDashboardNav}
+                sidebarCollapsed={classroomSidebarCollapsed}
+                setSidebarCollapsed={setClassroomSidebarCollapsed}
               />
             ) : (
               <div className="text-center text-gray-600 dark:text-gray-400">

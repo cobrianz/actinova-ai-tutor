@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import DashboardMobileNav from "./DashboardMobileNav";
@@ -19,9 +18,22 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideDashboardNav, setHideDashboardNav] = useState(false);
+  const [classroomSidebarCollapsed, setClassroomSidebarCollapsed] = useState(false);
+
+  // When the user navigates away from classrooms, always restore the dashboard nav.
+  // This guards against ClassroomDashboard leaving hideDashboardNav=true behind.
+  useEffect(() => {
+    if (activeContent !== "classrooms") {
+      setHideDashboardNav(false);
+    }
+  }, [activeContent]);
 
   const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
+    if (hideDashboardNav) {
+      setClassroomSidebarCollapsed((prev) => !prev);
+    } else {
+      setSidebarOpen((prev) => !prev);
+    }
   };
 
   return (
@@ -48,9 +60,9 @@ export default function DashboardLayout({
                 />
               </div>
             )}
-            <main className="flex-1 overflow-auto pb-16 md:pb-0">
+            <main className={`flex-1 min-h-0 ${hideDashboardNav ? "overflow-hidden" : "overflow-auto pb-16 md:pb-0"}`}>
               {React.Children.map(children, (child) =>
-                React.cloneElement(child, { sidebarOpen, setSidebarOpen, setHideDashboardNav, hideDashboardNav })
+                React.cloneElement(child, { classroomSidebarCollapsed, setClassroomSidebarCollapsed, setHideDashboardNav, hideDashboardNav })
               )}
             </main>
           </div>

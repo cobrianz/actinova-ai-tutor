@@ -35,5 +35,5 @@ async function handlePost(request, { params }) {
   return NextResponse.json({ success: true, discussion });
 }
 
-export const GET = combineMiddleware(withErrorHandling(handleGet));
-export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth, handlePost);
+export const GET = combineMiddleware(withErrorHandling)(handleGet);
+export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePost);
