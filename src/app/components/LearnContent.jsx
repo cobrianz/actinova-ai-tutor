@@ -878,11 +878,6 @@ export default function LearnContent() {
   const handleDownloadLesson = async () => {
     if (!currentLesson?.content || lessonContentLoading) return;
 
-    if (!hasPurchased('course_generation')) {
-      toast.error("Unlock this course to download lesson PDFs.");
-      return;
-    }
-
     const toastId = toast.loading("Preparing lesson PDF...");
     try {
       const activeModule = courseData?.modules?.find(m => m.id === activeLesson.moduleId);
@@ -983,10 +978,6 @@ export default function LearnContent() {
 
   const handleDownloadCourse = async () => {
     if (!courseData) return;
-    if (!hasPurchased('course_generation')) {
-      toast.error("Unlock this course to download the generated course PDF.");
-      return;
-    }
 
     try {
       const { downloadCourseAsPDF } = await import("@/lib/pdfUtils");
@@ -1311,12 +1302,11 @@ export default function LearnContent() {
   const currentLessonId =
     currentLesson?.id || `${activeLesson.moduleId}-${activeLesson.lessonIndex}`;
   const isCurrentLessonCompleted = completedLessons.has(currentLessonId);
-  const canDownloadCoursePdf = Boolean(courseData && hasPurchased('course_generation'));
+  const canDownloadCoursePdf = Boolean(courseData);
   const canDownloadLessonPdf = Boolean(
     currentLesson?.content &&
       currentLesson.content !== "Content for this lesson is coming soon..." &&
-      !lessonContentLoading &&
-      hasPurchased('course_generation')
+      !lessonContentLoading
   );
 
   const courseLessons = (courseData?.modules || courseData?.courseData?.modules || []).flatMap((mod) =>

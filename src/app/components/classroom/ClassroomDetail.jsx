@@ -28,11 +28,12 @@ import NotesTab from "./tabs/NotesTab";
 import MaterialsTab from "./tabs/MaterialsTab";
 import StudentsTab from "./tabs/StudentsTab";
 import SettingsTab from "./tabs/SettingsTab";
+import CourseTab from "./tabs/CourseTab";
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function ClassroomDetail({ classroom, onBack, user, sidebarCollapsed, setSidebarCollapsed, searchParams, router }) {
-  const initialTab = (typeof window !== 'undefined' && searchParams?.get('classroomTab')) || 'assignments';
+  const initialTab = (typeof window !== 'undefined' && searchParams?.get('classroomTab')) || 'course';
   const [activeTab, setActiveTabState] = useState(initialTab);
 
   const setActiveTab = useCallback((tab) => {
@@ -360,6 +361,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   };
 
   const instructorTabs = [
+    { id: "course", label: "Course", icon: BookOpen },
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "assignments", label: "Assignments", icon: ClipboardList },
     { id: "grades", label: "Grades", icon: BarChart2 },
@@ -371,6 +373,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     { id: "settings", label: "Settings", icon: Settings },
   ];
   const studentTabs = [
+    { id: "course", label: "Course", icon: BookOpen },
     { id: "assignments", label: "Assignments", icon: ClipboardList },
     { id: "grades", label: "Grades", icon: BarChart2 },
     { id: "discussions", label: "Discussions", icon: MessageSquare },
@@ -412,6 +415,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     toggleCls, toggleDot,
     browseResults, browseLoading, browseQuery, setBrowseQuery,
     browseType, setBrowseType, fetchBrowseContent, forking,
+    getWeeks, announcements,
   };
 
   return (
@@ -507,8 +511,12 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
           </div>
         )}
 
+        {activeTab === "course" && (
+          <CourseTab classroomState={classroomState} />
+        )}
+
         {activeTab === "schedule" && isInstructor && (
-          <ScheduleTab classroom={classroom} getWeeks={getWeeks} isInstructor={isInstructor} materials={materials} discussions={discussions} assignments={assignments} />
+          <ScheduleTab classroomState={classroomState} />
         )}
 
         {activeTab === "assignments" && (

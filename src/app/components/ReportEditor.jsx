@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { setSafeInnerHTML } from "@/../lib/sanitizer";
 import UpgradeModal from "./UpgradeModal";
+import ActirovaLoader from "./ActirovaLoader";
 
 const stripHtmlText = (value = "") =>
     String(value || "")
@@ -1339,54 +1340,8 @@ export default function ReportEditor({ reportId }) {
     // Helper to prevent focus loss on button clicks
     const preventFocus = (e) => e.preventDefault();
 
-    // Professional Loading Screen Component
-    const LoadingScreen = () => {
-        const [statusIndex, setStatusIndex] = useState(0);
-        const statuses = [
-            "Authenticating session...",
-            "Connecting to research database...",
-            "Retrieving document structure...",
-            "Fetching latest drafts...",
-            "Applying academic formatting...",
-            "Preparing your workspace..."
-        ];
-
-        useEffect(() => {
-            const interval = setInterval(() => {
-                setStatusIndex((prev) => (prev + 1) % statuses.length);
-            }, 2000);
-            return () => clearInterval(interval);
-        }, [statuses.length]);
-
-        return (
-            <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-all duration-500 animate-in fade-in">
-                <div className="flex flex-col items-center text-center max-w-xs w-full px-6">
-
-                    <div className="mb-6 relative">
-                        <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center">
-                            <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <div className="absolute -inset-2 border-2 border-emerald-600/20 border-t-emerald-600 rounded-full animate-spin" />
-                    </div>
-
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Actinova AI Tutor</h2>
-
-                    <div className="h-5 mb-8">
-                        <p className="text-sm text-slate-500 dark:text-slate-400 animate-in fade-in duration-300" key={statusIndex}>
-                            {statuses[statusIndex]}
-                        </p>
-                    </div>
-
-                    <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-600 rounded-full animate-progress-loading" />
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     if (loading || !report) {
-        return <LoadingScreen />;
+        return <ActirovaLoader text="report" />;
     }
 
     const referenceCount = Array.isArray(allReferences) ? allReferences.length : 0;

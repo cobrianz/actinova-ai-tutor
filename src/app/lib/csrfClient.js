@@ -70,7 +70,11 @@ export const apiClient = {
         method: "PUT",
         body: body instanceof FormData ? body : JSON.stringify(body),
     }),
-    delete: (url, options) => csrfFetch(url, { ...options, method: "DELETE" }),
+    delete: (url, body, options) => csrfFetch(url, {
+        ...options,
+        method: "DELETE",
+        ...(body && { body: JSON.stringify(body) }),
+    }),
     patch: (url, body, options) => csrfFetch(url, {
         ...options,
         method: "PATCH",
