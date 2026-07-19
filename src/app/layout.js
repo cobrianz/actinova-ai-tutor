@@ -49,11 +49,20 @@ export const metadata = {
     title: "Actirova AI Tutor - Personalized Learning Platform",
     description: "Master any skill with AI-powered personalized learning paths.",
     siteName: "Actirova AI",
+    images: [
+      {
+        url: "/hero.png",
+        width: 1200,
+        height: 630,
+        alt: "Actirova AI Tutor - Personalized Learning Platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Actirova AI Tutor",
     description: "Master any skill with our cutting-edge AI personalized learning platform.",
+    images: ["/hero.png"],
   },
   robots: {
     index: true,

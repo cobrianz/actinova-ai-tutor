@@ -46,8 +46,21 @@ async function handlePost(request, { params }) {
     title = sourceDoc.title || "Untitled Course";
     description = sourceDoc.description || "";
     meta = { level: sourceDoc.level, totalModules: sourceDoc.totalModules, totalLessons: sourceDoc.totalLessons, modules: sourceDoc.modules };
+  } else if (contentType === "quiz") {
+    const Quiz = (await import("@/models/Quiz")).default;
+    sourceDoc = await Quiz.findById(contentId).lean();
+    if (!sourceDoc) return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    title = sourceDoc.title || "Untitled Quiz";
+    description = `Quiz with ${sourceDoc.questions?.length || 0} questions`;
+    meta = { course: sourceDoc.course, questionCount: sourceDoc.questions?.length || 0 };
+  } else if (contentType === "flashcard") {
+    sourceDoc = await db.collection("cardSets").findOne({ _id: new ObjectId(contentId) });
+    if (!sourceDoc) return NextResponse.json({ error: "Flashcard set not found" }, { status: 404 });
+    title = sourceDoc.title || "Untitled Flashcards";
+    description = `${sourceDoc.totalCards || 0} cards`;
+    meta = { difficulty: sourceDoc.difficulty, totalCards: sourceDoc.totalCards };
   } else {
-    return NextResponse.json({ error: "Only courses can be forked" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid contentType" }, { status: 400 });
   }
 
   const existing = classroom.forkedContent.find(

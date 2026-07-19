@@ -1,0 +1,161 @@
+# Classroom Course Enhancement — Tasks
+
+- [ ] Task 1: Install Socket.IO dependencies (Req 5)
+  - Description: Add `socket.io` and `socket.io-client` packages to the project so that the real-time chat feature can be built. These are peer dependencies required by the server-side Socket.IO logic and the React chat component.
+  - Files: `package.json`
+  - Sub-tasks:
+    - [x] 1.1: Run `npm install socket.io socket.io-client` and verify both packages appear in `dependencies` in `package.json`
+    - [-] 1.2: Confirm installed versions are compatible with Node.js version in use (socket.io ≥4, socket.io-client ≥4)
+    - [~] 1.3: Verify no peer-dependency conflicts exist after installation (check `npm ls socket.io`)
+    - [~] 1.4: Commit the updated `package.json` and `package-lock.json` (do not proceed with Socket.IO tasks until lock file is stable)
+  - Dependencies: None
+
+- [ ] Task 2: Remove box shadows from classroom UI (Req 1)
+  - Description: Strip all `boxShadow` motion props and `shadow-*` Tailwind utilities from classroom card and panel elements. Replace hover shadow with a subtle border-color transition to keep the interactive feedback without the elevation effect.
+  - Files: `src/app/components/classroom/tabs/StudentsTab.jsx`, `src/app/components/classroom/ClassroomDetail.jsx`
+  - Sub-tasks:
+    - [~] 2.1: In `StudentsTab.jsx`, locate the `whileHover` prop on the student card `motion.div` and remove the `boxShadow` entry from the animation object
+    - [~] 2.2: Add `border border-slate-200 dark:border-slate-700` as the baseline border classes to the student card `motion.div`
+    - [~] 2.3: Add `hover:border-green-300 dark:hover:border-green-600` Tailwind classes to the student card `motion.div` to replace the removed shadow hover effect
+    - [~] 2.4: Search `ClassroomDetail.jsx` for any `shadow-*` Tailwind classes or inline `box-shadow` / `boxShadow` styles on card/panel elements and remove them
+    - [~] 2.5: Do a final grep across both files for `shadow` to confirm no shadow utilities remain
+  - Dependencies: None
+
+- [ ] Task 3: Fix Course Banner (Req 3)
+  - Description: Clean up the Course tab hero section by removing the decorative blurred circle overlay and allowing the course description to use the full available width instead of being capped at `max-w-2xl`.
+  - Files: `src/app/components/classroom/tabs/CourseTab.jsx`
+  - Sub-tasks:
+    - [~] 3.1: Locate the `<div className="absolute top-3 right-3 w-32 h-32 rounded-full bg-green-500/5 blur-3xl" />` element inside the hero/banner section and delete it
+    - [~] 3.2: Find the course description `<p>` (or wrapping `<div>`) that carries `max-w-2xl` and change that class to `w-full`
+    - [~] 3.3: Verify that the banner's gradient background, `rounded-2xl` shape, and border styling are all still intact after the changes
+    - [~] 3.4: Visually confirm in a browser (or by inspection) that the description now spans the full banner width with no decorative dot artifacts
+  - Dependencies: None
+
+- [ ] Task 4: Fix Fork Content Panel (Req 2)
+  - Description: Resolve the suite of Fork Content Panel bugs: auto-load on panel open, filter buttons fetching stale data, session badge display, 409 duplicate handling, unfork error recovery, and a dedicated browse error state with retry UI.
+  - Files: `src/app/components/classroom/ClassroomDetail.jsx`, `src/app/components/classroom/ForkContentPanel.jsx`
+  - Sub-tasks:
+    - [~] 4.1: In `ClassroomDetail.jsx`, update the `useEffect` that triggers the browse fetch so its dependency array is `[showForkPanel]`; call `fetchBrowseContent("all", "")` whenever `showForkPanel` transitions to `true`
+    - [~] 4.2: In `ForkContentPanel.jsx`, fix each filter button's `onClick` to pass the filter's explicit string value directly as the first argument to `onBrowse(value, browseQuery)` rather than reading from potentially stale state
+    - [~] 4.3: In `ClassroomDetail.jsx`, add a `forkedIdSet` state variable (a JavaScript `Set`) initialized from `classroom.forkedContent`; update this set on every successful fork or unfork action
+    - [~] 4.4: In the fork POST handler inside `ClassroomDetail.jsx`, intercept a `409` response and add the content ID to `forkedIdSet` without displaying an error toast (treat it as already-forked, not an error)
+    - [~] 4.5: In `handleUnforkContent` inside `ClassroomDetail.jsx`, add a `catch` block that shows an error toast and retains the item in the list (do not remove on failure)
+    - [~] 4.6: Add a `browseError` state to `ClassroomDetail.jsx`; pass it through `classroomState` to `ForkContentPanel.jsx`; render an error message with a "Retry" button in the panel when `browseError` is set
+    - [~] 4.7: Pass `forkedIdSet` through `classroomState` to `ForkContentPanel.jsx` and use it to render a "Forked" session badge on already-forked items in the browse list
+  - Dependencies: None
+
+- [ ] Task 5: Update browse API result cap (Req 2.8)
+  - Description: Increase the maximum number of results returned by the browse API from 50 to 100 so that instructors can discover more content in a single fetch.
+  - Files: `src/app/api/classrooms/[id]/browse/route.js`
+  - Sub-tasks:
+    - [~] 5.1: Open `browse/route.js` and locate every `.limit(50)` call in the query chain
+    - [~] 5.2: Change each `.limit(50)` to `.limit(100)`
+    - [~] 5.3: Confirm no other hard-coded limit values exist in the file that should also be updated
+    - [~] 5.4: Verify the route still returns a valid JSON response with up to 100 items by testing locally or with a curl/Postman request
+  - Dependencies: None
+
+- [ ] Task 6: Redesign Students section and profile (Req 4)
+  - Description: Overhaul the Students tab with a client-side search filter, improved grade threshold display, relative timestamp formatting, and a per-card remove-student action wired back to `ClassroomDetail` for instructor use.
+  - Files: `src/app/components/classroom/tabs/StudentsTab.jsx`, `src/app/components/classroom/ClassroomDetail.jsx`
+  - Sub-tasks:
+    - [~] 6.1: Add a `getGradeInfo(progress)` utility function in `StudentsTab.jsx` with thresholds A ≥ 90, B ≥ 75, C ≥ 60, D < 60; replace any inline threshold comparisons in the file with calls to this function
+    - [~] 6.2: Add `searchQuery` state and a `filteredStudents` derived array that filters the students list case-insensitively on both name and email fields
+    - [~] 6.3: Render a search `<input>` above the student grid, bound to `searchQuery`, with appropriate placeholder text
+    - [~] 6.4: Show a "No students match your search." empty state when `filteredStudents.length === 0` and `searchQuery` is non-empty
+    - [~] 6.5: Update the timestamp display logic: show "Active today" when the last-active date is the same calendar day, otherwise show "{N}d ago"
+    - [~] 6.6: Add a "Remove" button on each student card visible only to instructors (`isInstructor === true`); wire its `onClick` to a `onRemoveStudent(studentId)` prop
+    - [~] 6.7: Add `handleRemoveStudent(studentId)` in `ClassroomDetail.jsx`: call the DELETE enrollment API, remove the student from local state on success, show a success toast, and show an error toast on failure
+    - [~] 6.8: Pass `handleRemoveStudent` through `classroomState` to `StudentsTab` as `onRemoveStudent`
+  - Dependencies: None
+
+- [ ] Task 7: Add enrollment DELETE API route (Req 4.10)
+  - Description: Implement the server-side handler for removing a student from a classroom. The endpoint must verify the caller is the instructor, locate the active enrollment record, mark it as removed, and return a success response.
+  - Files: `src/app/api/classrooms/[id]/enrollment/route.js`
+  - Sub-tasks:
+    - [~] 7.1: Add an exported `DELETE` async function to `enrollment/route.js` following the existing Next.js App Router handler pattern
+    - [~] 7.2: Authenticate the caller and verify they are the classroom instructor using a null-safe comparison (`classroom.instructorId?.toString() === user._id?.toString()`); return a `403` response if the check fails
+    - [~] 7.3: Extract `studentId` from the request body (or query params); find the enrollment document matching `{ studentId, classroomId, status: "active" }`; return `404` if not found
+    - [~] 7.4: Set `enrollment.status = "removed"`, call `enrollment.save()`, and return `{ success: true }` with status `200`
+    - [~] 7.5: Add error handling with a `try/catch` that returns a `500` response on unexpected failures, consistent with other handlers in the file
+  - Dependencies: None
+
+- [ ] Task 8: Implement role-based permissions — client side (Req 6)
+  - Description: Propagate the authenticated user object and instructor flag through `classroomState` and gate every instructor-only UI control (create, delete, edit, export, fork) behind `isInstructor`, while also adding the Chat tab to both role tab arrays.
+  - Files: `src/app/components/classroom/ClassroomDetail.jsx`, `src/app/components/classroom/tabs/GradesTab.jsx`, `src/app/components/classroom/tabs/AssignmentsTab.jsx`, `src/app/components/classroom/tabs/DiscussionsTab.jsx`, `src/app/components/classroom/tabs/MaterialsTab.jsx`, `src/app/components/classroom/tabs/CourseTab.jsx`
+  - Sub-tasks:
+    - [~] 8.1: In `ClassroomDetail.jsx`, add `user` to `classroomState`; derive `isInstructor` as `classroom.isInstructor ?? false` with a null-safe fallback; add a Chat tab entry (using the `MessageSquare` icon) to both `instructorTabs` and `studentTabs` arrays; confirm `studentTabs` does not include analytics, students, or settings tabs
+    - [~] 8.2: In `GradesTab.jsx`, derive `visibleGrades` by filtering grades to only the current user's own records when `!isInstructor`; hide the export/download button for students
+    - [~] 8.3: In `AssignmentsTab.jsx`, wrap the "Create Assignment" button and any per-assignment management controls (edit, delete) in `isInstructor &&` guards
+    - [~] 8.4: In `DiscussionsTab.jsx`, derive `canPost = isInstructor || classroom.settings?.allowStudentPosts`; gate the "New Discussion" button and reply form on `canPost`; render a read-only notice ("Posting is disabled for students in this classroom.") when `canPost` is `false`
+    - [~] 8.5: In `MaterialsTab.jsx`, gate the "Add Material" button and per-item delete/edit controls on `isInstructor`
+    - [~] 8.6: In `CourseTab.jsx`, gate the "Fork Content" button, "Generate Course Structure" button, and "Add More" linked-content button on `isInstructor`
+  - Dependencies: None
+
+- [ ] Task 9: Add null-safety guards to instructor-only API routes (Req 6.13)
+  - Description: Prevent runtime errors in instructor-authorization checks across four API routes by adding explicit null guards before calling `.toString()` on `instructorId` or `user._id`, which can be undefined when data is partially populated.
+  - Files: `src/app/api/classrooms/[id]/fork/route.js`, `src/app/api/classrooms/[id]/assignments/route.js`, `src/app/api/classrooms/[id]/announcements/route.js`, `src/app/api/classrooms/[id]/materials/route.js`
+  - Sub-tasks:
+    - [~] 9.1: In `fork/route.js`, add `if (!classroom.instructorId || !user._id)` guards before the instructor comparison in POST, DELETE, and PATCH handlers; return `403` when either value is null/undefined
+    - [~] 9.2: Apply the same null-guard pattern to the instructor check in `assignments/route.js` POST handler
+    - [~] 9.3: Apply the same null-guard pattern to the instructor check in `announcements/route.js` POST handler
+    - [~] 9.4: Apply the same null-guard pattern to the instructor check in `materials/route.js` POST handler
+    - [~] 9.5: Review all four files for any other `.toString()` calls on potentially undefined ObjectId fields and add guards as needed
+  - Dependencies: None
+
+- [ ] Task 10: Create ClassroomMessage Mongoose model (Req 5.10)
+  - Description: Define the Mongoose schema and model for persisting real-time chat messages, including the appropriate indexes for efficient per-classroom chronological queries.
+  - Files: `src/models/ClassroomMessage.js`
+  - Sub-tasks:
+    - [~] 10.1: Create `src/models/ClassroomMessage.js`; import `mongoose` and define a `ClassroomMessageSchema` with fields: `classroomId` (ObjectId, ref `"Classroom"`, required, indexed), `senderId` (ObjectId, ref `"User"`, required), `senderName` (String, required), `senderRole` (String, enum `["instructor", "student"]`, required), `content` (String, required, maxlength 2000), `createdAt` (Date, default `Date.now`, indexed)
+    - [~] 10.2: Add a compound index `{ classroomId: 1, createdAt: -1 }` to the schema to support efficient "last N messages for a classroom" queries
+    - [~] 10.3: Export the model using the standard Next.js/Mongoose singleton pattern: `mongoose.models.ClassroomMessage || mongoose.model("ClassroomMessage", ClassroomMessageSchema)`
+    - [~] 10.4: Verify the model file has no syntax errors and that the enum values and maxlength constraint are correctly applied
+    - [~] 10.5: Confirm the model can be imported without errors from another file (quick import smoke-test in a local script or by starting the dev server)
+  - Dependencies: Task 1
+
+- [ ] Task 11: Create Socket.IO server (Req 5)
+  - Description: Implement the Socket.IO server module with JWT-based auth middleware, room join with enrollment verification and message history delivery, message send with persistence, typing relay, and disconnect logging.
+  - Files: `src/server/socket.js`
+  - Sub-tasks:
+    - [~] 11.1: Create `src/server/socket.js`; export an `initSocketServer(httpServer)` function that initializes a `Server` instance from `socket.io` with appropriate CORS options
+    - [~] 11.2: Add auth middleware: extract the JWT from `socket.handshake.auth.token` or the `cookie` header; call `verifyToken`; attach the decoded user to `socket.user`; call `next(new Error("401"))` on failure
+    - [~] 11.3: Implement the `join_room` event handler: verify the connecting user is the classroom instructor or has an active enrollment (DB lookup); emit `authorization_error` and disconnect if unauthorized; call `socket.join(classroomId)`; fetch the last 50 `ClassroomMessage` documents sorted `{ createdAt: 1 }` and emit them as `message_history`
+    - [~] 11.4: Implement the `send_message` event handler: validate that `content` is non-empty and ≤ 2000 characters; persist a new `ClassroomMessage` document; broadcast the saved message to the room via `io.to(classroomId).emit("new_message", message)`
+    - [~] 11.5: Implement the `typing` event handler: relay a `user_typing` event to all room members except the sender using `socket.to(classroomId).emit("user_typing", { userId, name })`
+    - [~] 11.6: Implement the `disconnect` handler: log `"Socket disconnected: ${socket.id}"` for observability
+  - Dependencies: Task 1, Task 10
+
+- [ ] Task 12: Create server.js entry point (Req 5)
+  - Description: Add a custom Node.js server entry point at the project root that creates an HTTP server, attaches Socket.IO, and serves the Next.js app — all on the same port — enabling WebSocket upgrades alongside normal HTTP traffic.
+  - Files: `server.js`, `package.json`
+  - Sub-tasks:
+    - [~] 12.1: Create `server.js` at the project root; import `http`, `next`, and `initSocketServer` from `src/server/socket.js`; create a Next.js app instance with `next({ dev: process.env.NODE_ENV !== "production" })`
+    - [~] 12.2: In `server.js`, call `app.prepare()`, then create an `http.createServer` that delegates all requests to the Next.js request handler
+    - [~] 12.3: Call `initSocketServer(httpServer)` to attach Socket.IO to the HTTP server before `.listen()`
+    - [~] 12.4: Start the server on `process.env.PORT || 3000` and log the listening URL
+    - [~] 12.5: Update `package.json` scripts: set `"dev"` to `"node server.js"` and `"start"` to `"NODE_ENV=production node server.js"`
+  - Dependencies: Task 1, Task 11
+
+- [ ] Task 13: Create ClassroomChat React component (Req 5)
+  - Description: Build the full-featured chat UI component including socket connection lifecycle management, message rendering, typing indicators, message validation, and throttled typing emission.
+  - Files: `src/app/components/classroom/ClassroomChat.jsx`
+  - Sub-tasks:
+    - [~] 13.1: Create `src/app/components/classroom/ClassroomChat.jsx`; on mount, initialize a `socket.io-client` connection with `auth: { token }` (token read from cookie or session); emit `join_room` with `classroomId` on `connect`; handle `connect_error` with retry logic (up to 3 attempts with exponential backoff via native socket.io `reconnectionDelay` options); set a "Chat unavailable" error state after 3 failed attempts
+    - [~] 13.2: Handle incoming socket events: populate `messages` state from the `message_history` payload; append to `messages` on `new_message`; add sender to `typingUsers` on `user_typing` and auto-remove the entry after 3 seconds
+    - [~] 13.3: Render the messages list with a `bottomRef` element and `useEffect` auto-scroll on every `messages` update; render own messages right-aligned with a green bubble, others' messages left-aligned with a neutral bubble; display sender name and a role badge (Instructor / Student) above messages from others
+    - [~] 13.4: Implement `formatTimestamp(date)` with four tiers: < 60 s → "Just now", < 60 min → "{N} min ago", < 24 hr → "{N} hr ago", older → formatted locale date string; apply to each message timestamp
+    - [~] 13.5: Render a "{name} is typing…" indicator below the message list when `typingUsers` has entries
+    - [~] 13.6: Implement the send flow: validate input is non-empty and ≤ 2000 characters; show an inline error below the input on validation failure; emit `send_message` on valid submit triggered by Enter key or send button click; clear input on successful emit
+    - [~] 13.7: Throttle typing emissions: use a `lastTypingEmit` ref to ensure `typing` is emitted at most once every 2 seconds while the user is actively typing
+  - Dependencies: Task 1, Task 11
+
+- [ ] Task 14: Wire ClassroomChat into ClassroomDetail (Req 5)
+  - Description: Connect the finished `ClassroomChat` component to the tab system in `ClassroomDetail` so that both instructors and students can access the chat panel by clicking the Chat tab added in Task 8.
+  - Files: `src/app/components/classroom/ClassroomDetail.jsx`
+  - Sub-tasks:
+    - [~] 14.1: Import `ClassroomChat` from `./ClassroomChat` at the top of `ClassroomDetail.jsx`
+    - [~] 14.2: In the tab content render section, add a conditional block: `{activeTab === "chat" && <ClassroomChat classroomId={classroom.id} user={user} />}`
+    - [~] 14.3: Confirm that `classroom.id` and `user` are both available in scope at the render site; add null guards if either could be undefined on first render
+    - [~] 14.4: Verify that switching to the Chat tab mounts the component (socket connects) and switching away unmounts it (socket disconnects) by checking the component's `useEffect` cleanup
+    - [~] 14.5: Smoke-test the full flow: open the Chat tab as an instructor and as a student, confirm the join handshake succeeds, and confirm message history loads
+  - Dependencies: Task 8, Task 13

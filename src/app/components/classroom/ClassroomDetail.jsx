@@ -168,14 +168,16 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const fetchGrades = useCallback(async () => { setGradesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/grades`); const data = await res.json(); if (data.success) setGrades(data.students || []); } catch {} finally { setGradesLoading(false); } }, [classroom.id]);
   const fetchAnalytics = useCallback(async () => { setAnalyticsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/analytics`); const data = await res.json(); if (data.success) setAnalytics(data); } catch {} finally { setAnalyticsLoading(false); } }, [classroom.id]);
 
-  const fetchBrowseContent = useCallback(async () => {
+  const fetchBrowseContent = useCallback(async (overrideType, overrideQuery) => {
     setBrowseLoading(true);
     try {
-      const q = browseQuery ? `&q=${encodeURIComponent(browseQuery)}` : "";
-      const res = await apiClient.get(`/api/classrooms/${classroom.id}/browse?type=${browseType}${q}`);
+      const t = overrideType || browseType;
+      const qVal = overrideQuery !== undefined ? overrideQuery : browseQuery;
+      const q = qVal ? `&q=${encodeURIComponent(qVal)}` : "";
+      const res = await apiClient.get(`/api/classrooms/${classroom.id}/browse?type=${t}${q}`);
       const data = await res.json();
       if (data.success) setBrowseResults({ courses: data.courses || [], quizzes: data.quizzes || [], flashcards: data.flashcards || [] });
-    } catch {} finally { setBrowseLoading(false); }
+    } catch (e) { console.error("Browse error:", e); } finally { setBrowseLoading(false); }
   }, [classroom.id, browseType, browseQuery]);
 
   const handleForkContent = async (contentType, contentId, title) => {
@@ -291,8 +293,12 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     if (activeTab === "students" && isInstructor) fetchStudents();
     if (activeTab === "grades") fetchGrades();
     if (activeTab === "analytics" && isInstructor) fetchAnalytics();
-    if (activeTab === "assignments" && showForkPanel && isInstructor) fetchBrowseContent();
-  }, [activeTab, fetchDiscussions, fetchNotes, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor, showForkPanel, fetchBrowseContent]);
+  }, [activeTab, fetchDiscussions, fetchNotes, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor]);
+
+  useEffect(() => {
+    if (activeTab === "course" && showForkPanel && isInstructor) fetchBrowseContent("all", "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, showForkPanel, isInstructor, fetchBrowseContent]);
 
   useEffect(() => { if (isInstructor) fetchStudents(); }, [isInstructor, fetchStudents]);
   useEffect(() => { if (selectedDiscussion) fetchPosts(selectedDiscussion._id || selectedDiscussion.id); }, [selectedDiscussion, fetchPosts]);
