@@ -29,6 +29,7 @@ import MaterialsTab from "./tabs/MaterialsTab";
 import StudentsTab from "./tabs/StudentsTab";
 import SettingsTab from "./tabs/SettingsTab";
 import CourseTab from "./tabs/CourseTab";
+import ClassroomChat from "./ClassroomChat";
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -52,7 +53,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   });
   const [showInvite, setShowInvite] = useState(false);
   const [loading, setLoading] = useState(false);
-  const isInstructor = classroom.isInstructor;
+  const isInstructor = classroom.isInstructor ?? false;
 
   const [discussions, setDiscussions] = useState([]);
   const [discussionsLoading, setDiscussionsLoading] = useState(false);
@@ -138,11 +139,19 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [courseGenLoading, setCourseGenLoading] = useState(false);
   const [expandedModule, setExpandedModule] = useState(null);
   const [forkedContent, setForkedContent] = useState(classroom.forkedContent || []);
+  const [forkedIdSet, setForkedIdSet] = useState(
+    () => new Set(
+      (classroom.forkedContent || []).map(
+        (fc) => `${fc.contentType}-${fc.contentId?.toString()}`
+      )
+    )
+  );
   const [showForkPanel, setShowForkPanel] = useState(false);
   const [browseType, setBrowseType] = useState("all");
   const [browseResults, setBrowseResults] = useState({ courses: [], quizzes: [], flashcards: [] });
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseQuery, setBrowseQuery] = useState("");
+  const [browseError, setBrowseError] = useState(null);
   const [forking, setForking] = useState(null);
 
   const [settingsForm, setSettingsForm] = useState({
@@ -170,27 +179,45 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const fetchBrowseContent = useCallback(async (overrideType, overrideQuery) => {
     setBrowseLoading(true);
+    setBrowseError(null);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     try {
       const t = overrideType || browseType;
       const qVal = overrideQuery !== undefined ? overrideQuery : browseQuery;
       const q = qVal ? `&q=${encodeURIComponent(qVal)}` : "";
-      const res = await apiClient.get(`/api/classrooms/${classroom.id}/browse?type=${t}${q}`);
+      const res = await fetch(`/api/classrooms/${classroom.id}/browse?type=${t}${q}`, { credentials: "include", signal: controller.signal });
+      if (!res.ok) { setBrowseError("fetch_failed"); return; }
       const data = await res.json();
       if (data.success) setBrowseResults({ courses: data.courses || [], quizzes: data.quizzes || [], flashcards: data.flashcards || [] });
-    } catch (e) { console.error("Browse error:", e); } finally { setBrowseLoading(false); }
-  }, [classroom.id, browseType, browseQuery]);
+      else setBrowseError("fetch_failed");
+    } catch (e) {
+      if (e.name === "AbortError") setBrowseError("timeout");
+      else setBrowseError("fetch_failed");
+    } finally {
+      clearTimeout(timeout);
+      setBrowseLoading(false);
+    }
+  }, [classroom.id]);
 
   const handleForkContent = async (contentType, contentId, title) => {
     setForking(contentId);
     try {
       const currentWeek = getCurrentWeekNumber();
       const res = await apiClient.post(`/api/classrooms/${classroom.id}/fork`, { contentType, contentId, weekNumber: currentWeek });
+      if (res.status === 409) {
+        setForkedIdSet((prev) => new Set([...prev, `${contentType}-${contentId}`]));
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setForkedContent((prev) => [...prev, data.forked]);
+        setForkedIdSet((prev) => new Set([...prev, `${contentType}-${contentId}`]));
         toast.success(`"${title}" forked to classroom!`);
       } else { toast.error(data.error || "Failed to fork"); }
-    } catch { toast.error("Failed to fork content"); } finally { setForking(null); }
+    } catch {
+      toast.error("Failed to fork content");
+    } finally { setForking(null); }
   };
 
   const handleUnforkContent = async (contentType, contentId, title) => {
@@ -199,9 +226,18 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const data = await res.json();
       if (data.success) {
         setForkedContent((prev) => prev.filter((fc) => !(fc.contentId === contentId && fc.contentType === contentType)));
+        setForkedIdSet((prev) => {
+          const next = new Set(prev);
+          next.delete(`${contentType}-${contentId}`);
+          return next;
+        });
         toast.success(`"${title}" removed from classroom`);
+      } else {
+        toast.error(data.error || "Failed to remove content");
       }
-    } catch { toast.error("Failed to remove"); }
+    } catch {
+      toast.error("Failed to remove content. Please try again.");
+    }
   };
 
   const handleToggleForkUnlock = async (contentType, contentId) => {
@@ -296,12 +332,29 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   }, [activeTab, fetchDiscussions, fetchNotes, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor]);
 
   useEffect(() => {
-    if (activeTab === "course" && showForkPanel && isInstructor) fetchBrowseContent("all", "");
+    if (showForkPanel && isInstructor) {
+      fetchBrowseContent("all", "");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, showForkPanel, isInstructor, fetchBrowseContent]);
+  }, [showForkPanel]);
 
   useEffect(() => { if (isInstructor) fetchStudents(); }, [isInstructor, fetchStudents]);
   useEffect(() => { if (selectedDiscussion) fetchPosts(selectedDiscussion._id || selectedDiscussion.id); }, [selectedDiscussion, fetchPosts]);
+
+  const handleRemoveStudent = async (studentId, studentName) => {
+    try {
+      const res = await apiClient.delete(`/api/classrooms/${classroom.id}/enrollment?studentId=${studentId}`);
+      const data = await res.json();
+      if (data.success) {
+        setStudents((prev) => prev.filter((s) => s.id !== studentId));
+        toast.success(`${studentName} removed from classroom`);
+      } else {
+        toast.error(data.error || "Failed to remove student");
+      }
+    } catch {
+      toast.error("Failed to remove student. Please try again.");
+    }
+  };
 
   const handleMarkComplete = async (assignmentId) => {
     try { const res = await apiClient.put(`/api/classrooms/${classroom.id}/progress`, { assignmentId, status: "completed", progress: 100 }); const data = await res.json(); if (data.success) { setAssignments((prev) => prev.map((a) => a.id === assignmentId ? { ...a, myProgress: { ...a.myProgress, status: "completed", progress: 100, completedAt: new Date().toISOString() } } : a)); toast.success("Assignment marked as complete!"); } else { toast.error(data.error || "Failed"); } } catch { toast.error("Failed to update progress"); }
@@ -376,6 +429,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     { id: "notes", label: "Notes", icon: StickyNote },
     { id: "materials", label: "Materials", icon: Layers },
     { id: "students", label: "Students", icon: Users },
+    { id: "chat", label: "Chat", icon: MessageSquare },
     { id: "settings", label: "Settings", icon: Settings },
   ];
   const studentTabs = [
@@ -385,17 +439,18 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     { id: "discussions", label: "Discussions", icon: MessageSquare },
     { id: "notes", label: "Notes", icon: StickyNote },
     { id: "materials", label: "Materials", icon: Layers },
+    { id: "chat", label: "Chat", icon: MessageSquare },
   ];
   const tabs = isInstructor ? instructorTabs : studentTabs;
 
   const classroomState = {
-    selectedAssignment, setSelectedAssignment, isInstructor, classroom,
+    selectedAssignment, setSelectedAssignment, isInstructor, classroom, user,
     assignments, setAssignments, handleStartAssignment, handleMarkComplete,
     showCreateAssignment, setShowCreateAssignment, showForkPanel, setShowForkPanel,
     showNewAnnouncement, setShowNewAnnouncement, showInvite, setShowInvite,
     courseModules, courseGenLoading, handleGenerateCourseStructure,
     handleGenerateModuleAssignments, expandedModule, setExpandedModule,
-    forkedContent, isForkedContentLocked, handleToggleForkUnlock,
+    forkedContent, forkedIdSet, isForkedContentLocked, handleToggleForkUnlock,
     handleUnforkContent, handleForkContent, getDueStatus,
     newAnnTitle, setNewAnnTitle, newAnnContent, setNewAnnContent,
     handlePostAnnouncement, assignmentForm, studentStats,
@@ -420,8 +475,9 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     handleSaveSettings, handleDeleteClassroom, daysOfWeek,
     toggleCls, toggleDot,
     browseResults, browseLoading, browseQuery, setBrowseQuery,
-    browseType, setBrowseType, fetchBrowseContent, forking,
+    browseType, setBrowseType, fetchBrowseContent, browseError, forking,
     getWeeks, announcements,
+    handleRemoveStudent,
   };
 
   return (
@@ -555,6 +611,10 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
         {activeTab === "settings" && isInstructor && (
           <SettingsTab classroomState={classroomState} />
+        )}
+
+        {activeTab === "chat" && (
+          <ClassroomChat classroomId={classroom.id} user={user} />
         )}
         </div>
       </div>

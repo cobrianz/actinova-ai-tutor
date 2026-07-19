@@ -111,6 +111,8 @@ export default function AssignmentsTab({ classroomState }) {
             setBrowseType={classroomState.setBrowseType}
             onBrowse={classroomState.fetchBrowseContent}
             forking={classroomState.forking}
+            forkedIdSet={classroomState.forkedIdSet}
+            browseError={classroomState.browseError}
           />
         )}
         {isInstructor && showCreateAssignment && (

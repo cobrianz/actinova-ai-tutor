@@ -5,7 +5,7 @@
   - Files: `package.json`
   - Sub-tasks:
     - [x] 1.1: Run `npm install socket.io socket.io-client` and verify both packages appear in `dependencies` in `package.json`
-    - [-] 1.2: Confirm installed versions are compatible with Node.js version in use (socket.io ≥4, socket.io-client ≥4)
+    - [ ] 1.2: Confirm installed versions are compatible with Node.js version in use (socket.io ≥4, socket.io-client ≥4)
     - [~] 1.3: Verify no peer-dependency conflicts exist after installation (check `npm ls socket.io`)
     - [~] 1.4: Commit the updated `package.json` and `package-lock.json` (do not proceed with Socket.IO tasks until lock file is stable)
   - Dependencies: None

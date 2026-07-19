@@ -15,7 +15,7 @@ export default function CourseTab({ classroomState }) {
     handleToggleForkUnlock, handleUnforkContent, isInstructor,
     showForkPanel, setShowForkPanel, browseResults, browseLoading,
     browseQuery, setBrowseQuery, browseType, setBrowseType,
-    fetchBrowseContent, forking, handleForkContent,
+    fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
     courseModules, courseGenLoading, handleGenerateCourseStructure,
   } = classroomState;
 
@@ -32,7 +32,6 @@ export default function CourseTab({ classroomState }) {
     <div className="space-y-4">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10 p-6">
-        <div className="absolute top-3 right-3 w-32 h-32 rounded-full bg-green-500/5 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/15 flex items-center justify-center">
@@ -44,7 +43,7 @@ export default function CourseTab({ classroomState }) {
             </div>
           </div>
           {classroom.description && (
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mt-2 max-w-2xl">{classroom.description}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mt-2 w-full">{classroom.description}</p>
           )}
           <div className="flex flex-wrap gap-2 mt-4">
             {classroom.academicLevel && (
@@ -107,6 +106,8 @@ export default function CourseTab({ classroomState }) {
           setBrowseType={setBrowseType}
           onBrowse={fetchBrowseContent}
           forking={forking}
+          forkedIdSet={forkedIdSet}
+          browseError={browseError}
         />
       )}
 

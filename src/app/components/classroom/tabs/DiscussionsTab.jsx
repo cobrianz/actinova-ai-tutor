@@ -86,6 +86,8 @@ export default function DiscussionsTab({ classroomState }) {
     fetchDiscussions, inputCls, labelCls,
   } = classroomState;
 
+  const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
+
   if (selectedDiscussion) {
     return (
       <ThreadView
@@ -119,7 +121,7 @@ export default function DiscussionsTab({ classroomState }) {
             {discussions.length} topic{discussions.length !== 1 ? "s" : ""} &middot; {totalPosts} post{totalPosts !== 1 ? "s" : ""} &middot; {openCount} open
           </p>
         </div>
-        {isInstructor && (
+        {canPost ? (
           <div className="flex items-center gap-2">
             <button
               onClick={handleGenerateDiscussionPrompt}
@@ -137,6 +139,10 @@ export default function DiscussionsTab({ classroomState }) {
               {showNewDiscussion ? "Cancel" : "New Discussion"}
             </button>
           </div>
+        ) : (
+          <p className="text-xs text-slate-400 italic">
+            Discussion posting is disabled for students in this classroom.
+          </p>
         )}
       </div>
 
@@ -246,6 +252,7 @@ function DiscussionCard({ disc, onClick, index }) {
 
 function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions }) {
   const [expandedReplies, setExpandedReplies] = useState({});
+  const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
 
   const rootPosts = posts.filter((p) => !p.parentPostId);
   const repliesMap = {};
@@ -323,7 +330,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
                   setReplyingTo={setReplyingTo} setReplyContent={setReplyContent}
                   replyContent={replyContent} handleCreatePost={handleCreatePost}
                   inputCls={inputCls} repliesMap={repliesMap}
-                  replyingTo={replyingTo}
+                  replyingTo={replyingTo} canPost={canPost}
                 />
               </motion.div>
             );
@@ -331,8 +338,8 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
         </div>
       )}
 
-      {/* Compose new post — only show when no inline reply is active */}
-      {!discussion.isClosed && !replyingTo ? (
+      {/* Compose new post — only show when no inline reply is active and user can post */}
+      {!discussion.isClosed && !replyingTo && canPost ? (
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0">
@@ -359,12 +366,16 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
         <div className="bg-secondary/40 border border-border rounded-xl p-4 text-center">
           <p className="text-xs text-muted-foreground italic">This discussion is closed.</p>
         </div>
+      ) : !canPost ? (
+        <div className="bg-secondary/40 border border-border rounded-xl p-4 text-center">
+          <p className="text-xs text-muted-foreground italic">Posting is disabled for students in this classroom.</p>
+        </div>
       ) : null}
     </div>
   );
 }
 
-function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo }) {
+function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost }) {
   const postId = post._id || post.id;
   return (
     <div className={`bg-card border rounded-xl overflow-hidden ${isInstructorPost ? "border-l-[3px] border-l-green-500 border-border" : "border-border"}`}>
@@ -438,7 +449,7 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
                     <span className="text-[10px] text-muted-foreground">{formatTime(reply.createdAt)}</span>
                   </div>
                   <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{reply.content}</p>
-                  {!discussion.isClosed && (
+          {!discussion.isClosed && canPost && (
                     <button onClick={() => { setReplyingTo(isReplyOfReply ? null : replyId); setReplyContent(""); }} className="flex items-center gap-1 mt-2 text-[11px] font-semibold text-muted-foreground hover:text-green-600 dark:hover:text-green-400 transition-colors">
                       <CornerDownRight className="w-3 h-3" /> Reply
                     </button>

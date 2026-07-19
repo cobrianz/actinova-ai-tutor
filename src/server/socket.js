@@ -1,0 +1,168 @@
+const { Server } = require("socket.io");
+const mongoose = require("mongoose");
+
+let ClassroomMessage;
+
+function getModel() {
+  if (!ClassroomMessage) {
+    ClassroomMessage = require("../app/models/ClassroomMessage").default;
+  }
+  return ClassroomMessage;
+}
+
+function verifySocketToken(token) {
+  const jwt = require("jsonwebtoken");
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET not set");
+  return jwt.verify(token, secret, {
+    issuer: "actirova-ai-tutor",
+    audience: "actirova-ai-tutor-users",
+  });
+}
+
+function initSocketServer(httpServer) {
+  const io = new Server(httpServer, {
+    path: "/socket.io",
+    cors: {
+      origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      credentials: true,
+    },
+  });
+
+  io.use(async (socket, next) => {
+    const token =
+      socket.handshake.auth?.token ||
+      socket.handshake.headers?.cookie?.match(/token=([^;]+)/)?.[1];
+
+    if (!token) {
+      return next(
+        Object.assign(new Error("Authentication required"), {
+          data: { code: 401 },
+        })
+      );
+    }
+    try {
+      const decoded = verifySocketToken(token);
+      const { connectToDatabase } = require("../app/lib/mongodb");
+      const { db } = await connectToDatabase();
+      const user = await db
+        .collection("users")
+        .findOne(
+          { _id: new mongoose.Types.ObjectId(decoded.id) },
+          { projection: { _id: 1, name: 1, email: 1, role: 1, status: 1 } }
+        );
+      if (!user || user.status !== "active") {
+        return next(
+          Object.assign(new Error("Unauthorized"), { data: { code: 401 } })
+        );
+      }
+      socket.user = {
+        id: user._id.toString(),
+        name: user.name,
+        role: user.role,
+      };
+      next();
+    } catch {
+      next(
+        Object.assign(new Error("Invalid token"), { data: { code: 401 } })
+      );
+    }
+  });
+
+  io.on("connection", (socket) => {
+    console.log(`[chat] connected: ${socket.user.id}`);
+
+    socket.on("join_room", async ({ classroomId }) => {
+      if (!classroomId) return;
+      try {
+        const { connectToDatabase } = require("../app/lib/mongodb");
+        const { db } = await connectToDatabase();
+        const classroom = await db
+          .collection("classrooms")
+          .findOne(
+            { _id: new mongoose.Types.ObjectId(classroomId) },
+            { projection: { instructorId: 1 } }
+          );
+        if (!classroom) {
+          return socket.emit("authorization_error", {
+            message: "Classroom not found",
+          });
+        }
+        const isInstructor =
+          classroom.instructorId?.toString() === socket.user.id;
+        if (!isInstructor) {
+          const enrollment = await db.collection("enrollments").findOne({
+            classroomId: new mongoose.Types.ObjectId(classroomId),
+            studentId: new mongoose.Types.ObjectId(socket.user.id),
+            status: "active",
+          });
+          if (!enrollment) {
+            return socket.emit("authorization_error", {
+              message: "Not enrolled in this classroom",
+            });
+          }
+        }
+        socket.join(classroomId);
+
+        const Model = getModel();
+        const history = await Model.find({ classroomId })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .lean();
+        socket.emit("message_history", history.reverse());
+      } catch (err) {
+        console.error("[chat] join_room error:", err);
+        socket.emit("authorization_error", {
+          message: "Failed to join room",
+        });
+      }
+    });
+
+    socket.on("send_message", async ({ classroomId, content }) => {
+      if (!content || typeof content !== "string") return;
+      const trimmed = content.trim();
+      if (!trimmed || trimmed.length > 2000) return;
+
+      try {
+        const Model = getModel();
+        const message = await Model.create({
+          classroomId,
+          senderId: socket.user.id,
+          senderName: socket.user.name,
+          senderRole: socket.user.role,
+          content: trimmed,
+          createdAt: new Date(),
+        });
+        const payload = {
+          _id: message._id.toString(),
+          classroomId,
+          senderId: socket.user.id,
+          senderName: socket.user.name,
+          senderRole: socket.user.role,
+          content: trimmed,
+          createdAt: message.createdAt.toISOString(),
+        };
+        io.to(classroomId).emit("new_message", payload);
+      } catch (err) {
+        console.error("[chat] send_message error:", err);
+      }
+    });
+
+    socket.on("typing", ({ classroomId }) => {
+      if (classroomId) {
+        socket.to(classroomId).emit("user_typing", {
+          userId: socket.user.id,
+          userName: socket.user.name,
+        });
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`[chat] disconnected: ${socket.user.id}`);
+    });
+  });
+
+  return io;
+}
+
+module.exports = { initSocketServer };

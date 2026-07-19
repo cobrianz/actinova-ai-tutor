@@ -18,6 +18,12 @@ async function handlePost(request, { params }) {
   await connectToDatabase();
   const user = request.user;
   const { id } = await params;
+
+  const classroom = await (await import("@/models/Classroom")).default.findById(id).lean();
+  if (!classroom || !classroom.instructorId || !user._id || classroom.instructorId.toString() !== user._id.toString()) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
   const { title, description, type, url, fileName, fileSize, weekNumber, category, isRequired } = await request.json();
 
   if (!title?.trim()) {

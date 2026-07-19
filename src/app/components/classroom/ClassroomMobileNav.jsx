@@ -7,6 +7,7 @@ function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor }) {
     { id: "course", label: "Course", icon: BookOpen },
     { id: "assignments", label: "Tasks", icon: ClipboardList },
     { id: "discussions", label: "Discuss", icon: MessageSquare },
+    { id: "chat", label: "Chat", icon: MessageSquare },
     { id: "notes", label: "Notes", icon: StickyNote },
     { id: "materials", label: "Materials", icon: Layers },
     ...(isInstructor ? [{ id: "settings", label: "Settings", icon: Settings }] : []),

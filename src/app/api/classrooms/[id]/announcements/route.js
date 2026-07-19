@@ -15,7 +15,7 @@ async function handlePost(request, { params }) {
   }
 
   const classroom = await Classroom.findById(id);
-  if (!classroom || classroom.instructorId.toString() !== user._id.toString()) {
+  if (!classroom || !classroom.instructorId || !user._id || classroom.instructorId.toString() !== user._id.toString()) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 

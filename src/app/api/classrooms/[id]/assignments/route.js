@@ -17,7 +17,7 @@ async function handlePost(request, { params }) {
     return NextResponse.json({ error: "Classroom not found" }, { status: 404 });
   }
 
-  if (classroom.instructorId.toString() !== user._id.toString()) {
+  if (!classroom.instructorId || !user._id || classroom.instructorId.toString() !== user._id.toString()) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 

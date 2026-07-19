@@ -22,7 +22,7 @@ async function handlePost(request, { params }) {
 
   const classroom = await Classroom.findById(id);
   if (!classroom) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (classroom.instructorId.toString() !== user._id.toString()) {
+  if (!classroom.instructorId || !user._id || classroom.instructorId.toString() !== user._id.toString()) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
@@ -95,7 +95,7 @@ async function handleDelete(request, { params }) {
 
   const classroom = await Classroom.findById(id);
   if (!classroom) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (classroom.instructorId.toString() !== user._id.toString()) {
+  if (!classroom.instructorId || !user._id || classroom.instructorId.toString() !== user._id.toString()) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
@@ -114,7 +114,7 @@ async function handlePatch(request, { params }) {
 
   const classroom = await Classroom.findById(id);
   if (!classroom) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (classroom.instructorId.toString() !== user._id.toString()) {
+  if (!classroom.instructorId || !user._id || classroom.instructorId.toString() !== user._id.toString()) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 

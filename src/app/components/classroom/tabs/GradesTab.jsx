@@ -28,7 +28,11 @@ function EmptyState({ icon: Icon, title, description, action, onAction }) {
 }
 
 export default function GradesTab({ classroomState }) {
-  const { isInstructor, assignments, grades, gradesLoading, handleExportGrades } = classroomState;
+  const { isInstructor, assignments, grades, gradesLoading, handleExportGrades, user } = classroomState;
+
+  const visibleGrades = isInstructor
+    ? grades
+    : grades.filter((g) => g.studentId?.toString() === user?._id?.toString());
 
   return (
     <div className="space-y-3">
@@ -38,7 +42,7 @@ export default function GradesTab({ classroomState }) {
       </div>
       {gradesLoading ? (
         <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 animate-pulse"><div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-2" /><div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/2" /></div>)}</div>
-      ) : grades.length === 0 ? (
+      ) : visibleGrades.length === 0 ? (
         <EmptyState icon={BarChart2} title="No grades yet" description="Grades will appear once students complete assignments" />
       ) : (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
@@ -55,7 +59,7 @@ export default function GradesTab({ classroomState }) {
                 </tr>
               </thead>
               <tbody>
-                {grades.map((student, i) => (
+                {visibleGrades.map((student, i) => (
                   <tr key={student.id || i} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
