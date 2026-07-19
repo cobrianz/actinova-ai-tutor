@@ -152,3 +152,219 @@ function AddEventModal({ date, classroomId, onSave, onClose }) {
     </div>
   );
 }
+
+// ── Main ScheduleTab ──────────────────────────────────────────────────────────
+
+export default function ScheduleTab({ classroomState }) {
+  const { classroom, assignments, materials, discussions, isInstructor } = classroomState;
+
+  const today = new Date();
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [events, setEvents] = useState(classroom.scheduleEvents || []);
+
+  // Build calendar grid
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(viewYear, viewMonth, d));
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
+    else setViewMonth((m) => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
+    else setViewMonth((m) => m + 1);
+  };
+
+  // Collect all events for a given day (custom + assignments/materials with dates)
+  const getDayItems = useCallback((date) => {
+    if (!date) return [];
+    const items = [];
+
+    // Custom schedule events
+    events.forEach((e) => {
+      if (e.date === isoDate(date)) {
+        items.push({ type: "event", color: e.color || "green", title: e.title, time: e.time, id: e._id || e.id });
+      }
+    });
+
+    // Assignments with due dates
+    (assignments || []).forEach((a) => {
+      if (a.dueDate && isSameDay(new Date(a.dueDate), date)) {
+        items.push({ type: "assignment", color: "amber", title: a.title });
+      }
+    });
+
+    // Materials by week (if classroom has startDate)
+    return items;
+  }, [events, assignments]);
+
+  const selectedItems = selectedDate ? getDayItems(selectedDate) : [];
+
+  const handleAddEvent = (newEvent) => {
+    setEvents((prev) => [...prev, newEvent]);
+    setShowAddModal(false);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      const res = await apiClient.delete(`/api/classrooms/${classroom.id}/schedule-events/${eventId}`);
+      const data = await res.json();
+      if (data.success) {
+        setEvents((prev) => prev.filter((e) => (e._id || e.id) !== eventId));
+        toast.success("Event deleted");
+      }
+    } catch {
+      toast.error("Failed to delete");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Calendar card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm">
+        {/* Month nav */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <h3 className="text-sm font-bold text-foreground">{MONTHS[viewMonth]} {viewYear}</h3>
+          <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Day headers */}
+        <div className="grid grid-cols-7 border-b border-border">
+          {DAYS.map((d) => (
+            <div key={d} className="py-2 text-center text-[10px] font-semibold text-muted-foreground">{d}</div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div className="grid grid-cols-7">
+          {cells.map((date, i) => {
+            if (!date) return <div key={`empty-${i}`} className="h-14 border-r border-b border-border/40 bg-secondary/20" />;
+
+            const isToday = isSameDay(date, today);
+            const isSelected = selectedDate && isSameDay(date, selectedDate);
+            const dayItems = getDayItems(date);
+            const hasItems = dayItems.length > 0;
+
+            return (
+              <button key={i} onClick={() => setSelectedDate(date)}
+                className={`relative h-14 p-1.5 border-r border-b border-border/40 text-left transition-colors hover:bg-green-50 dark:hover:bg-green-500/5 ${
+                  isSelected ? "bg-green-50 dark:bg-green-500/10 ring-inset ring-1 ring-green-500" : ""
+                } ${isToday ? "bg-blue-50/50 dark:bg-blue-500/5" : ""}`}
+              >
+                <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${
+                  isToday ? "bg-green-500 text-white" : "text-foreground"
+                }`}>
+                  {date.getDate()}
+                </span>
+                {hasItems && (
+                  <div className="flex gap-0.5 mt-0.5 flex-wrap">
+                    {dayItems.slice(0, 3).map((item, j) => (
+                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${colorDot(item.color)}`} />
+                    ))}
+                    {dayItems.length > 3 && <span className="text-[8px] text-muted-foreground">+{dayItems.length - 3}</span>}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Selected day panel */}
+      {selectedDate && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div>
+              <h4 className="text-sm font-bold text-foreground">
+                {selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              </h4>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {selectedItems.length === 0 ? "No events" : `${selectedItems.length} event${selectedItems.length !== 1 ? "s" : ""}`}
+              </p>
+            </div>
+            {isInstructor && (
+              <button onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Add Event
+              </button>
+            )}
+          </div>
+
+          {selectedItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Calendar className="w-8 h-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">No events on this day</p>
+              {isInstructor && (
+                <button onClick={() => setShowAddModal(true)}
+                  className="mt-2 text-xs text-green-600 hover:text-green-700 font-semibold">
+                  + Add an event
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {selectedItems.map((item, i) => (
+                <div key={i} className="flex items-start gap-3 px-5 py-3 group">
+                  <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${colorDot(item.color)}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.time && (
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Clock className="w-3 h-3" /> {item.time}
+                        </span>
+                      )}
+                      {item.type === "assignment" && (
+                        <span className="flex items-center gap-1 text-[10px] text-amber-500">
+                          <ClipboardList className="w-3 h-3" /> Due
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {item.type === "event" && isInstructor && (
+                    <button onClick={() => handleDeleteEvent(item.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Course weeks summary */}
+      {classroom.startDate && classroom.durationWeeks > 0 && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">Course Duration</p>
+          <p className="text-sm text-foreground">
+            {classroom.durationWeeks} weeks — {new Date(classroom.startDate).toLocaleDateString("en-US", { month: "long", day: "numeric" })} to{" "}
+            {new Date(new Date(classroom.startDate).getTime() + classroom.durationWeeks * 7 * 86400000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+          </p>
+        </div>
+      )}
+
+      {/* Add event modal */}
+      {showAddModal && selectedDate && (
+        <AddEventModal
+          date={selectedDate}
+          classroomId={classroom.id}
+          onSave={handleAddEvent}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+    </div>
+  );
+}

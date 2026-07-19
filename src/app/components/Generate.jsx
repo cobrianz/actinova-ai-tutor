@@ -616,8 +616,7 @@ export default function Generate({ setActiveContent }) {
       </div>
 
         <div>
-          <h3 className="text-sm font-bold text-foreground mb-6 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-green-500" />
+          <h3 className="text-sm font-normal text-muted-foreground mb-6">
             Popular Learning Tracks
           </h3>
           <PopularTopics setTopic={setTopic} setLocalTopic={setLocalTopic} />
@@ -680,9 +679,9 @@ function PopularTopics({ setTopic, setLocalTopic }) {
             setTopic(topicOption);
             setLocalTopic(topicOption);
           }}
-          className="p-2 text-left bg-card border border-border rounded-lg hover:border-foreground/30 transition-all"
+          className="p-2 text-left bg-white dark:bg-slate-900 border border-border/50 rounded-lg hover:border-border hover:bg-muted/50 transition-all"
         >
-          <span className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">
+          <span className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
             {topicOption}
           </span>
         </button>

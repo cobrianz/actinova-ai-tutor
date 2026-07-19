@@ -33,14 +33,15 @@ function NavBtn({ icon: Icon, label, isActive, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${
+      style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+      className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${
         isActive
           ? "text-green-600 dark:text-green-400"
           : "text-muted-foreground hover:text-foreground"
       }`}
     >
       <Icon
-        className={`w-5 h-5 transition-all duration-200 ${
+        className={`w-6 h-6 transition-all duration-200 ${
           isActive ? "stroke-[2.5]" : "stroke-[1.5]"
         }`}
         fill={isActive ? "currentColor" : "none"}
@@ -145,7 +146,7 @@ function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor }) {
       {/* Bottom bar */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[90] bg-card border-t border-border"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", touchAction: "manipulation" }}
       >
         <div className="flex items-center justify-around h-16 px-1">
           {PRIMARY_TABS.map(({ id, label, icon }) => (

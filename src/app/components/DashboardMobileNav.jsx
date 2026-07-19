@@ -3,7 +3,7 @@
 import {
   Search, Plus, MessageCircle, MoreHorizontal,
   FileText, ScrollText, Briefcase, HelpCircle, Star,
-  User, LogOut, X, TrendingUp, Coins, CalendarCheck, GraduationCap
+  User, LogOut, X, TrendingUp, Coins, CalendarCheck, GraduationCap, BookOpen, Home
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -19,18 +19,20 @@ const secondaryItems = [
   { name: "Career Growth", id: "career", icon: Briefcase },
   { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
   { name: "Premium", id: "premium-courses", icon: Star },
+  { name: "Planner", id: "study-plans", icon: CalendarCheck },
 ];
 
 function NavBtn({ icon: Icon, label, isActive, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${
+      style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+      className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${
         isActive ? "text-green-600 dark:text-green-400" : "text-muted-foreground hover:text-foreground"
       }`}
     >
       <Icon
-        className={`w-5 h-5 transition-all duration-200 ${
+        className={`w-6 h-6 transition-all duration-200 ${
           isActive ? "stroke-[2.5]" : "stroke-[1.5]"
         }`}
         fill={isActive ? "currentColor" : "none"}
@@ -187,13 +189,13 @@ export default function DashboardMobileNav() {
         </div>
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", touchAction: "manipulation" }}>
         <div className="flex items-center justify-around h-16 px-1">
             <NavBtn
-              icon={Search}
-              label="Explore"
-              isActive={activeContent === "explore"}
-              onClick={() => navigate("explore")}
+              icon={Home}
+              label="Home"
+              isActive={activeContent === "generate"}
+              onClick={() => navigate("generate")}
             />
 
             <NavBtn
@@ -205,16 +207,17 @@ export default function DashboardMobileNav() {
 
             <button
               onClick={() => navigate("generate")}
-              className="flex items-center justify-center -mt-3 w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200"
+              style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+              className="flex items-center justify-center -mt-3 w-12 h-12 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200"
             >
               <Plus className="w-7 h-7 stroke-[2.5]" />
             </button>
 
             <NavBtn
-              icon={CalendarCheck}
-              label="Planner"
-              isActive={activeContent === "study-plans"}
-              onClick={() => navigate("study-plans")}
+              icon={BookOpen}
+              label="Library"
+              isActive={activeContent === "library"}
+              onClick={() => navigate("library")}
             />
 
             <NavBtn

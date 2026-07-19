@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, Target, FileText, Lock, Unlock, ExternalLink,
   Award, Sparkles, Loader2, Link2, Trash2, Plus, Settings, Info,
   Eye, EyeOff, MessageSquare, ClipboardList, ExternalLink as LinkIcon,
+  Check,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import ForkContentPanel from "../ForkContentPanel";
@@ -13,6 +14,7 @@ import { renderLessonBlocks } from "@/lib/contentRenderer";
 import LessonChart from "@/components/LessonChart";
 import LessonTable from "@/components/LessonTable";
 import { apiClient } from "@/lib/csrfClient";
+import { toast } from "sonner";
 
 function groupModulesByWeek(modules, durationWeeks) {
   if (!modules?.length) return [];
@@ -36,6 +38,9 @@ export default function CourseTab({ classroomState }) {
     fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
     browseMyContent, setBrowseMyContent,
     courseModules, courseGenLoading, handleGenerateCourseStructure,
+    openedWeeks, handleToggleWeek,
+    completedLessons, toggleLessonComplete,
+    setAnnouncements, setDiscussions, setForkedContent,
   } = classroomState;
 
   const [editingFork, setEditingFork] = useState(null);
@@ -337,6 +342,12 @@ export default function CourseTab({ classroomState }) {
                             const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
                             handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
                           }}
+                          openedWeeks={openedWeeks}
+                          handleToggleWeek={handleToggleWeek}
+                          completedLessons={completedLessons}
+                          toggleLessonComplete={toggleLessonComplete}
+                          setAnnouncements={setAnnouncements}
+                          setDiscussions={setDiscussions}
                         />
                       </div>
                     )}
@@ -451,6 +462,8 @@ function ForkEditPanel({ fork, maxWeeks, onSave, onCancel }) {
 function WeekGroupedCourse({
   modules, durationWeeks, courseId, courseTopic, difficulty, classroomId,
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
+  openedWeeks, handleToggleWeek, completedLessons, toggleLessonComplete,
+  setAnnouncements, setDiscussions,
 }) {
   const [addMenuWeek, setAddMenuWeek] = useState(null);
   const [addQuizTitle, setAddQuizTitle] = useState("");
@@ -459,132 +472,182 @@ function WeekGroupedCourse({
   const [addDiscTitle, setAddDiscTitle] = useState("");
   const [addDiscDesc, setAddDiscDesc] = useState("");
   const [addingType, setAddingType] = useState(null);
+  const [adding, setAdding] = useState(false);
 
   const weekGroups = groupModulesByWeek(modules, durationWeeks);
 
-  const visibleModuleCount = modules.filter((_, i) => !hiddenModules.includes(i)).length;
-
   const handleAddQuiz = async (weekNumber) => {
     if (!addQuizTitle.trim()) return;
-    setAddingType("quiz");
+    setAdding(true);
     try {
-      const res = await apiClient.post(`/api/classrooms/${classroomId}/fork`, {
-        contentType: "quiz",
-        contentId: courseId,
-        weekNumber,
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/announcements`, {
+        title: `Quiz: ${addQuizTitle}`, content: `Quiz "${addQuizTitle}" assigned for Week ${weekNumber}`, weekNumber,
       });
-      if (res.ok) { setAddQuizTitle(""); setAddMenuWeek(null); }
-    } catch (_) {}
-    setAddingType(null);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setAddQuizTitle("");
+          setAddMenuWeek(null);
+          toast.success("Quiz added to week!");
+        }
+      }
+    } catch (_) { toast.error("Failed to add quiz"); }
+    setAdding(false);
   };
 
   const handleAddAnnouncement = async (weekNumber) => {
     if (!addAnnTitle.trim() || !addAnnContent.trim()) return;
-    setAddingType("announcement");
+    setAdding(true);
     try {
       const res = await apiClient.post(`/api/classrooms/${classroomId}/announcements`, {
         title: addAnnTitle, content: addAnnContent, weekNumber,
       });
-      if (res.ok) { setAddAnnTitle(""); setAddAnnContent(""); setAddMenuWeek(null); }
-    } catch (_) {}
-    setAddingType(null);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (setAnnouncements) setAnnouncements((prev) => [...prev, data.announcement]);
+          setAddAnnTitle("");
+          setAddAnnContent("");
+          setAddMenuWeek(null);
+          toast.success("Announcement posted!");
+        }
+      }
+    } catch (_) { toast.error("Failed to post announcement"); }
+    setAdding(false);
   };
 
   const handleAddDiscussion = async (weekNumber) => {
     if (!addDiscTitle.trim()) return;
-    setAddingType("discussion");
+    setAdding(true);
     try {
       const res = await apiClient.post(`/api/classrooms/${classroomId}/discussions`, {
         title: addDiscTitle, description: addDiscDesc, weekNumber,
       });
-      if (res.ok) { setAddDiscTitle(""); setAddDiscDesc(""); setAddMenuWeek(null); }
-    } catch (_) {}
-    setAddingType(null);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (setDiscussions) setDiscussions((prev) => [data.discussion, ...prev]);
+          setAddDiscTitle("");
+          setAddDiscDesc("");
+          setAddMenuWeek(null);
+          toast.success("Discussion created!");
+        }
+      }
+    } catch (_) { toast.error("Failed to create discussion"); }
+    setAdding(false);
   };
 
   return (
     <div className="space-y-4">
-      {weekGroups.map((wg) => (
-        <div key={wg.week} className="space-y-2.5">
-          {/* Week Header */}
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-6 h-6 rounded-md bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-[9px] font-bold text-indigo-600">W{wg.week}</span>
-            </div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Week {wg.week}</span>
-            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-            {isInstructor && (
-              <button
-                onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
-                className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                <Plus className="w-2.5 h-2.5" /> Add
-              </button>
-            )}
-          </div>
-
-          {/* Weekly Quick-Add Menu */}
-          {isInstructor && addMenuWeek === wg.week && (
-            <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Add to Week {wg.week}</p>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button onClick={() => setAddingType(addingType === "quiz-add" ? null : "quiz-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "quiz-add" ? "bg-purple-500/15 text-purple-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-500/10"}`}>
-                  <ClipboardList className="w-2.5 h-2.5" /> Quiz
-                </button>
-                <button onClick={() => setAddingType(addingType === "ann-add" ? null : "ann-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "ann-add" ? "bg-amber-500/15 text-amber-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-amber-500/10"}`}>
-                  <Megaphone className="w-2.5 h-2.5" /> Announce
-                </button>
-                <button onClick={() => setAddingType(addingType === "disc-add" ? null : "disc-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "disc-add" ? "bg-blue-500/15 text-blue-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-blue-500/10"}`}>
-                  <MessageSquare className="w-2.5 h-2.5" /> Discuss
-                </button>
+      {weekGroups.map((wg) => {
+        const isOpen = isInstructor || openedWeeks.includes(wg.week);
+        return (
+          <div key={wg.week} className="space-y-2.5">
+            {/* Week Header */}
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-6 h-6 rounded-md bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-[9px] font-bold text-indigo-600">W{wg.week}</span>
               </div>
-              {addingType === "quiz-add" && (
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Week {wg.week}</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              {isInstructor && (
                 <div className="flex items-center gap-1.5">
-                  <input value={addQuizTitle} onChange={(e) => setAddQuizTitle(e.target.value)} placeholder="Quiz title..." className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                  <button onClick={() => handleAddQuiz(wg.week)} disabled={!addQuizTitle.trim()} className="px-2 py-1 rounded bg-purple-500 text-white text-[9px] font-semibold disabled:opacity-50">Add</button>
-                </div>
-              )}
-              {addingType === "ann-add" && (
-                <div className="space-y-1.5">
-                  <input value={addAnnTitle} onChange={(e) => setAddAnnTitle(e.target.value)} placeholder="Announcement title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                  <textarea value={addAnnContent} onChange={(e) => setAddAnnContent(e.target.value)} placeholder="Content..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400 resize-none" />
-                  <button onClick={() => handleAddAnnouncement(wg.week)} disabled={!addAnnTitle.trim() || !addAnnContent.trim()} className="px-2 py-1 rounded bg-amber-500 text-white text-[9px] font-semibold disabled:opacity-50">Post</button>
-                </div>
-              )}
-              {addingType === "disc-add" && (
-                <div className="space-y-1.5">
-                  <input value={addDiscTitle} onChange={(e) => setAddDiscTitle(e.target.value)} placeholder="Discussion title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                  <input value={addDiscDesc} onChange={(e) => setAddDiscDesc(e.target.value)} placeholder="Description (optional)..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                  <button onClick={() => handleAddDiscussion(wg.week)} disabled={!addDiscTitle.trim()} className="px-2 py-1 rounded bg-blue-500 text-white text-[9px] font-semibold disabled:opacity-50">Create</button>
+                  <button
+                    onClick={() => handleToggleWeek(wg.week)}
+                    className={`flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded transition-colors ${isOpen ? "text-green-600 bg-green-500/10" : "text-slate-400 bg-slate-100 dark:bg-slate-800"}`}
+                  >
+                    {isOpen ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                    {isOpen ? "Opened" : "Closed"}
+                  </button>
+                  <button
+                    onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
+                    className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    <Plus className="w-2.5 h-2.5" /> Add
+                  </button>
                 </div>
               )}
             </div>
-          )}
 
-          {/* Modules in this week */}
-          {wg.modules.map((mod) => {
-            const globalIdx = modules.indexOf(mod);
-            const isHidden = hiddenModules.includes(globalIdx);
-            return (
-              <div key={globalIdx} className="ml-4">
-                <ForkedModuleCard
-                  mod={mod}
-                  modIndex={globalIdx}
-                  courseId={courseId}
-                  courseTopic={courseTopic}
-                  difficulty={difficulty}
-                  classroomId={classroomId}
-                  isInstructor={isInstructor}
-                  isHidden={isHidden}
-                  hiddenLessons={hiddenLessons}
-                  onToggleHideModule={() => onToggleHideModule(globalIdx)}
-                  onToggleHideLesson={onToggleHideLesson}
-                />
+            {/* Locked week message for students */}
+            {!isInstructor && !isOpen && (
+              <div className="ml-7 flex items-center gap-2 py-3 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-300 dark:border-slate-600">
+                <Lock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <p className="text-[10px] text-slate-500 font-medium">Week {wg.week} is not yet open. Your instructor will unlock it soon.</p>
               </div>
-            );
-          })}
-        </div>
-      ))}
+            )}
+
+            {/* Weekly Quick-Add Menu */}
+            {isInstructor && addMenuWeek === wg.week && (
+              <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Add to Week {wg.week}</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button onClick={() => setAddingType(addingType === "quiz-add" ? null : "quiz-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "quiz-add" ? "bg-purple-500/15 text-purple-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-500/10"}`}>
+                    <ClipboardList className="w-2.5 h-2.5" /> Quiz
+                  </button>
+                  <button onClick={() => setAddingType(addingType === "ann-add" ? null : "ann-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "ann-add" ? "bg-amber-500/15 text-amber-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-amber-500/10"}`}>
+                    <Megaphone className="w-2.5 h-2.5" /> Announce
+                  </button>
+                  <button onClick={() => setAddingType(addingType === "disc-add" ? null : "disc-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "disc-add" ? "bg-blue-500/15 text-blue-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-blue-500/10"}`}>
+                    <MessageSquare className="w-2.5 h-2.5" /> Discuss
+                  </button>
+                </div>
+                {addingType === "quiz-add" && (
+                  <div className="flex items-center gap-1.5">
+                    <input value={addQuizTitle} onChange={(e) => setAddQuizTitle(e.target.value)} placeholder="Quiz title..." className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" onKeyDown={(e) => e.key === "Enter" && handleAddQuiz(wg.week)} />
+                    <button onClick={() => handleAddQuiz(wg.week)} disabled={!addQuizTitle.trim() || adding} className="px-2 py-1 rounded bg-purple-500 text-white text-[9px] font-semibold disabled:opacity-50">
+                      {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Add"}
+                    </button>
+                  </div>
+                )}
+                {addingType === "ann-add" && (
+                  <div className="space-y-1.5">
+                    <input value={addAnnTitle} onChange={(e) => setAddAnnTitle(e.target.value)} placeholder="Announcement title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                    <textarea value={addAnnContent} onChange={(e) => setAddAnnContent(e.target.value)} placeholder="Content..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400 resize-none" />
+                    <button onClick={() => handleAddAnnouncement(wg.week)} disabled={!addAnnTitle.trim() || !addAnnContent.trim() || adding} className="px-2 py-1 rounded bg-amber-500 text-white text-[9px] font-semibold disabled:opacity-50">
+                      {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Post"}
+                    </button>
+                  </div>
+                )}
+                {addingType === "disc-add" && (
+                  <div className="space-y-1.5">
+                    <input value={addDiscTitle} onChange={(e) => setAddDiscTitle(e.target.value)} placeholder="Discussion title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                    <input value={addDiscDesc} onChange={(e) => setAddDiscDesc(e.target.value)} placeholder="Description (optional)..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                    <button onClick={() => handleAddDiscussion(wg.week)} disabled={!addDiscTitle.trim() || adding} className="px-2 py-1 rounded bg-blue-500 text-white text-[9px] font-semibold disabled:opacity-50">
+                      {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Create"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modules in this week */}
+            {isOpen && wg.modules.map((mod) => {
+              const globalIdx = modules.indexOf(mod);
+              const isHidden = hiddenModules.includes(globalIdx);
+              return (
+                <div key={globalIdx} className="ml-4">
+                  <ForkedModuleCard
+                    mod={mod}
+                    modIndex={globalIdx}
+                    courseId={courseId}
+                    courseTopic={courseTopic}
+                    difficulty={difficulty}
+                    classroomId={classroomId}
+                    isInstructor={isInstructor}
+                    isHidden={isHidden}
+                    hiddenLessons={hiddenLessons}
+                    onToggleHideModule={() => onToggleHideModule(globalIdx)}
+                    onToggleHideLesson={onToggleHideLesson}
+                    completedLessons={completedLessons}
+                    toggleLessonComplete={toggleLessonComplete}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -592,6 +655,7 @@ function WeekGroupedCourse({
 function ForkedModuleCard({
   mod, modIndex, courseId, courseTopic, difficulty, classroomId,
   isInstructor, isHidden, hiddenLessons, onToggleHideModule, onToggleHideLesson,
+  completedLessons, toggleLessonComplete,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [activeLessonIdx, setActiveLessonIdx] = useState(null);
@@ -606,6 +670,10 @@ function ForkedModuleCard({
     video: "bg-purple-500/10 text-purple-600",
     activity: "bg-green-500/10 text-green-600",
   };
+
+  const makeLessonKey = (li) => `${courseId}-${modIndex}-${li}`;
+
+  const isLessonCompleted = (li) => (completedLessons || []).includes(makeLessonKey(li));
 
   const handleLessonClick = async (lesson, li) => {
     if (activeLessonIdx === li && contentChecked) {
@@ -627,6 +695,13 @@ function ForkedModuleCard({
       const data = await res.json();
       setLessonContent(data.content || "");
       setContentChecked(true);
+
+      if (!isInstructor && data.hasContent) {
+        const key = makeLessonKey(li);
+        if (!isLessonCompleted(li)) {
+          toggleLessonComplete(key, true);
+        }
+      }
     } catch (_) {
       setLessonContent("");
       setContentChecked(true);
@@ -643,6 +718,7 @@ function ForkedModuleCard({
   const isLessonHidden = (li) => hiddenLessons.includes(`${modIndex}-${li}`);
   const visibleLessons = mod.lessons?.filter((_, li) => !isLessonHidden(li)) || [];
   const lessonCount = visibleLessons.length;
+  const completedCount = mod.lessons?.filter((_, li) => isLessonCompleted(li)).length || 0;
 
   return (
     <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
@@ -661,6 +737,9 @@ function ForkedModuleCard({
             {mod.description && <p className="text-[9px] text-slate-400 truncate">{mod.description}</p>}
           </div>
           <div className="flex items-center gap-2">
+            {!isInstructor && completedCount > 0 && (
+              <span className="text-[9px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">{completedCount}/{lessonCount}</span>
+            )}
             <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{lessonCount} lessons</span>
             {expanded ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
           </div>
@@ -671,7 +750,7 @@ function ForkedModuleCard({
           {mod.lessons.map((lesson, li) => {
             const isActive = activeLessonIdx === li;
             const hidden = isLessonHidden(li);
-            const lessonKey = `${modIndex}-${li}`;
+            const completed = isLessonCompleted(li);
             return (
               <div key={li} className={hidden ? "opacity-30" : ""}>
                 <div className="flex items-center gap-1">
@@ -690,9 +769,11 @@ function ForkedModuleCard({
                         : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                   >
-                    <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${isActive ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${completed ? "bg-green-500" : isActive ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}>
                       {loading && isActive ? (
                         <Loader2 className="w-3 h-3 text-white animate-spin" />
+                      ) : completed ? (
+                        <Check className="w-3 h-3 text-white" />
                       ) : (
                         <span className={`text-[8px] font-bold ${isActive ? "text-white" : "text-slate-500"}`}>{li + 1}</span>
                       )}
@@ -706,6 +787,24 @@ function ForkedModuleCard({
                     </div>
                     {isActive && <ChevronUp className="w-3 h-3 text-green-500 flex-shrink-0" />}
                   </button>
+                  {!isInstructor && !hidden && completed && (
+                    <button
+                      onClick={() => toggleLessonComplete(makeLessonKey(li), false)}
+                      className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors flex-shrink-0"
+                      title="Mark incomplete"
+                    >
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                    </button>
+                  )}
+                  {!isInstructor && !hidden && !completed && contentChecked && isActive && lessonContent && (
+                    <button
+                      onClick={() => toggleLessonComplete(makeLessonKey(li), true)}
+                      className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors flex-shrink-0"
+                      title="Mark complete"
+                    >
+                      <div className="w-3.5 h-3.5 rounded border-2 border-slate-300 dark:border-slate-600" />
+                    </button>
+                  )}
                   {hidden && <Lock className="w-3 h-3 text-slate-300 dark:text-slate-600 flex-shrink-0 ml-1" />}
                 </div>
 

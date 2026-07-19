@@ -2,82 +2,18 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Responsive zoom-out scaling ────────────────────────────────────────────
- *
- * The app is designed at ~1280px wide. On smaller screens we proportionally
- * scale the entire page down so the layout never breaks — it just shrinks.
- *
- * We use CSS `zoom` (supported by Chrome, Edge, Android WebView) with a
- * `transform: scale` fallback for Firefox and Safari.
- *
- * Breakpoints:
- *   ≥1024px  — 100% (no scaling, full design)
- *    768px   — 75%
- *    480px   — 55%
- *    360px   — 42%
- *    320px   — 36%
- *
- * The `html` min-width prevents the scrollbar from appearing on scaled views.
- * ─────────────────────────────────────────────────────────────────────────── */
-
+/* Prevent Android WebView (and mobile browsers) from inflating font sizes
+   based on the device accessibility font-size setting. */
 html {
   -webkit-text-size-adjust: 100% !important;
   text-size-adjust: 100% !important;
 }
 
-/* Chrome / Edge / Android WebView — use zoom */
-@supports (zoom: 1) {
-  @media screen and (max-width: 1023px) {
-    html { zoom: 0.9; }
-  }
-  @media screen and (max-width: 899px) {
-    html { zoom: 0.82; }
-  }
-  @media screen and (max-width: 767px) {
-    html { zoom: 0.72; }
-  }
-  @media screen and (max-width: 599px) {
-    html { zoom: 0.60; }
-  }
-  @media screen and (max-width: 479px) {
-    html { zoom: 0.52; }
-  }
-  @media screen and (max-width: 399px) {
-    html { zoom: 0.44; }
-  }
-  @media screen and (max-width: 359px) {
-    html { zoom: 0.38; }
-  }
-}
-
-/* Firefox / Safari fallback — transform scale on the body wrapper */
-@supports not (zoom: 1) {
-  @media screen and (max-width: 1023px) {
-    html { overflow-x: hidden; }
-    body {
-      transform-origin: top left;
-      width: calc(100% / 0.9);
-      transform: scale(0.9);
-    }
-  }
-  @media screen and (max-width: 899px) {
-    body { width: calc(100% / 0.82); transform: scale(0.82); }
-  }
-  @media screen and (max-width: 767px) {
-    body { width: calc(100% / 0.72); transform: scale(0.72); }
-  }
-  @media screen and (max-width: 599px) {
-    body { width: calc(100% / 0.60); transform: scale(0.60); }
-  }
-  @media screen and (max-width: 479px) {
-    body { width: calc(100% / 0.52); transform: scale(0.52); }
-  }
-  @media screen and (max-width: 399px) {
-    body { width: calc(100% / 0.44); transform: scale(0.44); }
-  }
-  @media screen and (max-width: 359px) {
-    body { width: calc(100% / 0.38); transform: scale(0.38); }
-  }
+/* Eliminate the 300ms tap delay on all interactive elements in Android WebView.
+   touch-action: manipulation disables double-tap-to-zoom on buttons/links so
+   the browser fires click immediately on touch-end. */
+a, button, input, select, textarea, label, [role="button"] {
+  touch-action: manipulation;
 }
 
 @theme {
