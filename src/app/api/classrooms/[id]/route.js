@@ -51,7 +51,7 @@ async function handlePatch(request, { params }) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
-  const { name, description, subject, maxStudents, semester, academicLevel, gradingScheme, prerequisites, syllabus, schedule, startDate, durationWeeks, settings } = body;
+  const { name, description, subject, maxStudents, semester, academicLevel, gradingScheme, prerequisites, syllabus, schedule, startDate, durationWeeks, settings, openedWeeks, modules } = body;
 
   if (startDate && new Date(startDate) < new Date(new Date().toDateString())) {
     return NextResponse.json(
@@ -74,6 +74,8 @@ async function handlePatch(request, { params }) {
   if (startDate !== undefined) update.startDate = startDate;
   if (durationWeeks !== undefined) update.durationWeeks = durationWeeks;
   if (settings !== undefined) update.settings = { ...classroom.settings, ...settings };
+  if (openedWeeks !== undefined) update.openedWeeks = openedWeeks;
+  if (modules !== undefined) update.modules = modules;
 
   await Classroom.updateOne({ _id: id }, { $set: update });
 

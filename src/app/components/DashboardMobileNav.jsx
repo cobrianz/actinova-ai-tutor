@@ -205,19 +205,18 @@ export default function DashboardMobileNav() {
               onClick={() => navigate("classrooms")}
             />
 
-            <button
-              onClick={() => navigate("generate")}
-              style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-              className="flex items-center justify-center -mt-3 w-12 h-12 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200"
-            >
-              <Plus className="w-7 h-7 stroke-[2.5]" />
-            </button>
-
             <NavBtn
               icon={BookOpen}
               label="Library"
               isActive={activeContent === "library"}
               onClick={() => navigate("library")}
+            />
+
+            <NavBtn
+              icon={Star}
+              label="Premium"
+              isActive={activeContent === "premium-courses"}
+              onClick={() => navigate("premium-courses")}
             />
 
             <NavBtn

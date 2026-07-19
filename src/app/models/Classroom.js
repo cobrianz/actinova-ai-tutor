@@ -118,6 +118,12 @@ const classroomSchema = new mongoose.Schema(
       forkedAt: { type: Date, default: Date.now },
       meta: { type: mongoose.Schema.Types.Mixed, default: {} },
     }],
+    openedWeeks: [{ type: Number }],
+    lessonCompletions: [{
+      studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+      lessonKey: { type: String, required: true },
+      completedAt: { type: Date, default: Date.now },
+    }],
   },
   { timestamps: true }
 );

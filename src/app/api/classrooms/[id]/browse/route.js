@@ -12,8 +12,6 @@ async function handleGet(request, { params }) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") || "all";
   const q = searchParams.get("q") || "";
-  const myContent = searchParams.get("myContent") === "1";
-
   const results = { courses: [], quizzes: [], flashcards: [], reports: [] };
 
   let userId;

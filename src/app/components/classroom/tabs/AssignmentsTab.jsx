@@ -113,8 +113,6 @@ export default function AssignmentsTab({ classroomState }) {
             forking={classroomState.forking}
             forkedIdSet={classroomState.forkedIdSet}
             browseError={classroomState.browseError}
-            browseMyContent={classroomState.browseMyContent}
-            setBrowseMyContent={classroomState.setBrowseMyContent}
           />
         )}
         {isInstructor && showCreateAssignment && (

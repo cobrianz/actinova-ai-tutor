@@ -13,6 +13,7 @@ import ForkContentPanel from "../ForkContentPanel";
 import { renderLessonBlocks } from "@/lib/contentRenderer";
 import LessonChart from "@/components/LessonChart";
 import LessonTable from "@/components/LessonTable";
+import ConfirmModal from "@/components/ConfirmModal";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
@@ -36,7 +37,6 @@ export default function CourseTab({ classroomState }) {
     showForkPanel, setShowForkPanel, browseResults, browseLoading,
     browseQuery, setBrowseQuery, browseType, setBrowseType,
     fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
-    browseMyContent, setBrowseMyContent,
     courseModules, courseGenLoading, handleGenerateCourseStructure,
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
@@ -45,6 +45,7 @@ export default function CourseTab({ classroomState }) {
 
   const [editingFork, setEditingFork] = useState(null);
   const [expandedFork, setExpandedFork] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", onConfirm: null, confirmColor: "red" });
 
   const levelLabels = { highschool: "High School", undergraduate: "Undergraduate", graduate: "Graduate", phd: "PhD", professional: "Professional" };
   const gradeLabels = { percentage: "Percentage (0–100%)", letter: "Letter Grades (A–F)", passfail: "Pass / Fail", gpa: "GPA Scale (0.0–4.0)" };
@@ -56,6 +57,7 @@ export default function CourseTab({ classroomState }) {
   const maxWeeks = classroom.durationWeeks || 12;
 
   return (
+    <>
     <div className="space-y-4">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10 p-6">
@@ -135,8 +137,6 @@ export default function CourseTab({ classroomState }) {
           forking={forking}
           forkedIdSet={forkedIdSet}
           browseError={browseError}
-          browseMyContent={browseMyContent}
-          setBrowseMyContent={setBrowseMyContent}
         />
       )}
 
@@ -250,7 +250,7 @@ export default function CourseTab({ classroomState }) {
             {forkedContent.map((fc, i) => {
               const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG.custom;
               const Icon = cfg.icon;
-              const locked = isForkedContentLocked?.(fc);
+              const locked = isInstructor ? !fc.unlocked : isForkedContentLocked?.(fc);
               const isEditing = editingFork === `${fc.contentType}-${fc.contentId}`;
               const isExpanded = expandedFork === `${fc.contentType}-${fc.contentId}`;
               const hasModules = fc.contentType === "course" && fc.meta?.modules?.length > 0;
@@ -305,10 +305,10 @@ export default function CourseTab({ classroomState }) {
                           <button onClick={() => setEditingFork(isEditing ? null : `${fc.contentType}-${fc.contentId}`)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Settings">
                             <Settings className="w-3.5 h-3.5 text-slate-400" />
                           </button>
-                          <button onClick={() => handleToggleForkUnlock(fc.contentType, fc.contentId)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={locked ? "Unlock" : "Lock"}>
-                            {locked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Unlock className="w-3.5 h-3.5 text-green-500" />}
+                          <button onClick={() => setConfirmModal({ open: true, title: locked ? "Unlock Content" : "Lock Content", message: locked ? "Students will be able to access this content. Continue?" : "Students won't be able to access this content. Continue?", confirmColor: locked ? "blue" : "red", onConfirm: () => handleToggleForkUnlock(fc.contentType, fc.contentId) })} className={`p-1 rounded transition-colors ${locked ? "bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20" : "bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20"}`} title={locked ? "Unlock" : "Lock"}>
+                            {locked ? <Lock className="w-3.5 h-3.5 text-red-500" /> : <Unlock className="w-3.5 h-3.5 text-green-500" />}
                           </button>
-                          <button onClick={() => handleUnforkContent(fc.contentType, fc.contentId, fc.title)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
+                          <button onClick={() => setConfirmModal({ open: true, title: "Remove Content", message: `Remove "${fc.title}" from this classroom? This cannot be undone.`, confirmColor: "red", onConfirm: () => handleUnforkContent(fc.contentType, fc.contentId, fc.title) })} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -393,6 +393,15 @@ export default function CourseTab({ classroomState }) {
         </div>
       )}
     </div>
+    <ConfirmModal
+      isOpen={confirmModal.open}
+      onClose={() => setConfirmModal({ open: false, title: "", message: "", onConfirm: null, confirmColor: "red" })}
+      onConfirm={confirmModal.onConfirm}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      confirmColor={confirmModal.confirmColor}
+    />
+    </>
   );
 }
 
@@ -540,7 +549,7 @@ function WeekGroupedCourse({
   return (
     <div className="space-y-4">
       {weekGroups.map((wg) => {
-        const isOpen = isInstructor || openedWeeks.includes(wg.week);
+        const isOpen = isInstructor || (openedWeeks || []).includes(wg.week);
         return (
           <div key={wg.week} className="space-y-2.5">
             {/* Week Header */}
@@ -551,14 +560,14 @@ function WeekGroupedCourse({
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Week {wg.week}</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
               {isInstructor && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleToggleWeek(wg.week)}
-                    className={`flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded transition-colors ${isOpen ? "text-green-600 bg-green-500/10" : "text-slate-400 bg-slate-100 dark:bg-slate-800"}`}
+                    onClick={() => setConfirmModal({ open: true, title: isOpen ? "Close Week " + wg.week : "Open Week " + wg.week, message: isOpen ? `Students will no longer see Week ${wg.week} modules. Continue?` : `Students will be able to see Week ${wg.week} modules. Continue?`, confirmColor: isOpen ? "red" : "blue", onConfirm: () => handleToggleWeek(wg.week) })}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isOpen ? "bg-green-500" : "bg-slate-300 dark:bg-slate-600"}`}
                   >
-                    {isOpen ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
-                    {isOpen ? "Opened" : "Closed"}
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${isOpen ? "translate-x-4" : "translate-x-0.5"}`} />
                   </button>
+                  <span className={`text-[9px] font-semibold ${isOpen ? "text-green-600" : "text-slate-400"}`}>{isOpen ? "Open" : "Closed"}</span>
                   <button
                     onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
                     className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
@@ -810,7 +819,7 @@ function ForkedModuleCard({
 
                 {/* Lesson Content Area */}
                 {isActive && !hidden && (
-                  <div className="mt-1.5 ml-7 border-l-2 border-green-500/20 pl-3">
+                  <div className="mt-1.5 ml-7 pl-3">
                     {loading && !contentChecked ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">

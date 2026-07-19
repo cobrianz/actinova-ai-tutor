@@ -155,8 +155,39 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseQuery, setBrowseQuery] = useState("");
   const [browseError, setBrowseError] = useState(null);
-  const [browseMyContent, setBrowseMyContent] = useState(true);
   const [forking, setForking] = useState(null);
+  const [openedWeeks, setOpenedWeeks] = useState(classroom.openedWeeks || []);
+  const [completedLessons, setCompletedLessons] = useState([]);
+
+  const fetchCompletedLessons = useCallback(async () => {
+    try {
+      const res = await apiClient.get(`/api/classrooms/${classroom.id}/lesson-complete`);
+      const data = await res.json();
+      if (data.success) setCompletedLessons(data.completed || []);
+    } catch {}
+  }, [classroom.id]);
+
+  useEffect(() => { fetchCompletedLessons(); }, [fetchCompletedLessons]);
+
+  const toggleLessonComplete = async (lessonKey, complete) => {
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroom.id}/lesson-complete`, { lessonKey, completed: complete });
+      const data = await res.json();
+      if (data.success) {
+        setCompletedLessons((prev) => complete ? [...prev, lessonKey] : prev.filter((k) => k !== lessonKey));
+      }
+    } catch {}
+  };
+
+  const handleToggleWeek = async (weekNumber) => {
+    const next = openedWeeks.includes(weekNumber)
+      ? openedWeeks.filter((w) => w !== weekNumber)
+      : [...openedWeeks, weekNumber];
+    setOpenedWeeks(next);
+    try {
+      await apiClient.patch(`/api/classrooms/${classroom.id}`, { openedWeeks: next });
+    } catch {}
+  };
 
   const [settingsForm, setSettingsForm] = useState({
     name: classroom.name || "", subject: classroom.subject || "", description: classroom.description || "",
@@ -181,7 +212,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const fetchGrades = useCallback(async () => { setGradesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/grades`); const data = await res.json(); if (data.success) setGrades(data.students || []); } catch {} finally { setGradesLoading(false); } }, [classroom.id]);
   const fetchAnalytics = useCallback(async () => { setAnalyticsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/analytics`); const data = await res.json(); if (data.success) setAnalytics(data); } catch {} finally { setAnalyticsLoading(false); } }, [classroom.id]);
 
-  const fetchBrowseContent = useCallback(async (overrideType, overrideQuery, overrideMyContent) => {
+  const fetchBrowseContent = useCallback(async (overrideType, overrideQuery) => {
     setBrowseLoading(true);
     setBrowseError(null);
     const controller = new AbortController();
@@ -190,8 +221,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const t = overrideType || browseType;
       const qVal = overrideQuery !== undefined ? overrideQuery : browseQuery;
       const q = qVal ? `&q=${encodeURIComponent(qVal)}` : "";
-      const mc = (overrideMyContent !== undefined ? overrideMyContent : browseMyContent) ? "&myContent=1" : "";
-      const res = await fetch(`/api/classrooms/${classroom.id}/browse?type=${t}${q}${mc}`, { credentials: "include", signal: controller.signal });
+      const res = await fetch(`/api/classrooms/${classroom.id}/browse?type=${t}${q}`, { credentials: "include", signal: controller.signal });
       if (!res.ok) { setBrowseError("fetch_failed"); return; }
       const data = await res.json();
       if (data.success) setBrowseResults({ courses: data.courses || [], quizzes: data.quizzes || [], flashcards: data.flashcards || [], reports: data.reports || [] });
@@ -230,7 +260,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const res = await apiClient.delete(`/api/classrooms/${classroom.id}/fork`, { contentType, contentId });
       const data = await res.json();
       if (data.success) {
-        setForkedContent((prev) => prev.filter((fc) => !(fc.contentId === contentId && fc.contentType === contentType)));
+        setForkedContent((prev) => prev.filter((fc) => !(String(fc.contentId) === String(contentId) && fc.contentType === contentType)));
         setForkedIdSet((prev) => {
           const next = new Set(prev);
           next.delete(`${contentType}-${contentId}`);
@@ -247,12 +277,13 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const handleToggleForkUnlock = async (contentType, contentId) => {
     try {
-      const entry = forkedContent.find((fc) => fc.contentId === contentId && fc.contentType === contentType);
+      const cid = String(contentId);
+      const entry = forkedContent.find((fc) => String(fc.contentId) === cid && fc.contentType === contentType);
       if (!entry) return;
       const res = await apiClient.patch(`/api/classrooms/${classroom.id}/fork`, { contentType, contentId, unlocked: !entry.unlocked });
       const data = await res.json();
       if (data.success) {
-        setForkedContent((prev) => prev.map((fc) => (fc.contentId === contentId && fc.contentType === contentType) ? { ...fc, unlocked: !fc.unlocked } : fc));
+        setForkedContent((prev) => prev.map((fc) => (String(fc.contentId) === cid && fc.contentType === contentType) ? { ...fc, unlocked: !fc.unlocked } : fc));
       }
     } catch { toast.error("Failed to update"); }
   };
@@ -262,7 +293,8 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const res = await apiClient.patch(`/api/classrooms/${classroom.id}/fork`, { contentType, contentId, ...updates });
       const data = await res.json();
       if (data.success) {
-        setForkedContent((prev) => prev.map((fc) => (fc.contentId === contentId && fc.contentType === contentType) ? { ...fc, ...updates } : fc));
+        const cid = String(contentId);
+        setForkedContent((prev) => prev.map((fc) => (String(fc.contentId) === cid && fc.contentType === contentType) ? { ...fc, ...updates } : fc));
         toast.success("Updated");
       }
     } catch { toast.error("Failed to update"); }
@@ -492,8 +524,9 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     toggleCls, toggleDot,
     browseResults, browseLoading, browseQuery, setBrowseQuery,
     browseType, setBrowseType, fetchBrowseContent, browseError, forking,
-    browseMyContent, setBrowseMyContent,
     getWeeks, announcements,
+    openedWeeks, handleToggleWeek,
+    completedLessons, toggleLessonComplete,
     handleRemoveStudent,
   };
 

@@ -416,22 +416,22 @@ export default function Generate({ setActiveContent }) {
           <ActirovaLoader text={format} />
         </div>
       )}
-      <div className="px-0 py-6 relative z-10">
-        <div className="text-center mb-12">
+      <div className="px-3 sm:px-0 py-4 sm:py-6 relative z-10">
+        <div className="text-center mb-8 sm:mb-12">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 dark:bg-white/10 border border-[#D2D7F8]/30 text-foreground text-[13px] font-medium mb-6 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/70 dark:bg-white/10 border border-[#D2D7F8]/30 text-foreground text-[11px] sm:text-[13px] font-medium mb-4 sm:mb-6 backdrop-blur-md"
           >
-            <GraduationCap className="w-4 h-4 text-green-500" />
+            <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
             <span>AI Learning Assistant</span>
           </motion.div>
 
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-xl md:text-2xl font-bold text-foreground mb-4 tracking-tight"
+            className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-3 sm:mb-4 tracking-tight"
             style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
           >
             {friendlyName
@@ -443,7 +443,7 @@ export default function Generate({ setActiveContent }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-muted-foreground text-xs md:text-sm max-w-xl mx-auto leading-relaxed"
+            className="text-muted-foreground text-[11px] sm:text-xs md:text-sm max-w-xl mx-auto leading-relaxed"
           >
             Enter a topic below to generate a personalized course, flashcards, or quiz
           </motion.p>
@@ -468,7 +468,7 @@ export default function Generate({ setActiveContent }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="relative max-w-2xl mx-auto mb-12 p-[2px] rounded-[32px] overflow-hidden"
+          className="relative max-w-2xl mx-auto mb-6 sm:mb-12 p-[2px] rounded-2xl sm:rounded-[32px] overflow-hidden"
         >
           {/* Animated Border Gradient - Smooth & Continuous Glowing Edge */}
           <div 
@@ -476,8 +476,8 @@ export default function Generate({ setActiveContent }) {
             style={{ filter: 'blur(3px)' }}
           />
           
-          <div className="relative bg-green-50/95 dark:bg-[#020617] backdrop-blur-2xl rounded-[30.5px] p-2 h-full w-full flex flex-col border-2 border-[#D2D7F8]/70">
-            <div className="relative p-4 flex-grow">
+          <div className="relative bg-green-50/95 dark:bg-[#020617] backdrop-blur-2xl rounded-[21.5px] sm:rounded-[30.5px] p-1.5 sm:p-2 h-full w-full flex flex-col border-2 border-[#D2D7F8]/70">
+            <div className="relative p-3 sm:p-4 flex-grow">
               <textarea
                 value={localTopic}
                 onChange={(e) => {
@@ -489,7 +489,7 @@ export default function Generate({ setActiveContent }) {
                   e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
                 }}
                 placeholder="What do you want to learn today?"
-                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm text-foreground placeholder-foreground/30 resize-none h-20 hide-scrollbar"
+                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm text-foreground placeholder-foreground/30 resize-none h-16 sm:h-20 hide-scrollbar"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -501,7 +501,7 @@ export default function Generate({ setActiveContent }) {
               />
               
               {/* Character Count/Limit indicator */}
-              <div className="absolute top-4 right-4 text-[10px] sm:text-xs font-bold text-foreground/20">
+              <div className="absolute top-3 sm:top-4 right-3 sm:right-4 text-[10px] sm:text-xs font-bold text-foreground/20">
                 {localTopic.length}/500
               </div>
 
@@ -544,8 +544,8 @@ export default function Generate({ setActiveContent }) {
               )}
 
               {/* Bottom Row: Controls & Action */}
-            <div className="flex items-center justify-between p-2 mt-auto border-t border-[#D2D7F8]/30">
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center justify-between p-1.5 sm:p-2 mt-auto border-t border-[#D2D7F8]/30">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                 {/* Level Dropdown */}
                 <div className="relative">
                   <select
@@ -559,7 +559,7 @@ export default function Generate({ setActiveContent }) {
                       }
                       setDifficulty(selectedDifficulty);
                     }}
-                    className="appearance-none flex items-center gap-2 px-4 py-2 pr-10 rounded-full border border-white/60 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-white/60 transition-colors text-[13px] font-medium text-foreground outline-none cursor-pointer"
+                    className="appearance-none flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 pr-8 sm:pr-10 rounded-full border border-white/60 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-white/60 transition-colors text-[11px] sm:text-[13px] font-medium text-foreground outline-none cursor-pointer"
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate {isPremium ? "" : " (Pro)"}</option>
@@ -576,7 +576,7 @@ export default function Generate({ setActiveContent }) {
                 <button 
                   onClick={handleGenerate}
                   disabled={!topic.trim() || isSubmitting}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border border-[#D2D7F8]/60 ${topic.trim().length > 0 ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-[#1a1a1a] dark:bg-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-white/90 text-white'}`}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-all border border-[#D2D7F8]/60 ${topic.trim().length > 0 ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-[#1a1a1a] dark:bg-white dark:text-[#1a1a1a] hover:bg-black dark:hover:bg-white/90 text-white'}`}
                 >
                   {isSubmitting ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -590,7 +590,7 @@ export default function Generate({ setActiveContent }) {
         </motion.div>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-16 px-4 sm:px-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto mb-12 sm:mb-16 px-3 sm:px-4 md:px-0">
           {[
             { id: "course", label: "Course", sub: "Create a study plan to course", icon: BookOpen },
             { id: "flashcards", label: "Flashcards", sub: "Explain complex topic to flashcards", icon: Sparkles },
@@ -600,7 +600,7 @@ export default function Generate({ setActiveContent }) {
               key={f.id}
               whileHover={{ y: -2 }}
               onClick={() => setFormat(f.id)}
-              className={`text-left rounded-xl border p-4 transition-all cursor-pointer ${format === f.id
+              className={`text-left rounded-xl border p-3 sm:p-4 transition-all cursor-pointer ${format === f.id
                 ? "border-green-500 bg-green-50/70 ring-1 ring-green-200 dark:border-green-500 dark:bg-green-950/20"
                 : "border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900"}`}
             >
