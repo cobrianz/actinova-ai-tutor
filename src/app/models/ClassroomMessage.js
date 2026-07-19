@@ -28,12 +28,23 @@ const ClassroomMessageSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 2000,
+      maxlength: 4000,
+    },
+    subject: {
+      type: String,
+      trim: true,
+      maxlength: 300,
+      default: null,
     },
     // Optional: set for DMs, absent for group messages
     recipientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      index: true,
+    },
+    read: {
+      type: Boolean,
+      default: false,
       index: true,
     },
     createdAt: {

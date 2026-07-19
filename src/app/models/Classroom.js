@@ -75,6 +75,7 @@ const classroomSchema = new mongoose.Schema(
     announcements: [{
       title: { type: String, required: true },
       content: { type: String, required: true },
+      weekNumber: { type: Number, default: 0 },
       createdAt: { type: Date, default: Date.now },
     }],
     settings: {

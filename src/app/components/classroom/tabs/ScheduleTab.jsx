@@ -1,65 +1,154 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Calendar, Layers, MessageSquare, ClipboardList } from "lucide-react";
+import { useState, useCallback } from "react";
+import {
+  ChevronLeft, ChevronRight, Plus, X, Layers,
+  MessageSquare, ClipboardList, Calendar, Clock, Tag, Trash2,
+} from "lucide-react";
+import { apiClient } from "@/lib/csrfClient";
+import { toast } from "sonner";
 
-/**
- * @param {object} props
- * @param {object} props.classroom - Classroom object with startDate, durationWeeks, etc.
- * @param {Function} props.getWeeks - Function returning array of week objects
- * @param {boolean} props.isInstructor - Whether current user is instructor
- * @param {Array} props.materials - Materials array
- * @param {Array} props.discussions - Discussions array
- * @param {Array} props.assignments - Assignments array
- */
-function EmptyState({ icon: Icon, title, description, action, onAction }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4">
-        <Icon className="w-8 h-8 text-green-500" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-xs mb-4">{description}</p>
-      {action && (
-        <button onClick={onAction} className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors">
-          {action}
-        </button>
-      )}
-    </div>
-  );
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+
+const EVENT_COLORS = [
+  { label: "Green", value: "green", cls: "bg-green-500" },
+  { label: "Blue", value: "blue", cls: "bg-blue-500" },
+  { label: "Amber", value: "amber", cls: "bg-amber-500" },
+  { label: "Red", value: "red", cls: "bg-red-500" },
+  { label: "Purple", value: "purple", cls: "bg-purple-500" },
+];
+
+function colorDot(color) {
+  switch (color) {
+    case "blue":   return "bg-blue-500";
+    case "amber":  return "bg-amber-500";
+    case "red":    return "bg-red-500";
+    case "purple": return "bg-purple-500";
+    default:       return "bg-green-500";
+  }
 }
 
-export default function ScheduleTab({ classroomState }) {
-  const { classroom, getWeeks, materials, discussions, assignments } = classroomState;
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+// ── Add Event Modal ───────────────────────────────────────────────────────────
+
+function AddEventModal({ date, classroomId, onSave, onClose }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [time, setTime] = useState("09:00");
+  const [color, setColor] = useState("green");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!title.trim()) { toast.error("Title is required"); return; }
+    setSaving(true);
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/schedule-events`, {
+        title: title.trim(),
+        description: description.trim(),
+        date: isoDate(date),
+        time,
+        color,
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSave(data.event);
+        toast.success("Event added!");
+      } else {
+        toast.error(data.error || "Failed to save");
+      }
+    } catch {
+      toast.error("Failed to save event");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className="space-y-3">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Course Schedule</h3>
-        {classroom.startDate && classroom.durationWeeks ? (
-          <p className="text-[11px] text-slate-500">{classroom.durationWeeks} weeks starting {new Date(classroom.startDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
-        ) : (
-          <p className="text-[11px] text-slate-400">No schedule set. Edit classroom settings to add duration and start date.</p>
-        )}
-      </div>
-      {getWeeks().map((week) => (
-        <div key={week.number} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><span className="text-sm font-bold text-green-600">W{week.number}</span></div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Week {week.number}</h4>
-              <p className="text-[10px] text-slate-500">{week.startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — {week.endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Add Event</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-3">
+          {/* Title */}
+          <div>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Title *</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Class session, Assignment due..."
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+          </div>
+
+          {/* Time */}
+          <div>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Time</label>
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/30" />
             </div>
           </div>
-          <div className="space-y-2">
-            {week.materials.length > 0 && <div className="flex items-center gap-2 text-[11px] text-slate-500"><Layers className="w-3 h-3 text-purple-500" /><span className="font-medium">{week.materials.length} material{week.materials.length !== 1 ? "s" : ""}</span><span className="text-slate-400">— {week.materials.map((m) => m.title).join(", ")}</span></div>}
-            {week.discussions.length > 0 && <div className="flex items-center gap-2 text-[11px] text-slate-500"><MessageSquare className="w-3 h-3 text-blue-500" /><span className="font-medium">{week.discussions.length} discussion{week.discussions.length !== 1 ? "s" : ""}</span><span className="text-slate-400">— {week.discussions.map((d) => d.title).join(", ")}</span></div>}
-            {week.assignments.length > 0 && <div className="flex items-center gap-2 text-[11px] text-slate-500"><ClipboardList className="w-3 h-3 text-green-500" /><span className="font-medium">{week.assignments.length} assignment{week.assignments.length !== 1 ? "s" : ""}</span><span className="text-slate-400">— {week.assignments.map((a) => a.title).join(", ")}</span></div>}
-            {week.materials.length === 0 && week.discussions.length === 0 && week.assignments.length === 0 && <p className="text-[11px] text-slate-400 italic">No content yet for this week</p>}
+
+          {/* Description */}
+          <div>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional notes..."
+              rows={2}
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/30 resize-none" />
+          </div>
+
+          {/* Color */}
+          <div>
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <Tag className="inline w-3 h-3 mr-1" />Color
+            </label>
+            <div className="flex gap-2">
+              {EVENT_COLORS.map((c) => (
+                <button key={c.value} onClick={() => setColor(c.value)}
+                  className={`w-7 h-7 rounded-full ${c.cls} transition-all ${color === c.value ? "ring-2 ring-offset-2 ring-offset-background ring-current scale-110" : "opacity-70 hover:opacity-100"}`}
+                  title={c.label}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      ))}
-      {getWeeks().length === 0 && <EmptyState icon={Calendar} title="No schedule" description="Set a start date and duration in settings to see a weekly course breakdown" />}
+
+        {/* Footer */}
+        <div className="flex gap-2 px-5 py-4 border-t border-border">
+          <button onClick={onClose}
+            className="flex-1 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving || !title.trim()}
+            className="flex-1 py-2 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors">
+            {saving ? "Saving..." : "Add Event"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

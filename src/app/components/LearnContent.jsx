@@ -501,7 +501,7 @@ export default function LearnContent() {
         moduleId,
         lessonIndex,
         lesson.title,
-        module.title
+        targetModule.title
       );
     }
   };

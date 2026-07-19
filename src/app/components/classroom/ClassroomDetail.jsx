@@ -19,7 +19,7 @@ import ForkContentPanel from "./ForkContentPanel";
 import CreateAssignmentPanel from "./CreateAssignmentPanel";
 import AssignmentDetailPanel from "./AssignmentDetailPanel";
 import ClassroomMobileNav from "./ClassroomMobileNav";
-import ScheduleTab from "./tabs/ScheduleTab";
+import CalendarTab from "./tabs/CalendarTab";
 import AssignmentsTab from "./tabs/AssignmentsTab";
 import GradesTab from "./tabs/GradesTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
@@ -55,12 +55,8 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [loading, setLoading] = useState(false);
   const isInstructor = classroom.isInstructor ?? false;
 
-  // Participants for the chat sidebar
-  const [chatParticipants, setChatParticipants] = useState([]);
-  const [chatParticipantsLoading, setChatParticipantsLoading] = useState(false);
-  const [chatParticipantsFetched, setChatParticipantsFetched] = useState(false);
-  // null = group chat, { id, name } = DM with that participant
-  const [chatRecipient, setChatRecipient] = useState(null);
+  // Participants for the chat sidebar — no longer needed (email-style inbox handles its own data)
+
 
   const [discussions, setDiscussions] = useState([]);
   const [discussionsLoading, setDiscussionsLoading] = useState(false);
@@ -159,7 +155,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseQuery, setBrowseQuery] = useState("");
   const [browseError, setBrowseError] = useState(null);
-  const [browseMyContent, setBrowseMyContent] = useState(false);
+  const [browseMyContent, setBrowseMyContent] = useState(true);
   const [forking, setForking] = useState(null);
 
   const [settingsForm, setSettingsForm] = useState({
@@ -349,18 +345,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     if (activeTab === "students" && isInstructor) fetchStudents();
     if (activeTab === "grades") fetchGrades();
     if (activeTab === "analytics" && isInstructor) fetchAnalytics();
-    if (activeTab === "chat" && !chatParticipantsFetched) {
-      setChatParticipantsLoading(true);
-      apiClient.get(`/api/classrooms/${classroom.id}/participants`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) setChatParticipants(data.students || []);
-          setChatParticipantsFetched(true);
-        })
-        .catch(() => {})
-        .finally(() => setChatParticipantsLoading(false));
-    }
-  }, [activeTab, fetchDiscussions, fetchNotes, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor, classroom.id, chatParticipantsFetched]);
+  }, [activeTab, fetchDiscussions, fetchNotes, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor, classroom.id]);
 
   useEffect(() => {
     if (showForkPanel && isInstructor) {
@@ -452,7 +437,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const instructorTabs = [
     { id: "course", label: "Course", icon: BookOpen },
-    { id: "schedule", label: "Schedule", icon: Calendar },
+    { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "assignments", label: "Assignments", icon: ClipboardList },
     { id: "grades", label: "Grades", icon: BarChart2 },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
@@ -518,159 +503,21 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       <div className={`${sidebarCollapsed ? "w-14" : "w-[240px]"} shrink-0 transition-all duration-300 hidden lg:flex flex-col h-full`}
         style={{ background: "var(--sidebar-bg, var(--card))", borderRight: "1px solid var(--border)" }}>
 
-        {/* ── CHAT MODE: participants list ── */}
-        {activeTab === "chat" ? (
-          <>
-            <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <>
-                  <span className="text-xs font-semibold text-foreground">Participants</span>
-                  <span className="ml-auto text-[10px] font-medium bg-secondary text-muted-foreground px-1.5 py-0.5 rounded-full">
-                    {chatParticipants.length + 1}
-                  </span>
-                </>
-              )}
-            </div>
-            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3" style={{ scrollbarWidth: "none" }}>
-              {/* Group chat button */}
-              {!sidebarCollapsed && (
-                <button
-                  onClick={() => setChatRecipient(null)}
-                  className={`flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg transition-colors text-left ${
-                    !chatRecipient
-                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                  }`}
-                >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-100 dark:bg-slate-800">
-                    <MessageSquare className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-semibold truncate">Group Chat</span>
-                </button>
-              )}
-              {/* Instructor */}
-              {!sidebarCollapsed && (
-                <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1 mb-1.5">Instructor</p>
-                  <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-sm">
-                      {(classroom.instructorName || "I").charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-foreground truncate">{classroom.instructorName || "Instructor"}</p>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 font-semibold">Instructor</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* Students — clickable for DM */}
-              {!sidebarCollapsed && (
-                <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1 mb-1.5">
-                    Students ({chatParticipants.length})
-                  </p>
-                  {chatParticipantsLoading ? (
-                    <div className="space-y-1.5">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-2.5 px-2 py-1.5 animate-pulse">
-                          <div className="w-8 h-8 rounded-full bg-secondary" />
-                          <div className="h-2.5 bg-secondary rounded w-2/3" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : chatParticipants.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-6 text-center px-2">
-                      <GraduationCap className="w-6 h-6 text-muted-foreground/40 mb-1.5" />
-                      <p className="text-[10px] text-muted-foreground">No students yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-0.5">
-                      {chatParticipants.map((s) => {
-                        const isActive = chatRecipient?.id === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => setChatRecipient({ id: s.id, name: s.name })}
-                            className={`flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg transition-colors text-left ${
-                              isActive
-                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                                : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                            }`}
-                          >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm ${
-                              isActive
-                                ? "bg-green-500 text-white"
-                                : "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300"
-                            }`}>
-                              {(s.name || "S").charAt(0).toUpperCase()}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium truncate">{s.name}</p>
-                              {isInstructor && s.email && (
-                                <p className="text-[9px] text-muted-foreground truncate">{s.email}</p>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Collapsed: just show avatars */}
-              {sidebarCollapsed && (
-                <div className="flex flex-col items-center gap-2 pt-1">
-                  <button
-                    onClick={() => setChatRecipient(null)}
-                    title="Group Chat"
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${!chatRecipient ? "bg-green-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:bg-secondary"}`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                  </button>
-                  <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-700 dark:text-purple-300 font-bold text-sm">
-                    {(classroom.instructorName || "I").charAt(0).toUpperCase()}
-                  </div>
-                  {chatParticipants.slice(0, 5).map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => setChatRecipient({ id: s.id, name: s.name })}
-                      title={s.name}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
-                        chatRecipient?.id === s.id
-                          ? "bg-green-500 text-white"
-                          : "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-500/30"
-                      }`}
-                    >
-                      {(s.name || "S").charAt(0).toUpperCase()}
-                    </button>
-                  ))}
-                  {chatParticipants.length > 5 && (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[9px] font-bold text-muted-foreground">
-                      +{chatParticipants.length - 5}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          /* ── NORMAL MODE: classroom nav ── */
-          <>
-          {!sidebarCollapsed && (
-            <div className="px-3 pt-4 pb-3 border-b border-border/60">
-              <div className="flex items-center gap-2.5">
-                <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-500/15 text-green-600 dark:text-green-400 flex-shrink-0">
-                  <GraduationCap className="w-4.5 h-4.5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[15px] font-semibold truncate text-foreground leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>{classroom.name}</p>
-                  <p className="text-xs text-muted-foreground leading-none mt-1 truncate">{classroom.subject || "Classroom"}</p>
-                </div>
+        {/* ── Classroom nav (same for all tabs) ── */}
+        {!sidebarCollapsed && (
+          <div className="px-3 pt-4 pb-3 border-b border-border/60">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-500/15 text-green-600 dark:text-green-400 flex-shrink-0">
+                <GraduationCap className="w-4.5 h-4.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold truncate text-foreground leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>{classroom.name}</p>
+                <p className="text-xs text-muted-foreground leading-none mt-1 truncate">{classroom.subject || "Classroom"}</p>
               </div>
             </div>
-          )}
-          <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          </div>
+        )}
+        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {tabs.map(({ id, label, icon: Icon }, index) => {
               const isActive = activeTab === id;
               return (
@@ -709,15 +556,13 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
               ))}
             </div>
           )}
-          </>
-        )}
       </div>
 
       <ClassroomMobileNav activeTab={activeTab} setActiveTab={setActiveTab} isInstructor={isInstructor} />
 
       <div className="flex-1 overflow-y-auto min-w-0">
         <div className="max-w-[110rem] mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
-        {announcements.length > 0 && activeTab !== "settings" && (
+        {announcements.length > 0 && activeTab !== "settings" && activeTab !== "chat" && (
           <div className="space-y-2">
             {announcements.slice(-3).reverse().map((ann, i) => (
               <div key={i} className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3">
@@ -732,7 +577,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
           </div>
         )}
 
-        {isInstructor && (activeTab === "assignments" || activeTab === "schedule") && (
+        {isInstructor && (activeTab === "assignments" || activeTab === "calendar") && (
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: "Students", value: studentStats.totalStudents || classroom.studentCount, icon: Users, color: "text-blue-500" },
@@ -751,8 +596,8 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
           <CourseTab classroomState={classroomState} />
         )}
 
-        {activeTab === "schedule" && isInstructor && (
-          <ScheduleTab classroomState={classroomState} />
+        {activeTab === "calendar" && (
+          <CalendarTab classroomState={classroomState} />
         )}
 
         {activeTab === "assignments" && (
@@ -791,9 +636,12 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
           <ClassroomChat
             classroomId={classroom.id}
             user={user}
-            recipientId={chatRecipient?.id}
-            recipientName={chatRecipient?.name}
-            onBack={chatRecipient ? () => setChatRecipient(null) : undefined}
+            classroom={classroom}
+            isInstructor={isInstructor}
+            students={students}
+            announcements={announcements}
+            onAnnouncementAdd={(ann) => setAnnouncements((prev) => [...prev, ann])}
+            onAnnouncementDelete={(annId) => setAnnouncements((prev) => prev.filter((a) => (a._id || a.id) !== annId))}
           />
         )}
         </div>

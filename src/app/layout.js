@@ -32,6 +32,16 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
+// Explicit viewport export prevents Next.js from generating a default
+// viewport that omits user-scalable=no, which causes Android WebViews to
+// inflate font sizes based on the device accessibility font-size setting.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 0.1,
+  maximumScale: 5,
+};
+
 export const metadata = {
   metadataBase: new URL("https://actirova.com"),
   title: {

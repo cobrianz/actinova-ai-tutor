@@ -124,7 +124,7 @@ async function handlePatch(request, { params }) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
-  const { contentId, contentType, unlocked, weekNumber, availableFrom, availableUntil, instructions } = await request.json();
+  const { contentId, contentType, unlocked, weekNumber, availableFrom, availableUntil, instructions, hiddenModules, hiddenLessons } = await request.json();
 
   const entry = classroom.forkedContent.find(
     (fc) => fc.contentId.toString() === contentId && fc.contentType === contentType
@@ -136,6 +136,14 @@ async function handlePatch(request, { params }) {
   if (availableFrom !== undefined) entry.availableFrom = availableFrom ? new Date(availableFrom) : null;
   if (availableUntil !== undefined) entry.availableUntil = availableUntil ? new Date(availableUntil) : null;
   if (instructions !== undefined) entry.instructions = instructions;
+  if (hiddenModules !== undefined) {
+    if (!entry.meta) entry.meta = {};
+    entry.meta.hiddenModules = hiddenModules;
+  }
+  if (hiddenLessons !== undefined) {
+    if (!entry.meta) entry.meta = {};
+    entry.meta.hiddenLessons = hiddenLessons;
+  }
 
   await classroom.save();
   const saved = classroom.forkedContent.find((fc) => fc.contentId.toString() === contentId && fc.contentType === contentType);

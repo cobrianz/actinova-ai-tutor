@@ -1,18 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   BookOpen, Calendar, Clock, MapPin, GraduationCap, Layers, Megaphone,
   ChevronDown, ChevronUp, Target, FileText, Lock, Unlock, ExternalLink,
-  Award, Sparkles, Loader2, Link2, Trash2, Plus,
+  Award, Sparkles, Loader2, Link2, Trash2, Plus, Settings, Info,
+  Eye, EyeOff, MessageSquare, ClipboardList, ExternalLink as LinkIcon,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import ForkContentPanel from "../ForkContentPanel";
+import { renderLessonBlocks } from "@/lib/contentRenderer";
+import LessonChart from "@/components/LessonChart";
+import LessonTable from "@/components/LessonTable";
+import { apiClient } from "@/lib/csrfClient";
+
+function groupModulesByWeek(modules, durationWeeks) {
+  if (!modules?.length) return [];
+  const weeks = durationWeeks || Math.ceil(modules.length / 2);
+  const perWeek = Math.ceil(modules.length / weeks);
+  const result = [];
+  for (let w = 0; w < weeks; w++) {
+    const start = w * perWeek;
+    const weekMods = modules.slice(start, start + perWeek);
+    if (weekMods.length > 0) result.push({ week: w + 1, modules: weekMods });
+  }
+  return result;
+}
 
 export default function CourseTab({ classroomState }) {
   const {
     classroom, announcements, forkedContent, isForkedContentLocked,
-    handleToggleForkUnlock, handleUnforkContent, isInstructor,
+    handleToggleForkUnlock, handleUnforkContent, handleUpdateFork, isInstructor,
     showForkPanel, setShowForkPanel, browseResults, browseLoading,
     browseQuery, setBrowseQuery, browseType, setBrowseType,
     fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
@@ -20,7 +38,8 @@ export default function CourseTab({ classroomState }) {
     courseModules, courseGenLoading, handleGenerateCourseStructure,
   } = classroomState;
 
-  const [showForkSection, setShowForkSection] = useState(false);
+  const [editingFork, setEditingFork] = useState(null);
+  const [expandedFork, setExpandedFork] = useState(null);
 
   const levelLabels = { highschool: "High School", undergraduate: "Undergraduate", graduate: "Graduate", phd: "PhD", professional: "Professional" };
   const gradeLabels = { percentage: "Percentage (0–100%)", letter: "Letter Grades (A–F)", passfail: "Pass / Fail", gpa: "GPA Scale (0.0–4.0)" };
@@ -28,6 +47,8 @@ export default function CourseTab({ classroomState }) {
   const scheduleDays = classroom.schedule?.days?.length
     ? classroom.schedule.days.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(", ")
     : null;
+
+  const maxWeeks = classroom.durationWeeks || 12;
 
   return (
     <div className="space-y-4">
@@ -116,7 +137,6 @@ export default function CourseTab({ classroomState }) {
 
       {/* Quick Info Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Schedule */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-blue-500" />
@@ -136,8 +156,6 @@ export default function CourseTab({ classroomState }) {
             <p className="text-xs text-slate-400 italic">Not set</p>
           )}
         </div>
-
-        {/* Grading */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Award className="w-4 h-4 text-amber-500" />
@@ -145,8 +163,6 @@ export default function CourseTab({ classroomState }) {
           </div>
           <p className="text-sm font-semibold text-slate-900 dark:text-white">{gradeLabels[classroom.gradingScheme] || "Percentage"}</p>
         </div>
-
-        {/* Duration */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-4 h-4 text-purple-500" />
@@ -211,43 +227,132 @@ export default function CourseTab({ classroomState }) {
       {/* Forked Content */}
       {forkedContent?.length > 0 && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-indigo-500" />
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Linked Content ({forkedContent.length})</h3>
-            </div>
-            {isInstructor && (
+          {isInstructor && (
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Content ({forkedContent.length})</h3>
+              </div>
               <button
                 onClick={() => setShowForkPanel(true)}
                 className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
                 <Plus className="w-3 h-3" /> Add More
               </button>
-            )}
-          </div>
-          <div className="space-y-2">
+            </div>
+          )}
+          <div className="space-y-4">
             {forkedContent.map((fc, i) => {
               const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG.custom;
               const Icon = cfg.icon;
               const locked = isForkedContentLocked?.(fc);
+              const isEditing = editingFork === `${fc.contentType}-${fc.contentId}`;
+              const isExpanded = expandedFork === `${fc.contentType}-${fc.contentId}`;
+              const hasModules = fc.contentType === "course" && fc.meta?.modules?.length > 0;
               return (
-                <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
-                    <Icon className="w-4 h-4" />
+                <div key={i}>
+                  <div className="rounded-lg overflow-hidden">
+                    {/* Header row */}
+                    <div className="flex items-center gap-3 p-2.5 bg-slate-50 dark:bg-slate-800/50">
+                      {hasModules ? (
+                        <button onClick={() => setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{fc.title}</p>
+                            {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {fc.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-semibold">Week {fc.weekNumber}</span>}
+                              {locked ? (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold flex items-center gap-0.5"><Lock className="w-2.5 h-2.5" /> Locked</span>
+                              ) : (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>
+                              )}
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{fc.meta.modules.length} modules</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                          </div>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{fc.title}</p>
+                            {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {fc.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-semibold">Week {fc.weekNumber}</span>}
+                              {locked ? (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold flex items-center gap-0.5"><Lock className="w-2.5 h-2.5" /> Locked</span>
+                              ) : (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {isInstructor && (
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          <button onClick={() => setEditingFork(isEditing ? null : `${fc.contentType}-${fc.contentId}`)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Settings">
+                            <Settings className="w-3.5 h-3.5 text-slate-400" />
+                          </button>
+                          <button onClick={() => handleToggleForkUnlock(fc.contentType, fc.contentId)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={locked ? "Unlock" : "Lock"}>
+                            {locked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Unlock className="w-3.5 h-3.5 text-green-500" />}
+                          </button>
+                          <button onClick={() => handleUnforkContent(fc.contentType, fc.contentId, fc.title)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                      {!isInstructor && locked && (
+                        <Lock className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                      )}
+                    </div>
+
+                    {/* Expanded: week-grouped modules for courses, flat for others */}
+                    {hasModules && isExpanded && (
+                      <div className="bg-white dark:bg-slate-900 p-3">
+                        <WeekGroupedCourse
+                          modules={fc.meta.modules}
+                          durationWeeks={classroom.durationWeeks}
+                          courseId={fc.contentId}
+                          courseTopic={classroom.subject || classroom.name}
+                          difficulty={classroom.academicLevel || "intermediate"}
+                          classroomId={classroom.id}
+                          isInstructor={isInstructor}
+                          hiddenModules={fc.meta?.hiddenModules || []}
+                          hiddenLessons={fc.meta?.hiddenLessons || []}
+                          forkEntry={fc}
+                          onToggleHideModule={(modIdx) => {
+                            const current = fc.meta?.hiddenModules || [];
+                            const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
+                            handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
+                          }}
+                          onToggleHideLesson={(lessonKey) => {
+                            const current = fc.meta?.hiddenLessons || [];
+                            const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
+                            handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{fc.title}</p>
-                    {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
-                  </div>
-                  {isInstructor && handleToggleForkUnlock && (
-                    <button onClick={() => handleToggleForkUnlock(fc.contentType, fc.contentId)} className="flex-shrink-0 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                      {locked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Unlock className="w-3.5 h-3.5 text-green-500" />}
-                    </button>
-                  )}
-                  {isInstructor && handleUnforkContent && (
-                    <button onClick={() => handleUnforkContent(fc.contentType, fc.contentId, fc.title)} className="flex-shrink-0 p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+
+                  {/* Instructor Edit Panel */}
+                  {isInstructor && isEditing && (
+                    <ForkEditPanel
+                      fork={fc}
+                      maxWeeks={maxWeeks}
+                      onSave={(updates) => {
+                        handleUpdateFork(fc.contentType, fc.contentId, updates);
+                        setEditingFork(null);
+                      }}
+                      onCancel={() => setEditingFork(null)}
+                    />
                   )}
                 </div>
               );
@@ -274,6 +379,389 @@ export default function CourseTab({ classroomState }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForkEditPanel({ fork, maxWeeks, onSave, onCancel }) {
+  const [weekNumber, setWeekNumber] = useState(fork.weekNumber || 0);
+  const [instructions, setInstructions] = useState(fork.instructions || "");
+  const [availableFrom, setAvailableFrom] = useState(fork.availableFrom ? new Date(fork.availableFrom).toISOString().slice(0, 16) : "");
+  const [availableUntil, setAvailableUntil] = useState(fork.availableUntil ? new Date(fork.availableUntil).toISOString().slice(0, 16) : "");
+
+  return (
+    <div className="mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Info className="w-3.5 h-3.5 text-indigo-500" />
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Content Settings</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Week Number</label>
+          <select
+            value={weekNumber}
+            onChange={(e) => setWeekNumber(Number(e.target.value))}
+            className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/30"
+          >
+            <option value={0}>Not assigned</option>
+            {Array.from({ length: maxWeeks }, (_, i) => (
+              <option key={i + 1} value={i + 1}>Week {i + 1}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Visible From</label>
+          <input
+            type="datetime-local"
+            value={availableFrom}
+            onChange={(e) => setAvailableFrom(e.target.value)}
+            className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/30"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Visible Until</label>
+          <input
+            type="datetime-local"
+            value={availableUntil}
+            onChange={(e) => setAvailableUntil(e.target.value)}
+            className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/30"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Instructions / Notes</label>
+        <textarea
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          placeholder="Add instructions for students..."
+          rows={2}
+          className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 resize-none"
+        />
+      </div>
+      <div className="flex items-center gap-2 justify-end">
+        <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+        <button onClick={() => onSave({ weekNumber, instructions, availableFrom: availableFrom || null, availableUntil: availableUntil || null })} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors">Save</button>
+      </div>
+    </div>
+  );
+}
+
+function WeekGroupedCourse({
+  modules, durationWeeks, courseId, courseTopic, difficulty, classroomId,
+  isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
+}) {
+  const [addMenuWeek, setAddMenuWeek] = useState(null);
+  const [addQuizTitle, setAddQuizTitle] = useState("");
+  const [addAnnTitle, setAddAnnTitle] = useState("");
+  const [addAnnContent, setAddAnnContent] = useState("");
+  const [addDiscTitle, setAddDiscTitle] = useState("");
+  const [addDiscDesc, setAddDiscDesc] = useState("");
+  const [addingType, setAddingType] = useState(null);
+
+  const weekGroups = groupModulesByWeek(modules, durationWeeks);
+
+  const visibleModuleCount = modules.filter((_, i) => !hiddenModules.includes(i)).length;
+
+  const handleAddQuiz = async (weekNumber) => {
+    if (!addQuizTitle.trim()) return;
+    setAddingType("quiz");
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/fork`, {
+        contentType: "quiz",
+        contentId: courseId,
+        weekNumber,
+      });
+      if (res.ok) { setAddQuizTitle(""); setAddMenuWeek(null); }
+    } catch (_) {}
+    setAddingType(null);
+  };
+
+  const handleAddAnnouncement = async (weekNumber) => {
+    if (!addAnnTitle.trim() || !addAnnContent.trim()) return;
+    setAddingType("announcement");
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/announcements`, {
+        title: addAnnTitle, content: addAnnContent, weekNumber,
+      });
+      if (res.ok) { setAddAnnTitle(""); setAddAnnContent(""); setAddMenuWeek(null); }
+    } catch (_) {}
+    setAddingType(null);
+  };
+
+  const handleAddDiscussion = async (weekNumber) => {
+    if (!addDiscTitle.trim()) return;
+    setAddingType("discussion");
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/discussions`, {
+        title: addDiscTitle, description: addDiscDesc, weekNumber,
+      });
+      if (res.ok) { setAddDiscTitle(""); setAddDiscDesc(""); setAddMenuWeek(null); }
+    } catch (_) {}
+    setAddingType(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      {weekGroups.map((wg) => (
+        <div key={wg.week} className="space-y-2.5">
+          {/* Week Header */}
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-6 h-6 rounded-md bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-[9px] font-bold text-indigo-600">W{wg.week}</span>
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Week {wg.week}</span>
+            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+            {isInstructor && (
+              <button
+                onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
+                className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                <Plus className="w-2.5 h-2.5" /> Add
+              </button>
+            )}
+          </div>
+
+          {/* Weekly Quick-Add Menu */}
+          {isInstructor && addMenuWeek === wg.week && (
+            <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Add to Week {wg.week}</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button onClick={() => setAddingType(addingType === "quiz-add" ? null : "quiz-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "quiz-add" ? "bg-purple-500/15 text-purple-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-500/10"}`}>
+                  <ClipboardList className="w-2.5 h-2.5" /> Quiz
+                </button>
+                <button onClick={() => setAddingType(addingType === "ann-add" ? null : "ann-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "ann-add" ? "bg-amber-500/15 text-amber-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-amber-500/10"}`}>
+                  <Megaphone className="w-2.5 h-2.5" /> Announce
+                </button>
+                <button onClick={() => setAddingType(addingType === "disc-add" ? null : "disc-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "disc-add" ? "bg-blue-500/15 text-blue-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-blue-500/10"}`}>
+                  <MessageSquare className="w-2.5 h-2.5" /> Discuss
+                </button>
+              </div>
+              {addingType === "quiz-add" && (
+                <div className="flex items-center gap-1.5">
+                  <input value={addQuizTitle} onChange={(e) => setAddQuizTitle(e.target.value)} placeholder="Quiz title..." className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                  <button onClick={() => handleAddQuiz(wg.week)} disabled={!addQuizTitle.trim()} className="px-2 py-1 rounded bg-purple-500 text-white text-[9px] font-semibold disabled:opacity-50">Add</button>
+                </div>
+              )}
+              {addingType === "ann-add" && (
+                <div className="space-y-1.5">
+                  <input value={addAnnTitle} onChange={(e) => setAddAnnTitle(e.target.value)} placeholder="Announcement title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                  <textarea value={addAnnContent} onChange={(e) => setAddAnnContent(e.target.value)} placeholder="Content..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400 resize-none" />
+                  <button onClick={() => handleAddAnnouncement(wg.week)} disabled={!addAnnTitle.trim() || !addAnnContent.trim()} className="px-2 py-1 rounded bg-amber-500 text-white text-[9px] font-semibold disabled:opacity-50">Post</button>
+                </div>
+              )}
+              {addingType === "disc-add" && (
+                <div className="space-y-1.5">
+                  <input value={addDiscTitle} onChange={(e) => setAddDiscTitle(e.target.value)} placeholder="Discussion title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                  <input value={addDiscDesc} onChange={(e) => setAddDiscDesc(e.target.value)} placeholder="Description (optional)..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
+                  <button onClick={() => handleAddDiscussion(wg.week)} disabled={!addDiscTitle.trim()} className="px-2 py-1 rounded bg-blue-500 text-white text-[9px] font-semibold disabled:opacity-50">Create</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modules in this week */}
+          {wg.modules.map((mod) => {
+            const globalIdx = modules.indexOf(mod);
+            const isHidden = hiddenModules.includes(globalIdx);
+            return (
+              <div key={globalIdx} className="ml-4">
+                <ForkedModuleCard
+                  mod={mod}
+                  modIndex={globalIdx}
+                  courseId={courseId}
+                  courseTopic={courseTopic}
+                  difficulty={difficulty}
+                  classroomId={classroomId}
+                  isInstructor={isInstructor}
+                  isHidden={isHidden}
+                  hiddenLessons={hiddenLessons}
+                  onToggleHideModule={() => onToggleHideModule(globalIdx)}
+                  onToggleHideLesson={onToggleHideLesson}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ForkedModuleCard({
+  mod, modIndex, courseId, courseTopic, difficulty, classroomId,
+  isInstructor, isHidden, hiddenLessons, onToggleHideModule, onToggleHideLesson,
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [activeLessonIdx, setActiveLessonIdx] = useState(null);
+  const [lessonContent, setLessonContent] = useState("");
+  const [contentChecked, setContentChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const typeColors = {
+    lecture: "bg-blue-500/10 text-blue-600",
+    lab: "bg-orange-500/10 text-orange-600",
+    reading: "bg-teal-500/10 text-teal-600",
+    video: "bg-purple-500/10 text-purple-600",
+    activity: "bg-green-500/10 text-green-600",
+  };
+
+  const handleLessonClick = async (lesson, li) => {
+    if (activeLessonIdx === li && contentChecked) {
+      setActiveLessonIdx(null);
+      setLessonContent("");
+      setContentChecked(false);
+      return;
+    }
+    setActiveLessonIdx(li);
+    setLessonContent("");
+    setContentChecked(false);
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        `/api/classrooms/${classroomId}/lesson-content?contentId=${courseId}&moduleIdx=${modIndex}&lessonIdx=${li}`,
+        { credentials: "include" }
+      );
+      const data = await res.json();
+      setLessonContent(data.content || "");
+      setContentChecked(true);
+    } catch (_) {
+      setLessonContent("");
+      setContentChecked(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleLesson = (li) => {
+    const key = `${modIndex}-${li}`;
+    onToggleHideLesson(key);
+  };
+
+  const isLessonHidden = (li) => hiddenLessons.includes(`${modIndex}-${li}`);
+  const visibleLessons = mod.lessons?.filter((_, li) => !isLessonHidden(li)) || [];
+  const lessonCount = visibleLessons.length;
+
+  return (
+    <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
+      <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50">
+        {isInstructor && (
+          <button onClick={onToggleHideModule} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={isHidden ? "Show module" : "Hide module"}>
+            {isHidden ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
+          </button>
+        )}
+        <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+          <div className="w-7 h-7 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-[10px] font-bold text-green-600">{mod.weekNumber ? `W${mod.weekNumber}` : `M${modIndex + 1}`}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
+            {mod.description && <p className="text-[9px] text-slate-400 truncate">{mod.description}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{lessonCount} lessons</span>
+            {expanded ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+          </div>
+        </button>
+      </div>
+      {expanded && mod.lessons?.length > 0 && (
+        <div className="px-2.5 pb-2.5 space-y-2 pt-2">
+          {mod.lessons.map((lesson, li) => {
+            const isActive = activeLessonIdx === li;
+            const hidden = isLessonHidden(li);
+            const lessonKey = `${modIndex}-${li}`;
+            return (
+              <div key={li} className={hidden ? "opacity-30" : ""}>
+                <div className="flex items-center gap-1">
+                  {isInstructor && (
+                    <button onClick={() => handleToggleLesson(li)} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={hidden ? "Show lesson" : "Hide lesson"}>
+                      {hidden ? <EyeOff className="w-2.5 h-2.5 text-slate-400" /> : <Eye className="w-2.5 h-2.5 text-slate-400" />}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => !hidden && handleLessonClick(lesson, li)}
+                    disabled={hidden}
+                    className={`flex items-center gap-2 flex-1 py-2 px-2 rounded-lg text-left transition-all ${
+                      hidden ? "cursor-not-allowed" :
+                      isActive
+                        ? "bg-green-500/10 ring-1 ring-green-500/30"
+                        : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${isActive ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}>
+                      {loading && isActive ? (
+                        <Loader2 className="w-3 h-3 text-white animate-spin" />
+                      ) : (
+                        <span className={`text-[8px] font-bold ${isActive ? "text-white" : "text-slate-500"}`}>{li + 1}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[10px] font-semibold truncate ${isActive ? "text-green-700 dark:text-green-400" : "text-slate-900 dark:text-white"}`}>{lesson.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {lesson.type && <span className={`text-[8px] font-semibold px-1 py-0.5 rounded-full ${typeColors[lesson.type] || "bg-slate-500/10 text-slate-600"}`}>{lesson.type}</span>}
+                        {lesson.duration && <span className="text-[8px] text-slate-400">{lesson.duration}min</span>}
+                      </div>
+                    </div>
+                    {isActive && <ChevronUp className="w-3 h-3 text-green-500 flex-shrink-0" />}
+                  </button>
+                  {hidden && <Lock className="w-3 h-3 text-slate-300 dark:text-slate-600 flex-shrink-0 ml-1" />}
+                </div>
+
+                {/* Lesson Content Area */}
+                {isActive && !hidden && (
+                  <div className="mt-1.5 ml-7 border-l-2 border-green-500/20 pl-3">
+                    {loading && !contentChecked ? (
+                      <div className="py-6 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-xs font-semibold">Loading lesson content...</span>
+                        </div>
+                      </div>
+                    ) : contentChecked && lessonContent ? (
+                      <div className="space-y-2">
+                        <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none">
+                          <div className="space-y-4">
+                            {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
+                          </div>
+                        </div>
+                      </div>
+                    ) : contentChecked ? (
+                      <div className="py-4">
+                        {isInstructor ? (
+                          <div className="flex flex-col items-center gap-2 py-3 px-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20">
+                            <div className="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
+                              <FileText className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 text-center">This lesson has no content yet.</p>
+                            <a
+                              href={`/learn/${encodeURIComponent(courseTopic)}?moduleId=${modIndex + 1}&lessonIndex=${li}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-colors"
+                            >
+                              <ExternalLink className="w-3 h-3" /> Go to Library to Generate
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 py-3 px-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                            <Lock className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                            <p className="text-[10px] font-medium text-slate-400 text-center">Lesson content has not been added yet. Please check back later.</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {expanded && lessonCount === 0 && (
+        <div className="px-2.5 pb-2.5">
+          <p className="text-[9px] text-slate-400 italic py-1.5">No visible lessons</p>
         </div>
       )}
     </div>

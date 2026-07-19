@@ -308,10 +308,13 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
   };
 
   return (
-    <motion.button
+    <motion.div
       whileHover={{ y: -2 }}
       onClick={onClick}
-      className="text-left w-full rounded-xl border p-4 transition-all border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-400/30"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
+      className="text-left w-full rounded-xl border p-4 transition-all border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-400/30 cursor-pointer"
     >
       {/* Top row: icon + name + delete */}
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -377,7 +380,7 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
           Open <ArrowRight className="w-3 h-3" />
         </span>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 

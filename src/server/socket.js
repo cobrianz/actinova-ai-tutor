@@ -115,15 +115,20 @@ function initSocketServer(httpServer) {
         socket.join(roomId);
 
         const Model = getModel();
+        // Group chat: only messages with NO recipientId (exclude all DMs)
+        // DM chat: messages between this exact pair only
         const query = recipientId
           ? {
               classroomId,
               $or: [
-                { senderId: socket.user.id, recipientId },
+                { senderId: socket.user.id, recipientId: recipientId },
                 { senderId: recipientId, recipientId: socket.user.id },
               ],
             }
-          : { classroomId, recipientId: { $exists: false } };
+          : {
+              classroomId,
+              recipientId: null,  // only group messages (recipientId not set)
+            };
 
         const history = await Model.find(query)
           .sort({ createdAt: -1 })
@@ -151,9 +156,10 @@ function initSocketServer(httpServer) {
           senderName: socket.user.name,
           senderRole: socket.user.role,
           content: trimmed,
+          // Explicitly null for group messages so queries on recipientId: null work
+          recipientId: recipientId || null,
           createdAt: new Date(),
         };
-        if (recipientId) doc.recipientId = recipientId;
 
         const message = await Model.create(doc);
         const payload = {

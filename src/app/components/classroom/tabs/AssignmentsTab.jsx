@@ -187,14 +187,19 @@ export default function AssignmentsTab({ classroomState }) {
         {forkedContent.length > 0 && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><Layers className="w-3.5 h-3.5" /> Forked Content ({forkedContent.length})</h4>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><Layers className="w-3.5 h-3.5" /> Class Content ({forkedContent.length})</h4>
+              {isInstructor && (
+                <button onClick={() => setShowForkPanel(!showForkPanel)} className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                  <Plus className="w-3 h-3" /> {showForkPanel ? "Close" : "Add"}
+                </button>
+              )}
             </div>
             <div className="space-y-2">
               {forkedContent.map((fc, i) => {
                 const isLocked = isForkedContentLocked(fc);
-                const typeIcon = fc.contentType === "course" ? BookOpen : fc.contentType === "quiz" ? CheckCircle2 : FileText;
-                const TypeIcon = typeIcon;
-                const typeColor = fc.contentType === "course" ? "bg-blue-500/10 text-blue-500" : fc.contentType === "quiz" ? "bg-amber-500/10 text-amber-500" : "bg-purple-500/10 text-purple-500";
+                const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG.custom;
+                const TypeIcon = cfg.icon;
+                const typeColor = cfg.color;
                 return (
                   <div key={i} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isLocked ? "bg-slate-50 dark:bg-slate-800/30 opacity-60" : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
                     <div className={`w-8 h-8 rounded-lg ${typeColor} flex items-center justify-center flex-shrink-0`}>
@@ -203,24 +208,24 @@ export default function AssignmentsTab({ classroomState }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{fc.title}</p>
-                        <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full capitalize">{fc.contentType}</span>
                         {fc.weekNumber > 0 && <span className="text-[9px] font-medium text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded-full">Week {fc.weekNumber}</span>}
                       </div>
                       {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
+                      {fc.instructions && <p className="text-[10px] text-slate-500 mt-0.5 italic">{fc.instructions}</p>}
                     </div>
                     {isLocked ? (
-                      <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1"><Lock className="w-3 h-3" /> Locked</span>
+                      <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1 flex-shrink-0"><Lock className="w-3 h-3" /> Locked</span>
                     ) : isInstructor ? (
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handleToggleForkUnlock(fc.contentType, fc.contentId)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-green-500 transition-colors" title={fc.unlocked ? "Lock content" : "Unlock content"}>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button onClick={() => handleToggleForkUnlock(fc.contentType, fc.contentId)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-green-500 transition-colors" title={fc.unlocked ? "Lock" : "Unlock"}>
                           {fc.unlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                         </button>
-                        <button onClick={() => handleUnforkContent(fc.contentType, fc.contentId, fc.title)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove from classroom">
+                        <button onClick={() => handleUnforkContent(fc.contentType, fc.contentId, fc.title)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ) : (
-                      <span className="text-[10px] font-medium text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Available</span>
+                      <span className="text-[10px] font-medium text-green-500 flex items-center gap-1 flex-shrink-0"><CheckCircle2 className="w-3 h-3" /> Available</span>
                     )}
                   </div>
                 );
