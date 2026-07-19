@@ -344,6 +344,7 @@ export default function CourseTab({ classroomState }) {
                           }}
                           openedWeeks={openedWeeks}
                           handleToggleWeek={handleToggleWeek}
+                          setConfirmModal={setConfirmModal}
                           completedLessons={completedLessons}
                           toggleLessonComplete={toggleLessonComplete}
                           setAnnouncements={setAnnouncements}
@@ -471,7 +472,7 @@ function ForkEditPanel({ fork, maxWeeks, onSave, onCancel }) {
 function WeekGroupedCourse({
   modules, durationWeeks, courseId, courseTopic, difficulty, classroomId,
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
-  openedWeeks, handleToggleWeek, completedLessons, toggleLessonComplete,
+  openedWeeks, handleToggleWeek, setConfirmModal, completedLessons, toggleLessonComplete,
   setAnnouncements, setDiscussions,
 }) {
   const [addMenuWeek, setAddMenuWeek] = useState(null);
@@ -549,7 +550,8 @@ function WeekGroupedCourse({
   return (
     <div className="space-y-4">
       {weekGroups.map((wg) => {
-        const isOpen = isInstructor || (openedWeeks || []).includes(wg.week);
+        const isWeekOpen = (openedWeeks || []).includes(wg.week);
+        const isOpen = isInstructor || isWeekOpen;
         return (
           <div key={wg.week} className="space-y-2.5">
             {/* Week Header */}
@@ -562,12 +564,12 @@ function WeekGroupedCourse({
               {isInstructor && (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setConfirmModal({ open: true, title: isOpen ? "Close Week " + wg.week : "Open Week " + wg.week, message: isOpen ? `Students will no longer see Week ${wg.week} modules. Continue?` : `Students will be able to see Week ${wg.week} modules. Continue?`, confirmColor: isOpen ? "red" : "blue", onConfirm: () => handleToggleWeek(wg.week) })}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isOpen ? "bg-green-500" : "bg-slate-300 dark:bg-slate-600"}`}
+                    onClick={() => handleToggleWeek(wg.week)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isWeekOpen ? "bg-green-500" : "bg-red-400 dark:bg-red-500"}`}
                   >
-                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${isOpen ? "translate-x-4" : "translate-x-0.5"}`} />
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${isWeekOpen ? "translate-x-4" : "translate-x-0.5"}`} />
                   </button>
-                  <span className={`text-[9px] font-semibold ${isOpen ? "text-green-600" : "text-slate-400"}`}>{isOpen ? "Open" : "Closed"}</span>
+                  <span className={`text-[9px] font-semibold ${isWeekOpen ? "text-green-600" : "text-red-500"}`}>{isWeekOpen ? "Open" : "Closed"}</span>
                   <button
                     onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
                     className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"

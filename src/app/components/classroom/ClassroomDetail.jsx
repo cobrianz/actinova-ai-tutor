@@ -169,6 +169,17 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   useEffect(() => { fetchCompletedLessons(); }, [fetchCompletedLessons]);
 
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await apiClient.get(`/api/classrooms/${classroom.id}/opened-weeks`);
+        const data = await res.json();
+        if (data.success) setOpenedWeeks(data.openedWeeks || []);
+      } catch {}
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [classroom.id]);
+
   const toggleLessonComplete = async (lessonKey, complete) => {
     try {
       const res = await apiClient.post(`/api/classrooms/${classroom.id}/lesson-complete`, { lessonKey, completed: complete });
