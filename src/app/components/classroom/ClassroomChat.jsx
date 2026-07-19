@@ -38,26 +38,46 @@ export default function ClassroomChat({ classroomId, user }) {
   const typingUsersRef = useRef({});
 
   useEffect(() => {
+    // Use a destroyed flag to handle React Strict Mode's double-invoke:
+    // if the effect cleanup runs before the socket finishes connecting,
+    // we mark it destroyed so we don't call setState on the unmounted instance.
+    let destroyed = false;
+
+    // The token cookie is httpOnly so JS can't read it via document.cookie —
+    // the server will pick it up from the raw Cookie header instead.
+    // We still try to pass it via handshake.auth as a belt-and-suspenders measure.
+    const tokenCookie = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("token="));
+    const token = tokenCookie ? tokenCookie.split("=")[1] : undefined;
+
     const socket = io(SOCKET_URL || window.location.origin, {
       withCredentials: true,
-      transports: ["websocket"],
+      // Start with polling so the HTTP handshake (and cookie auth) can complete,
+      // then upgrade to websocket. Pure "websocket" transport skips the HTTP
+      // handshake entirely which means the auth middleware on the socket server
+      // may not receive the cookie in time.
+      transports: ["polling", "websocket"],
+      auth: token ? { token } : {},
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
+      reconnectionAttempts: 5,
     });
     socketRef.current = socket;
 
     let retryCount = 0;
 
     socket.on("connect", () => {
+      if (destroyed) return;
       setConnectionState("connected");
       setAuthError(null);
       socket.emit("join_room", { classroomId });
     });
 
     socket.on("connect_error", () => {
+      if (destroyed) return;
       retryCount++;
-      if (retryCount < 3) {
+      if (retryCount < 5) {
         setConnectionState("retrying");
       } else {
         setConnectionState("failed");
@@ -65,14 +85,17 @@ export default function ClassroomChat({ classroomId, user }) {
     });
 
     socket.on("message_history", (history) => {
+      if (destroyed) return;
       setMessages(history);
     });
 
     socket.on("new_message", (msg) => {
+      if (destroyed) return;
       setMessages((prev) => [...prev, msg]);
     });
 
     socket.on("user_typing", ({ userId, userName }) => {
+      if (destroyed) return;
       setTypingUsers((prev) => {
         const exists = prev.find((u) => u.userId === userId);
         if (exists) return prev;
@@ -88,11 +111,13 @@ export default function ClassroomChat({ classroomId, user }) {
     });
 
     socket.on("authorization_error", ({ message }) => {
+      if (destroyed) return;
       setAuthError(message);
     });
 
     const timers = typingUsersRef.current;
     return () => {
+      destroyed = true;
       socket.disconnect();
       Object.values(timers).forEach(clearTimeout);
     };
@@ -135,6 +160,18 @@ export default function ClassroomChat({ classroomId, user }) {
     return senderId === myId;
   };
 
+  if (connectionState === "connecting") {
+    return (
+      <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px] items-center justify-center">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-bounce [animation-delay:-0.3s]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-bounce [animation-delay:-0.15s]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-bounce" />
+        </div>
+      </div>
+    );
+  }
+
   if (connectionState === "failed" && !authError) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -160,7 +197,7 @@ export default function ClassroomChat({ classroomId, user }) {
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px]">
       {/* Connection status bar */}
-      {(connectionState === "connecting" || connectionState === "retrying") && (
+      {connectionState === "retrying" && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           Connection failed. Retrying...

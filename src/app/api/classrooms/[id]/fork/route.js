@@ -41,11 +41,11 @@ async function handlePost(request, { params }) {
   const { db } = await connectToDatabase();
 
   if (contentType === "course") {
-    sourceDoc = await db.collection("courses").findOne({ _id: new ObjectId(contentId) });
+    sourceDoc = await db.collection("library").findOne({ _id: new ObjectId(contentId) });
     if (!sourceDoc) return NextResponse.json({ error: "Course not found" }, { status: 404 });
-    title = sourceDoc.title || "Untitled Course";
+    title = sourceDoc.title || sourceDoc.topic || "Untitled Course";
     description = sourceDoc.description || "";
-    meta = { level: sourceDoc.level, totalModules: sourceDoc.totalModules, totalLessons: sourceDoc.totalLessons, modules: sourceDoc.modules };
+    meta = { level: sourceDoc.level || sourceDoc.difficulty, totalModules: sourceDoc.totalModules, totalLessons: sourceDoc.totalLessons, modules: sourceDoc.modules || sourceDoc.courseData?.modules };
   } else if (contentType === "quiz") {
     const Quiz = (await import("@/models/Quiz")).default;
     sourceDoc = await Quiz.findById(contentId).lean();
@@ -59,6 +59,12 @@ async function handlePost(request, { params }) {
     title = sourceDoc.title || "Untitled Flashcards";
     description = `${sourceDoc.totalCards || 0} cards`;
     meta = { difficulty: sourceDoc.difficulty, totalCards: sourceDoc.totalCards };
+  } else if (contentType === "report") {
+    sourceDoc = await db.collection("reports").findOne({ _id: new ObjectId(contentId) });
+    if (!sourceDoc) return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    title = sourceDoc.title || sourceDoc.topic || "Untitled Report";
+    description = sourceDoc.summary || "";
+    meta = { topic: sourceDoc.topic, format: sourceDoc.format };
   } else {
     return NextResponse.json({ error: "Invalid contentType" }, { status: 400 });
   }

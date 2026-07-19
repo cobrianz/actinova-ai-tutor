@@ -486,14 +486,14 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       <div className={`${sidebarCollapsed ? "w-14" : "w-[240px]"} shrink-0 transition-all duration-300 hidden lg:flex flex-col h-full`}
         style={{ background: "var(--sidebar-bg, var(--card))", borderRight: "1px solid var(--border)" }}>
           {!sidebarCollapsed && (
-            <div className="px-3 pt-3 pb-2 border-b border-border/60">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-md bg-green-500/15 text-green-600 dark:text-green-400 flex-shrink-0">
-                  <GraduationCap className="w-3.5 h-3.5" />
+            <div className="px-3 pt-4 pb-3 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-500/15 text-green-600 dark:text-green-400 flex-shrink-0">
+                  <GraduationCap className="w-4.5 h-4.5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold truncate text-foreground leading-none" style={{ fontFamily: "var(--font-fraunces)" }}>{classroom.name}</p>
-                  <p className="text-[9px] text-muted-foreground leading-none mt-0.5 truncate">{classroom.subject || "Classroom"}</p>
+                  <p className="text-[15px] font-semibold truncate text-foreground leading-tight" style={{ fontFamily: "var(--font-fraunces)" }}>{classroom.name}</p>
+                  <p className="text-xs text-muted-foreground leading-none mt-1 truncate">{classroom.subject || "Classroom"}</p>
                 </div>
               </div>
             </div>

@@ -26,7 +26,11 @@ function initSocketServer(httpServer) {
     cors: {
       origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
       credentials: true,
+      methods: ["GET", "POST"],
     },
+    // Allow both polling and websocket so the HTTP handshake auth cookie
+    // is always present regardless of the initial transport
+    transports: ["polling", "websocket"],
   });
 
   io.use(async (socket, next) => {

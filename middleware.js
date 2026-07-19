@@ -28,6 +28,11 @@ export function middleware(request) {
     "/blog",
   ];
 
+  // Let Socket.IO handshake requests pass through — auth is handled by the socket server middleware
+  if (pathname.startsWith("/socket.io")) {
+    return NextResponse.next();
+  }
+
   // Specific check for public API routes or webhooks if any
   if (pathname.startsWith("/api/webhook") || pathname.startsWith("/api/public") || pathname.startsWith("/api/auth") || pathname.startsWith("/api/billing")) {
     return NextResponse.next();
