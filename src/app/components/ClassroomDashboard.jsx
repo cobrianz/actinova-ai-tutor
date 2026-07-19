@@ -402,11 +402,16 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
   useEffect(() => {
     const classroomId = searchParams?.get("classroom");
     if (!classroomId) return;
+    // Already restored
+    if (selectedClassroom?.id === classroomId) return;
+
     const tryRestore = async () => {
+      // Try from already-loaded list first
       if (classrooms.length > 0) {
         const found = classrooms.find((c) => c.id === classroomId);
         if (found) { setSelectedClassroom(found); return; }
       }
+      // Otherwise fetch fresh
       try {
         const res = await apiClient.get("/api/classrooms");
         const data = await res.json();
@@ -418,7 +423,9 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
       } catch {}
     };
     tryRestore();
-  }, [searchParams]);
+  // Re-run when classrooms load so a refresh that fetches classrooms late still restores
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, classrooms.length]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

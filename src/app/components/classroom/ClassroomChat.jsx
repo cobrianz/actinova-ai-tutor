@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
-import { Send, MessageSquare, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Send, MessageSquare, Loader2, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 
 const MAX_CHARS = 2000;
 const TYPING_THROTTLE_MS = 2000;
@@ -24,7 +24,17 @@ function formatTimestamp(isoString) {
   });
 }
 
-export default function ClassroomChat({ classroomId, user }) {
+/**
+ * ClassroomChat — supports both group chat and DMs.
+ *
+ * Props:
+ *   classroomId   — required, the classroom this chat belongs to
+ *   user          — the current user
+ *   recipientId   — optional; when set, renders a DM with that user
+ *   recipientName — display name for the DM header
+ *   onBack        — callback to go back to group chat (shown when recipientId is set)
+ */
+export default function ClassroomChat({ classroomId, user, recipientId, recipientName, onBack }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [inputError, setInputError] = useState("");
@@ -32,20 +42,14 @@ export default function ClassroomChat({ classroomId, user }) {
   const [connectionState, setConnectionState] = useState("connecting");
   const [authError, setAuthError] = useState(null);
   const bottomRef = useRef(null);
-  const typingTimerRef = useRef(null);
   const lastTypingEmit = useRef(0);
   const socketRef = useRef(null);
   const typingUsersRef = useRef({});
 
+  // Re-connect when classroomId or recipientId changes
   useEffect(() => {
-    // Use a destroyed flag to handle React Strict Mode's double-invoke:
-    // if the effect cleanup runs before the socket finishes connecting,
-    // we mark it destroyed so we don't call setState on the unmounted instance.
     let destroyed = false;
 
-    // The token cookie is httpOnly so JS can't read it via document.cookie —
-    // the server will pick it up from the raw Cookie header instead.
-    // We still try to pass it via handshake.auth as a belt-and-suspenders measure.
     const tokenCookie = document.cookie
       .split("; ")
       .find((c) => c.startsWith("token="));
@@ -53,10 +57,6 @@ export default function ClassroomChat({ classroomId, user }) {
 
     const socket = io(SOCKET_URL || window.location.origin, {
       withCredentials: true,
-      // Start with polling so the HTTP handshake (and cookie auth) can complete,
-      // then upgrade to websocket. Pure "websocket" transport skips the HTTP
-      // handshake entirely which means the auth middleware on the socket server
-      // may not receive the cookie in time.
       transports: ["polling", "websocket"],
       auth: token ? { token } : {},
       reconnection: true,
@@ -71,17 +71,14 @@ export default function ClassroomChat({ classroomId, user }) {
       if (destroyed) return;
       setConnectionState("connected");
       setAuthError(null);
-      socket.emit("join_room", { classroomId });
+      // Join the appropriate room (group or DM)
+      socket.emit("join_room", { classroomId, recipientId });
     });
 
     socket.on("connect_error", () => {
       if (destroyed) return;
       retryCount++;
-      if (retryCount < 5) {
-        setConnectionState("retrying");
-      } else {
-        setConnectionState("failed");
-      }
+      setConnectionState(retryCount < 5 ? "retrying" : "failed");
     });
 
     socket.on("message_history", (history) => {
@@ -97,13 +94,10 @@ export default function ClassroomChat({ classroomId, user }) {
     socket.on("user_typing", ({ userId, userName }) => {
       if (destroyed) return;
       setTypingUsers((prev) => {
-        const exists = prev.find((u) => u.userId === userId);
-        if (exists) return prev;
+        if (prev.find((u) => u.userId === userId)) return prev;
         return [...prev, { userId, userName }];
       });
-      if (typingUsersRef.current[userId]) {
-        clearTimeout(typingUsersRef.current[userId]);
-      }
+      if (typingUsersRef.current[userId]) clearTimeout(typingUsersRef.current[userId]);
       typingUsersRef.current[userId] = setTimeout(() => {
         setTypingUsers((prev) => prev.filter((u) => u.userId !== userId));
         delete typingUsersRef.current[userId];
@@ -121,7 +115,14 @@ export default function ClassroomChat({ classroomId, user }) {
       socket.disconnect();
       Object.values(timers).forEach(clearTimeout);
     };
-  }, [classroomId]);
+  }, [classroomId, recipientId]);
+
+  // Reset messages when switching between DM / group
+  useEffect(() => {
+    setMessages([]);
+    setConnectionState("connecting");
+    setAuthError(null);
+  }, [recipientId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,30 +130,21 @@ export default function ClassroomChat({ classroomId, user }) {
 
   const handleSend = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed) {
-      setInputError("Message cannot be empty");
-      return;
-    }
-    if (trimmed.length > MAX_CHARS) {
-      setInputError(`Message too long (max ${MAX_CHARS} chars)`);
-      return;
-    }
+    if (!trimmed) { setInputError("Message cannot be empty"); return; }
+    if (trimmed.length > MAX_CHARS) { setInputError(`Message too long (max ${MAX_CHARS} chars)`); return; }
     setInputError("");
-    socketRef.current?.emit("send_message", { classroomId, content: trimmed });
+    socketRef.current?.emit("send_message", { classroomId, content: trimmed, recipientId });
     setInput("");
-  }, [input, classroomId]);
+  }, [input, classroomId, recipientId]);
 
-  const handleInputChange = useCallback(
-    (e) => {
-      setInput(e.target.value);
-      const now = Date.now();
-      if (now - lastTypingEmit.current > TYPING_THROTTLE_MS) {
-        socketRef.current?.emit("typing", { classroomId });
-        lastTypingEmit.current = now;
-      }
-    },
-    [classroomId]
-  );
+  const handleInputChange = useCallback((e) => {
+    setInput(e.target.value);
+    const now = Date.now();
+    if (now - lastTypingEmit.current > TYPING_THROTTLE_MS) {
+      socketRef.current?.emit("typing", { classroomId, recipientId });
+      lastTypingEmit.current = now;
+    }
+  }, [classroomId, recipientId]);
 
   const isOwnMessage = (msg) => {
     const senderId = msg.senderId?.toString?.() || msg.senderId;
@@ -162,7 +154,7 @@ export default function ClassroomChat({ classroomId, user }) {
 
   if (connectionState === "connecting") {
     return (
-      <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px] items-center justify-center">
+      <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px] items-center justify-center bg-white dark:bg-slate-900">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-bounce [animation-delay:-0.3s]" />
           <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-bounce [animation-delay:-0.15s]" />
@@ -174,16 +166,12 @@ export default function ClassroomChat({ classroomId, user }) {
 
   if (connectionState === "failed" && !authError) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-slate-900">
         <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
           <AlertCircle className="w-8 h-8 text-red-500" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-1">
-          Chat unavailable
-        </h3>
-        <p className="text-sm text-muted-foreground max-w-xs mb-4">
-          Could not connect to the chat server.
-        </p>
+        <h3 className="text-lg font-semibold text-foreground mb-1">Chat unavailable</h3>
+        <p className="text-sm text-muted-foreground max-w-xs mb-4">Could not connect to the chat server.</p>
         <button
           onClick={() => window.location.reload()}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
@@ -195,8 +183,24 @@ export default function ClassroomChat({ classroomId, user }) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px]">
-      {/* Connection status bar */}
+    <div className="flex flex-col h-[calc(100vh-200px)] min-h-[400px] bg-white dark:bg-slate-900">
+      {/* DM header */}
+      {recipientId && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          {onBack && (
+            <button onClick={onBack} className="p-1 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-700 dark:text-green-300 font-bold text-xs flex-shrink-0">
+            {(recipientName || "?").charAt(0).toUpperCase()}
+          </div>
+          <span className="text-xs font-semibold text-foreground truncate">{recipientName || "Direct Message"}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground">Direct Message</span>
+        </div>
+      )}
+
+      {/* Connection status */}
       {connectionState === "retrying" && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -212,59 +216,30 @@ export default function ClassroomChat({ classroomId, user }) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 bg-white dark:bg-slate-900">
         {messages.length === 0 && connectionState === "connected" && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
             <p className="text-xs text-slate-400">
-              No messages yet. Start the conversation!
+              {recipientId ? `Start a private conversation with ${recipientName || "this user"}.` : "No messages yet. Start the conversation!"}
             </p>
           </div>
         )}
         {messages.map((msg) => {
           const mine = isOwnMessage(msg);
           return (
-            <div
-              key={msg._id}
-              className={`flex ${mine ? "justify-end" : "justify-start"} mb-2`}
-            >
-              <div
-                className={`max-w-[70%] rounded-2xl px-3 py-2 ${
-                  mine
-                    ? "bg-green-500 text-white rounded-br-sm"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm"
-                }`}
-              >
-                {!mine && (
+            <div key={msg._id} className={`flex ${mine ? "justify-end" : "justify-start"} mb-2`}>
+              <div className={`max-w-[70%] rounded-2xl px-3 py-2 ${mine ? "bg-green-500 text-white rounded-br-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm"}`}>
+                {!mine && !recipientId && (
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[10px] font-bold">
-                      {msg.senderName}
-                    </span>
-                    <span
-                      className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
-                        msg.senderRole === "instructor"
-                          ? "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400"
-                          : "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
-                      }`}
-                    >
-                      {msg.senderRole === "instructor"
-                        ? "Instructor"
-                        : "Student"}
+                    <span className="text-[10px] font-bold">{msg.senderName}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${msg.senderRole === "instructor" ? "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400" : "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"}`}>
+                      {msg.senderRole === "instructor" ? "Instructor" : "Student"}
                     </span>
                   </div>
                 )}
-                <p className="text-xs leading-relaxed break-words">
-                  {msg.content}
-                </p>
-                <p
-                  className={`text-[9px] mt-0.5 ${
-                    mine
-                      ? "text-green-100"
-                      : "text-slate-400"
-                  }`}
-                >
-                  {formatTimestamp(msg.createdAt)}
-                </p>
+                <p className="text-xs leading-relaxed break-words">{msg.content}</p>
+                <p className={`text-[9px] mt-0.5 ${mine ? "text-green-100" : "text-slate-400"}`}>{formatTimestamp(msg.createdAt)}</p>
               </div>
             </div>
           );
@@ -274,39 +249,31 @@ export default function ClassroomChat({ classroomId, user }) {
 
       {/* Typing indicator */}
       {typingUsers.length > 0 && (
-        <div className="px-4 py-1 text-[10px] text-slate-400">
-          {typingUsers.map((u) => u.userName).join(", ")}{" "}
-          {typingUsers.length === 1 ? "is" : "are"} typing...
+        <div className="px-4 py-1 text-[10px] text-slate-400 bg-white dark:bg-slate-900">
+          {typingUsers.map((u) => u.userName).join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
         </div>
       )}
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
+      <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
         <div className="flex items-center gap-2">
           <input
             value={input}
             onChange={handleInputChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Type a message..."
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder={recipientId ? `Message ${recipientName || ""}...` : "Type a message..."}
             disabled={connectionState !== "connected"}
             className="flex-1 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30 disabled:opacity-50"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || connectionState !== "connected"}
-            className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:opacity-50 transition-colors"
+            className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="w-4 h-4" />
           </button>
         </div>
-        {inputError && (
-          <p className="text-[10px] text-red-500 mt-1">{inputError}</p>
-        )}
+        {inputError && <p className="text-[10px] text-red-500 mt-1">{inputError}</p>}
       </div>
     </div>
   );

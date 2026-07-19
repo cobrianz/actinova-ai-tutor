@@ -16,6 +16,7 @@ export default function CourseTab({ classroomState }) {
     showForkPanel, setShowForkPanel, browseResults, browseLoading,
     browseQuery, setBrowseQuery, browseType, setBrowseType,
     fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
+    browseMyContent, setBrowseMyContent,
     courseModules, courseGenLoading, handleGenerateCourseStructure,
   } = classroomState;
 
@@ -108,6 +109,8 @@ export default function CourseTab({ classroomState }) {
           forking={forking}
           forkedIdSet={forkedIdSet}
           browseError={browseError}
+          browseMyContent={browseMyContent}
+          setBrowseMyContent={setBrowseMyContent}
         />
       )}
 

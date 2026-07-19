@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Search, BookOpen, Plus, MessageCircle, MoreHorizontal,
+  Search, Plus, MessageCircle, MoreHorizontal,
   FileText, ScrollText, Briefcase, HelpCircle, Star,
   User, LogOut, X, TrendingUp, Coins, CalendarCheck, GraduationCap
 } from "lucide-react";
@@ -10,10 +10,6 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 
-const primaryItems = [
-  { name: "Explore", id: "explore", icon: Search },
-  { name: "Planner", id: "study-plans", icon: CalendarCheck },
-];
 
 const secondaryItems = [
   { name: "AI Chat", id: "chat", icon: MessageCircle },
@@ -23,7 +19,6 @@ const secondaryItems = [
   { name: "Career Growth", id: "career", icon: Briefcase },
   { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
   { name: "Premium", id: "premium-courses", icon: Star },
-  { name: "Classrooms", id: "classrooms", icon: GraduationCap },
 ];
 
 function NavBtn({ icon: Icon, label, isActive, onClick }) {
@@ -194,15 +189,19 @@ export default function DashboardMobileNav() {
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         <div className="flex items-center justify-around h-16 px-1">
-            {primaryItems.map((item) => (
-              <NavBtn
-                key={item.id}
-                icon={item.icon}
-                label={item.name}
-                isActive={activeContent === item.id}
-                onClick={() => navigate(item.id)}
-              />
-            ))}
+            <NavBtn
+              icon={Search}
+              label="Explore"
+              isActive={activeContent === "explore"}
+              onClick={() => navigate("explore")}
+            />
+
+            <NavBtn
+              icon={GraduationCap}
+              label="Classes"
+              isActive={activeContent === "classrooms"}
+              onClick={() => navigate("classrooms")}
+            />
 
             <button
               onClick={() => navigate("generate")}
@@ -212,10 +211,10 @@ export default function DashboardMobileNav() {
             </button>
 
             <NavBtn
-              icon={BookOpen}
-              label="Learn"
-              isActive={activeContent === "library"}
-              onClick={() => navigate("library")}
+              icon={CalendarCheck}
+              label="Planner"
+              isActive={activeContent === "study-plans"}
+              onClick={() => navigate("study-plans")}
             />
 
             <NavBtn

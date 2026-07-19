@@ -76,7 +76,7 @@ function initSocketServer(httpServer) {
   io.on("connection", (socket) => {
     console.log(`[chat] connected: ${socket.user.id}`);
 
-    socket.on("join_room", async ({ classroomId }) => {
+    socket.on("join_room", async ({ classroomId, recipientId }) => {
       if (!classroomId) return;
       try {
         const { connectToDatabase } = require("../app/lib/mongodb");
@@ -106,10 +106,26 @@ function initSocketServer(httpServer) {
             });
           }
         }
-        socket.join(classroomId);
+
+        // DM room: deterministic room ID from sorted pair of user IDs
+        const roomId = recipientId
+          ? `dm_${classroomId}_${[socket.user.id, recipientId].sort().join("_")}`
+          : classroomId;
+
+        socket.join(roomId);
 
         const Model = getModel();
-        const history = await Model.find({ classroomId })
+        const query = recipientId
+          ? {
+              classroomId,
+              $or: [
+                { senderId: socket.user.id, recipientId },
+                { senderId: recipientId, recipientId: socket.user.id },
+              ],
+            }
+          : { classroomId, recipientId: { $exists: false } };
+
+        const history = await Model.find(query)
           .sort({ createdAt: -1 })
           .limit(50)
           .lean();
@@ -122,21 +138,24 @@ function initSocketServer(httpServer) {
       }
     });
 
-    socket.on("send_message", async ({ classroomId, content }) => {
+    socket.on("send_message", async ({ classroomId, content, recipientId }) => {
       if (!content || typeof content !== "string") return;
       const trimmed = content.trim();
       if (!trimmed || trimmed.length > 2000) return;
 
       try {
         const Model = getModel();
-        const message = await Model.create({
+        const doc = {
           classroomId,
           senderId: socket.user.id,
           senderName: socket.user.name,
           senderRole: socket.user.role,
           content: trimmed,
           createdAt: new Date(),
-        });
+        };
+        if (recipientId) doc.recipientId = recipientId;
+
+        const message = await Model.create(doc);
         const payload = {
           _id: message._id.toString(),
           classroomId,
@@ -145,16 +164,25 @@ function initSocketServer(httpServer) {
           senderRole: socket.user.role,
           content: trimmed,
           createdAt: message.createdAt.toISOString(),
+          ...(recipientId && { recipientId }),
         };
-        io.to(classroomId).emit("new_message", payload);
+
+        const roomId = recipientId
+          ? `dm_${classroomId}_${[socket.user.id, recipientId].sort().join("_")}`
+          : classroomId;
+
+        io.to(roomId).emit("new_message", payload);
       } catch (err) {
         console.error("[chat] send_message error:", err);
       }
     });
 
-    socket.on("typing", ({ classroomId }) => {
+    socket.on("typing", ({ classroomId, recipientId }) => {
       if (classroomId) {
-        socket.to(classroomId).emit("user_typing", {
+        const roomId = recipientId
+          ? `dm_${classroomId}_${[socket.user.id, recipientId].sort().join("_")}`
+          : classroomId;
+        socket.to(roomId).emit("user_typing", {
           userId: socket.user.id,
           userName: socket.user.name,
         });
