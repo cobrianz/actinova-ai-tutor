@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, ChevronRight, Clock, Trash2,
   AlertCircle, UserPlus, GraduationCap, ArrowRight, ChevronLeft,
-  Sparkles, Loader2,
+  Sparkles, Loader2, ClipboardList, Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -308,46 +308,76 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
   };
 
   return (
-    <motion.div whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }} onClick={onClick}
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 cursor-pointer hover:border-green-300 dark:hover:border-green-600 transition-colors">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-            <GraduationCap className="w-4.5 h-4.5 text-green-600" />
-          </div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[180px]">{classroom.name}</h4>
+    <motion.button
+      whileHover={{ y: -2 }}
+      onClick={onClick}
+      className="text-left w-full rounded-xl border p-4 transition-all border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-400/30"
+    >
+      {/* Top row: icon + name + delete */}
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <GraduationCap size={16} className="text-green-600 dark:text-green-400 shrink-0" />
+          <span className="text-[13px] font-semibold text-slate-800 dark:text-white truncate">{classroom.name}</span>
         </div>
-        <button onClick={handleDelete} disabled={deleting} className="p-1 text-slate-300 hover:text-red-400 transition-colors disabled:opacity-50">
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {classroom.semester && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 uppercase tracking-wider">
+              {classroom.semester}
+            </span>
+          )}
+          {role === "instructor" && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="p-1 text-slate-300 hover:text-red-400 transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
-      {classroom.subject && <p className="text-[11px] text-slate-500 mb-2 line-clamp-1">{classroom.subject}</p>}
-      <div className="flex items-center gap-3 flex-wrap mb-3">
+
+      {/* Description */}
+      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+        {classroom.description || classroom.subject || "No description yet."}
+      </p>
+
+      {/* Stats row */}
+      <div className="mt-3 flex items-center gap-3 flex-wrap">
         {role === "instructor" && (
-          <span className="flex items-center gap-1 text-[10px] text-slate-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /><Users className="w-3 h-3" /><span className="font-medium">{classroom.studentCount}</span> Students
+          <span className="flex items-center gap-1 text-[10px] text-slate-400">
+            <Users className="w-3 h-3" />
+            <span className="font-semibold text-slate-600 dark:text-slate-300">{classroom.studentCount}</span> students
           </span>
         )}
-        <span className="flex items-center gap-1 text-[10px] text-slate-500">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400" /><GraduationCap className="w-3 h-3" /><span className="font-medium">{classroom.assignmentCount}</span> Assignments
-          <span className="ml-0.5 px-1.5 py-0.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-bold rounded-full uppercase tracking-wider">{classroom.semester || "Active"}</span>
+        <span className="flex items-center gap-1 text-[10px] text-slate-400">
+          <ClipboardList className="w-3 h-3" />
+          <span className="font-semibold text-slate-600 dark:text-slate-300">{classroom.assignmentCount}</span> assignments
         </span>
         {role !== "instructor" && (
-          <span className="flex items-center gap-1 text-[10px] text-slate-500">
-            <span className={`w-1.5 h-1.5 rounded-full ${isOverdue ? "bg-amber-400" : "bg-green-400"}`} /><Clock className={`w-3 h-3 ${isOverdue ? "text-amber-500" : ""}`} /><span className="font-medium">{classroom.dueAssignments || 0}</span> Due Soon
+          <span className={`flex items-center gap-1 text-[10px] ${isOverdue ? "text-amber-500" : "text-slate-400"}`}>
+            <Clock className="w-3 h-3" />
+            <span className="font-semibold">{classroom.dueAssignments || 0}</span> due soon
+          </span>
+        )}
+        {classroom.durationWeeks > 0 && (
+          <span className="flex items-center gap-1 text-[10px] text-slate-400">
+            <Calendar className="w-3 h-3" />
+            <span className="font-semibold text-slate-600 dark:text-slate-300">{classroom.durationWeeks}w</span>
           </span>
         )}
       </div>
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] text-slate-400">{new Date(classroom.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-          {classroom.durationWeeks > 0 && <span className="text-[10px] text-slate-400">{classroom.durationWeeks} weeks</span>}
-        </div>
-        <button onClick={(e) => { e.stopPropagation(); onClick(); }} className="text-green-600 dark:text-green-400 text-xs font-semibold flex items-center gap-1 hover:gap-2 transition-all px-2 py-1 rounded-lg hover:bg-green-50 dark:hover:bg-green-500/10">
-          Open <ArrowRight className="w-3 h-3 -rotate-45" />
-        </button>
+
+      {/* Footer */}
+      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <span className="text-[10px] text-slate-400">
+          {new Date(classroom.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+        <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
+          Open <ArrowRight className="w-3 h-3" />
+        </span>
       </div>
-    </motion.div>
+    </motion.button>
   );
 }
 

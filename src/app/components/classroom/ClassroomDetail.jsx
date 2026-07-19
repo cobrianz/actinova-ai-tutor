@@ -59,6 +59,8 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [chatParticipants, setChatParticipants] = useState([]);
   const [chatParticipantsLoading, setChatParticipantsLoading] = useState(false);
   const [chatParticipantsFetched, setChatParticipantsFetched] = useState(false);
+  // null = group chat, { id, name } = DM with that participant
+  const [chatRecipient, setChatRecipient] = useState(null);
 
   const [discussions, setDiscussions] = useState([]);
   const [discussionsLoading, setDiscussionsLoading] = useState(false);
@@ -255,6 +257,17 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const data = await res.json();
       if (data.success) {
         setForkedContent((prev) => prev.map((fc) => (fc.contentId === contentId && fc.contentType === contentType) ? { ...fc, unlocked: !fc.unlocked } : fc));
+      }
+    } catch { toast.error("Failed to update"); }
+  };
+
+  const handleUpdateFork = async (contentType, contentId, updates) => {
+    try {
+      const res = await apiClient.patch(`/api/classrooms/${classroom.id}/fork`, { contentType, contentId, ...updates });
+      const data = await res.json();
+      if (data.success) {
+        setForkedContent((prev) => prev.map((fc) => (fc.contentId === contentId && fc.contentType === contentType) ? { ...fc, ...updates } : fc));
+        toast.success("Updated");
       }
     } catch { toast.error("Failed to update"); }
   };
@@ -469,7 +482,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     courseModules, courseGenLoading, handleGenerateCourseStructure,
     handleGenerateModuleAssignments, expandedModule, setExpandedModule,
     forkedContent, forkedIdSet, isForkedContentLocked, handleToggleForkUnlock,
-    handleUnforkContent, handleForkContent, getDueStatus,
+    handleUnforkContent, handleForkContent, handleUpdateFork, getDueStatus,
     newAnnTitle, setNewAnnTitle, newAnnContent, setNewAnnContent,
     handlePostAnnouncement, assignmentForm, studentStats,
     CreateAssignmentPanel, AssignmentDetailPanel,
@@ -520,6 +533,22 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
               )}
             </div>
             <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3" style={{ scrollbarWidth: "none" }}>
+              {/* Group chat button */}
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => setChatRecipient(null)}
+                  className={`flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg transition-colors text-left ${
+                    !chatRecipient
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-100 dark:bg-slate-800">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-semibold truncate">Group Chat</span>
+                </button>
+              )}
               {/* Instructor */}
               {!sidebarCollapsed && (
                 <div>
@@ -535,7 +564,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
                   </div>
                 </div>
               )}
-              {/* Students */}
+              {/* Students — clickable for DM */}
               {!sidebarCollapsed && (
                 <div>
                   <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1 mb-1.5">
@@ -557,19 +586,34 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
                     </div>
                   ) : (
                     <div className="space-y-0.5">
-                      {chatParticipants.map((s) => (
-                        <div key={s.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 text-sm">
-                            {(s.name || "S").charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-foreground truncate">{s.name}</p>
-                            {isInstructor && s.email && (
-                              <p className="text-[9px] text-muted-foreground truncate">{s.email}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                      {chatParticipants.map((s) => {
+                        const isActive = chatRecipient?.id === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => setChatRecipient({ id: s.id, name: s.name })}
+                            className={`flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg transition-colors text-left ${
+                              isActive
+                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                                : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm ${
+                              isActive
+                                ? "bg-green-500 text-white"
+                                : "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300"
+                            }`}>
+                              {(s.name || "S").charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium truncate">{s.name}</p>
+                              {isInstructor && s.email && (
+                                <p className="text-[9px] text-muted-foreground truncate">{s.email}</p>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -577,17 +621,33 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
               {/* Collapsed: just show avatars */}
               {sidebarCollapsed && (
                 <div className="flex flex-col items-center gap-2 pt-1">
+                  <button
+                    onClick={() => setChatRecipient(null)}
+                    title="Group Chat"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${!chatRecipient ? "bg-green-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:bg-secondary"}`}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </button>
                   <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-700 dark:text-purple-300 font-bold text-sm">
                     {(classroom.instructorName || "I").charAt(0).toUpperCase()}
                   </div>
-                  {chatParticipants.slice(0, 6).map((s) => (
-                    <div key={s.id} className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-700 dark:text-green-300 font-bold text-sm" title={s.name}>
+                  {chatParticipants.slice(0, 5).map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setChatRecipient({ id: s.id, name: s.name })}
+                      title={s.name}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                        chatRecipient?.id === s.id
+                          ? "bg-green-500 text-white"
+                          : "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-500/30"
+                      }`}
+                    >
                       {(s.name || "S").charAt(0).toUpperCase()}
-                    </div>
+                    </button>
                   ))}
-                  {chatParticipants.length > 6 && (
+                  {chatParticipants.length > 5 && (
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-[9px] font-bold text-muted-foreground">
-                      +{chatParticipants.length - 6}
+                      +{chatParticipants.length - 5}
                     </div>
                   )}
                 </div>
@@ -728,7 +788,13 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
         )}
 
         {activeTab === "chat" && (
-          <ClassroomChat classroomId={classroom.id} user={user} />
+          <ClassroomChat
+            classroomId={classroom.id}
+            user={user}
+            recipientId={chatRecipient?.id}
+            recipientName={chatRecipient?.name}
+            onBack={chatRecipient ? () => setChatRecipient(null) : undefined}
+          />
         )}
         </div>
       </div>

@@ -105,10 +105,11 @@ const classroomSchema = new mongoose.Schema(
       }],
     }],
     forkedContent: [{
-      contentType: { type: String, enum: ["course", "quiz", "flashcard"], required: true },
+      contentType: { type: String, enum: ["course", "quiz", "flashcard", "report"], required: true },
       contentId: { type: mongoose.Schema.Types.ObjectId, required: true },
       title: { type: String, required: true },
       description: { type: String, default: "" },
+      instructions: { type: String, default: "" },
       weekNumber: { type: Number, default: 0 },
       unlocked: { type: Boolean, default: true },
       availableFrom: { type: Date, default: null },
