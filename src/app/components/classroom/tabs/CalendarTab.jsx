@@ -302,14 +302,14 @@ export default function CalendarTab({ classroomState }) {
           <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-2">Upcoming</h4>
           <div className="space-y-2">
             {assignments?.filter((a) => a.dueDate && new Date(a.dueDate) >= today).slice(0, 3).map((a) => (
-              <div key={a._id} className="flex items-center gap-2 text-[11px]">
+              <div key={a._id || a.id || `assign-${a.title}`} className="flex items-center gap-2 text-[11px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
                 <span className="text-slate-600 dark:text-slate-400 truncate flex-1">{a.title}</span>
                 <span className="text-slate-400 flex-shrink-0">{new Date(a.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               </div>
             ))}
             {discussions?.filter((d) => d.createdAt && new Date(d.createdAt) >= today).slice(0, 2).map((d) => (
-              <div key={d._id} className="flex items-center gap-2 text-[11px]">
+              <div key={d._id || d.id || `disc-${d.title}`} className="flex items-center gap-2 text-[11px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
                 <span className="text-slate-600 dark:text-slate-400 truncate flex-1">{d.title}</span>
                 <span className="text-slate-400 flex-shrink-0">{new Date(d.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
