@@ -321,11 +321,8 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const isForkedContentLocked = (entry) => {
     if (!isInstructor && !entry.unlocked) return true;
-    if (!classroom.startDate || !entry.weekNumber) return false;
-    const now = new Date();
-    const start = new Date(classroom.startDate);
-    const unlockDate = new Date(start.getTime() + (entry.weekNumber - 1) * 7 * 24 * 60 * 60 * 1000);
-    return now < unlockDate;
+    if (entry.weekNumber && !(openedWeeks || []).includes(entry.weekNumber)) return true;
+    return false;
   };
 
   const handleGenerateCourseStructure = async () => {
