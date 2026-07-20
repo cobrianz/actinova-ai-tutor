@@ -6,7 +6,7 @@ import {
   Users, ChevronRight, Calendar, BookOpen, Clock, BarChart2,
   Settings, ArrowLeft, Search, AlertCircle, CheckCircle2, TrendingUp,
   UserPlus, GraduationCap, FileText, Sparkles, MessageSquare, Pin,
-  StickyNote, ExternalLink, Presentation, Code, Layers, Megaphone,
+  ExternalLink, Presentation, Code, Layers, Megaphone,
   ChevronDown, ChevronUp, Send, Tag, AlertTriangle, Link2, Copy,
   Bell, ClipboardList, Lock, Unlock, Trash2, X, Plus,
 } from "lucide-react";
@@ -24,7 +24,6 @@ import AssignmentsTab from "./tabs/AssignmentsTab";
 import GradesTab from "./tabs/GradesTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
 import DiscussionsTab from "./tabs/DiscussionsTab";
-import NotesTab from "./tabs/NotesTab";
 import MaterialsTab from "./tabs/MaterialsTab";
 import StudentsTab from "./tabs/StudentsTab";
 import SettingsTab from "./tabs/SettingsTab";
@@ -83,24 +82,11 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const [notes, setNotes] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
-  const [showNewNote, setShowNewNote] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return sessionStorage.getItem(`classroom_${classroom.id}_show_note`) === 'true';
-  });
-  const [newNoteTitle, setNewNoteTitle] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return sessionStorage.getItem(`classroom_${classroom.id}_note_title`) || '';
-  });
-  const [newNoteContent, setNewNoteContent] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return sessionStorage.getItem(`classroom_${classroom.id}_note_content`) || '';
-  });
-  const [newNoteTags, setNewNoteTags] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return sessionStorage.getItem(`classroom_${classroom.id}_note_tags`) || '';
-  });
+  const [showNewNote, setShowNewNote] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [newNoteContent, setNewNoteContent] = useState("");
+  const [newNoteTags, setNewNoteTags] = useState("");
   const [noteAiLoading, setNoteAiLoading] = useState(false);
-  const [noteSummaryLoading, setNoteSummaryLoading] = useState(null);
 
   const [materials, setMaterials] = useState([]);
   const [materialsLoading, setMaterialsLoading] = useState(false);
@@ -220,15 +206,15 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     settings: classroom.settings || {
       allowStudentPosts: true, requireApproval: false, showGradesToStudents: true,
       allowLateSubmissions: true, latePenaltyPercent: 10, maxFileSizeMB: 50,
-      enableDiscussions: true, enableNotes: true, enableMaterials: true,
+      enableDiscussions: true, enableMaterials: true,
     },
     newPrereq: "",
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   const fetchDiscussions = useCallback(async () => { setDiscussionsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions`); const data = await res.json(); if (data.success) setDiscussions(data.discussions); } catch {} finally { setDiscussionsLoading(false); } }, [classroom.id]);
-  const fetchPosts = useCallback(async (discussionId) => { setPostsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions/${discussionId}/posts`); const data = await res.json(); if (data.success) setDiscussionPosts(data.posts); } catch {} finally { setPostsLoading(false); } }, [classroom.id]);
   const fetchNotes = useCallback(async () => { setNotesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/notes`); const data = await res.json(); if (data.success) setNotes(data.notes); } catch {} finally { setNotesLoading(false); } }, [classroom.id]);
+  const fetchPosts = useCallback(async (discussionId) => { setPostsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions/${discussionId}/posts`); const data = await res.json(); if (data.success) setDiscussionPosts(data.posts); } catch {} finally { setPostsLoading(false); } }, [classroom.id]);
   const fetchMaterials = useCallback(async () => { setMaterialsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/materials`); const data = await res.json(); if (data.success) setMaterials(data.materials); } catch {} finally { setMaterialsLoading(false); } }, [classroom.id]);
   const fetchStudents = useCallback(async () => { if (!isInstructor) return; setLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/students`); const data = await res.json(); if (data.success) { setStudents(data.students); setStudentStats(data.stats); } } catch {} finally { setLoading(false); } }, [classroom.id, isInstructor]);
   const fetchGrades = useCallback(async () => { setGradesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/grades`); const data = await res.json(); if (data.success) setGrades(data.students || []); } catch {} finally { setGradesLoading(false); } }, [classroom.id]);
@@ -404,12 +390,11 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   useEffect(() => {
     if (activeTab === "discussions") fetchDiscussions();
-    if (activeTab === "notes") fetchNotes();
     if (activeTab === "materials") fetchMaterials();
     if (activeTab === "students" && isInstructor) fetchStudents();
     if (activeTab === "grades") fetchGrades();
     if (activeTab === "analytics" && isInstructor) fetchAnalytics();
-  }, [activeTab, fetchDiscussions, fetchNotes, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor, classroom.id]);
+  }, [activeTab, fetchDiscussions, fetchMaterials, fetchStudents, fetchGrades, fetchAnalytics, isInstructor, classroom.id]);
 
   useEffect(() => {
     if (showForkPanel && isInstructor) {
@@ -490,10 +475,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     setNoteAiLoading(true);
     try { const res = await apiClient.post("/api/classrooms/ai-generate", { task: "generate_note", name: newNoteTitle, subject: classroom.subject, classroomName: classroom.name }); const data = await res.json(); if (data.result) { setNewNoteContent(data.result); toast.success("Note generated!"); } } catch { toast.error("Failed to generate note"); } finally { setNoteAiLoading(false); }
   };
-  const handleSummarizeNote = async (note) => {
-    setNoteSummaryLoading(note._id || note.id);
-    try { const res = await apiClient.post("/api/classrooms/ai-generate", { task: "note_summary", content: note.content, classroomName: classroom.name }); const data = await res.json(); if (data.result) { setNotes((prev) => prev.map((n) => (n._id || n.id) === (note._id || note.id) ? { ...n, content: data.result } : n)); toast.success("Note summarized!"); } } catch { toast.error("Failed to summarize"); } finally { setNoteSummaryLoading(null); }
-  };
   const handleCreateMaterial = async () => {
     if (!newMat.title.trim()) { toast.error("Title required"); return; }
     try { const res = await apiClient.post(`/api/classrooms/${classroom.id}/materials`, newMat); const data = await res.json(); if (data.success) { setMaterials([data.material, ...materials]); setNewMat({ title: "", description: "", type: "document", url: "", weekNumber: 0, category: "", isRequired: false }); setShowNewMaterial(false); toast.success("Material added!"); } } catch { toast.error("Failed to add material"); }
@@ -533,7 +514,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     { id: "grades", label: "Grades", icon: BarChart2 },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "discussions", label: "Discussions", icon: MessageSquare },
-    { id: "notes", label: "Notes", icon: StickyNote },
     { id: "materials", label: "Materials", icon: Layers },
     { id: "students", label: "Students", icon: Users },
     { id: "chat", label: "Chat", icon: MessageSquare },
@@ -544,7 +524,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     { id: "assignments", label: "Assignments", icon: ClipboardList },
     { id: "grades", label: "Grades", icon: BarChart2 },
     { id: "discussions", label: "Discussions", icon: MessageSquare },
-    { id: "notes", label: "Notes", icon: StickyNote },
     { id: "materials", label: "Materials", icon: Layers },
     { id: "chat", label: "Chat", icon: MessageSquare },
   ];
@@ -571,12 +550,11 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     replyContent, setReplyContent, replyingTo, setReplyingTo,
     discAiLoading, handleCreateDiscussion, handleCreatePost,
     handleGenerateDiscussionPrompt, fetchDiscussions,
-    notes, notesLoading, showNewNote, setShowNewNote,
-    newNoteTitle, setNewNoteTitle, newNoteContent, setNewNoteContent,
-    newNoteTags, setNewNoteTags, noteAiLoading, noteSummaryLoading,
-    handleCreateNote, handleGenerateNote, handleSummarizeNote,
     materials, materialsLoading, showNewMaterial, setShowNewMaterial,
     newMat, setNewMat, handleCreateMaterial,
+    notes, notesLoading, showNewNote, setShowNewNote,
+    newNoteTitle, setNewNoteTitle, newNoteContent, setNewNoteContent,
+    newNoteTags, setNewNoteTags, noteAiLoading, handleCreateNote, handleGenerateNote, fetchNotes,
     grades, gradesLoading, handleExportGrades,
     analytics, analyticsLoading,
     students, loading, showInvite: showInvite,
@@ -639,7 +617,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
               {[
                 { label: "Assignment", color: "text-green-600 dark:text-green-400", hoverBg: "hover:bg-green-500/10", icon: ClipboardList, action: () => setShowCreateAssignment(true) },
                 { label: "Discussion", color: "text-blue-600 dark:text-blue-400", hoverBg: "hover:bg-blue-500/10", icon: MessageSquare, action: () => { setActiveTab("discussions"); setShowNewDiscussion(true); } },
-                { label: "Note", color: "text-amber-600 dark:text-amber-400", hoverBg: "hover:bg-amber-500/10", icon: StickyNote, action: () => { setActiveTab("notes"); setShowNewNote(true); } },
                 { label: "Material", color: "text-purple-600 dark:text-purple-400", hoverBg: "hover:bg-purple-500/10", icon: Layers, action: () => { setActiveTab("materials"); setShowNewMaterial(true); } },
                 { label: "Invite", color: "text-muted-foreground", hoverBg: "hover:bg-secondary/80", icon: UserPlus, action: () => setShowInvite(true) },
               ].map(({ label, color, hoverBg, icon: Icon, action }) => (
@@ -700,10 +677,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
         {activeTab === "discussions" && (
           <DiscussionsTab classroomState={classroomState} />
-        )}
-
-        {activeTab === "notes" && (
-          <NotesTab classroomState={classroomState} />
         )}
 
         {activeTab === "materials" && (

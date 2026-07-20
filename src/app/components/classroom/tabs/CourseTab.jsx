@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Target, FileText, Lock, Unlock, ExternalLink,
   Award, Sparkles, Loader2, Link2, Trash2, Plus, Settings, Info,
   Eye, EyeOff, MessageSquare, ClipboardList, ExternalLink as LinkIcon,
-  Check,
+  Check, Video, Presentation, Code, StickyNote, Tag,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import ForkContentPanel from "../ForkContentPanel";
@@ -41,10 +41,13 @@ export default function CourseTab({ classroomState }) {
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
     setAnnouncements, setDiscussions, setForkedContent,
+    materials, materialsLoading, showNewMaterial, setShowNewMaterial,
+    newMat, setNewMat, handleCreateMaterial, inputCls, labelCls, sectionCls,
   } = classroomState;
 
   const [editingFork, setEditingFork] = useState(null);
   const [expandedFork, setExpandedFork] = useState(null);
+  const [showMaterialsPanel, setShowMaterialsPanel] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", onConfirm: null, confirmColor: "red" });
 
   const levelLabels = { highschool: "High School", undergraduate: "Undergraduate", graduate: "Graduate", phd: "PhD", professional: "Professional" };
@@ -56,11 +59,22 @@ export default function CourseTab({ classroomState }) {
 
   const maxWeeks = classroom.durationWeeks || 12;
 
+  const MATERIAL_ICON_MAP = { document: FileText, video: Video, link: ExternalLink, slides: Presentation, code: Code, other: Layers };
+  const MATERIAL_TYPES = [
+    { value: "document", label: "Document", icon: FileText },
+    { value: "video", label: "Video", icon: Video },
+    { value: "link", label: "Link", icon: ExternalLink },
+    { value: "slides", label: "Slides", icon: Presentation },
+    { value: "code", label: "Code", icon: Code },
+    { value: "other", label: "Other", icon: Layers },
+  ];
+
   return (
     <>
     <div className="space-y-4">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10 p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10" />
         <div className="relative">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/15 flex items-center justify-center">
@@ -107,6 +121,17 @@ export default function CourseTab({ classroomState }) {
           >
             <Link2 className="w-3.5 h-3.5" />
             {showForkPanel ? "Close Fork" : "Fork Content"}
+          </button>
+          <button
+            onClick={() => setShowMaterialsPanel(!showMaterialsPanel)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              showMaterialsPanel
+                ? "bg-purple-500 text-white shadow-lg shadow-purple-500/25"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300 hover:text-purple-600"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Materials
           </button>
           {classroom.durationWeeks > 0 && !courseModules?.length && (
             <button
@@ -258,7 +283,7 @@ export default function CourseTab({ classroomState }) {
                 <div key={i}>
                   <div className="rounded-lg overflow-hidden">
                     {/* Header row */}
-                    <div className="flex items-center gap-3 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg" style={{ backgroundColor: "#E8E6DF" }}>
                       {hasModules ? (
                         <button onClick={() => setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
@@ -391,6 +416,64 @@ export default function CourseTab({ classroomState }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Course Materials */}
+      {showMaterialsPanel && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-purple-500" />
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Course Materials ({materials?.length || 0})</h3>
+            </div>
+            {isInstructor && (
+              <button onClick={() => setShowNewMaterial(!showNewMaterial)} className="flex items-center gap-1 text-[10px] font-semibold text-purple-600 hover:text-purple-700 transition-colors">
+                <Plus className="w-3 h-3" /> {showNewMaterial ? "Close" : "Add"}
+              </button>
+            )}
+          </div>
+          {showNewMaterial && (
+            <div className="mb-3 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <input value={newMat.title} onChange={(e) => setNewMat({ ...newMat, title: e.target.value })} placeholder="Material title" className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+                <select value={newMat.type} onChange={(e) => setNewMat({ ...newMat, type: e.target.value })} className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/30">
+                  {MATERIAL_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </div>
+              <input value={newMat.url} onChange={(e) => setNewMat({ ...newMat, url: e.target.value })} placeholder="https://..." className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+              <div className="flex gap-2">
+                <button onClick={handleCreateMaterial} disabled={!newMat.title.trim()} className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-[10px] font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors">Add</button>
+                <button onClick={() => setShowNewMaterial(false)} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-[10px] font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+          {materialsLoading ? (
+            <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-12 bg-slate-50 dark:bg-slate-800 rounded-lg animate-pulse" />)}</div>
+          ) : materials?.length > 0 ? (
+            <div className="space-y-1.5">
+              {materials.map((mat) => {
+                const MIcon = MATERIAL_ICON_MAP[mat.type] || Layers;
+                return (
+                  <div key={mat._id || mat.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                      <MIcon className="w-3.5 h-3.5 text-purple-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{mat.title}</p>
+                        {mat.isRequired && <span className="text-[8px] font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-1 py-0.5 rounded">Req</span>}
+                      </div>
+                      {mat.description && <p className="text-[9px] text-slate-400 truncate">{mat.description}</p>}
+                    </div>
+                    {mat.url && <a href={mat.url} target="_blank" rel="noopener noreferrer" className="text-[9px] font-semibold text-green-600 hover:text-green-700 flex items-center gap-0.5 flex-shrink-0">Open <ExternalLink className="w-2.5 h-2.5" /></a>}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400 text-center py-4">No materials yet.</p>
+          )}
         </div>
       )}
     </div>
@@ -733,7 +816,7 @@ function ForkedModuleCard({
 
   return (
     <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
-      <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+      <div className="flex items-center gap-2 p-2.5 rounded-lg" style={{ backgroundColor: "#F2F1EC" }}>
         {isInstructor && (
           <button onClick={onToggleHideModule} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={isHidden ? "Show module" : "Hide module"}>
             {isHidden ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
@@ -757,7 +840,7 @@ function ForkedModuleCard({
         </button>
       </div>
       {expanded && mod.lessons?.length > 0 && (
-        <div className="px-2.5 pb-2.5 space-y-2 pt-2">
+        <div className="pb-2.5 space-y-2 pt-2">
           {mod.lessons.map((lesson, li) => {
             const isActive = activeLessonIdx === li;
             const hidden = isLessonHidden(li);
@@ -776,9 +859,12 @@ function ForkedModuleCard({
                     className={`flex items-center gap-2 flex-1 py-2 px-2 rounded-lg text-left transition-all ${
                       hidden ? "cursor-not-allowed" :
                       isActive
-                        ? "bg-green-500/10 ring-1 ring-green-500/30"
-                        : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? completed
+                          ? "bg-green-500/10 ring-1 ring-green-500/30"
+                          : "ring-1 ring-slate-300/50 dark:ring-slate-600/50"
+                        : ""
                     }`}
+                    style={!hidden && !isActive ? { backgroundColor: "#EDECE8" } : !hidden && isActive && !completed ? { backgroundColor: "#EDECE8" } : undefined}
                   >
                     <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${completed ? "bg-green-500" : isActive ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}>
                       {loading && isActive ? (
@@ -821,7 +907,7 @@ function ForkedModuleCard({
 
                 {/* Lesson Content Area */}
                   {isActive && !hidden && (
-                  <div className="mt-1.5 pl-3">
+                  <div className="mt-1.5 rounded-lg overflow-hidden" style={{ backgroundColor: "#EDECE8" }}>
                     {loading && !contentChecked ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
@@ -830,7 +916,7 @@ function ForkedModuleCard({
                         </div>
                       </div>
                     ) : contentChecked && lessonContent ? (
-                      <div className="rounded-lg p-4" style={{ backgroundColor: "#F2F1EC" }}>
+                      <div className="p-4">
                         <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
                           <div className="space-y-4">
                             {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
@@ -840,7 +926,7 @@ function ForkedModuleCard({
                     ) : contentChecked ? (
                       <div className="py-4">
                         {isInstructor ? (
-                          <div className="flex flex-col items-center gap-2 py-3 px-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20">
+                          <div className="flex flex-col items-center gap-2 py-3 px-4 border border-amber-200/60 dark:border-amber-500/20">
                             <div className="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
                               <FileText className="w-4 h-4 text-amber-600" />
                             </div>
@@ -855,7 +941,7 @@ function ForkedModuleCard({
                             </a>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center gap-2 py-3 px-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                          <div className="flex flex-col items-center gap-2 py-3 px-4 border border-slate-200 dark:border-slate-700">
                             <Lock className="w-5 h-5 text-slate-300 dark:text-slate-600" />
                             <p className="text-[10px] font-medium text-slate-400 text-center">Lesson content has not been added yet. Please check back later.</p>
                           </div>

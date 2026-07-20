@@ -5,7 +5,6 @@ import {
   BookOpen,
   ClipboardList,
   MessageSquare,
-  StickyNote,
   Layers,
   Settings,
   MoreHorizontal,
@@ -17,17 +16,17 @@ import {
 
 // Always visible in the bottom bar (max 4 + More)
 const PRIMARY_TABS = [
+  { id: "home",         label: "Home",      icon: LayoutDashboard },
   { id: "course",       label: "Course",    icon: BookOpen },
   { id: "assignments",  label: "Tasks",     icon: ClipboardList },
   { id: "discussions",  label: "Discuss",   icon: MessagesSquare },
-  { id: "calendar",     label: "Calendar",  icon: Calendar },
 ];
 
 // Shown inside the More modal
 const SECONDARY_TABS = [
-  { id: "chat",        label: "Chat",      icon: MessageSquare },
-  { id: "notes",       label: "Notes",     icon: StickyNote },
-  { id: "materials",   label: "Materials", icon: Layers },
+  { id: "chat",         label: "Chat",       icon: MessageSquare },
+  { id: "calendar",     label: "Calendar",  icon: Calendar },
+  { id: "materials",    label: "Materials", icon: Layers },
 ];
 
 const INSTRUCTOR_TAB = { id: "settings", label: "Settings", icon: Settings };
@@ -80,6 +79,7 @@ function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor, onBack }) {
   }, [moreOpen]);
 
   const handleTabClick = (id) => {
+    if (id === "home") { onBack(); return; }
     setActiveTab(id);
     setMoreOpen(false);
   };
@@ -152,12 +152,6 @@ function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor, onBack }) {
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", touchAction: "manipulation" }}
       >
         <div className="flex items-center justify-around h-16 px-1">
-          <NavBtn
-            icon={LayoutDashboard}
-            label="Home"
-            isActive={false}
-            onClick={onBack}
-          />
           {PRIMARY_TABS.map(({ id, label, icon }) => (
             <NavBtn
               key={id}
