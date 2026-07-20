@@ -242,10 +242,15 @@ export function renderContent(content) {
     }
   );
 
-  html = html.replace(/^\s*#+ (?:Module|Lesson|Course|Topic):\s*.*$/gim, "");
-  html = html.replace(/^\s*(?:Module|Lesson|Course|Topic):\s*.*$/gim, "");
+  html = html.replace(/^\s*#+\s+(?:Module|Lesson|Course|Topic)\s*:\s*$/gim, "");
+  html = html.replace(/^\s*(?:Module|Lesson|Course|Topic)\s*:\s*$/gim, "");
+  html = html.replace(/^([ \t]*#)\s+(?:Module|Lesson|Course|Topic)\s+\d+\s*:\s*(.+)$/gim, "$1 $2");
+  html = html.replace(/^([ \t]*)(?:Module|Lesson|Course|Topic)\s+\d+\s*:\s*(.+)$/gim, "$1$2");
 
-  html = html.replace(/^[ \t]*# (?!Module|Lesson|Course|Topic)(.*)$/gm, "");
+  html = html.replace(
+    /^[ \t]*# (.+)$/gm,
+    '<h1 class="text-3xl lg:text-5xl font-black font-serif text-foreground mb-4 mt-4">$1</h1>'
+  );
   html = html.replace(
     /^[ \t]*## (.*$)/gm,
     '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-3 mt-3">$1</h2>'

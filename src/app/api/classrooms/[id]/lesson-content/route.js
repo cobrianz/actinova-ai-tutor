@@ -3,6 +3,7 @@ import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware
 import { withCsrf } from "@/lib/withCsrf";
 import { connectToDatabase } from "@/lib/mongodb";
 import Classroom from "@/models/Classroom";
+import Enrollment from "@/models/Enrollment";
 import { ObjectId } from "mongodb";
 
 const handler = combineMiddleware(withErrorHandling, withCsrf, withAuth);
@@ -25,9 +26,11 @@ async function handleGet(request, { params }) {
   if (!classroom) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const isInstructor = classroom.instructorId?.toString() === user._id?.toString();
-  const isEnrolled = classroom.students?.some((s) => s.toString() === user._id?.toString());
-  if (!isInstructor && !isEnrolled) {
-    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  if (!isInstructor) {
+    const enrollment = await Enrollment.findOne({ classroomId: id, studentId: user._id, status: "active" }).lean();
+    if (!enrollment) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
   }
 
   const forkEntry = classroom.forkedContent?.find(
@@ -39,13 +42,17 @@ async function handleGet(request, { params }) {
     return NextResponse.json({ content: "", hasContent: false, locked: true });
   }
 
+  if (!isInstructor && forkEntry.weekNumber && !(classroom.openedWeeks || []).includes(forkEntry.weekNumber)) {
+    return NextResponse.json({ content: "", hasContent: false, locked: true });
+  }
+
   let content = "";
   let hasContent = false;
 
   const forkedModules = forkEntry.meta?.modules;
   if (forkedModules?.[moduleIdx]?.lessons?.[lessonIdx]?.content) {
     const c = forkedModules[moduleIdx].lessons[lessonIdx].content;
-    if (c && c.length > 50 && !c.includes("coming soon")) {
+    if (c && !c.includes("coming soon")) {
       content = c;
       hasContent = true;
     }
@@ -55,10 +62,11 @@ async function handleGet(request, { params }) {
     try {
       const sourceDoc = await db.collection("library").findOne(
         { _id: new ObjectId(contentId) },
-        { projection: { [`modules.${moduleIdx}.lessons.${lessonIdx}.content`]: 1 } }
+        { projection: { [`modules.${moduleIdx}.lessons.${lessonIdx}.content`]: 1, [`courseData.modules.${moduleIdx}.lessons.${lessonIdx}.content`]: 1 } }
       );
-      const sourceContent = sourceDoc?.modules?.[moduleIdx]?.lessons?.[lessonIdx]?.content;
-      if (sourceContent && sourceContent.length > 50 && !sourceContent.includes("coming soon")) {
+      const sourceContent = sourceDoc?.modules?.[moduleIdx]?.lessons?.[lessonIdx]?.content
+        || sourceDoc?.courseData?.modules?.[moduleIdx]?.lessons?.[lessonIdx]?.content;
+      if (sourceContent && !sourceContent.includes("coming soon")) {
         content = sourceContent;
         hasContent = true;
 
