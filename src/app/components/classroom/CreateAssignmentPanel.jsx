@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ClipboardList, X, Search, BookOpen, Check, Loader2, Sparkles, Plus, Trash2 } from "lucide-react";
+import { ClipboardList, X, Search, BookOpen, Check, Loader2, Sparkles, Plus, Trash2, Paperclip, FileText, MessageSquare, GraduationCap } from "lucide-react";
 import { ASSIGNMENT_TYPES } from "./constants";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
-export default function CreateAssignmentPanel({ classroomId, classroomName, onClose, onCreated, initialForm, editAssignment }) {
+export default function CreateAssignmentPanel({ classroomId, classroomName, onClose, onCreated, initialForm, editAssignment, forkedContent = [], materials = [], discussions = [] }) {
   const [form, setForm] = useState(() => {
     if (editAssignment) {
       return {
@@ -18,12 +18,13 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
         availableUntil: editAssignment.availableUntil ? new Date(editAssignment.availableUntil).toISOString().slice(0, 16) : "",
         passingScore: editAssignment.passingScore ?? 60, weight: editAssignment.weight ?? 1,
         maxAttempts: editAssignment.maxAttempts ?? 0, rubric: editAssignment.rubric || [],
+        attachments: editAssignment.attachments || [],
       };
     }
     return initialForm || {
       title: "", description: "", instructions: "", type: "course", dueDate: "", maxScore: 100,
       courseId: "", category: "", availableFrom: "", availableUntil: "", passingScore: 60,
-      weight: 1, maxAttempts: 0, rubric: [],
+      weight: 1, maxAttempts: 0, rubric: [], attachments: [],
     };
   });
   const [courses, setCourses] = useState([]);
@@ -68,7 +69,7 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
     if (!form.title.trim()) { toast.error("Assignment title is required"); return; }
     setLoading(true);
     try {
-      const payload = { ...form, courseId: form.courseId || undefined, rubric: form.rubric.length > 0 ? form.rubric : undefined };
+      const payload = { ...form, courseId: form.courseId || undefined, rubric: form.rubric.length > 0 ? form.rubric : undefined, attachments: form.attachments?.length > 0 ? form.attachments : undefined };
       const isEdit = !!editAssignment;
       const res = isEdit
         ? await apiClient.put(`/api/classrooms/${classroomId}/assignments/${editAssignment.id}`, payload)
@@ -169,6 +170,50 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
               </div>
             </div>
           ) : <p className="text-[11px] text-slate-400">No courses in library yet</p>}
+        </div>
+        <div>
+          <label className={labelCls}>Attach Resources (optional)</label>
+          {(() => {
+            const attachable = [
+              ...forkedContent.map((fc) => ({ type: fc.contentType, id: String(fc.contentId), title: fc.title, icon: ClipboardList })),
+              ...materials.map((m) => ({ type: "material", id: m._id || m.id, title: m.title, icon: FileText })),
+              ...discussions.map((d) => ({ type: "discussion", id: d._id || d.id, title: d.title, icon: MessageSquare })),
+            ];
+            const attachedIds = new Set((form.attachments || []).map((a) => a.id));
+            return attachable.length > 0 ? (
+              <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-hide">
+                {attachable.map((item) => {
+                  const isSelected = attachedIds.has(item.id);
+                  const ItemIcon = item.icon;
+                  return (
+                    <button key={item.id} type="button"
+                      onClick={() => {
+                        const next = isSelected
+                          ? (form.attachments || []).filter((a) => a.id !== item.id)
+                          : [...(form.attachments || []), { type: item.type, id: item.id, title: item.title }];
+                        setForm({ ...form, attachments: next });
+                      }}
+                      className={`flex items-center gap-2 w-full p-2 rounded-lg text-left transition-all ${isSelected ? "bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-600" : "bg-slate-50 dark:bg-slate-800 border border-transparent hover:bg-slate-100 dark:hover:bg-slate-700"}`}>
+                      <ItemIcon className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                      <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">{item.title}</span>
+                      <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 uppercase">{item.type}</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-amber-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : <p className="text-[11px] text-slate-400">No forked content, materials, or discussions available.</p>;
+          })()}
+          {form.attachments?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {form.attachments.map((a) => (
+                <span key={a.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[9px] font-semibold">
+                  {a.title}
+                  <button type="button" onClick={() => setForm({ ...form, attachments: form.attachments.filter((x) => x.id !== a.id) })} className="hover:text-red-500"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <button onClick={handleCreate} disabled={loading || !form.title.trim()} className="w-full py-2.5 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors">
           {loading ? "Saving..." : editAssignment ? "Update Assignment" : "Create Assignment"}

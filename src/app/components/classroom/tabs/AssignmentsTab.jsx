@@ -135,6 +135,7 @@ export default function AssignmentsTab({ classroomState }) {
     handlePostAnnouncement, assignmentForm, studentStats,
     CreateAssignmentPanel, AssignmentDetailPanel,
     inputCls, labelCls, sectionCls,
+    materials, discussions,
   } = classroomState;
 
   return (
@@ -190,7 +191,7 @@ export default function AssignmentsTab({ classroomState }) {
           />
         )}
         {isInstructor && showCreateAssignment && (
-          <CreateAssignmentPanel classroomId={classroom.id} classroomName={classroom.name} onClose={() => { setShowCreateAssignment(false); setEditingAssignment(null); }} onCreated={handleAssignmentSaved} initialForm={assignmentForm} editAssignment={editingAssignment} />
+          <CreateAssignmentPanel classroomId={classroom.id} classroomName={classroom.name} onClose={() => { setShowCreateAssignment(false); setEditingAssignment(null); }} onCreated={handleAssignmentSaved} initialForm={assignmentForm} editAssignment={editingAssignment} forkedContent={forkedContent || []} materials={materials || []} discussions={discussions || []} />
         )}
         {isInstructor && showNewAnnouncement && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={sectionCls}>

@@ -89,7 +89,8 @@ export default function AnalyticsTab({ classroomState }) {
   return (
     <div className="space-y-4">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-indigo-500/10 p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-indigo-500/10" />
         <div className="absolute top-3 right-3 w-32 h-32 rounded-full bg-purple-500/5 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-3">

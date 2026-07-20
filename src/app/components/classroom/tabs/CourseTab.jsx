@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Target, FileText, Lock, Unlock, ExternalLink,
   Award, Sparkles, Loader2, Link2, Trash2, Plus, Settings, Info,
   Eye, EyeOff, MessageSquare, ClipboardList, ExternalLink as LinkIcon,
-  Check, Video, Presentation, Code, StickyNote, Tag,
+  Check, Video, Presentation, Code, StickyNote, Tag, Paperclip,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import ForkContentPanel from "../ForkContentPanel";
@@ -43,11 +43,15 @@ export default function CourseTab({ classroomState }) {
     setAnnouncements, setDiscussions, setForkedContent,
     materials, materialsLoading, showNewMaterial, setShowNewMaterial,
     newMat, setNewMat, handleCreateMaterial, inputCls, labelCls, sectionCls,
+    notes, notesLoading, showNewNote, setShowNewNote,
+    newNoteTitle, setNewNoteTitle, newNoteContent, setNewNoteContent,
+    newNoteTags, setNewNoteTags, noteAiLoading, handleCreateNote, handleGenerateNote, fetchNotes,
   } = classroomState;
 
   const [editingFork, setEditingFork] = useState(null);
   const [expandedFork, setExpandedFork] = useState(null);
   const [showMaterialsPanel, setShowMaterialsPanel] = useState(false);
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", onConfirm: null, confirmColor: "red" });
 
   const levelLabels = { highschool: "High School", undergraduate: "Undergraduate", graduate: "Graduate", phd: "PhD", professional: "Professional" };
@@ -132,6 +136,17 @@ export default function CourseTab({ classroomState }) {
           >
             <Layers className="w-3.5 h-3.5" />
             Materials
+          </button>
+          <button
+            onClick={() => { setShowNotesPanel(!showNotesPanel); if (!showNotesPanel && fetchNotes) fetchNotes(); }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              showNotesPanel
+                ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-300 hover:text-amber-600"
+            }`}
+          >
+            <StickyNote className="w-3.5 h-3.5" />
+            Notes
           </button>
           {classroom.durationWeeks > 0 && !courseModules?.length && (
             <button
@@ -256,7 +271,7 @@ export default function CourseTab({ classroomState }) {
 
       {/* Forked Content */}
       {forkedContent?.length > 0 && (
-        <div className="rounded-xl p-4">
+        <div className="rounded-2xl">
           {isInstructor && (
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -283,7 +298,7 @@ export default function CourseTab({ classroomState }) {
                 <div key={i}>
                   <div className="rounded-lg overflow-hidden">
                     {/* Header row */}
-                    <div className="flex items-center gap-3 p-2.5 rounded-lg" style={{ backgroundColor: "#E8E6DF" }}>
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#E8E6DF] dark:bg-slate-700/50">
                       {hasModules ? (
                         <button onClick={() => setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
@@ -375,9 +390,64 @@ export default function CourseTab({ classroomState }) {
                           setAnnouncements={setAnnouncements}
                           setDiscussions={setDiscussions}
                         />
+        </div>
+      )}
+
+      {/* Course Notes */}
+      {showNotesPanel && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <StickyNote className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Course Notes ({notes?.length || 0})</h3>
+            </div>
+            {isInstructor && (
+              <button onClick={() => setShowNewNote(!showNewNote)} className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 hover:text-amber-700 transition-colors">
+                <Plus className="w-3 h-3" /> {showNewNote ? "Close" : "Add"}
+              </button>
+            )}
+          </div>
+          {showNewNote && (
+            <div className="mb-3 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+              <input value={newNoteTitle} onChange={(e) => setNewNoteTitle(e.target.value)} placeholder="Note title" className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30" />
+              <textarea value={newNoteContent} onChange={(e) => setNewNoteContent(e.target.value)} placeholder="Note content..." rows={3} className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none" />
+              <input value={newNoteTags} onChange={(e) => setNewNoteTags(e.target.value)} placeholder="Tags (comma-separated)" className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30" />
+              <div className="flex gap-2">
+                <button onClick={handleCreateNote} disabled={!newNoteTitle.trim()} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-semibold hover:bg-amber-600 disabled:opacity-50 transition-colors">Add</button>
+                <button onClick={handleGenerateNote} disabled={!newNoteTitle.trim() || noteAiLoading} className="px-3 py-1.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg text-[10px] font-semibold hover:bg-amber-200 dark:hover:bg-amber-500/30 disabled:opacity-50 transition-colors flex items-center gap-1">
+                  {noteAiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  {noteAiLoading ? "Generating..." : "Generate with AI"}
+                </button>
+                <button onClick={() => setShowNewNote(false)} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-[10px] font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+          {notesLoading ? (
+            <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-12 bg-slate-50 dark:bg-slate-800 rounded-lg animate-pulse" />)}</div>
+          ) : notes?.length > 0 ? (
+            <div className="space-y-2">
+              {notes.map((note) => (
+                <div key={note._id || note.id} className="p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">{note.title}</p>
+                    {note.tags?.length > 0 && (
+                      <div className="flex gap-1">
+                        {note.tags.map((tag, ti) => (
+                          <span key={ti} className="text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-semibold">{tag}</span>
+                        ))}
                       </div>
                     )}
                   </div>
+                  {note.content && <p className="text-[11px] text-amber-800 dark:text-amber-300 whitespace-pre-wrap line-clamp-3">{note.content}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400 text-center py-4">No notes yet.</p>
+          )}
+        </div>
+      )}
+    </div>
 
                   {/* Instructor Edit Panel */}
                   {isInstructor && isEditing && (
@@ -653,11 +723,11 @@ function WeekGroupedCourse({
                     <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${isWeekOpen ? "translate-x-4" : "translate-x-0.5"}`} />
                   </button>
                   <span className={`text-[9px] font-semibold ${isWeekOpen ? "text-green-600" : "text-red-500"}`}>{isWeekOpen ? "Open" : "Closed"}</span>
-                  <button
+                   <button
                     onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
                     className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
                   >
-                    <Plus className="w-2.5 h-2.5" /> Add
+                    <Paperclip className="w-2.5 h-2.5" /> Attach
                   </button>
                 </div>
               )}
@@ -674,16 +744,16 @@ function WeekGroupedCourse({
             {/* Weekly Quick-Add Menu */}
             {isInstructor && addMenuWeek === wg.week && (
               <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Add to Week {wg.week}</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Attach to Week {wg.week}</p>
                 <div className="grid grid-cols-3 gap-1.5">
-                  <button onClick={() => setAddingType(addingType === "quiz-add" ? null : "quiz-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "quiz-add" ? "bg-purple-500/15 text-purple-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-500/10"}`}>
+                   <button onClick={() => setAddingType(addingType === "quiz-add" ? null : "quiz-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "quiz-add" ? "bg-purple-500/15 text-purple-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-500/10"}`}>
                     <ClipboardList className="w-2.5 h-2.5" /> Quiz
                   </button>
                   <button onClick={() => setAddingType(addingType === "ann-add" ? null : "ann-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "ann-add" ? "bg-amber-500/15 text-amber-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-amber-500/10"}`}>
                     <Megaphone className="w-2.5 h-2.5" /> Announce
                   </button>
                   <button onClick={() => setAddingType(addingType === "disc-add" ? null : "disc-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "disc-add" ? "bg-blue-500/15 text-blue-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-blue-500/10"}`}>
-                    <MessageSquare className="w-2.5 h-2.5" /> Discuss
+                    <MessageSquare className="w-2.5 h-2.5" /> Discussion
                   </button>
                 </div>
                 {addingType === "quiz-add" && (
@@ -816,7 +886,7 @@ function ForkedModuleCard({
 
   return (
     <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
-      <div className="flex items-center gap-2 p-2.5 rounded-lg" style={{ backgroundColor: "#F2F1EC" }}>
+      <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[#F2F1EC] dark:bg-slate-700/50">
         {isInstructor && (
           <button onClick={onToggleHideModule} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={isHidden ? "Show module" : "Hide module"}>
             {isHidden ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
@@ -861,10 +931,9 @@ function ForkedModuleCard({
                       isActive
                         ? completed
                           ? "bg-green-500/10 ring-1 ring-green-500/30"
-                          : "ring-1 ring-slate-300/50 dark:ring-slate-600/50"
-                        : ""
+                          : "bg-[#EDECE8] dark:bg-slate-700/40 ring-1 ring-slate-300/50 dark:ring-slate-600/50"
+                        : "bg-[#EDECE8] dark:bg-slate-700/40"
                     }`}
-                    style={!hidden && !isActive ? { backgroundColor: "#EDECE8" } : !hidden && isActive && !completed ? { backgroundColor: "#EDECE8" } : undefined}
                   >
                     <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${completed ? "bg-green-500" : isActive ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}>
                       {loading && isActive ? (
@@ -907,7 +976,7 @@ function ForkedModuleCard({
 
                 {/* Lesson Content Area */}
                   {isActive && !hidden && (
-                  <div className="mt-1.5 rounded-lg overflow-hidden" style={{ backgroundColor: "#EDECE8" }}>
+                  <div className="mt-1.5 rounded-lg overflow-hidden bg-[#EDECE8] dark:bg-slate-700/40">
                     {loading && !contentChecked ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
