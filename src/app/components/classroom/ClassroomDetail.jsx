@@ -257,6 +257,17 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     }
   }, [classroom.id]);
 
+  const fetchForkedContent = useCallback(async () => {
+    try {
+      const res = await apiClient.get(`/api/classrooms/${classroom.id}/fork`);
+      const data = await res.json();
+      if (data.success && data.forkedContent) {
+        setForkedContent(data.forkedContent);
+        setForkedIdSet(new Set(data.forkedContent.map((fc) => `${fc.contentType}-${fc.contentId?.toString() || fc.contentId}`)));
+      }
+    } catch {}
+  }, [classroom.id]);
+
   const handleForkContent = async (contentType, contentId, title) => {
     setForking(contentId);
     try {
@@ -270,7 +281,9 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       if (data.success) {
         setForkedContent((prev) => [...prev, data.forked]);
         setForkedIdSet((prev) => new Set([...prev, `${contentType}-${contentId}`]));
+        setShowForkPanel(false);
         toast.success(`"${title}" forked to classroom!`);
+        fetchForkedContent();
       } else { toast.error(data.error || "Failed to fork"); }
     } catch {
       toast.error("Failed to fork content");
@@ -639,7 +652,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
           )}
       </div>
 
-      <ClassroomMobileNav activeTab={activeTab} setActiveTab={setActiveTab} isInstructor={isInstructor} />
+      <ClassroomMobileNav activeTab={activeTab} setActiveTab={setActiveTab} isInstructor={isInstructor} onBack={onBack} />
 
       <div className="flex-1 overflow-y-auto min-w-0">
         <div className="max-w-[110rem] mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">

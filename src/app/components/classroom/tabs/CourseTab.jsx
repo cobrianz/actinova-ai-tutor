@@ -258,7 +258,7 @@ export default function CourseTab({ classroomState }) {
                 <div key={i}>
                   <div className="rounded-lg overflow-hidden">
                     {/* Header row */}
-                    <div className="flex items-center gap-3 p-2.5">
+                    <div className="flex items-center gap-3 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                       {hasModules ? (
                         <button onClick={() => setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
@@ -733,7 +733,7 @@ function ForkedModuleCard({
 
   return (
     <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
-      <div className="flex items-center gap-2 p-2.5">
+      <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
         {isInstructor && (
           <button onClick={onToggleHideModule} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={isHidden ? "Show module" : "Hide module"}>
             {isHidden ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
@@ -830,8 +830,8 @@ function ForkedModuleCard({
                         </div>
                       </div>
                     ) : contentChecked && lessonContent ? (
-                      <div className="space-y-2">
-                        <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none">
+                      <div className="rounded-lg p-4" style={{ backgroundColor: "#F2F1EC" }}>
+                        <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
                           <div className="space-y-4">
                             {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
                           </div>

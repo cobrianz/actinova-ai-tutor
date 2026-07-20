@@ -6,6 +6,7 @@ import Classroom from "@/models/Classroom";
 import Assignment from "@/models/Assignment";
 import StudentProgress from "@/models/StudentProgress";
 import Enrollment from "@/models/Enrollment";
+import mongoose from "mongoose";
 
 async function handleGet(request, { params }) {
   await connectToDatabase();
@@ -125,7 +126,10 @@ async function handlePut(request, { params }) {
   if (title !== undefined) assignment.title = title.trim();
   if (description !== undefined) assignment.description = description?.trim() || "";
   if (instructions !== undefined) assignment.instructions = instructions?.trim() || "";
-  if (courseId !== undefined) assignment.courseId = courseId || null;
+  if (courseId !== undefined) {
+    const isValidId = mongoose.Types.ObjectId.isValid(courseId);
+    assignment.courseId = isValidId ? courseId : null;
+  }
   if (type !== undefined) assignment.type = type;
   if (category !== undefined) assignment.category = category?.trim() || "";
   if (dueDate !== undefined) assignment.dueDate = dueDate ? new Date(dueDate) : null;

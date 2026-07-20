@@ -11,20 +11,23 @@ import {
   MoreHorizontal,
   X,
   MessagesSquare,
+  LayoutDashboard,
+  Calendar,
 } from "lucide-react";
 
 // Always visible in the bottom bar (max 4 + More)
 const PRIMARY_TABS = [
   { id: "course",       label: "Course",    icon: BookOpen },
   { id: "assignments",  label: "Tasks",     icon: ClipboardList },
-  { id: "chat",         label: "Chat",      icon: MessageSquare },
   { id: "discussions",  label: "Discuss",   icon: MessagesSquare },
+  { id: "calendar",     label: "Calendar",  icon: Calendar },
 ];
 
 // Shown inside the More modal
 const SECONDARY_TABS = [
-  { id: "notes",     label: "Notes",     icon: StickyNote },
-  { id: "materials", label: "Materials", icon: Layers },
+  { id: "chat",        label: "Chat",      icon: MessageSquare },
+  { id: "notes",       label: "Notes",     icon: StickyNote },
+  { id: "materials",   label: "Materials", icon: Layers },
 ];
 
 const INSTRUCTOR_TAB = { id: "settings", label: "Settings", icon: Settings };
@@ -57,7 +60,7 @@ function NavBtn({ icon: Icon, label, isActive, onClick }) {
   );
 }
 
-function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor }) {
+function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor, onBack }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -149,6 +152,12 @@ function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor }) {
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", touchAction: "manipulation" }}
       >
         <div className="flex items-center justify-around h-16 px-1">
+          <NavBtn
+            icon={LayoutDashboard}
+            label="Home"
+            isActive={false}
+            onClick={onBack}
+          />
           {PRIMARY_TABS.map(({ id, label, icon }) => (
             <NavBtn
               key={id}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ClipboardList, X, Search, BookOpen, Check, Loader2, Sparkles } from "lucide-react";
+import { ClipboardList, X, Search, BookOpen, Check, Loader2, Sparkles, Plus, Trash2 } from "lucide-react";
 import { ASSIGNMENT_TYPES } from "./constants";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
@@ -138,13 +138,19 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
           {form.rubric.length > 0 ? (
             <div className="space-y-2">
               {form.rubric.map((r, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
-                  <div className="flex-1 min-w-0"><p className="text-xs font-bold text-slate-900 dark:text-white">{r.criterion}</p><p className="text-[10px] text-slate-500">{r.description}</p></div>
-                  <span className="text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-500/10 px-1.5 py-0.5 rounded">{r.maxPoints}pts</span>
+                <div key={i} className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <input value={r.criterion} onChange={(e) => { const next = [...form.rubric]; next[i] = { ...next[i], criterion: e.target.value }; setForm({ ...form, rubric: next }); }} placeholder="Criterion" className="flex-1 px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500/30" />
+                    <input type="number" min={0} value={r.maxPoints} onChange={(e) => { const next = [...form.rubric]; next[i] = { ...next[i], maxPoints: parseInt(e.target.value) || 0 }; setForm({ ...form, rubric: next }); }} className="w-16 px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-white text-center focus:outline-none focus:ring-1 focus:ring-green-500/30" />
+                    <span className="text-[10px] text-slate-400 self-center">pts</span>
+                    <button onClick={() => setForm({ ...form, rubric: form.rubric.filter((_, j) => j !== i) })} className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"><Trash2 className="w-3 h-3" /></button>
+                  </div>
+                  <input value={r.description || ""} onChange={(e) => { const next = [...form.rubric]; next[i] = { ...next[i], description: e.target.value }; setForm({ ...form, rubric: next }); }} placeholder="Description (optional)" className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500/30" />
                 </div>
               ))}
             </div>
-          ) : <p className="text-[11px] text-slate-400 italic">No rubric yet. Click the AI button to generate one.</p>}
+          ) : <p className="text-[11px] text-slate-400 italic mb-2">No rubric yet.</p>}
+          <button type="button" onClick={() => setForm({ ...form, rubric: [...form.rubric, { criterion: "", description: "", maxPoints: 10 }] })} className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors mt-1.5"><Plus className="w-3 h-3" /> Add Criterion</button>
         </div>
         <div>
           <label className={labelCls}>Link Course (optional)</label>

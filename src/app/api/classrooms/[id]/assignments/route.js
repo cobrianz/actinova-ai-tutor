@@ -6,6 +6,7 @@ import Classroom from "@/models/Classroom";
 import Assignment from "@/models/Assignment";
 import Enrollment from "@/models/Enrollment";
 import StudentProgress from "@/models/StudentProgress";
+import mongoose from "mongoose";
 
 async function handlePost(request, { params }) {
   await connectToDatabase();
@@ -37,7 +38,7 @@ async function handlePost(request, { params }) {
     title: title.trim(),
     description: description?.trim() || "",
     instructions: instructions?.trim() || "",
-    courseId: courseId || null,
+    courseId: courseId && mongoose.Types.ObjectId.isValid(courseId) ? courseId : null,
     type: type || "course",
     category: category?.trim() || "",
     dueDate: dueDate ? new Date(dueDate) : null,

@@ -43,11 +43,24 @@ export default function CalendarTab({ classroomState }) {
     const map = {};
     if (assignments) {
       assignments.forEach((a) => {
-        if (!a.dueDate) return;
-        const d = new Date(a.dueDate);
-        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-        if (!map[key]) map[key] = [];
-        map[key].push({ type: "assignment", title: a.title, color: "bg-green-500" });
+        if (a.dueDate) {
+          const d = new Date(a.dueDate);
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!map[key]) map[key] = [];
+          map[key].push({ type: "assignment", title: a.title, color: "bg-green-500" });
+        }
+        if (a.availableFrom) {
+          const d = new Date(a.availableFrom);
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!map[key]) map[key] = [];
+          map[key].push({ type: "available", title: `${a.title} (opens)`, color: "bg-emerald-400" });
+        }
+        if (a.availableUntil) {
+          const d = new Date(a.availableUntil);
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!map[key]) map[key] = [];
+          map[key].push({ type: "closes", title: `${a.title} (closes)`, color: "bg-orange-400" });
+        }
       });
     }
     if (discussions) {
