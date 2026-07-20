@@ -45,6 +45,8 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   }, [router]);
   const [assignments, setAssignments] = useState(classroom.assignments || []);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [editingAssignment, setEditingAssignment] = useState(null);
+  const [submissionsAssignment, setSubmissionsAssignment] = useState(null);
   const [students, setStudents] = useState([]);
   const [studentStats, setStudentStats] = useState({ totalStudents: 0, activeStudents: 0, avgCompletion: 0 });
   const [showCreateAssignment, setShowCreateAssignment] = useState(() => {
@@ -191,13 +193,22 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   };
 
   const handleToggleWeek = async (weekNumber) => {
-    const next = openedWeeks.includes(weekNumber)
+    const wasOpen = openedWeeks.includes(weekNumber);
+    const next = wasOpen
       ? openedWeeks.filter((w) => w !== weekNumber)
       : [...openedWeeks, weekNumber];
     setOpenedWeeks(next);
     try {
-      await apiClient.patch(`/api/classrooms/${classroom.id}`, { openedWeeks: next });
-    } catch {}
+      const res = await apiClient.patch(`/api/classrooms/${classroom.id}`, { openedWeeks: next });
+      const data = await res.json();
+      if (!data.success) {
+        setOpenedWeeks(wasOpen ? [...openedWeeks, weekNumber] : openedWeeks.filter((w) => w !== weekNumber));
+        toast.error("Failed to save week visibility");
+      }
+    } catch {
+      setOpenedWeeks(wasOpen ? [...openedWeeks, weekNumber] : openedWeeks.filter((w) => w !== weekNumber));
+      toast.error("Failed to save week visibility");
+    }
   };
 
   const [settingsForm, setSettingsForm] = useState({
@@ -395,6 +406,16 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   }, [showForkPanel]);
 
   useEffect(() => { if (isInstructor) fetchStudents(); }, [isInstructor, fetchStudents]);
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const res = await apiClient.get(`/api/classrooms/${classroom.id}/assignments`);
+        const data = await res.json();
+        if (data.success) setAssignments(data.assignments || []);
+      } catch {}
+    };
+    if (!classroom.assignments?.length) fetchAssignments();
+  }, [classroom.id, classroom.assignments?.length]);
   useEffect(() => { if (selectedDiscussion) fetchPosts(selectedDiscussion._id || selectedDiscussion.id); }, [selectedDiscussion, fetchPosts]);
 
   const handleRemoveStudent = async (studentId, studentName) => {
@@ -417,6 +438,23 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   };
   const handleStartAssignment = async (assignmentId) => {
     try { const res = await apiClient.put(`/api/classrooms/${classroom.id}/progress`, { assignmentId, status: "in_progress", progress: 10 }); const data = await res.json(); if (data.success) { setAssignments((prev) => prev.map((a) => a.id === assignmentId ? { ...a, myProgress: { ...a.myProgress, status: "in_progress", progress: 10 } } : a)); toast.success("Assignment started!"); } } catch { toast.error("Failed to start assignment"); }
+  };
+  const handleEditAssignment = (assignment) => {
+    setSelectedAssignment(null);
+    setEditingAssignment(assignment);
+    setShowCreateAssignment(true);
+  };
+  const handleViewSubmissions = (assignment) => {
+    setSelectedAssignment(null);
+    setSubmissionsAssignment(assignment);
+  };
+  const handleAssignmentSaved = (saved, isEdit) => {
+    if (isEdit) {
+      setAssignments((prev) => prev.map((a) => a.id === saved.id ? { ...a, ...saved } : a));
+    } else {
+      setAssignments((prev) => [saved, ...prev]);
+    }
+    setEditingAssignment(null);
   };
   const handleCreateDiscussion = async () => {
     if (!newDiscTitle.trim()) { toast.error("Title required"); return; }
@@ -500,8 +538,10 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const tabs = isInstructor ? instructorTabs : studentTabs;
 
   const classroomState = {
-    selectedAssignment, setSelectedAssignment, isInstructor, classroom, user,
+    selectedAssignment, setSelectedAssignment, editingAssignment, setEditingAssignment,
+    submissionsAssignment, setSubmissionsAssignment, isInstructor, classroom, user,
     assignments, setAssignments, handleStartAssignment, handleMarkComplete,
+    handleEditAssignment, handleViewSubmissions, handleAssignmentSaved,
     showCreateAssignment, setShowCreateAssignment, showForkPanel, setShowForkPanel,
     showNewAnnouncement, setShowNewAnnouncement, showInvite, setShowInvite,
     courseModules, courseGenLoading, handleGenerateCourseStructure,

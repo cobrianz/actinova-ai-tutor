@@ -524,7 +524,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
           <p className="text-xs text-slate-500 mt-0.5">{isInstructor ? "Manage your classes and track student progress" : "View assignments and track your progress"}</p>
         </div>
         <div className="flex items-center gap-2">
-          {!isInstructor && <button onClick={() => setShowJoin(!showJoin)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${showJoin ? "bg-green-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}><UserPlus className="w-3.5 h-3.5" /> Join</button>}
+          {!isInstructor && <button onClick={() => setShowJoin(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"><UserPlus className="w-3.5 h-3.5" /> Join</button>}
           {isInstructor && <button onClick={openCreate} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors"><Plus className="w-3.5 h-3.5" /> New Classroom</button>}
         </div>
       </div>
@@ -550,17 +550,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
           {isInstructor ? (
             <button onClick={openCreate} className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors">Create Classroom</button>
           ) : (
-            <div className="w-full max-w-xs">
-              <button onClick={() => setShowJoin(!showJoin)} className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-500 text-white hover:bg-green-600">{showJoin ? "Close" : "Join Classroom"}</button>
-              <AnimatePresence>{showJoin && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                  <div className="mt-3 flex items-end gap-2">
-                    <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="Invite code" maxLength={8} className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-center font-mono text-sm font-bold text-slate-900 dark:text-white tracking-widest placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500/30 uppercase" />
-                    <button onClick={handleJoinClassroom} disabled={joining || joinCode.trim().length < 4} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors flex-shrink-0">{joining ? "..." : "Join"}</button>
-                  </div>
-                </motion.div>
-              )}</AnimatePresence>
-            </div>
+            <button onClick={() => setShowJoin(true)} className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-500 text-white hover:bg-green-600">Join Classroom</button>
           )}
         </div>
       ) : (
@@ -570,6 +560,28 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
           ))}
         </div>
       )}
+
+      {/* Join Modal */}
+      <AnimatePresence>
+        {showJoin && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowJoin(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0"><UserPlus className="w-5 h-5 text-green-500" /></div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Join a Classroom</h3>
+                  <p className="text-[11px] text-slate-500">Enter the invite code from your instructor</p>
+                </div>
+              </div>
+              <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="ENTER CODE" maxLength={8} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-center font-mono text-lg font-bold text-slate-900 dark:text-white tracking-[0.3em] placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500/30 uppercase mb-4" />
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowJoin(false)} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                <button onClick={handleJoinClassroom} disabled={joining || joinCode.trim().length < 4} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5">{joining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />} {joining ? "Joining..." : "Join"}</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

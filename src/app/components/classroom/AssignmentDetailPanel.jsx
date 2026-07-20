@@ -2,10 +2,138 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, ChevronUp, ChevronDown, ListOrdered, CheckCircle2, Check, Play, Edit3, Eye } from "lucide-react";
+import { ChevronUp, ChevronDown, ListOrdered, CheckCircle2, Check, Play, Edit3, Eye } from "lucide-react";
 import { TYPE_CONFIG } from "./constants";
 
-export default function AssignmentDetailPanel({ assignment, isInstructor, classroomId, onBack, onStart, onComplete }) {
+function renderInstructions(text) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  const elements = [];
+  let i = 0;
+
+  const isSectionHeader = (line) => {
+    const t = line.trim();
+    if (!t || t.length > 80) return false;
+    return /^(Objectives?|Requirements?|Submission Guidelines?|Grading Criteria?|Important Notes?|Overview|Description|Deliverables?|Summary|Conclusion|Instructions?|Guidelines?|Steps?|Prerequisites?|Resources?|Format|Content|Time Limit|Access|Deadline|Criteria|Expectations|Tasks?|Notes?|Policies?|References?):?\s*$/i.test(t);
+  };
+
+  const isListItem = (line) => /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line);
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (/^#{1,3}\s+/.test(line)) {
+      elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{line.replace(/^#{1,3}\s+/, "")}</p>);
+      i++;
+    } else if (isSectionHeader(line)) {
+      elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{line.replace(/:$/, "")}</p>);
+      i++;
+    } else if (/^[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*]\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ul key={`ul-${i}`} className="list-disc list-outside ml-8 space-y-1 text-sm my-2">
+          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}
+        </ul>
+      );
+    } else if (/^\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ol key={`ol-${i}`} className="list-decimal list-outside ml-8 space-y-1 text-sm my-2">
+          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}
+        </ol>
+      );
+    } else if (line.trim() === "") {
+      i++;
+    } else {
+      const prevLine = i > 0 ? lines[i - 1] : "";
+      const lookAhead = i < lines.length - 1 ? lines[i + 1] : "";
+      const prevNonEmpty = (() => {
+        for (let j = i - 1; j >= 0; j--) { if (lines[j].trim()) return lines[j].trim(); }
+        return "";
+      })();
+      const isSoftListItem = /^.{5,80}:\s*$/.test(prevNonEmpty) ||
+        (isSectionHeader(lookAhead) && line.trim().length > 10);
+
+      if (isSoftListItem) {
+        const items = [line.trim()];
+        i++;
+        while (i < lines.length && lines[i].trim() !== "" && !isSectionHeader(lines[i]) && !/^#{1,3}\s+/.test(lines[i]) && !/^[-*]\s+/.test(lines[i]) && !/^\d+\.\s+/.test(lines[i])) {
+          items.push(lines[i].trim());
+          i++;
+        }
+        elements.push(
+          <ul key={`soft-${i}`} className="list-disc list-outside ml-8 space-y-1 text-sm my-2">
+            {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}
+          </ul>
+        );
+      } else {
+        elements.push(<p key={i} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{renderInline(line)}</p>);
+        i++;
+      }
+    }
+  }
+
+  return elements;
+}
+
+function renderInline(text) {
+  const parts = [];
+  let remaining = text;
+  let idx = 0;
+
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+    const italicMatch = remaining.match(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/);
+    const codeMatch = remaining.match(/`(.+?)`/);
+
+    let firstMatch = null;
+    let firstIndex = Infinity;
+
+    if (boldMatch && remaining.indexOf(boldMatch[0]) < firstIndex) {
+      firstMatch = { type: "bold", match: boldMatch };
+      firstIndex = remaining.indexOf(boldMatch[0]);
+    }
+    if (italicMatch && remaining.indexOf(italicMatch[0]) < firstIndex) {
+      firstMatch = { type: "italic", match: italicMatch };
+      firstIndex = remaining.indexOf(italicMatch[0]);
+    }
+    if (codeMatch && remaining.indexOf(codeMatch[0]) < firstIndex) {
+      firstMatch = { type: "code", match: codeMatch };
+      firstIndex = remaining.indexOf(codeMatch[0]);
+    }
+
+    if (!firstMatch) {
+      parts.push(<span key={idx++}>{remaining}</span>);
+      break;
+    }
+
+    if (firstIndex > 0) {
+      parts.push(<span key={idx++}>{remaining.slice(0, firstIndex)}</span>);
+    }
+
+    if (firstMatch.type === "bold") {
+      parts.push(<strong key={idx++} className="font-bold">{firstMatch.match[1]}</strong>);
+    } else if (firstMatch.type === "italic") {
+      parts.push(<em key={idx++} className="italic">{firstMatch.match[1]}</em>);
+    } else if (firstMatch.type === "code") {
+      parts.push(<code key={idx++} className="px-1 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-mono">{firstMatch.match[1]}</code>);
+    }
+
+    remaining = remaining.slice(firstIndex + firstMatch.match[0].length);
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+export default function AssignmentDetailPanel({ assignment, isInstructor, classroomId, onBack, onStart, onComplete, onEdit, onSubmissions }) {
   const [showRubric, setShowRubric] = useState(false);
   const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom;
   const TypeIcon = tc.icon;
@@ -35,11 +163,6 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
               </div>
               {assignment.description && <p className="text-sm text-slate-500 mt-1">{assignment.description}</p>}
             </div>
-            {isInstructor && (
-              <button className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors">
-                <Settings className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
 
@@ -102,7 +225,7 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
             <div>
               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Instructions</h4>
               <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{assignment.instructions}</p>
+                <div className="space-y-1">{renderInstructions(assignment.instructions)}</div>
               </div>
             </div>
           )}
@@ -169,8 +292,8 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><Edit3 className="w-3.5 h-3.5" /> Edit</button>
-              <button className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><Eye className="w-3.5 h-3.5" /> Submissions</button>
+              <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><Edit3 className="w-3.5 h-3.5" /> Edit</button>
+              <button onClick={onSubmissions} className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><Eye className="w-3.5 h-3.5" /> Submissions</button>
             </div>
           )}
         </div>

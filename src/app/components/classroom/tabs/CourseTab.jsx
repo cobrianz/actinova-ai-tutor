@@ -231,7 +231,7 @@ export default function CourseTab({ classroomState }) {
 
       {/* Forked Content */}
       {forkedContent?.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+        <div className="rounded-xl p-4">
           {isInstructor && (
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export default function CourseTab({ classroomState }) {
                 <div key={i}>
                   <div className="rounded-lg overflow-hidden">
                     {/* Header row */}
-                    <div className="flex items-center gap-3 p-2.5 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="flex items-center gap-3 p-2.5">
                       {hasModules ? (
                         <button onClick={() => setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
@@ -320,7 +320,7 @@ export default function CourseTab({ classroomState }) {
 
                     {/* Expanded: week-grouped modules for courses, flat for others */}
                     {hasModules && isExpanded && (
-                      <div className="bg-white dark:bg-slate-900 p-3">
+                      <div className="p-3">
                         <WeekGroupedCourse
                           modules={fc.meta.modules}
                           durationWeeks={classroom.durationWeeks}
@@ -637,7 +637,7 @@ function WeekGroupedCourse({
               const globalIdx = modules.indexOf(mod);
               const isHidden = hiddenModules.includes(globalIdx);
               return (
-                <div key={globalIdx} className="ml-4">
+                <div key={globalIdx}>
                   <ForkedModuleCard
                     mod={mod}
                     modIndex={globalIdx}
@@ -733,7 +733,7 @@ function ForkedModuleCard({
 
   return (
     <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
-      <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50">
+      <div className="flex items-center gap-2 p-2.5">
         {isInstructor && (
           <button onClick={onToggleHideModule} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={isHidden ? "Show module" : "Hide module"}>
             {isHidden ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
@@ -820,8 +820,8 @@ function ForkedModuleCard({
                 </div>
 
                 {/* Lesson Content Area */}
-                {isActive && !hidden && (
-                  <div className="mt-1.5 ml-7 pl-3">
+                  {isActive && !hidden && (
+                  <div className="mt-1.5 pl-3">
                     {loading && !contentChecked ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">

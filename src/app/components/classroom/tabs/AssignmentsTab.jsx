@@ -2,14 +2,80 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, ArrowLeft, ArrowRight, X, Layers, ClipboardList, Megaphone,
+  Plus, ArrowLeft, ArrowRight, Layers, ClipboardList, Megaphone,
   UserPlus, Loader2, Sparkles, BookOpen, ChevronUp, ChevronDown, Lock,
-  Unlock, Trash2, CheckCircle2, Tag, Calendar, Check, Play, FileText,
+  Unlock, Trash2, CheckCircle2, Tag, Calendar, Check, Play,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import EmptyState from "../EmptyState";
 import InvitePanel from "../InvitePanel";
 import ForkContentPanel from "../ForkContentPanel";
+import { useEffect, useState } from "react";
+import { apiClient } from "@/lib/csrfClient";
+
+function SubmissionsView({ assignment, classroomId }) {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await apiClient.get(`/api/classrooms/${classroomId}/assignments/${assignment.id}`);
+        const data = await res.json();
+        if (data.success && data.assignment?.studentProgress) setSubmissions(data.assignment.studentProgress);
+      } catch {} finally { setLoading(false); }
+    };
+    fetch();
+  }, [classroomId, assignment.id]);
+
+  const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom;
+  const TypeIcon = tc.icon;
+
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
+
+  return (
+    <div className="space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`w-8 h-8 rounded-lg ${tc.color} flex items-center justify-center`}><TypeIcon className="w-4 h-4" /></div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{assignment.title}</h3>
+            <p className="text-[10px] text-slate-400">{submissions.length} submission{submissions.length !== 1 ? "s" : ""}</p>
+          </div>
+        </div>
+      </div>
+      {submissions.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center">
+          <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+          <p className="text-xs text-slate-500">No submissions yet</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {submissions.map((s) => (
+            <div key={s.id} className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold text-green-600">{(s.studentName || "S").charAt(0).toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{s.studentName || "Student"}</p>
+                <p className="text-[10px] text-slate-400">{s.studentEmail}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  s.status === "completed" ? "bg-green-500/10 text-green-600" :
+                  s.status === "in_progress" ? "bg-amber-500/10 text-amber-600" :
+                  "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                }`}>{s.status === "completed" ? "Completed" : s.status === "in_progress" ? "In Progress" : "Not Started"}</span>
+                {s.score != null && <p className="text-[10px] font-bold text-slate-900 dark:text-white mt-0.5">{s.score}/{assignment.maxScore}</p>}
+                {s.completedAt && <p className="text-[9px] text-slate-400 mt-0.5">Done {new Date(s.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * @param {object} props.classroomState
@@ -54,8 +120,11 @@ import ForkContentPanel from "../ForkContentPanel";
  */
 export default function AssignmentsTab({ classroomState }) {
   const {
-    selectedAssignment, setSelectedAssignment, isInstructor, classroom,
+    selectedAssignment, setSelectedAssignment, editingAssignment, setEditingAssignment,
+    submissionsAssignment, setSubmissionsAssignment,
+    isInstructor, classroom,
     assignments, setAssignments, handleStartAssignment, handleMarkComplete,
+    handleEditAssignment, handleViewSubmissions, handleAssignmentSaved,
     showCreateAssignment, setShowCreateAssignment, showForkPanel, setShowForkPanel,
     showNewAnnouncement, setShowNewAnnouncement, showInvite, setShowInvite,
     courseModules, courseGenLoading, handleGenerateCourseStructure,
@@ -70,7 +139,10 @@ export default function AssignmentsTab({ classroomState }) {
 
   return (
     <div className="space-y-3">
-      {selectedAssignment ? (<>
+      {submissionsAssignment ? (<>
+        <button onClick={() => setSubmissionsAssignment(null)} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px] font-medium transition-colors"><ArrowLeft size={14} /> Back to Assignments</button>
+        <SubmissionsView assignment={submissionsAssignment} classroomId={classroom.id} />
+      </>) : selectedAssignment ? (<>
         <button onClick={() => setSelectedAssignment(null)} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px] font-medium transition-colors"><ArrowLeft size={14} /> Back to Assignments</button>
         <AssignmentDetailPanel
           assignment={selectedAssignment}
@@ -79,11 +151,13 @@ export default function AssignmentsTab({ classroomState }) {
           onBack={() => setSelectedAssignment(null)}
           onStart={() => handleStartAssignment(selectedAssignment.id)}
           onComplete={() => handleMarkComplete(selectedAssignment.id)}
+          onEdit={() => handleEditAssignment(selectedAssignment)}
+          onSubmissions={() => handleViewSubmissions(selectedAssignment)}
         />
       </>) : (<>
         {isInstructor && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowCreateAssignment(!showCreateAssignment)} className={`flex items-center gap-2 flex-1 p-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showCreateAssignment ? "border-green-400 text-green-600" : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-green-400 hover:text-green-600"}`}><Plus className="w-4 h-4" /> {showCreateAssignment ? "Close Form" : "Add Assignment"}</button>
+            <button onClick={() => { setEditingAssignment(null); setShowCreateAssignment(!showCreateAssignment); }} className={`flex items-center gap-2 flex-1 p-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showCreateAssignment ? "border-green-400 text-green-600" : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-green-400 hover:text-green-600"}`}><Plus className="w-4 h-4" /> {showCreateAssignment ? "Close Form" : "Add Assignment"}</button>
             <button onClick={() => setShowForkPanel(!showForkPanel)} className={`flex items-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showForkPanel ? "border-purple-400 text-purple-600" : "border-purple-200 dark:border-purple-500/30 text-purple-600 hover:border-purple-400"}`}><Layers className="w-4 h-4" /> {showForkPanel ? "Close" : "Fork"}</button>
             <button onClick={() => setShowNewAnnouncement(!showNewAnnouncement)} className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-amber-200 dark:border-amber-500/30 rounded-xl text-sm text-amber-600 hover:border-amber-400 transition-colors bg-white dark:bg-slate-900"><Megaphone className="w-4 h-4" /> Announce</button>
             <button onClick={() => setShowInvite(!showInvite)} className={`flex items-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showInvite ? "border-green-400 text-green-600" : "border-green-200 dark:border-green-500/30 text-green-600 hover:border-green-400"}`}><UserPlus className="w-4 h-4" /> {showInvite ? "Close" : "Invite"}</button>
@@ -116,7 +190,7 @@ export default function AssignmentsTab({ classroomState }) {
           />
         )}
         {isInstructor && showCreateAssignment && (
-          <CreateAssignmentPanel classroomId={classroom.id} classroomName={classroom.name} onClose={() => setShowCreateAssignment(false)} onCreated={(a) => setAssignments([a, ...assignments])} initialForm={assignmentForm} />
+          <CreateAssignmentPanel classroomId={classroom.id} classroomName={classroom.name} onClose={() => { setShowCreateAssignment(false); setEditingAssignment(null); }} onCreated={handleAssignmentSaved} initialForm={assignmentForm} editAssignment={editingAssignment} />
         )}
         {isInstructor && showNewAnnouncement && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={sectionCls}>

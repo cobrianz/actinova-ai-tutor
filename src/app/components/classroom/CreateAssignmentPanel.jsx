@@ -7,11 +7,24 @@ import { ASSIGNMENT_TYPES } from "./constants";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
-export default function CreateAssignmentPanel({ classroomId, classroomName, onClose, onCreated, initialForm }) {
-  const [form, setForm] = useState(initialForm || {
-    title: "", description: "", instructions: "", type: "course", dueDate: "", maxScore: 100,
-    courseId: "", category: "", availableFrom: "", availableUntil: "", passingScore: 60,
-    weight: 0, maxAttempts: 1, rubric: [],
+export default function CreateAssignmentPanel({ classroomId, classroomName, onClose, onCreated, initialForm, editAssignment }) {
+  const [form, setForm] = useState(() => {
+    if (editAssignment) {
+      return {
+        title: editAssignment.title || "", description: editAssignment.description || "", instructions: editAssignment.instructions || "",
+        type: editAssignment.type || "course", dueDate: editAssignment.dueDate ? new Date(editAssignment.dueDate).toISOString().slice(0, 16) : "",
+        maxScore: editAssignment.maxScore ?? 100, courseId: editAssignment.courseId || "", category: editAssignment.category || "",
+        availableFrom: editAssignment.availableFrom ? new Date(editAssignment.availableFrom).toISOString().slice(0, 16) : "",
+        availableUntil: editAssignment.availableUntil ? new Date(editAssignment.availableUntil).toISOString().slice(0, 16) : "",
+        passingScore: editAssignment.passingScore ?? 60, weight: editAssignment.weight ?? 1,
+        maxAttempts: editAssignment.maxAttempts ?? 0, rubric: editAssignment.rubric || [],
+      };
+    }
+    return initialForm || {
+      title: "", description: "", instructions: "", type: "course", dueDate: "", maxScore: 100,
+      courseId: "", category: "", availableFrom: "", availableUntil: "", passingScore: 60,
+      weight: 1, maxAttempts: 0, rubric: [],
+    };
   });
   const [courses, setCourses] = useState([]);
   const [courseSearch, setCourseSearch] = useState("");
@@ -22,7 +35,7 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
 
   useEffect(() => {
     const fetchCourses = async () => {
-      try { const res = await apiClient.get("/api/library/courses"); const data = await res.json(); if (data.courses) setCourses(data.courses); } catch {} finally { setLoadingCourses(false); }
+      try { const res = await apiClient.get("/api/library?type=course&limit=50"); const data = await res.json(); if (data.items) setCourses(data.items.filter((i) => i.type === "course").map((c) => ({ id: c.courseId || c._id || c.id, title: c.title || c.topic || "Untitled" }))); } catch {} finally { setLoadingCourses(false); }
     };
     fetchCourses();
   }, []);
@@ -56,11 +69,14 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
     setLoading(true);
     try {
       const payload = { ...form, courseId: form.courseId || undefined, rubric: form.rubric.length > 0 ? form.rubric : undefined };
-      const res = await apiClient.post(`/api/classrooms/${classroomId}/assignments`, payload);
+      const isEdit = !!editAssignment;
+      const res = isEdit
+        ? await apiClient.put(`/api/classrooms/${classroomId}/assignments/${editAssignment.id}`, payload)
+        : await apiClient.post(`/api/classrooms/${classroomId}/assignments`, payload);
       const data = await res.json();
-      if (data.success) { toast.success("Assignment created!"); onCreated(data.assignment); onClose(); }
-      else { toast.error(data.error || "Failed to create assignment"); }
-    } catch { toast.error("Failed to create assignment"); } finally { setLoading(false); }
+      if (data.success) { toast.success(isEdit ? "Assignment updated!" : "Assignment created!"); onCreated(data.assignment, isEdit); onClose(); }
+      else { toast.error(data.error || "Failed to save assignment"); }
+    } catch { toast.error("Failed to save assignment"); } finally { setLoading(false); }
   };
 
   const inputCls = "w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30";
@@ -70,7 +86,7 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
       className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><ClipboardList className="w-4 h-4 text-green-500" /> New Assignment</h3>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><ClipboardList className="w-4 h-4 text-green-500" /> {editAssignment ? "Edit Assignment" : "New Assignment"}</h3>
         <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"><X className="w-4 h-4" /></button>
       </div>
       <div className="p-4 space-y-4">
@@ -149,7 +165,7 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
           ) : <p className="text-[11px] text-slate-400">No courses in library yet</p>}
         </div>
         <button onClick={handleCreate} disabled={loading || !form.title.trim()} className="w-full py-2.5 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors">
-          {loading ? "Creating..." : "Create Assignment"}
+          {loading ? "Saving..." : editAssignment ? "Update Assignment" : "Create Assignment"}
         </button>
       </div>
     </motion.div>
