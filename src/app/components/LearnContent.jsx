@@ -1612,7 +1612,7 @@ export default function LearnContent() {
         } else {
         // Course exists - use it!
         console.log(
-          "✅ Found course:",
+          "Found course:",
           existingCourse.title || existingCourse.courseData?.title
         );
 
@@ -1740,21 +1740,21 @@ export default function LearnContent() {
 
           if (existingCardSet) {
             console.log(
-              "✅ Loading existing questions:",
+              "Loading existing questions:",
               existingCardSet.title,
               "Cards:",
               existingCardSet.totalCards
             );
             setCourseData(existingCardSet);
             console.log(
-              "✅ Found questions in library, setting isLoading to false"
+              "Found questions in library, setting isLoading to false"
             );
             setIsLoading(false);
             fetchInProgressRef.current = false;
             initializedCoursesRef.current.add(courseKey);
             return;
           } else {
-            console.log("❌ Question set not found in cards collection");
+            console.log("Question set not found in cards collection");
           }
         }
       } catch (cardsError) {
@@ -1769,7 +1769,7 @@ export default function LearnContent() {
         if (quizResponse.ok) {
           const quizData = await quizResponse.json();
           setCourseData(quizData);
-          console.log("✅ Loaded existing quiz:", quizData.title);
+          console.log("Loaded existing quiz:", quizData.title);
           setIsLoading(false);
           fetchInProgressRef.current = false;
           initializedCoursesRef.current.add(courseKey);
@@ -1786,7 +1786,7 @@ export default function LearnContent() {
       );
       router.push("/dashboard");
       console.log(
-        "✅ Free user trying non-beginner difficulty, setting isLoading to false and redirecting"
+        "Free user trying non-beginner difficulty, setting isLoading to false and redirecting"
       );
       console.log("Setting isLoading to false (free user redirect)");
       setIsLoading(false);

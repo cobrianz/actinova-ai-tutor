@@ -416,7 +416,7 @@ export default function StudyPlanLibrary({ setActiveContent }) {
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(6);
                 doc.setTextColor(...C.white);
-                doc.text("✓", margin + 13, ty + 1.5);
+                doc.text("x", margin + 13, ty + 1.5);
               } else {
                 doc.setDrawColor(...C.gray400);
                 doc.setLineWidth(0.3);

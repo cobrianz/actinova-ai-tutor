@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, ChevronUp, ChevronDown, Play } from "lucide-react";
+import { Download, ChevronUp, ChevronDown, Play, Check } from "lucide-react";
 
 export default function CourseSidebar({
   isSidebarOpen,
@@ -136,7 +136,7 @@ export default function CourseSidebar({
                               : "border-border text-muted-foreground"
                               }`}
                           >
-                            {isCompleted ? "✓" : lessonIndex + 1}
+                            {isCompleted ? <Check className="w-3 h-3" /> : lessonIndex + 1}
                           </div>
                           <span
                             className={`text-sm text-left flex-1 ${isActive

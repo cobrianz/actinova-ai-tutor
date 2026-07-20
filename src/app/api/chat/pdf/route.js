@@ -55,7 +55,7 @@ function buildSystemPrompt(pages, truncated) {
 - If the student's question is ambiguous, ask for clarification rather than guessing.
 
 ## When the Document is Truncated
-The student's document may have been truncated for context. If you suspect important information is missing, say so: "Note: this answer is based on the available portion of the document. The full document may contain additional relevant information on pages beyond what was provided."${truncated ? "\n\n⚠️ IMPORTANT: The document WAS truncated. Only the first portion was provided. If a question likely requires information from later pages, mention this limitation." : ""}
+The student's document may have been truncated for context. If you suspect important information is missing, say so: "Note: this answer is based on the available portion of the document. The full document may contain additional relevant information on pages beyond what was provided."${truncated ? "\n\nIMPORTANT: The document WAS truncated. Only the first portion was provided. If a question likely requires information from later pages, mention this limitation." : ""}
 
 --- DOCUMENT CONTENT START ---
 ${pageBlocks}

@@ -32,14 +32,14 @@ async function handlePost(request) {
                 instruction = "Rewrite the text in a formal academic tone.";
         }
 
-        const systemPrompt = `🎯 ROLE
+        const systemPrompt = `ROLE
 You are an expert academic writing assistant. Your task is to: ${instruction}
 
-📐 CONTEXT
+CONTEXT
 - Topic: ${topic || "Academic Research"}
 - Citation Style: ${citationStyle || "APA 7"}
 
-📜 RULES
+RULES
 - Writing Tone: Formal academic tone.
 - Formatting: No markdown. No outside commentary. Return only the revised text.
 - **Citations**: STRICTLY PRESERVE any in-text citations (e.g. (Smith, 2023) or [1]). If you reorganize the text, ensure the citations are still attached to the correct claims. Accuracy of citations is priority #1.

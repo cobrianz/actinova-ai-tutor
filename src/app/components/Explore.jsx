@@ -1387,7 +1387,7 @@ export default function Explore() {
 
                       {topic.whyTrending && (
                         <div className="flex items-center gap-1 text-[10px] text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-900/20 rounded-md px-2 py-1 mb-3">
-                          <span>🔥</span> <span className="truncate">{topic.whyTrending}</span>
+                          <span className="text-lime-500 font-bold">TRENDING</span> <span className="truncate">{topic.whyTrending}</span>
                         </div>
                       )}
 
@@ -1566,7 +1566,7 @@ export default function Explore() {
                     {generatedSet.category} Courses
                   </h2>
                   <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-medium">
-                    {generatedSet.cached ? "📦 From Cache" : "✨ Generated"} • {new Date(generatedSet.generatedAt).toLocaleDateString()}
+                    {generatedSet.cached ? "From Cache" : "Generated"} • {new Date(generatedSet.generatedAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>

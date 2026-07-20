@@ -217,7 +217,7 @@ export default function DashboardContent({ setHideDashboardNav, hideDashboardNav
       {showCelebration && (
         <div className="fixed inset-0 z-[200] pointer-events-none flex items-center justify-center">
           <div className="text-center animate-bounce">
-            <div className="text-6xl mb-4">🎉</div>
+            <div className="text-6xl mb-4"><span className="text-green-500 font-bold">!</span></div>
             <p className="text-lg font-black text-foreground drop-shadow-lg" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
               Payment Successful!
             </p>

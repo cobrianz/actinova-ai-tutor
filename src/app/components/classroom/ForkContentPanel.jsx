@@ -59,7 +59,7 @@ function ForkContentPanel({ classroom, onClose, onForkContent, browseResults, br
                     <p className="text-[10px] text-slate-400">{c.totalModules || 0} modules · {c.totalLessons || 0} lessons · {c.level}</p>
                   </div>
                   <button onClick={() => onForkContent("course", c.id, c.title)} disabled={isForked || forking === c.id} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors ${isForked ? "bg-green-50 dark:bg-green-500/10 text-green-500 cursor-default" : "bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"}`}>
-                    {isForked ? "Forked ✓" : forking === c.id ? "..." : "Fork"}
+                    {isForked ? "Forked" : forking === c.id ? "..." : "Fork"}
                   </button>
                 </div>
               );
@@ -74,7 +74,7 @@ function ForkContentPanel({ classroom, onClose, onForkContent, browseResults, br
                     <p className="text-[10px] text-slate-400">{q.questionCount} questions · {q.course}</p>
                   </div>
                   <button onClick={() => onForkContent("quiz", q.id, q.title)} disabled={isForked || forking === q.id} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors ${isForked ? "bg-green-50 dark:bg-green-500/10 text-green-500 cursor-default" : "bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"}`}>
-                    {isForked ? "Forked ✓" : forking === q.id ? "..." : "Fork"}
+                    {isForked ? "Forked" : forking === q.id ? "..." : "Fork"}
                   </button>
                 </div>
               );
@@ -89,7 +89,7 @@ function ForkContentPanel({ classroom, onClose, onForkContent, browseResults, br
                     <p className="text-[10px] text-slate-400">{fc.totalCards} cards · {fc.difficulty}</p>
                   </div>
                   <button onClick={() => onForkContent("flashcard", fc.id, fc.title)} disabled={isForked || forking === fc.id} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors ${isForked ? "bg-green-50 dark:bg-green-500/10 text-green-500 cursor-default" : "bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"}`}>
-                    {isForked ? "Forked ✓" : forking === fc.id ? "..." : "Fork"}
+                    {isForked ? "Forked" : forking === fc.id ? "..." : "Fork"}
                   </button>
                 </div>
               );
@@ -104,7 +104,7 @@ function ForkContentPanel({ classroom, onClose, onForkContent, browseResults, br
                     <p className="text-[10px] text-slate-400">{r.topic}{r.format ? ` · ${r.format}` : ""}</p>
                   </div>
                   <button onClick={() => onForkContent("report", r.id, r.title)} disabled={isForked || forking === r.id} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-colors ${isForked ? "bg-green-50 dark:bg-green-500/10 text-green-500 cursor-default" : "bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"}`}>
-                    {isForked ? "Forked ✓" : forking === r.id ? "..." : "Fork"}
+                    {isForked ? "Forked" : forking === r.id ? "..." : "Fork"}
                   </button>
                 </div>
               );
