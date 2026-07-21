@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import QuizInterface from "@/components/QuizInterface";
 import {
   BookOpen, Calendar, Clock, MapPin, GraduationCap, Layers, Megaphone,
   ChevronDown, ChevronUp, Target, FileText, Lock, Unlock, ExternalLink,
@@ -47,6 +48,26 @@ export default function CourseTab({ classroomState }) {
   const [editingFork, setEditingFork] = useState(null);
   const [expandedFork, setExpandedFork] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", onConfirm: null, confirmColor: "red" });
+  const [expandedQuiz, setExpandedQuiz] = useState(null);
+  const [quizData, setQuizData] = useState(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+
+  const fetchQuizContent = useCallback(async (contentId) => {
+    setQuizLoading(true);
+    try {
+      const res = await fetch(`/api/classrooms/${classroom.id}/quiz-content?contentId=${contentId}`, { credentials: "include" });
+      const data = await res.json();
+      if (res.ok && data.questions) {
+        setQuizData(data);
+      } else {
+        toast.error(data.error || "Failed to load quiz");
+      }
+    } catch {
+      toast.error("Failed to load quiz");
+    } finally {
+      setQuizLoading(false);
+    }
+  }, [classroom.id]);
 
   const levelLabels = { highschool: "High School", undergraduate: "Undergraduate", graduate: "Graduate", phd: "PhD", professional: "Professional" };
   const gradeLabels = { percentage: "Percentage (0–100%)", letter: "Letter Grades (A–F)", passfail: "Pass / Fail", gpa: "GPA Scale (0.0–4.0)" };
@@ -262,7 +283,7 @@ export default function CourseTab({ classroomState }) {
                     {/* Header row */}
                     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#E8E6DF] dark:bg-slate-700/50">
                       {hasModules ? (
-                        <button onClick={() => setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                        <button onClick={() => { setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`); setQuizData(null); }} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
                             <Icon className="w-4 h-4" />
                           </div>
@@ -284,7 +305,15 @@ export default function CourseTab({ classroomState }) {
                           </div>
                         </button>
                       ) : (
-                        <a href={`/learn/${encodeURIComponent(classroom.subject || classroom.name)}?format=${fc.contentType}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 flex-1 min-w-0 group">
+                        <button onClick={() => {
+                          const key = `${fc.contentType}-${fc.contentId}`;
+                          const next = expandedFork === key ? null : key;
+                          setExpandedFork(next);
+                          setQuizData(null);
+                          if (next && fc.contentType === "quiz") {
+                            fetchQuizContent(fc.contentId);
+                          }
+                        }} className="flex items-center gap-3 flex-1 min-w-0 text-left group">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
                             <Icon className="w-4 h-4" />
                           </div>
@@ -301,8 +330,10 @@ export default function CourseTab({ classroomState }) {
                               {fc.meta?.questionCount > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{fc.meta.questionCount} questions</span>}
                             </div>
                           </div>
-                          <ExternalLink className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 flex-shrink-0" />
-                        </a>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                          </div>
+                        </button>
                       )}
                       {isInstructor && (
                         <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -353,6 +384,28 @@ export default function CourseTab({ classroomState }) {
                         setAnnouncements={setAnnouncements}
                         setDiscussions={setDiscussions}
                       />
+                    )}
+
+                    {/* Expanded: inline quiz */}
+                    {!hasModules && isExpanded && fc.contentType === "quiz" && (
+                      <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+                        {quizLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                          </div>
+                        ) : quizData?.questions?.length > 0 ? (
+                          <QuizInterface
+                            topic={quizData.course || classroom.subject || classroom.name}
+                            quizData={quizData}
+                            onBack={() => { setExpandedQuiz(null); setQuizData(null); }}
+                            onQuizComplete={(results) => {
+                              if (results) toast.success(`Quiz completed! Score: ${results.score}%`);
+                            }}
+                          />
+                        ) : (
+                          <p className="text-xs text-slate-400 text-center py-4">No questions available</p>
+                        )}
+                      </div>
                     )}
 
                   </div>
