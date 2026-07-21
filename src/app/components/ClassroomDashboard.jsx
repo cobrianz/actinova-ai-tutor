@@ -6,7 +6,7 @@ import { apiClient } from "@/lib/csrfClient";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, ChevronRight, Clock, Trash2,
-  AlertCircle, UserPlus, GraduationCap, ArrowRight, ChevronLeft,
+  AlertCircle, UserPlus, GraduationCap, ArrowRight, ArrowLeft, ChevronLeft,
   Sparkles, Loader2, ClipboardList, Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
