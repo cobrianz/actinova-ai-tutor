@@ -47,6 +47,9 @@ async function handleGet(request, { params }) {
     title: quiz.title,
     course: quiz.course,
     questions: quiz.questions,
+    allowRetake: forkEntry.allowRetake !== false,
+    allowReview: forkEntry.allowReview !== false,
+    allowDownload: forkEntry.allowDownload !== false,
   });
 }
 

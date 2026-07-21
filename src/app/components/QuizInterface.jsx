@@ -28,7 +28,7 @@ import { useAuth } from "./AuthProvider";
 import { downloadQuizPdfFromServer } from "@/lib/quizPdfDownload";
 import { apiClient } from "@/lib/csrfClient";
 
-const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
+const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = true, allowReview = true, allowDownload = true }) => {
   const { user, loading: authLoading, isEnterprise, hasPurchased } = useAuth();
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -292,17 +292,19 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
               {quizData.title}
             </h1>
 
-            {/* Download button - always visible */}
+            {/* Download button - conditionally visible */}
             <div className="flex items-center gap-2 shrink-0">
-              <Button
-                onClick={handleDownloadExam}
-                variant="outline"
-                size="sm"
-                className="border-border hover:bg-muted"
-              >
-                <Download className="w-4 h-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">Download</span>
-              </Button>
+              {allowDownload && (
+                <Button
+                  onClick={handleDownloadExam}
+                  variant="outline"
+                  size="sm"
+                  className="border-border hover:bg-muted"
+                >
+                  <Download className="w-4 h-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -633,29 +635,35 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId }) => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button
-                  onClick={handleRetake}
-                  variant="outline"
-                  className="border-border"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Retake Test
-                </Button>
-                <Button
-                  onClick={handleDownloadExam}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Exam
-                </Button>
-                <Button
-                  onClick={() => setIsReviewMode(!isReviewMode)}
-                  variant="outline"
-                  className="border-border"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  {isReviewMode ? "Hide Review" : "Review Answers"}
-                </Button>
+                {allowRetake && (
+                  <Button
+                    onClick={handleRetake}
+                    variant="outline"
+                    className="border-border"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Retake Test
+                  </Button>
+                )}
+                {allowDownload && (
+                  <Button
+                    onClick={handleDownloadExam}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Exam
+                  </Button>
+                )}
+                {allowReview && (
+                  <Button
+                    onClick={() => setIsReviewMode(!isReviewMode)}
+                    variant="outline"
+                    className="border-border"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    {isReviewMode ? "Hide Review" : "Review Answers"}
+                  </Button>
+                )}
               </div>
             </div>
           ) : (

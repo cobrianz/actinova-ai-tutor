@@ -42,6 +42,7 @@ export default function CourseTab({ classroomState }) {
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
     setAnnouncements, setDiscussions, setForkedContent,
+    materials, discussions,
     inputCls, labelCls, sectionCls,
   } = classroomState;
 
@@ -383,6 +384,11 @@ export default function CourseTab({ classroomState }) {
                         toggleLessonComplete={toggleLessonComplete}
                         setAnnouncements={setAnnouncements}
                         setDiscussions={setDiscussions}
+                        forkedContent={forkedContent}
+                        materials={materials}
+                        discussions={discussions}
+                        handleUpdateFork={handleUpdateFork}
+                        setForkedContent={setForkedContent}
                       />
                     )}
 
@@ -401,6 +407,9 @@ export default function CourseTab({ classroomState }) {
                             onQuizComplete={(results) => {
                               if (results) toast.success(`Quiz completed! Score: ${results.score}%`);
                             }}
+                            allowRetake={quizData.allowRetake !== false}
+                            allowReview={quizData.allowReview !== false}
+                            allowDownload={quizData.allowDownload !== false}
                           />
                         ) : (
                           <p className="text-xs text-slate-400 text-center py-4">No questions available</p>
@@ -468,6 +477,13 @@ function ForkEditPanel({ fork, maxWeeks, onSave, onCancel }) {
   const [instructions, setInstructions] = useState(fork.instructions || "");
   const [availableFrom, setAvailableFrom] = useState(fork.availableFrom ? new Date(fork.availableFrom).toISOString().slice(0, 16) : "");
   const [availableUntil, setAvailableUntil] = useState(fork.availableUntil ? new Date(fork.availableUntil).toISOString().slice(0, 16) : "");
+  const [allowRetake, setAllowRetake] = useState(fork.allowRetake !== false);
+  const [allowReview, setAllowReview] = useState(fork.allowReview !== false);
+  const [allowDownload, setAllowDownload] = useState(fork.allowDownload !== false);
+  const isQuiz = fork.contentType === "quiz";
+
+  const toggleCls = (on) => `relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${on ? "bg-green-500" : "bg-slate-300 dark:bg-slate-600"}`;
+  const toggleDot = (on) => `inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${on ? "translate-x-4" : "translate-x-0.5"}`;
 
   return (
     <div className="mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg space-y-3">
@@ -518,9 +534,28 @@ function ForkEditPanel({ fork, maxWeeks, onSave, onCancel }) {
           className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 resize-none"
         />
       </div>
+      {isQuiz && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Permissions</p>
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={() => setAllowRetake(!allowRetake)} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <span className={toggleCls(allowRetake)}><span className={toggleDot(allowRetake)} /></span>
+              <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">Retake</span>
+            </button>
+            <button type="button" onClick={() => setAllowReview(!allowReview)} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <span className={toggleCls(allowReview)}><span className={toggleDot(allowReview)} /></span>
+              <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">Review</span>
+            </button>
+            <button type="button" onClick={() => setAllowDownload(!allowDownload)} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <span className={toggleCls(allowDownload)}><span className={toggleDot(allowDownload)} /></span>
+              <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">Download</span>
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-2 justify-end">
         <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
-        <button onClick={() => onSave({ weekNumber, instructions, availableFrom: availableFrom || null, availableUntil: availableUntil || null })} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors">Save</button>
+        <button onClick={() => onSave({ weekNumber, instructions, availableFrom: availableFrom || null, availableUntil: availableUntil || null, ...(isQuiz ? { allowRetake, allowReview, allowDownload } : {}) })} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors">Save</button>
       </div>
     </div>
   );
@@ -530,78 +565,42 @@ function WeekGroupedCourse({
   modules, durationWeeks, courseId, courseTopic, difficulty, classroomId,
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
   openedWeeks, handleToggleWeek, setConfirmModal, completedLessons, toggleLessonComplete,
-  setAnnouncements, setDiscussions,
+  setAnnouncements, setDiscussions, forkedContent, materials, discussions,
+  handleUpdateFork, setForkedContent,
 }) {
   const [addMenuWeek, setAddMenuWeek] = useState(null);
-  const [addQuizTitle, setAddQuizTitle] = useState("");
-  const [addAnnTitle, setAddAnnTitle] = useState("");
-  const [addAnnContent, setAddAnnContent] = useState("");
-  const [addDiscTitle, setAddDiscTitle] = useState("");
-  const [addDiscDesc, setAddDiscDesc] = useState("");
-  const [addingType, setAddingType] = useState(null);
-  const [adding, setAdding] = useState(false);
-
+  const [attachTab, setAttachTab] = useState("quiz");
+  const [attachLoading, setAttachLoading] = useState(null);
   const weekGroups = groupModulesByWeek(modules, durationWeeks);
 
-  const handleAddQuiz = async (weekNumber) => {
-    if (!addQuizTitle.trim()) return;
-    setAdding(true);
+  const handleAttachQuiz = async (fc, weekNumber) => {
+    setAttachLoading(`${fc.contentId}`);
     try {
-      const res = await apiClient.post(`/api/classrooms/${classroomId}/announcements`, {
-        title: `Quiz: ${addQuizTitle}`, content: `Quiz "${addQuizTitle}" assigned for Week ${weekNumber}`, weekNumber,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setAddQuizTitle("");
-          setAddMenuWeek(null);
-          toast.success("Quiz added to week!");
-        }
-      }
-    } catch (_) { toast.error("Failed to add quiz"); }
-    setAdding(false);
+      handleUpdateFork(fc.contentType, fc.contentId, { weekNumber });
+      toast.success(`"${fc.title}" attached to Week ${weekNumber}`);
+      setAddMenuWeek(null);
+    } catch { toast.error("Failed to attach quiz"); }
+    setAttachLoading(null);
   };
 
-  const handleAddAnnouncement = async (weekNumber) => {
-    if (!addAnnTitle.trim() || !addAnnContent.trim()) return;
-    setAdding(true);
+  const handleAttachMaterial = async (mat, weekNumber) => {
+    setAttachLoading(mat._id || mat.id);
     try {
-      const res = await apiClient.post(`/api/classrooms/${classroomId}/announcements`, {
-        title: addAnnTitle, content: addAnnContent, weekNumber,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          if (setAnnouncements) setAnnouncements((prev) => [...prev, data.announcement]);
-          setAddAnnTitle("");
-          setAddAnnContent("");
-          setAddMenuWeek(null);
-          toast.success("Announcement posted!");
-        }
-      }
-    } catch (_) { toast.error("Failed to post announcement"); }
-    setAdding(false);
+      const res = await apiClient.patch(`/api/classrooms/${classroomId}/materials`, { materialId: mat._id || mat.id, weekNumber });
+      if (res.ok) toast.success(`"${mat.title}" attached to Week ${weekNumber}`);
+      setAddMenuWeek(null);
+    } catch { toast.error("Failed to attach material"); }
+    setAttachLoading(null);
   };
 
-  const handleAddDiscussion = async (weekNumber) => {
-    if (!addDiscTitle.trim()) return;
-    setAdding(true);
+  const handleAttachDiscussion = async (disc, weekNumber) => {
+    setAttachLoading(disc._id || disc.id);
     try {
-      const res = await apiClient.post(`/api/classrooms/${classroomId}/discussions`, {
-        title: addDiscTitle, description: addDiscDesc, weekNumber,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          if (setDiscussions) setDiscussions((prev) => [data.discussion, ...prev]);
-          setAddDiscTitle("");
-          setAddDiscDesc("");
-          setAddMenuWeek(null);
-          toast.success("Discussion created!");
-        }
-      }
-    } catch (_) { toast.error("Failed to create discussion"); }
-    setAdding(false);
+      const res = await apiClient.patch(`/api/classrooms/${classroomId}/discussions`, { discussionId: disc._id || disc.id, weekNumber });
+      if (res.ok) toast.success(`"${disc.title}" attached to Week ${weekNumber}`);
+      setAddMenuWeek(null);
+    } catch { toast.error("Failed to attach discussion"); }
+    setAttachLoading(null);
   };
 
   return (
@@ -645,49 +644,69 @@ function WeekGroupedCourse({
               </div>
             )}
 
-            {/* Weekly Quick-Add Menu */}
-            {isInstructor && addMenuWeek === wg.week && (
-              <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Attach to Week {wg.week}</p>
-                <div className="grid grid-cols-3 gap-1.5">
-                   <button onClick={() => setAddingType(addingType === "quiz-add" ? null : "quiz-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "quiz-add" ? "bg-purple-500/15 text-purple-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-purple-500/10"}`}>
-                    <ClipboardList className="w-2.5 h-2.5" /> Quiz
-                  </button>
-                  <button onClick={() => setAddingType(addingType === "ann-add" ? null : "ann-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "ann-add" ? "bg-amber-500/15 text-amber-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-amber-500/10"}`}>
-                    <Megaphone className="w-2.5 h-2.5" /> Announce
-                  </button>
-                  <button onClick={() => setAddingType(addingType === "disc-add" ? null : "disc-add")} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${addingType === "disc-add" ? "bg-blue-500/15 text-blue-700" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-blue-500/10"}`}>
-                    <MessageSquare className="w-2.5 h-2.5" /> Discussion
-                  </button>
+            {/* Weekly Attach Dropdown */}
+            {isInstructor && addMenuWeek === wg.week && (() => {
+              const weekQuizzes = (forkedContent || []).filter((fc) => fc.contentType === "quiz" && (!fc.weekNumber || fc.weekNumber === 0));
+              const weekMaterials = (materials || []).filter((m) => !m.weekNumber || m.weekNumber === 0);
+              const weekDiscussions = (discussions || []).filter((d) => !d.weekNumber || d.weekNumber === 0);
+              const tabs = [
+                { id: "quiz", label: "Quizzes", icon: ClipboardList, count: weekQuizzes.length, active: "bg-purple-500/15 text-purple-700" },
+                { id: "material", label: "Materials", icon: FileText, count: weekMaterials.length, active: "bg-green-500/15 text-green-700" },
+                { id: "discussion", label: "Discussions", icon: MessageSquare, count: weekDiscussions.length, active: "bg-blue-500/15 text-blue-700" },
+              ];
+              return (
+                <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Attach to Week {wg.week}</p>
+                  <div className="flex gap-1">
+                    {tabs.map((t) => (
+                      <button key={t.id} onClick={() => setAttachTab(attachTab === t.id ? null : t.id)} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${attachTab === t.id ? t.active : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600"}`}>
+                        <t.icon className="w-2.5 h-2.5" /> {t.label}
+                        {t.count > 0 && <span className="ml-0.5 px-1 py-0 rounded-full bg-slate-300/50 dark:bg-slate-600/50 text-[8px]">{t.count}</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {attachTab === "quiz" && (
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {weekQuizzes.length === 0 ? (
+                        <p className="text-[9px] text-slate-400 py-1">No unassigned quizzes</p>
+                      ) : weekQuizzes.map((fc) => (
+                        <button key={fc.contentId} onClick={() => handleAttachQuiz(fc, wg.week)} disabled={attachLoading === `${fc.contentId}`} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors text-left disabled:opacity-50">
+                          <ClipboardList className="w-3 h-3 text-purple-500 flex-shrink-0" />
+                          <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{fc.title}</span>
+                          {attachLoading === `${fc.contentId}` ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {attachTab === "material" && (
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {weekMaterials.length === 0 ? (
+                        <p className="text-[9px] text-slate-400 py-1">No unassigned materials</p>
+                      ) : weekMaterials.map((mat) => (
+                        <button key={mat._id || mat.id} onClick={() => handleAttachMaterial(mat, wg.week)} disabled={attachLoading === (mat._id || mat.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 transition-colors text-left disabled:opacity-50">
+                          <FileText className="w-3 h-3 text-green-500 flex-shrink-0" />
+                          <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{mat.title}</span>
+                          {attachLoading === (mat._id || mat.id) ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {attachTab === "discussion" && (
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {weekDiscussions.length === 0 ? (
+                        <p className="text-[9px] text-slate-400 py-1">No unassigned discussions</p>
+                      ) : weekDiscussions.map((disc) => (
+                        <button key={disc._id || disc.id} onClick={() => handleAttachDiscussion(disc, wg.week)} disabled={attachLoading === (disc._id || disc.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors text-left disabled:opacity-50">
+                          <MessageSquare className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                          <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{disc.title}</span>
+                          {attachLoading === (disc._id || disc.id) ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {addingType === "quiz-add" && (
-                  <div className="flex items-center gap-1.5">
-                    <input value={addQuizTitle} onChange={(e) => setAddQuizTitle(e.target.value)} placeholder="Quiz title..." className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" onKeyDown={(e) => e.key === "Enter" && handleAddQuiz(wg.week)} />
-                    <button onClick={() => handleAddQuiz(wg.week)} disabled={!addQuizTitle.trim() || adding} className="px-2 py-1 rounded bg-purple-500 text-white text-[9px] font-semibold disabled:opacity-50">
-                      {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Add"}
-                    </button>
-                  </div>
-                )}
-                {addingType === "ann-add" && (
-                  <div className="space-y-1.5">
-                    <input value={addAnnTitle} onChange={(e) => setAddAnnTitle(e.target.value)} placeholder="Announcement title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                    <textarea value={addAnnContent} onChange={(e) => setAddAnnContent(e.target.value)} placeholder="Content..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400 resize-none" />
-                    <button onClick={() => handleAddAnnouncement(wg.week)} disabled={!addAnnTitle.trim() || !addAnnContent.trim() || adding} className="px-2 py-1 rounded bg-amber-500 text-white text-[9px] font-semibold disabled:opacity-50">
-                      {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Post"}
-                    </button>
-                  </div>
-                )}
-                {addingType === "disc-add" && (
-                  <div className="space-y-1.5">
-                    <input value={addDiscTitle} onChange={(e) => setAddDiscTitle(e.target.value)} placeholder="Discussion title..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                    <input value={addDiscDesc} onChange={(e) => setAddDiscDesc(e.target.value)} placeholder="Description (optional)..." className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[9px] text-slate-900 dark:text-white placeholder:text-slate-400" />
-                    <button onClick={() => handleAddDiscussion(wg.week)} disabled={!addDiscTitle.trim() || adding} className="px-2 py-1 rounded bg-blue-500 text-white text-[9px] font-semibold disabled:opacity-50">
-                      {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Create"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })()}
 
             {/* Modules in this week */}
             {isOpen && wg.modules.map((mod) => {

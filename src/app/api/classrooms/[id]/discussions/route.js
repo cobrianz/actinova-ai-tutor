@@ -37,3 +37,26 @@ async function handlePost(request, { params }) {
 
 export const GET = combineMiddleware(withErrorHandling)(handleGet);
 export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePost);
+
+async function handlePatch(request, { params }) {
+  await connectToDatabase();
+  const user = request.user;
+  const { id } = await params;
+  const { discussionId, weekNumber } = await request.json();
+
+  const classroom = await (await import("@/models/Classroom")).default.findById(id).lean();
+  if (!classroom || classroom.instructorId?.toString() !== user._id?.toString()) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  const discussion = await Discussion.findByIdAndUpdate(
+    discussionId,
+    { weekNumber: weekNumber || 0 },
+    { new: true }
+  ).lean();
+  if (!discussion) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  return NextResponse.json({ success: true, discussion });
+}
+
+export const PATCH = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePatch);
