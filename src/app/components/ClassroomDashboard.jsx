@@ -484,10 +484,9 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
 
   useEffect(() => {
     if (setHideDashboardNav) {
-      const entering = !!(selectedClassroom || showCreate || showJoin);
-      setHideDashboardNav(entering);
+      setHideDashboardNav(!!selectedClassroom);
     }
-  }, [selectedClassroom, showCreate, showJoin, setHideDashboardNav]);
+  }, [selectedClassroom, setHideDashboardNav]);
 
   useEffect(() => {
     return () => {
