@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
   Star,
@@ -31,9 +32,10 @@ import { apiClient } from "@/lib/csrfClient";
 import { PRODUCTS } from "@/lib/planLimits";
 
 export default function Library({ setActiveContent }) {
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState("grid");
   const [filterBy, setFilterBy] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);

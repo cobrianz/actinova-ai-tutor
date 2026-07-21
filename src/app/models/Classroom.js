@@ -103,6 +103,7 @@ const classroomSchema = new mongoose.Schema(
         type: { type: String, enum: ["lecture", "lab", "reading", "video", "activity"], default: "lecture" },
         objectives: [{ type: String }],
         materials: [{ type: String }],
+        content: { type: String, default: "" },
       }],
     }],
     forkedContent: [{

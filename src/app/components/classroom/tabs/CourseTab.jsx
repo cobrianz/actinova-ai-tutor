@@ -38,7 +38,7 @@ export default function CourseTab({ classroomState }) {
     showForkPanel, setShowForkPanel, browseResults, browseLoading,
     browseQuery, setBrowseQuery, browseType, setBrowseType,
     fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
-    courseModules, courseGenLoading, handleGenerateCourseStructure,
+    courseModules, courseGenLoading, handleGenerateCourseStructure, setCourseModules,
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
     setAnnouncements, setDiscussions, setForkedContent,
@@ -238,20 +238,7 @@ export default function CourseTab({ classroomState }) {
         </div>
       )}
 
-      {/* Course Modules */}
-      {courseModules?.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Layers className="w-4 h-4 text-green-500" />
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Course Modules ({courseModules.length})</h3>
-          </div>
-          <div className="space-y-2">
-            {courseModules.map((mod, i) => (
-              <ModuleCard key={i} mod={mod} index={i} />
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Forked Content */}
       {forkedContent?.length > 0 && (
@@ -604,14 +591,21 @@ function WeekGroupedCourse({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-4">
+      {/* Course Modules header */}
+      {modules?.length > 0 && (
+        <div className="flex items-center gap-2 px-1">
+          <Layers className="w-4 h-4 text-green-500" />
+          <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Course Modules ({modules.length})</h3>
+        </div>
+      )}
       {weekGroups.map((wg) => {
         const isWeekOpen = (openedWeeks || []).includes(wg.week);
         const isOpen = isInstructor || isWeekOpen;
         return (
           <div key={wg.week} className="space-y-2.5">
             {/* Week Header */}
-            <div className="flex items-center gap-2 px-1">
+        <div className="flex items-center gap-2 px-1 mt-4">
               <div className="w-6 h-6 rounded-md bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-[9px] font-bold text-indigo-600">W{wg.week}</span>
               </div>
@@ -899,7 +893,7 @@ function ForkedModuleCard({
 
                 {/* Lesson Content Area */}
                   {isActive && !hidden && (
-                  <div className="mt-1.5 rounded-lg overflow-hidden bg-[#EDECE8] dark:bg-slate-700/40">
+                  <div className="mt-1.5 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
                     {loading && !contentChecked ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
@@ -924,7 +918,7 @@ function ForkedModuleCard({
                             </div>
                             <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 text-center">This lesson has no content yet.</p>
                             <a
-                              href={`/learn/${encodeURIComponent(courseTopic)}?module=${modIndex + 1}&lesson=${li + 1}`}
+                              href={`/dashboard?tab=library&q=${encodeURIComponent(mod.title)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-colors"
@@ -956,8 +950,15 @@ function ForkedModuleCard({
   );
 }
 
-function ModuleCard({ mod, index }) {
+function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setForkedContent }) {
   const [expanded, setExpanded] = useState(false);
+  const [activeLesson, setActiveLesson] = useState(null);
+  const [lessonContent, setLessonContent] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [generatingQuiz, setGeneratingQuiz] = useState(false);
+
   const typeColors = {
     lecture: "bg-blue-500/10 text-blue-600",
     lab: "bg-orange-500/10 text-orange-600",
@@ -966,37 +967,196 @@ function ModuleCard({ mod, index }) {
     activity: "bg-green-500/10 text-green-600",
   };
 
+  const handleLessonClick = (li) => {
+    if (activeLesson === li) {
+      setActiveLesson(null);
+      setLessonContent("");
+      setEditing(false);
+      return;
+    }
+    setActiveLesson(li);
+    setLessonContent(mod.lessons[li].content || "");
+    setEditing(false);
+  };
+
+  const handleGenerateContent = async (li) => {
+    setGenerating(true);
+    try {
+      const res = await fetch(`/api/classrooms/${classroomId}/module-lesson-content`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ moduleIdx: index, lessonIdx: li }),
+      });
+      const data = await res.json();
+      if (res.ok && data.content) {
+        setLessonContent(data.content);
+        setCourseModules((prev) => {
+          const next = [...prev];
+          next[index] = { ...next[index], lessons: [...next[index].lessons] };
+          next[index].lessons[li] = { ...next[index].lessons[li], content: data.content };
+          return next;
+        });
+        toast.success("Lesson content generated!");
+      } else {
+        toast.error(data.error || "Failed to generate");
+      }
+    } catch { toast.error("Failed to generate content"); }
+    setGenerating(false);
+  };
+
+  const handleSaveEdit = async (li) => {
+    try {
+      const res = await fetch(`/api/classrooms/${classroomId}/module-lesson-content`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ moduleIdx: index, lessonIdx: li, content: editContent }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLessonContent(editContent);
+        setEditing(false);
+        setCourseModules((prev) => {
+          const next = [...prev];
+          next[index] = { ...next[index], lessons: [...next[index].lessons] };
+          next[index].lessons[li] = { ...next[index].lessons[li], content: editContent };
+          return next;
+        });
+        toast.success("Content saved!");
+      } else {
+        toast.error(data.error || "Failed to save");
+      }
+    } catch { toast.error("Failed to save"); }
+  };
+
+  const handleGenerateQuiz = async () => {
+    setGeneratingQuiz(true);
+    try {
+      const res = await fetch(`/api/classrooms/${classroomId}/module-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ moduleIdx: index }),
+      });
+      const data = await res.json();
+      if (res.ok && data.quiz) {
+        setForkedContent?.((prev) => [...prev, {
+          contentType: "quiz",
+          contentId: data.quiz._id,
+          title: data.quiz.title,
+          description: `Auto-generated quiz for ${mod.title}`,
+          weekNumber: mod.weekNumber || 0,
+          unlocked: true,
+          meta: { course: mod.title, questionCount: data.quiz.questionCount },
+        }]);
+        toast.success(`Quiz generated: ${data.quiz.questionCount} questions`);
+      } else {
+        toast.error(data.error || "Failed to generate quiz");
+      }
+    } catch { toast.error("Failed to generate quiz"); }
+    setGeneratingQuiz(false);
+  };
+
+  const hasQuiz = false;
+
   return (
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-        <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
-          {mod.description && <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-        </div>
-      </button>
+      <div className="flex items-center gap-3 w-full p-3 text-left">
+        <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
+            {mod.description && <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
+            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+          </div>
+        </button>
+        {isInstructor && (
+          <button onClick={handleGenerateQuiz} disabled={generatingQuiz} className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors disabled:opacity-50 flex-shrink-0" title="Generate quiz from module">
+            {generatingQuiz ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <ClipboardList className="w-2.5 h-2.5" />}
+            <span className="hidden sm:inline">Quiz</span>
+          </button>
+        )}
+      </div>
       {expanded && (
         <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
-          {(mod.lessons || []).map((lesson, li) => (
-            <div key={li} className="flex items-center gap-2.5 py-2 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-              <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
+          {(mod.lessons || []).map((lesson, li) => {
+            const isActive = activeLesson === li;
+            const hasContent = !!lesson.content;
+            return (
+              <div key={li}>
+                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-2 rounded-lg transition-colors text-left ${isActive ? "bg-green-500/10 dark:bg-green-500/10" : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
+                  <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${typeColors[lesson.type] || "bg-slate-500/10 text-slate-600"}`}>{lesson.type}</span>
+                      {lesson.duration && <span className="text-[9px] text-slate-400">{lesson.duration}min</span>}
+                      {hasContent && <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">Content</span>}
+                    </div>
+                  </div>
+                  {isActive ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+                </button>
+                {isActive && (
+                  <div className="mt-1 ml-8 rounded-lg overflow-hidden bg-[#EDECE8] dark:bg-slate-700/40">
+                    {generating ? (
+                      <div className="py-6 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-xs font-semibold">Generating lesson content...</span>
+                        </div>
+                      </div>
+                    ) : editing ? (
+                      <div className="p-3 space-y-2">
+                        <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={12} className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono resize-y focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+                        <div className="flex items-center gap-2 justify-end">
+                          <button onClick={() => setEditing(false)} className="px-2.5 py-1 rounded text-[10px] font-semibold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700">Cancel</button>
+                          <button onClick={() => handleSaveEdit(li)} className="px-2.5 py-1 rounded bg-green-500 text-white text-[10px] font-semibold hover:bg-green-600">Save</button>
+                        </div>
+                      </div>
+                    ) : hasContent ? (
+                      <div className="p-4 relative group">
+                        {isInstructor && (
+                          <button onClick={() => { setEditing(true); setEditContent(lessonContent); }} className="absolute top-2 right-2 p-1.5 rounded-md bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 dark:hover:bg-slate-700" title="Edit content">
+                            <FileText className="w-3 h-3 text-slate-500" />
+                          </button>
+                        )}
+                        <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
+                          <div className="space-y-4">
+                            {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-4 flex flex-col items-center gap-2">
+                        {isInstructor ? (
+                          <>
+                            <FileText className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                            <p className="text-[10px] font-medium text-slate-400">No content yet</p>
+                            <button onClick={() => handleGenerateContent(li)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] font-semibold hover:bg-green-500/20 transition-colors">
+                              <Sparkles className="w-3 h-3" /> Generate with AI
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+                            <p className="text-[10px] font-medium text-slate-400">Content not available yet</p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${typeColors[lesson.type] || "bg-slate-500/10 text-slate-600"}`}>{lesson.type}</span>
-                  {lesson.duration && <span className="text-[9px] text-slate-400">{lesson.duration}min</span>}
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

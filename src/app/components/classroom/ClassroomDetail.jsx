@@ -536,7 +536,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     handleEditAssignment, handleViewSubmissions, handleAssignmentSaved,
     showCreateAssignment, setShowCreateAssignment, showForkPanel, setShowForkPanel,
     showNewAnnouncement, setShowNewAnnouncement, showInvite, setShowInvite,
-    courseModules, courseGenLoading, handleGenerateCourseStructure,
+    courseModules, courseGenLoading, handleGenerateCourseStructure, setCourseModules,
     handleGenerateModuleAssignments, expandedModule, setExpandedModule,
     forkedContent, forkedIdSet, isForkedContentLocked, handleToggleForkUnlock,
     handleUnforkContent, handleForkContent, handleUpdateFork, getDueStatus,

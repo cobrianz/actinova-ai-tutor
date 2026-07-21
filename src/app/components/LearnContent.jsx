@@ -57,6 +57,7 @@ export default function LearnContent() {
   const premiumRequested = searchParams.get("premiumRequested") === "true";
   const forceRegenerate = searchParams.get("forceRegenerate") === "true";
   const marketplaceCourseId = searchParams.get("marketplaceCourseId");
+  const libraryCourseId = searchParams.get("libraryCourseId");
   // Use original topic if provided, otherwise use the URL topic
   const actualTopic = originalTopic ? decodeURIComponent(originalTopic) : topic;
   const [activeView, setActiveView] = useState("outline");
@@ -1473,6 +1474,24 @@ export default function LearnContent() {
       if (libraryResponse.ok) {
         const libraryData = await libraryResponse.json();
         
+        // 0. If libraryCourseId provided (from classroom), look up that specific course by ID
+        if (libraryCourseId && !existingCourse) {
+          const fullResponse = await apiClient.get(`/api/library?id=${libraryCourseId}`);
+          if (fullResponse.ok) {
+            const fullData = await fullResponse.json();
+            if (fullData.success && fullData.item) {
+              existingCourse = fullData.item;
+            }
+          }
+          // Also try matching in the list
+          if (!existingCourse) {
+            existingCourse = libraryData.items?.find((c) => {
+              const id = (c.id || "").replace(/^(course|guide|cards)_/, "");
+              return id === String(libraryCourseId) || c.courseId === String(libraryCourseId);
+            });
+          }
+        }
+
         // Search by shareId first if provided
         if (shareId) {
           existingCourse = libraryData.items?.find((c) => {
