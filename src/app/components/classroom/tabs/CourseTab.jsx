@@ -284,12 +284,12 @@ export default function CourseTab({ classroomState }) {
                           </div>
                         </button>
                       ) : (
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <a href={`/learn/${encodeURIComponent(classroom.subject || classroom.name)}?format=${fc.contentType}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 flex-1 min-w-0 group">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
                             <Icon className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{fc.title}</p>
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{fc.title}</p>
                             {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               {fc.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-semibold">Week {fc.weekNumber}</span>}
@@ -298,9 +298,11 @@ export default function CourseTab({ classroomState }) {
                               ) : (
                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>
                               )}
+                              {fc.meta?.questionCount > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{fc.meta.questionCount} questions</span>}
                             </div>
                           </div>
-                        </div>
+                          <ExternalLink className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 flex-shrink-0" />
+                        </a>
                       )}
                       {isInstructor && (
                         <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -850,7 +852,7 @@ function ForkedModuleCard({
                             </div>
                             <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 text-center">This lesson has no content yet.</p>
                             <a
-                              href={`/learn/${encodeURIComponent(courseTopic)}?moduleId=${modIndex + 1}&lessonIndex=${li}`}
+                              href={`/learn/${encodeURIComponent(courseTopic)}?module=${modIndex + 1}&lesson=${li + 1}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-colors"
