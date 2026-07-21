@@ -347,6 +347,7 @@ export default function CourseTab({ classroomState }) {
                         modules={fc.meta.modules}
                         durationWeeks={classroom.durationWeeks}
                         courseId={fc.contentId}
+                        courseName={fc.title}
                         courseTopic={classroom.subject || classroom.name}
                         difficulty={classroom.academicLevel || "intermediate"}
                         classroomId={classroom.id}
@@ -549,7 +550,7 @@ function ForkEditPanel({ fork, maxWeeks, onSave, onCancel }) {
 }
 
 function WeekGroupedCourse({
-  modules, durationWeeks, courseId, courseTopic, difficulty, classroomId,
+  modules, durationWeeks, courseId, courseName, courseTopic, difficulty, classroomId,
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
   openedWeeks, handleToggleWeek, setConfirmModal, completedLessons, toggleLessonComplete,
   setAnnouncements, setDiscussions, forkedContent, materials, discussions,
@@ -712,6 +713,7 @@ function WeekGroupedCourse({
                     mod={mod}
                     modIndex={globalIdx}
                     courseId={courseId}
+                    courseName={courseName}
                     courseTopic={courseTopic}
                     difficulty={difficulty}
                     classroomId={classroomId}
@@ -734,7 +736,7 @@ function WeekGroupedCourse({
 }
 
 function ForkedModuleCard({
-  mod, modIndex, courseId, courseTopic, difficulty, classroomId,
+  mod, modIndex, courseId, courseName, courseTopic, difficulty, classroomId,
   isInstructor, isHidden, hiddenLessons, onToggleHideModule, onToggleHideLesson,
   completedLessons, toggleLessonComplete,
 }) {
@@ -918,7 +920,7 @@ function ForkedModuleCard({
                             </div>
                             <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 text-center">This lesson has no content yet.</p>
                             <a
-                              href={`/dashboard?tab=library&q=${encodeURIComponent(mod.title)}`}
+                              href={`/dashboard?tab=library&q=${encodeURIComponent(courseName)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-colors"
