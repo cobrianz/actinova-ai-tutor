@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, ChevronDown, ListOrdered, CheckCircle2, Check, Play, Edit3, Eye } from "lucide-react";
+import { ChevronUp, ChevronDown, ListOrdered, CheckCircle2, Check, Play, Edit3, Eye, Send, Loader2 } from "lucide-react";
 import { TYPE_CONFIG } from "./constants";
+import { apiClient } from "@/lib/csrfClient";
 
 function renderInstructions(text) {
   if (!text) return null;
@@ -16,8 +17,6 @@ function renderInstructions(text) {
     if (!t || t.length > 80) return false;
     return /^(Objectives?|Requirements?|Submission Guidelines?|Grading Criteria?|Important Notes?|Overview|Description|Deliverables?|Summary|Conclusion|Instructions?|Guidelines?|Steps?|Prerequisites?|Resources?|Format|Content|Time Limit|Access|Deadline|Criteria|Expectations|Tasks?|Notes?|Policies?|References?):?\s*$/i.test(t);
   };
-
-  const isListItem = (line) => /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line);
 
   while (i < lines.length) {
     const line = lines[i];
@@ -36,7 +35,7 @@ function renderInstructions(text) {
       }
       elements.push(
         <ul key={`ul-${i}`} className="list-disc list-outside ml-8 space-y-1 text-sm my-2">
-          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}
+          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{item}</li>)}
         </ul>
       );
     } else if (/^\d+\.\s+/.test(line)) {
@@ -47,96 +46,27 @@ function renderInstructions(text) {
       }
       elements.push(
         <ol key={`ol-${i}`} className="list-decimal list-outside ml-8 space-y-1 text-sm my-2">
-          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}
+          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{item}</li>)}
         </ol>
       );
     } else if (line.trim() === "") {
       i++;
     } else {
-      const prevLine = i > 0 ? lines[i - 1] : "";
-      const lookAhead = i < lines.length - 1 ? lines[i + 1] : "";
-      const prevNonEmpty = (() => {
-        for (let j = i - 1; j >= 0; j--) { if (lines[j].trim()) return lines[j].trim(); }
-        return "";
-      })();
-      const isSoftListItem = /^.{5,80}:\s*$/.test(prevNonEmpty) ||
-        (isSectionHeader(lookAhead) && line.trim().length > 10);
-
-      if (isSoftListItem) {
-        const items = [line.trim()];
-        i++;
-        while (i < lines.length && lines[i].trim() !== "" && !isSectionHeader(lines[i]) && !/^#{1,3}\s+/.test(lines[i]) && !/^[-*]\s+/.test(lines[i]) && !/^\d+\.\s+/.test(lines[i])) {
-          items.push(lines[i].trim());
-          i++;
-        }
-        elements.push(
-          <ul key={`soft-${i}`} className="list-disc list-outside ml-8 space-y-1 text-sm my-2">
-            {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}
-          </ul>
-        );
-      } else {
-        elements.push(<p key={i} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{renderInline(line)}</p>);
-        i++;
-      }
+      elements.push(<p key={i} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{line}</p>);
+      i++;
     }
   }
 
   return elements;
 }
 
-function renderInline(text) {
-  const parts = [];
-  let remaining = text;
-  let idx = 0;
-
-  while (remaining.length > 0) {
-    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-    const italicMatch = remaining.match(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/);
-    const codeMatch = remaining.match(/`(.+?)`/);
-
-    let firstMatch = null;
-    let firstIndex = Infinity;
-
-    if (boldMatch && remaining.indexOf(boldMatch[0]) < firstIndex) {
-      firstMatch = { type: "bold", match: boldMatch };
-      firstIndex = remaining.indexOf(boldMatch[0]);
-    }
-    if (italicMatch && remaining.indexOf(italicMatch[0]) < firstIndex) {
-      firstMatch = { type: "italic", match: italicMatch };
-      firstIndex = remaining.indexOf(italicMatch[0]);
-    }
-    if (codeMatch && remaining.indexOf(codeMatch[0]) < firstIndex) {
-      firstMatch = { type: "code", match: codeMatch };
-      firstIndex = remaining.indexOf(codeMatch[0]);
-    }
-
-    if (!firstMatch) {
-      parts.push(<span key={idx++}>{remaining}</span>);
-      break;
-    }
-
-    if (firstIndex > 0) {
-      parts.push(<span key={idx++}>{remaining.slice(0, firstIndex)}</span>);
-    }
-
-    if (firstMatch.type === "bold") {
-      parts.push(<strong key={idx++} className="font-bold">{firstMatch.match[1]}</strong>);
-    } else if (firstMatch.type === "italic") {
-      parts.push(<em key={idx++} className="italic">{firstMatch.match[1]}</em>);
-    } else if (firstMatch.type === "code") {
-      parts.push(<code key={idx++} className="px-1 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-mono">{firstMatch.match[1]}</code>);
-    }
-
-    remaining = remaining.slice(firstIndex + firstMatch.match[0].length);
-  }
-
-  return parts.length > 0 ? parts : text;
-}
-
-export default function AssignmentDetailPanel({ assignment, isInstructor, classroomId, onBack, onStart, onComplete, onEdit, onSubmissions }) {
+export default function AssignmentDetailPanel({ assignment, isInstructor, classroomId, onBack, onStart, onComplete, onEdit, onSubmissions, onSubmit }) {
   const [showRubric, setShowRubric] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [text, setText] = useState("");
   const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom;
   const TypeIcon = tc.icon;
+
   const due = (() => {
     if (!assignment.dueDate) return null;
     const now = new Date(); const due = new Date(assignment.dueDate); const hoursLeft = (due - now) / (1000 * 60 * 60);
@@ -145,8 +75,28 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
     if (hoursLeft < 72) return { label: `${Math.round(hoursLeft / 24)}d left`, color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" };
     return { label: `${Math.round(hoursLeft / 24)}d left`, color: "text-slate-500 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700" };
   })();
+
   const progress = assignment.myProgress;
+  const isSubmitted = progress?.status === "completed" && progress?.submissionText;
   const totalRubricPoints = (assignment.rubric || []).reduce((sum, r) => sum + (r.maxPoints || 0), 0);
+
+  const handleSubmit = async () => {
+    if (!text) return;
+    setSubmitting(true);
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/submissions`, {
+        assignmentId: assignment.id,
+        text,
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (onSubmit) onSubmit(data.progress);
+        setText("");
+      }
+    } catch {} finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -188,24 +138,6 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Max Score</p>
                 <p className="text-xs font-bold text-slate-900 dark:text-white">{assignment.maxScore} pts</p>
-              </div>
-            )}
-            {assignment.weight > 0 && (
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Weight</p>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{assignment.weight}%</p>
-              </div>
-            )}
-            {assignment.passingScore > 0 && (
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Passing Score</p>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{assignment.passingScore} pts</p>
-              </div>
-            )}
-            {assignment.maxAttempts > 1 && (
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Max Attempts</p>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{assignment.maxAttempts}</p>
               </div>
             )}
           </div>
@@ -267,13 +199,26 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                   {progress.status === "completed" ? "Completed" : progress.status === "in_progress" ? "In Progress" : "Not Started"}
                 </span>
               </div>
-              {progress.status !== "completed" && (
-                <div className="w-full bg-green-200 dark:bg-green-900 rounded-full h-1.5 overflow-hidden mb-2">
-                  <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${progress.progress || 0}%` }} />
+              {progress.score != null && (
+                <p className="text-sm font-bold text-green-700 dark:text-green-400 mb-1">Score: {progress.score}/{assignment.maxScore}</p>
+              )}
+              {progress.feedback && (
+                <div className="mt-2 p-2 bg-white dark:bg-slate-900 rounded-lg border border-green-200 dark:border-green-500/20">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Instructor Feedback</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300">{progress.feedback}</p>
                 </div>
               )}
-              {progress.completedAt && (
-                <p className="text-[10px] text-green-600 dark:text-green-400">Completed {new Date(progress.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+            </div>
+          )}
+
+          {!isInstructor && isSubmitted && (
+            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Submission</p>
+              <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{progress.submissionText}</p>
+              </div>
+              {progress.submittedAt && (
+                <p className="text-[10px] text-slate-400 mt-2">Submitted {new Date(progress.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
               )}
             </div>
           )}
@@ -281,13 +226,40 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
 
         <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           {!isInstructor ? (
-            <div className="flex items-center gap-2">
-              {progress?.status === "completed" ? (
+            <div className="space-y-3">
+              {progress?.status === "completed" && !isSubmitted ? (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600"><CheckCircle2 className="w-4 h-4" /> Assignment Completed</span>
-              ) : progress?.status === "in_progress" ? (
-                <button onClick={onComplete} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors"><Check className="w-4 h-4" /> Mark Complete</button>
+              ) : progress?.status === "in_progress" || (!progress && assignment.type !== "quiz") ? (
+                <>
+                  {!isSubmitted && (
+                    <div className="space-y-3">
+                      <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Type your submission here..."
+                        rows={6}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400"
+                      />
+                      <button
+                        onClick={handleSubmit}
+                        disabled={submitting || !text}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
+                      >
+                        {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                        {submitting ? "Submitting..." : "Submit Assignment"}
+                      </button>
+                    </div>
+                  )}
+                  {isSubmitted && (
+                    <button onClick={onComplete} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
+                      <Check className="w-4 h-4" /> Mark Complete
+                    </button>
+                  )}
+                </>
               ) : (
-                <button onClick={onStart} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors"><Play className="w-4 h-4" /> Start Assignment</button>
+                <button onClick={onStart} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
+                  <Play className="w-4 h-4" /> Start Assignment
+                </button>
               )}
             </div>
           ) : (

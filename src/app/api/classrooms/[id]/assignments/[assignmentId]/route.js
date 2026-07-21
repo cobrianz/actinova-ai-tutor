@@ -64,6 +64,10 @@ async function handleGet(request, { params }) {
       completedAt: p.completedAt,
       timeSpentMinutes: p.timeSpentMinutes,
       lastAccessedAt: p.lastAccessedAt,
+      submissionText: p.submissionText || "",
+      submissionFiles: p.submissionFiles || [],
+      submittedAt: p.submittedAt,
+      feedback: p.feedback || "",
     }));
   } else {
     result.myProgress = progress.length > 0
@@ -75,6 +79,10 @@ async function handleGet(request, { params }) {
           completedAt: progress[0].completedAt,
           timeSpentMinutes: progress[0].timeSpentMinutes,
           lastAccessedAt: progress[0].lastAccessedAt,
+          submissionText: progress[0].submissionText || "",
+          submissionFiles: progress[0].submissionFiles || [],
+          submittedAt: progress[0].submittedAt,
+          feedback: progress[0].feedback || "",
         }
       : null;
   }

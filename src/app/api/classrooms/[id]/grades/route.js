@@ -41,9 +41,6 @@ async function handleGet(request, { params }) {
   }
 
   const isInstructor = classroom.instructorId.toString() === user._id.toString();
-  if (!isInstructor) {
-    return NextResponse.json({ error: "Access denied" }, { status: 403 });
-  }
 
   const assignments = await Assignment.find({
     classroomId: id,
@@ -52,115 +49,188 @@ async function handleGet(request, { params }) {
     .sort({ weekNumber: 1, createdAt: 1 })
     .lean();
 
-  const enrollments = await Enrollment.find({
-    classroomId: id,
-    status: "active",
-  }).lean();
+  if (isInstructor) {
+    const enrollments = await Enrollment.find({
+      classroomId: id,
+      status: "active",
+    }).lean();
 
-  const studentIds = enrollments.map((e) => e.studentId);
+    const studentIds = enrollments.map((e) => e.studentId);
 
-  const studentsData = await Enrollment.find({
-    classroomId: id,
-    status: "active",
-  })
-    .populate("studentId", "name email")
-    .lean();
+    const studentsData = await Enrollment.find({
+      classroomId: id,
+      status: "active",
+    })
+      .populate("studentId", "name email")
+      .lean();
 
-  const allProgress = await StudentProgress.find({ classroomId: id }).lean();
+    const allProgress = await StudentProgress.find({ classroomId: id }).lean();
 
-  const progressByStudent = {};
-  allProgress.forEach((p) => {
-    const sid = p.studentId.toString();
-    if (!progressByStudent[sid]) progressByStudent[sid] = {};
-    progressByStudent[sid][p.assignmentId.toString()] = p;
-  });
-
-  const gradingScheme = classroom.gradingScheme || "percentage";
-
-  const students = studentsData.map((enrollment) => {
-    const student = enrollment.studentId;
-    const sid = student._id.toString();
-    const grades = {};
-    let weightedSum = 0;
-    let totalWeight = 0;
-
-    assignments.forEach((a) => {
-      const aid = a._id.toString();
-      const progress = progressByStudent[sid]?.[aid];
-      const score = progress?.score ?? null;
-      const maxScore = a.maxScore || 100;
-      const percentage = score !== null ? (score / maxScore) * 100 : null;
-      const weight = a.weight || 1;
-
-      grades[aid] = {
-        score,
-        maxScore,
-        percentage,
-        weight,
-        status: progress?.status || "not_started",
-      };
-
-      if (percentage !== null) {
-        weightedSum += (percentage * weight);
-        totalWeight += weight;
-      }
+    const progressByStudent = {};
+    allProgress.forEach((p) => {
+      const sid = p.studentId.toString();
+      if (!progressByStudent[sid]) progressByStudent[sid] = {};
+      progressByStudent[sid][p.assignmentId.toString()] = p;
     });
 
-    const weightedAverage = totalWeight > 0
-      ? Math.round((weightedSum / totalWeight) * 100) / 100
-      : null;
-    const letterGrade = weightedAverage !== null
-      ? computeLetterGrade(weightedAverage, gradingScheme)
-      : "N/A";
+    const gradingScheme = classroom.gradingScheme || "percentage";
 
-    return {
-      id: sid,
-      name: student.name,
-      email: student.email,
-      grades,
-      weightedAverage,
-      totalWeight,
-      letterGrade,
-    };
-  });
+    const students = studentsData.map((enrollment) => {
+      const student = enrollment.studentId;
+      const sid = student._id.toString();
+      const grades = {};
+      let weightedSum = 0;
+      let totalWeight = 0;
 
-  const assignmentList = assignments.map((a) => ({
-    id: a._id.toString(),
-    title: a.title,
-    type: a.type,
-    maxScore: a.maxScore || 100,
-    weight: a.weight || 1,
-  }));
+      assignments.forEach((a) => {
+        const aid = a._id.toString();
+        const progress = progressByStudent[sid]?.[aid];
+        const score = progress?.score ?? null;
+        const maxScore = a.maxScore || 100;
+        const percentage = score !== null ? (score / maxScore) * 100 : null;
+        const weight = a.weight || 1;
 
-  const searchParams = request.nextUrl.searchParams;
-  if (searchParams.get("format") === "csv") {
-    const assignmentNames = assignments.map((a) => a.title);
-    const csvHeader = ["Name", "Email", ...assignmentNames, "Weighted Average", "Letter Grade"];
-    const csvRows = students.map((s) => [
-      s.name,
-      s.email,
-      ...assignments.map((a) => s.grades[a._id.toString()]?.score ?? ""),
-      s.weightedAverage ?? "",
-      s.letterGrade,
-    ]);
-    const csv = [
-      csvHeader.join(","),
-      ...csvRows.map((r) =>
-        r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")
-      ),
-    ].join("\n");
-    return new NextResponse(csv, {
-      headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="grades-${id}.csv"`,
+        grades[aid] = {
+          score,
+          maxScore,
+          percentage,
+          weight,
+          status: progress?.status || "not_started",
+          feedback: progress?.feedback || "",
+        };
+
+        if (percentage !== null) {
+          weightedSum += (percentage * weight);
+          totalWeight += weight;
+        }
+      });
+
+      const weightedAverage = totalWeight > 0
+        ? Math.round((weightedSum / totalWeight) * 100) / 100
+        : null;
+      const letterGrade = weightedAverage !== null
+        ? computeLetterGrade(weightedAverage, gradingScheme)
+        : "N/A";
+
+      return {
+        id: sid,
+        name: student.name,
+        email: student.email,
+        grades,
+        weightedAverage,
+        totalWeight,
+        letterGrade,
+      };
+    });
+
+    const assignmentList = assignments.map((a) => ({
+      id: a._id.toString(),
+      title: a.title,
+      type: a.type,
+      maxScore: a.maxScore || 100,
+      weight: a.weight || 1,
+    }));
+
+    const searchParams = request.nextUrl.searchParams;
+    if (searchParams.get("format") === "csv") {
+      const assignmentNames = assignments.map((a) => a.title);
+      const csvHeader = ["Name", "Email", ...assignmentNames, "Weighted Average", "Letter Grade"];
+      const csvRows = students.map((s) => [
+        s.name,
+        s.email,
+        ...assignments.map((a) => s.grades[a._id.toString()]?.score ?? ""),
+        s.weightedAverage ?? "",
+        s.letterGrade,
+      ]);
+      const csv = [
+        csvHeader.join(","),
+        ...csvRows.map((r) =>
+          r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")
+        ),
+      ].join("\n");
+      return new NextResponse(csv, {
+        headers: {
+          "Content-Type": "text/csv",
+          "Content-Disposition": `attachment; filename="grades-${id}.csv"`,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      students,
+      assignments: assignmentList,
+      classroom: {
+        name: classroom.name,
+        gradingScheme,
       },
     });
   }
 
+  // Student view: return own grades only
+  const myProgress = await StudentProgress.find({
+    classroomId: id,
+    studentId: user._id,
+  }).lean();
+
+  const progressByAssignment = {};
+  myProgress.forEach((p) => {
+    progressByAssignment[p.assignmentId.toString()] = p;
+  });
+
+  const gradingScheme = classroom.gradingScheme || "percentage";
+  const grades = {};
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  assignments.forEach((a) => {
+    const aid = a._id.toString();
+    const progress = progressByAssignment[aid];
+    const score = progress?.score ?? null;
+    const maxScore = a.maxScore || 100;
+    const percentage = score !== null ? (score / maxScore) * 100 : null;
+    const weight = a.weight || 1;
+
+    grades[aid] = {
+      score,
+      maxScore,
+      percentage,
+      weight,
+      status: progress?.status || "not_started",
+      feedback: progress?.feedback || "",
+    };
+
+    if (percentage !== null) {
+      weightedSum += (percentage * weight);
+      totalWeight += weight;
+    }
+  });
+
+  const weightedAverage = totalWeight > 0
+    ? Math.round((weightedSum / totalWeight) * 100) / 100
+    : null;
+  const letterGrade = weightedAverage !== null
+    ? computeLetterGrade(weightedAverage, gradingScheme)
+    : "N/A";
+
   return NextResponse.json({
     success: true,
-    students,
-    assignments: assignmentList,
+    students: [{
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      grades,
+      weightedAverage,
+      totalWeight,
+      letterGrade,
+    }],
+    assignments: assignments.map((a) => ({
+      id: a._id.toString(),
+      title: a.title,
+      type: a.type,
+      maxScore: a.maxScore || 100,
+      weight: a.weight || 1,
+    })),
     classroom: {
       name: classroom.name,
       gradingScheme,

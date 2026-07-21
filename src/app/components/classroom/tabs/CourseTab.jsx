@@ -44,7 +44,7 @@ export default function CourseTab({ classroomState }) {
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
     setAnnouncements, setDiscussions, setForkedContent,
-    materials, discussions,
+    materials, discussions, handleAttachMaterial, handleAttachDiscussion,
     inputCls, labelCls, sectionCls, setActiveTab,
   } = classroomState;
 
@@ -58,7 +58,7 @@ export default function CourseTab({ classroomState }) {
   const fetchQuizContent = useCallback(async (contentId) => {
     setQuizLoading(true);
     try {
-      const res = await fetch(`/api/classrooms/${classroom.id}/quiz-content?contentId=${contentId}`, { credentials: "include" });
+      const res = await apiClient.get(`/api/classrooms/${classroom.id}/quiz-content?contentId=${contentId}`);
       const data = await res.json();
       if (res.ok && data.questions) {
         setQuizData(data);
@@ -416,56 +416,36 @@ export default function CourseTab({ classroomState }) {
         if (allModules.length > 0) {
           return (
             <div className="pt-4">
-              {isInstructor && courseModules.length > 0 && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4">
-                  <div className="flex items-center justify-between mb-3">
+              {courseModules.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between mb-3 px-1">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Class Structure ({courseModules.length} weeks)</h4>
-                    <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
-                      {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                      {courseGenLoading ? "Generating..." : "Regenerate"}
-                    </button>
+                    {isInstructor && (
+                      <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
+                        {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                        {courseGenLoading ? "Generating..." : "Regenerate"}
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {courseModules.map((mod, i) => (
-                      <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                        <button onClick={() => setExpandedModule(expandedModule === i ? null : i)} className="flex items-center gap-3 w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
-                            <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
-                            {expandedModule === i ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                          </div>
-                        </button>
-                        <AnimatePresence>
-                          {expandedModule === i && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                              <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
-                                {(mod.lessons || []).map((lesson, li) => (
-                                  <div key={li} className="flex items-center gap-2.5 py-2 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                                    <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                                      <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
-                                      <p className="text-[9px] text-slate-400">{lesson.type} · {lesson.duration}min</p>
-                                    </div>
-                                  </div>
-                                ))}
-                                <button onClick={() => handleGenerateModuleAssignments(mod)} disabled={courseGenLoading} className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 border border-dashed border-green-300 dark:border-green-600/30 rounded-lg text-[10px] font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors disabled:opacity-40">
-                                  {courseGenLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                                  {courseGenLoading ? "Generating..." : "Generate Assignments for This Week"}
-                                </button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                      <ModuleCard
+                        key={i}
+                        mod={mod}
+                        index={i}
+                        classroomId={classroom.id}
+                        isInstructor={isInstructor}
+                        setCourseModules={setCourseModules}
+                        setForkedContent={setForkedContent}
+                        materials={materials}
+                        discussions={discussions}
+                        handleAttachMaterial={handleAttachMaterial}
+                        handleAttachDiscussion={handleAttachDiscussion}
+                        setActiveTab={setActiveTab}
+                      />
                     ))}
                   </div>
-                </div>
+                </>
               )}
               <WeekGroupedCourse
                 modules={allModules}
@@ -509,6 +489,8 @@ export default function CourseTab({ classroomState }) {
                 forkedContent={forkedContent}
                 materials={materials}
                 discussions={discussions}
+                handleAttachMaterial={handleAttachMaterial}
+                handleAttachDiscussion={handleAttachDiscussion}
                 handleUpdateFork={handleUpdateFork}
                 setForkedContent={setForkedContent}
                 setActiveTab={setActiveTab}
@@ -538,60 +520,6 @@ export default function CourseTab({ classroomState }) {
         return null;
       })()}
 
-      {/* Class Structure */}
-      {isInstructor && courseModules.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Class Structure ({courseModules.length} weeks)</h4>
-            <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
-              {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-              {courseGenLoading ? "Generating..." : "Regenerate"}
-            </button>
-          </div>
-          <div className="space-y-2">
-            {courseModules.map((mod, i) => (
-              <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                <button onClick={() => setExpandedModule(expandedModule === i ? null : i)} className="flex items-center gap-3 w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
-                    {expandedModule === i ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                </button>
-                <AnimatePresence>
-                  {expandedModule === i && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
-                        {(mod.lessons || []).map((lesson, li) => (
-                          <div key={li} className="flex items-center gap-2.5 py-2 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                            <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                              <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
-                              <p className="text-[9px] text-slate-400">{lesson.type} · {lesson.duration}min</p>
-                            </div>
-                          </div>
-                        ))}
-                        <button onClick={() => handleGenerateModuleAssignments(mod)} disabled={courseGenLoading} className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 border border-dashed border-green-300 dark:border-green-600/30 rounded-lg text-[10px] font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors disabled:opacity-40">
-                          {courseGenLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                          {courseGenLoading ? "Generating..." : "Generate Assignments for This Week"}
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Announcements */}
       {announcements?.length > 0 && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -719,6 +647,7 @@ function WeekGroupedCourse({
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
   openedWeeks, handleToggleWeek, setConfirmModal, completedLessons, toggleLessonComplete,
   setAnnouncements, setDiscussions, forkedContent, materials, discussions,
+  handleAttachMaterial, handleAttachDiscussion,
   handleUpdateFork, setForkedContent, setActiveTab,
 }) {
   const [addMenuWeek, setAddMenuWeek] = useState(null);
@@ -733,26 +662,6 @@ function WeekGroupedCourse({
       toast.success(`"${fc.title}" attached to Week ${weekNumber}`);
       setAddMenuWeek(null);
     } catch { toast.error("Failed to attach quiz"); }
-    setAttachLoading(null);
-  };
-
-  const handleAttachMaterial = async (mat, weekNumber) => {
-    setAttachLoading(mat._id || mat.id);
-    try {
-      const res = await apiClient.patch(`/api/classrooms/${classroomId}/materials`, { materialId: mat._id || mat.id, weekNumber });
-      if (res.ok) toast.success(`"${mat.title}" attached to Week ${weekNumber}`);
-      setAddMenuWeek(null);
-    } catch { toast.error("Failed to attach material"); }
-    setAttachLoading(null);
-  };
-
-  const handleAttachDiscussion = async (disc, weekNumber) => {
-    setAttachLoading(disc._id || disc.id);
-    try {
-      const res = await apiClient.patch(`/api/classrooms/${classroomId}/discussions`, { discussionId: disc._id || disc.id, weekNumber });
-      if (res.ok) toast.success(`"${disc.title}" attached to Week ${weekNumber}`);
-      setAddMenuWeek(null);
-    } catch { toast.error("Failed to attach discussion"); }
     setAttachLoading(null);
   };
 
@@ -843,7 +752,7 @@ function WeekGroupedCourse({
                       {weekMaterials.length === 0 ? (
                         <p className="text-[9px] text-slate-400 py-1">No unassigned materials</p>
                       ) : weekMaterials.map((mat) => (
-                        <button key={mat._id || mat.id} onClick={() => handleAttachMaterial(mat, wg.week)} disabled={attachLoading === (mat._id || mat.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 transition-colors text-left disabled:opacity-50">
+                        <button key={mat._id || mat.id} onClick={() => { handleAttachMaterial(mat, wg.week); setAddMenuWeek(null); }} disabled={attachLoading === (mat._id || mat.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 transition-colors text-left disabled:opacity-50">
                           <FileText className="w-3 h-3 text-green-500 flex-shrink-0" />
                           <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{mat.title}</span>
                           {attachLoading === (mat._id || mat.id) ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
@@ -856,7 +765,7 @@ function WeekGroupedCourse({
                       {weekDiscussions.length === 0 ? (
                         <p className="text-[9px] text-slate-400 py-1">No unassigned discussions</p>
                       ) : weekDiscussions.map((disc) => (
-                        <button key={disc._id || disc.id} onClick={() => handleAttachDiscussion(disc, wg.week)} disabled={attachLoading === (disc._id || disc.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors text-left disabled:opacity-50">
+                        <button key={disc._id || disc.id} onClick={() => { handleAttachDiscussion(disc, wg.week); setAddMenuWeek(null); }} disabled={attachLoading === (disc._id || disc.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors text-left disabled:opacity-50">
                           <MessageSquare className="w-3 h-3 text-blue-500 flex-shrink-0" />
                           <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{disc.title}</span>
                           {attachLoading === (disc._id || disc.id) ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
@@ -902,14 +811,14 @@ function WeekGroupedCourse({
               return (
                 <div className="ml-7 space-y-1.5">
                   {weekMats.map((mat) => (
-                    <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
+                    <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800/50 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
                       <FileText className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
                       <span className="text-[10px] font-semibold text-green-700 dark:text-green-300 truncate">{mat.title}</span>
                       {mat.url && <ExternalLink className="w-2.5 h-2.5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
                     </a>
                   ))}
                   {weekDiscs.map((disc) => (
-                    <button key={disc._id || disc.id} onClick={() => { setAnnouncements && setActiveTab && setActiveTab("discussions"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors w-full text-left">
+                    <button key={disc._id || disc.id} onClick={() => { setAnnouncements && setActiveTab && setActiveTab("discussions"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors w-full text-left">
                       <MessageSquare className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                       <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 truncate">{disc.title}</span>
                     </button>
@@ -960,9 +869,8 @@ function ForkedModuleCard({
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `/api/classrooms/${classroomId}/lesson-content?contentId=${courseId}&moduleIdx=${modIndex}&lessonIdx=${li}`,
-        { credentials: "include" }
+      const res = await apiClient.get(
+        `/api/classrooms/${classroomId}/lesson-content?contentId=${courseId}&moduleIdx=${modIndex}&lessonIdx=${li}`
       );
       const data = await res.json();
       setLessonContent(data.content || "");
@@ -994,7 +902,7 @@ function ForkedModuleCard({
 
   return (
     <div className={`rounded-lg overflow-hidden transition-opacity ${isHidden ? "opacity-40" : ""}`}>
-      <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[#F2F1EC] dark:bg-slate-700/50">
+      <div className="flex items-center gap-2 p-2.5 rounded-lg bg-green-50 dark:bg-green-950/50">
         {isInstructor && (
           <button onClick={onToggleHideModule} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0" title={isHidden ? "Show module" : "Hide module"}>
             {isHidden ? <EyeOff className="w-3 h-3 text-slate-400" /> : <Eye className="w-3 h-3 text-slate-400" />}
@@ -1039,8 +947,8 @@ function ForkedModuleCard({
                       isActive
                         ? completed
                           ? "bg-green-500/10 ring-1 ring-green-500/30"
-                          : "bg-[#EDECE8] dark:bg-slate-700/40 ring-1 ring-slate-300/50 dark:ring-slate-600/50"
-                        : "bg-[#EDECE8] dark:bg-slate-700/40"
+                          : "bg-[#EDECE8] dark:bg-slate-800 ring-1 ring-slate-300/50 dark:ring-slate-600/50"
+                        : "bg-[#EDECE8] dark:bg-slate-800"
                     }`}
                   >
                     <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${completed ? "bg-green-500" : isActive ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}>
@@ -1141,7 +1049,7 @@ function ForkedModuleCard({
   );
 }
 
-function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setForkedContent }) {
+function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setForkedContent, materials, discussions, handleAttachMaterial, handleAttachDiscussion, setActiveTab }) {
   const [expanded, setExpanded] = useState(false);
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonContent, setLessonContent] = useState("");
@@ -1149,6 +1057,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [showAttach, setShowAttach] = useState(false);
 
   const typeColors = {
     lecture: "bg-blue-500/10 text-blue-600",
@@ -1173,12 +1082,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
   const handleGenerateContent = async (li) => {
     setGenerating(true);
     try {
-      const res = await fetch(`/api/classrooms/${classroomId}/module-lesson-content`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ moduleIdx: index, lessonIdx: li }),
-      });
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/module-lesson-content`, { moduleIdx: index, lessonIdx: li });
       const data = await res.json();
       if (res.ok && data.content) {
         setLessonContent(data.content);
@@ -1198,12 +1102,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
 
   const handleSaveEdit = async (li) => {
     try {
-      const res = await fetch(`/api/classrooms/${classroomId}/module-lesson-content`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ moduleIdx: index, lessonIdx: li, content: editContent }),
-      });
+      const res = await apiClient.put(`/api/classrooms/${classroomId}/module-lesson-content`, { moduleIdx: index, lessonIdx: li, content: editContent });
       const data = await res.json();
       if (res.ok) {
         setLessonContent(editContent);
@@ -1224,12 +1123,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
   const handleGenerateQuiz = async () => {
     setGeneratingQuiz(true);
     try {
-      const res = await fetch(`/api/classrooms/${classroomId}/module-quiz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ moduleIdx: index }),
-      });
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/module-quiz`, { moduleIdx: index });
       const data = await res.json();
       if (res.ok && data.quiz) {
         setForkedContent?.((prev) => [...prev, {
@@ -1253,25 +1147,56 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
 
   return (
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <div className="flex items-center gap-3 w-full p-3 text-left">
+      <div className="flex items-center gap-3 w-full p-3 text-left bg-blue-50 dark:bg-blue-950/50">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
             <span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
-            {mod.description && <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>}
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate text-left">{mod.title}</p>
+            {mod.description && <p className="text-[10px] text-slate-400 truncate text-left">{mod.description}</p>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
           </div>
         </button>
         {isInstructor && (
-          <button onClick={handleGenerateQuiz} disabled={generatingQuiz} className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors disabled:opacity-50 flex-shrink-0" title="Generate quiz from module">
-            {generatingQuiz ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <ClipboardList className="w-2.5 h-2.5" />}
-            <span className="hidden sm:inline">Quiz</span>
-          </button>
+          <div className="flex items-center gap-1 flex-shrink-0 relative">
+            <button onClick={handleGenerateQuiz} disabled={generatingQuiz} className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors disabled:opacity-50" title="Generate quiz from module">
+              {generatingQuiz ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <ClipboardList className="w-2.5 h-2.5" />}
+              <span className="hidden sm:inline">Quiz</span>
+            </button>
+            <button onClick={() => setShowAttach(!showAttach)} className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors" title="Attach materials or discussions">
+              <Paperclip className="w-2.5 h-2.5" />
+              <span className="hidden sm:inline">Attach</span>
+            </button>
+            <AnimatePresence>
+              {showAttach && (
+                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 p-2 max-h-60 overflow-y-auto">
+                  {materials?.filter((m) => !m.weekNumber || m.weekNumber === 0).length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Materials</p>
+                      {materials.filter((m) => !m.weekNumber || m.weekNumber === 0).map((m) => (
+                        <button key={m._id || m.id} onClick={() => { handleAttachMaterial?.(m._id || m.id, mod.weekNumber); setShowAttach(false); }} className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 truncate transition-colors">{m.title}</button>
+                      ))}
+                    </div>
+                  )}
+                  {discussions?.filter((d) => !d.weekNumber || d.weekNumber === 0).length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Discussions</p>
+                      {discussions.filter((d) => !d.weekNumber || d.weekNumber === 0).map((d) => (
+                        <button key={d._id || d.id} onClick={() => { handleAttachDiscussion?.(d._id || d.id, mod.weekNumber); setShowAttach(false); }} className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 truncate transition-colors">{d.title}</button>
+                      ))}
+                    </div>
+                  )}
+                  {(!materials?.filter((m) => !m.weekNumber || m.weekNumber === 0).length && !discussions?.filter((d) => !d.weekNumber || d.weekNumber === 0).length) && (
+                    <p className="text-[10px] text-slate-400 text-center py-2">No unassigned items to attach</p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
       </div>
       {expanded && (
@@ -1296,7 +1221,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
                   {isActive ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
                 </button>
                 {isActive && (
-                  <div className="mt-1 ml-8 rounded-lg overflow-hidden bg-[#EDECE8] dark:bg-slate-700/40">
+                  <div className="mt-1 rounded-lg overflow-hidden bg-[#EDECE8] dark:bg-slate-800">
                     {generating ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
@@ -1350,6 +1275,28 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
           })}
         </div>
       )}
+      {(() => {
+        const weekMats = (materials || []).filter((m) => m.weekNumber === mod.weekNumber && mod.weekNumber > 0);
+        const weekDiscs = (discussions || []).filter((d) => d.weekNumber === mod.weekNumber && mod.weekNumber > 0);
+        if (weekMats.length === 0 && weekDiscs.length === 0) return null;
+        return (
+          <div className="px-3 pb-3 space-y-1.5">
+            {weekMats.map((mat) => (
+              <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800/50 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
+                <FileText className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-[10px] font-semibold text-green-700 dark:text-green-300 truncate">{mat.title}</span>
+                {mat.url && <ExternalLink className="w-2.5 h-2.5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
+              </a>
+            ))}
+            {weekDiscs.map((disc) => (
+              <button key={disc._id || disc.id} onClick={() => { setActiveTab && setActiveTab("discussions"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors w-full text-left">
+                <MessageSquare className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 truncate">{disc.title}</span>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }

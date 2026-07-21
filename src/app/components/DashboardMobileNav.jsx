@@ -3,7 +3,7 @@
 import {
   Search, Plus, MessageCircle, MoreHorizontal,
   FileText, ScrollText, Briefcase, HelpCircle, Star,
-  User, LogOut, X, TrendingUp, Coins, CalendarCheck, GraduationCap, BookOpen, Home
+  User, LogOut, X, TrendingUp, Coins, CalendarCheck, GraduationCap, BookOpen, Home, Compass
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -199,13 +199,6 @@ export default function DashboardMobileNav() {
             />
 
             <NavBtn
-              icon={GraduationCap}
-              label="Classes"
-              isActive={activeContent === "classrooms"}
-              onClick={() => navigate("classrooms")}
-            />
-
-            <NavBtn
               icon={BookOpen}
               label="Library"
               isActive={activeContent === "library"}
@@ -213,10 +206,17 @@ export default function DashboardMobileNav() {
             />
 
             <NavBtn
-              icon={Star}
-              label="Premium"
-              isActive={activeContent === "premium-courses"}
-              onClick={() => navigate("premium-courses")}
+              icon={GraduationCap}
+              label="Classes"
+              isActive={activeContent === "classrooms"}
+              onClick={() => navigate("classrooms")}
+            />
+
+            <NavBtn
+              icon={Compass}
+              label="Explore"
+              isActive={activeContent === "explore"}
+              onClick={() => navigate("explore")}
             />
 
             <NavBtn

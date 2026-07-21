@@ -17,7 +17,7 @@ async function handlePut(request, { params }) {
 
   const isInstructor = classroom.instructorId.toString() === user._id.toString();
   const body = await request.json();
-  const { assignmentId, progress, status, score, timeSpentMinutes } = body;
+  const { assignmentId, studentId, progress, status, score, feedback, timeSpentMinutes } = body;
 
   if (!assignmentId) {
     return NextResponse.json(
@@ -29,7 +29,7 @@ async function handlePut(request, { params }) {
   const filter = {
     assignmentId,
     classroomId: id,
-    studentId: user._id,
+    studentId: isInstructor && studentId ? studentId : user._id,
   };
 
   const update = {
@@ -44,7 +44,14 @@ async function handlePut(request, { params }) {
       update.progress = 100;
     }
   }
-  if (score !== undefined) update.score = score;
+  if (score !== undefined && isInstructor) {
+    update.score = score;
+    update.gradedBy = user._id;
+    update.gradedAt = new Date();
+  }
+  if (feedback !== undefined && isInstructor) {
+    update.feedback = feedback;
+  }
   if (timeSpentMinutes !== undefined) {
     update.$inc = { timeSpentMinutes };
   }
@@ -68,7 +75,11 @@ async function handlePut(request, { params }) {
       status: doc.status,
       progress: doc.progress,
       score: doc.score,
+      feedback: doc.feedback,
       completedAt: doc.completedAt,
+      submittedAt: doc.submittedAt,
+      submissionText: doc.submissionText,
+      submissionFiles: doc.submissionFiles,
       timeSpentMinutes: doc.timeSpentMinutes,
     },
   });

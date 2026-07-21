@@ -476,6 +476,13 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     setSelectedAssignment(null);
     setSubmissionsAssignment(assignment);
   };
+  const handleSubmitAssignment = (progress) => {
+    setAssignments((prev) => prev.map((a) => {
+      if (a.id !== progress.assignmentId) return a;
+      return { ...a, myProgress: { ...a.myProgress, ...progress, status: "completed", progress: 100, completedAt: new Date().toISOString() } };
+    }));
+    toast.success("Assignment submitted!");
+  };
   const handleAssignmentSaved = (saved, isEdit) => {
     if (isEdit) {
       setAssignments((prev) => prev.map((a) => a.id === saved.id ? { ...a, ...saved } : a));
@@ -499,6 +506,12 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const handleCreateNote = async () => {
     if (!newNoteTitle.trim()) { toast.error("Title required"); return; }
     try { const res = await apiClient.post(`/api/classrooms/${classroom.id}/notes`, { title: newNoteTitle, content: newNoteContent, tags: newNoteTags.split(",").map((t) => t.trim()).filter(Boolean) }); const data = await res.json(); if (data.success) { setNotes([data.note, ...notes]); setNewNoteTitle(""); setNewNoteContent(""); setNewNoteTags(""); setShowNewNote(false); toast.success("Note created!"); } } catch { toast.error("Failed to create note"); }
+  };
+  const handleAttachMaterial = async (materialId, weekNumber) => {
+    try { const res = await apiClient.patch(`/api/classrooms/${classroom.id}/materials`, { materialId, weekNumber }); const data = await res.json(); if (data.success) { setMaterials((prev) => prev.map((m) => (m._id || m.id) === materialId ? { ...m, weekNumber } : m)); toast.success("Material attached!"); } else { toast.error(data.error || "Failed"); } } catch { toast.error("Failed to attach material"); }
+  };
+  const handleAttachDiscussion = async (discussionId, weekNumber) => {
+    try { const res = await apiClient.patch(`/api/classrooms/${classroom.id}/discussions`, { discussionId, weekNumber }); const data = await res.json(); if (data.success) { setDiscussions((prev) => prev.map((d) => (d._id || d.id) === discussionId ? { ...d, weekNumber } : d)); toast.success("Discussion attached!"); } else { toast.error(data.error || "Failed"); } } catch { toast.error("Failed to attach discussion"); }
   };
   const handleGenerateNote = async () => {
     if (!newNoteTitle.trim()) { toast.error("Enter a topic first"); return; }
@@ -563,7 +576,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     selectedAssignment, setSelectedAssignment, editingAssignment, setEditingAssignment,
     submissionsAssignment, setSubmissionsAssignment, isInstructor, classroom, user,
     assignments, setAssignments, handleStartAssignment, handleMarkComplete,
-    handleEditAssignment, handleViewSubmissions, handleAssignmentSaved,
+    handleEditAssignment, handleViewSubmissions, handleAssignmentSaved, handleSubmitAssignment,
     showCreateAssignment, setShowCreateAssignment, showForkPanel, setShowForkPanel,
     showNewAnnouncement, setShowNewAnnouncement, showInvite, setShowInvite,
     courseModules, courseGenLoading, handleGenerateCourseStructure, setCourseModules,
@@ -571,7 +584,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     forkedContent, forkedIdSet, isForkedContentLocked, handleToggleForkUnlock,
     handleUnforkContent, handleForkContent, handleUpdateFork, getDueStatus,
     newAnnTitle, setNewAnnTitle, newAnnContent, setNewAnnContent,
-    handlePostAnnouncement, assignmentForm, studentStats,
+    handlePostAnnouncement, assignmentForm, studentStats, handleAttachMaterial, handleAttachDiscussion,
     CreateAssignmentPanel, AssignmentDetailPanel,
     inputCls, labelCls, sectionCls,
     discussions, discussionsLoading, selectedDiscussion, setSelectedDiscussion,

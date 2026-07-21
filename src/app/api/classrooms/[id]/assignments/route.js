@@ -139,6 +139,10 @@ async function handleGet(request, { params }) {
         score: p.score,
         completedAt: p.completedAt,
         timeSpentMinutes: p.timeSpentMinutes,
+        submissionText: p.submissionText || "",
+        submissionFiles: p.submissionFiles || [],
+        submittedAt: p.submittedAt,
+        feedback: p.feedback || "",
       };
     });
   }

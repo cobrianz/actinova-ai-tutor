@@ -47,6 +47,36 @@ const studentProgressSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    submissionText: {
+      type: String,
+      maxlength: 50000,
+      default: "",
+    },
+    submissionFiles: [{
+      url: { type: String, required: true },
+      name: { type: String, required: true },
+      type: { type: String, default: "" },
+      size: { type: Number, default: 0 },
+      uploadedAt: { type: Date, default: Date.now },
+    }],
+    submittedAt: {
+      type: Date,
+      default: null,
+    },
+    feedback: {
+      type: String,
+      maxlength: 5000,
+      default: "",
+    },
+    gradedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    gradedAt: {
+      type: Date,
+      default: null,
+    },
     notes: {
       type: String,
       maxlength: 2000,

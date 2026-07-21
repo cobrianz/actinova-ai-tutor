@@ -24,31 +24,6 @@ function formatTime(dateStr) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function getInitials(name) {
-  if (!name) return "?";
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-}
-
-const AVATAR_COLORS = [
-  "bg-blue-500", "bg-emerald-500", "bg-violet-500",
-  "bg-rose-500", "bg-amber-500", "bg-cyan-500", "bg-fuchsia-500",
-];
-
-function avatarColor(name) {
-  let h = 0;
-  for (let i = 0; i < (name || "").length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-function Avatar({ name, size = "md" }) {
-  const sz = size === "sm" ? "w-7 h-7 text-[9px]" : size === "lg" ? "w-11 h-11 text-xs" : "w-9 h-9 text-[10px]";
-  return (
-    <div className={`${sz} ${avatarColor(name)} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>
-      {getInitials(name)}
-    </div>
-  );
-}
-
 function Badge({ children, color = "slate" }) {
   const colors = {
     green: "bg-green-500/10 text-green-700 dark:text-green-400",
@@ -221,7 +196,6 @@ function DiscussionCard({ disc, onClick, index }) {
       className={`w-full text-left bg-card border rounded-xl p-4 hover:border-green-400 dark:hover:border-green-600 hover:shadow-sm transition-all group ${disc.isPinned ? "border-amber-300 dark:border-amber-500/30" : "border-border"}`}
     >
       <div className="flex gap-3 items-start">
-        <Avatar name={disc.title} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="text-xs font-semibold text-foreground">{disc.author?.name || "Instructor"}</span>
@@ -274,7 +248,6 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
           <ArrowLeft size={13} /> Back to Discussions
         </button>
         <div className="flex items-start gap-3">
-          <Avatar name={discussion.title} size="lg" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-sm font-bold text-foreground">{discussion.author?.name || "Instructor"}</span>
@@ -305,7 +278,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
       {/* Posts */}
       {postsLoading ? (
         <div className="space-y-3">
-          {[1, 2].map((i) => <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse"><div className="flex gap-3"><div className="w-9 h-9 rounded-full bg-secondary" /><div className="flex-1 space-y-2"><div className="h-3 bg-secondary rounded w-1/3" /><div className="h-2 bg-secondary rounded w-full" /></div></div></div>)}
+          {[1, 2].map((i) => <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse"><div className="flex gap-3"><div className="flex-1 space-y-2"><div className="h-3 bg-secondary rounded w-1/3" /><div className="h-2 bg-secondary rounded w-full" /></div></div></div>)}
         </div>
       ) : rootPosts.length === 0 ? (
         <div className="bg-card border-2 border-dashed border-border rounded-xl p-8 text-center">
@@ -342,9 +315,6 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
       {!discussion.isClosed && !replyingTo && canPost ? (
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
-            </div>
             <div className="flex-1">
               <textarea
                 value={replyContent} onChange={(e) => setReplyContent(e.target.value)}
@@ -380,7 +350,6 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
   return (
     <div className={`bg-card border rounded-xl overflow-hidden ${isInstructorPost ? "border-l-[3px] border-l-green-500 border-border" : "border-border"}`}>
       <div className="flex gap-3 p-4">
-        <Avatar name={authorName} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="text-sm font-bold text-foreground">{authorName}</span>
@@ -441,7 +410,6 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
           return (
             <motion.div key={replyId} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="border-t border-border/40 ml-10 bg-secondary/10">
               <div className="flex gap-3 px-4 py-3">
-                <Avatar name={replyAuthor} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
                     <span className="text-xs font-bold text-foreground">{replyAuthor}</span>
