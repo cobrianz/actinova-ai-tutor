@@ -76,9 +76,11 @@ const assignmentSchema = new mongoose.Schema(
       maxPoints: { type: Number, required: true },
     }],
     attachments: [{
-      name: { type: String, required: true },
-      url: { type: String, required: true },
       type: { type: String, default: "file" },
+      id: { type: String, default: "" },
+      title: { type: String, default: "" },
+      name: { type: String, default: "" },
+      url: { type: String, default: "" },
     }],
     allowLateSubmissions: { type: Boolean, default: true },
     maxAttempts: { type: Number, default: 0 },

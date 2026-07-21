@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import QuizInterface from "@/components/QuizInterface";
 import {
   BookOpen, Calendar, Clock, MapPin, GraduationCap, Layers, Megaphone,
@@ -39,6 +40,7 @@ export default function CourseTab({ classroomState }) {
     browseQuery, setBrowseQuery, browseType, setBrowseType,
     fetchBrowseContent, browseError, forking, handleForkContent, forkedIdSet,
     courseModules, courseGenLoading, handleGenerateCourseStructure, setCourseModules,
+    handleGenerateModuleAssignments, expandedModule, setExpandedModule,
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
     setAnnouncements, setDiscussions, setForkedContent,
@@ -387,14 +389,21 @@ export default function CourseTab({ classroomState }) {
       {/* Class Structure — merged modules from all course forks */}
       {(() => {
         const courseForks = (forkedContent || []).filter((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
-        if (courseForks.length === 0) return null;
-        const mergedModules = [];
+        const modulesFromCourse = courseModules?.length > 0 ? courseModules : [];
+        const allModules = [];
+        for (const fc of courseForks) {
+          for (const mod of fc.meta.modules) {
+            allModules.push({ ...mod, _contentId: fc.contentId });
+          }
+        }
+        if (allModules.length === 0 && modulesFromCourse.length > 0) {
+          for (const mod of modulesFromCourse) {
+            allModules.push({ ...mod, _contentId: null });
+          }
+        }
         const mergedHiddenModules = [];
         const mergedHiddenLessons = [];
         for (const fc of courseForks) {
-          for (const mod of fc.meta.modules) {
-            mergedModules.push({ ...mod, _contentId: fc.contentId });
-          }
           for (const idx of (fc.meta?.hiddenModules || [])) {
             mergedHiddenModules.push({ contentId: fc.contentId, idx });
           }
@@ -404,61 +413,183 @@ export default function CourseTab({ classroomState }) {
         }
         const flatHiddenModules = mergedHiddenModules.map((h) => h.idx);
         const flatHiddenLessons = mergedHiddenLessons.map((h) => h.key);
-        return (
-          <div className="pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-4 h-4 text-indigo-500" />
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Structure</h3>
+        if (allModules.length > 0) {
+          return (
+            <div className="pt-4">
+              {isInstructor && courseModules.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Class Structure ({courseModules.length} weeks)</h4>
+                    <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
+                      {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                      {courseGenLoading ? "Generating..." : "Regenerate"}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {courseModules.map((mod, i) => (
+                      <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <button onClick={() => setExpandedModule(expandedModule === i ? null : i)} className="flex items-center gap-3 w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
+                            <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
+                            {expandedModule === i ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                          </div>
+                        </button>
+                        <AnimatePresence>
+                          {expandedModule === i && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
+                                {(mod.lessons || []).map((lesson, li) => (
+                                  <div key={li} className="flex items-center gap-2.5 py-2 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                                    <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                                      <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
+                                      <p className="text-[9px] text-slate-400">{lesson.type} · {lesson.duration}min</p>
+                                    </div>
+                                  </div>
+                                ))}
+                                <button onClick={() => handleGenerateModuleAssignments(mod)} disabled={courseGenLoading} className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 border border-dashed border-green-300 dark:border-green-600/30 rounded-lg text-[10px] font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors disabled:opacity-40">
+                                  {courseGenLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                  {courseGenLoading ? "Generating..." : "Generate Assignments for This Week"}
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <WeekGroupedCourse
+                modules={allModules}
+                durationWeeks={classroom.durationWeeks}
+                courseId={courseForks.length === 1 ? courseForks[0].contentId : null}
+                courseName={courseForks.length === 1 ? courseForks[0].title : classroom.name}
+                courseTopic={classroom.subject || classroom.name}
+                difficulty={classroom.academicLevel || "intermediate"}
+                classroomId={classroom.id}
+                isInstructor={isInstructor}
+                hiddenModules={flatHiddenModules}
+                hiddenLessons={flatHiddenLessons}
+                forkEntry={courseForks.length === 1 ? courseForks[0] : null}
+                onToggleHideModule={(modIdx) => {
+                  const src = allModules[modIdx]?._contentId;
+                  if (!src) return;
+                  const fc = courseForks.find((f) => f.contentId === src);
+                  if (!fc) return;
+                  const current = fc.meta?.hiddenModules || [];
+                  const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
+                  handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
+                }}
+                onToggleHideLesson={(lessonKey) => {
+                  const parts = lessonKey.split(":");
+                  const modIdx = parseInt(parts[0], 10);
+                  const src = allModules[modIdx]?._contentId;
+                  if (!src) return;
+                  const fc = courseForks.find((f) => f.contentId === src);
+                  if (!fc) return;
+                  const current = fc.meta?.hiddenLessons || [];
+                  const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
+                  handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
+                }}
+                openedWeeks={openedWeeks}
+                handleToggleWeek={handleToggleWeek}
+                setConfirmModal={setConfirmModal}
+                completedLessons={completedLessons}
+                toggleLessonComplete={toggleLessonComplete}
+                setAnnouncements={setAnnouncements}
+                setDiscussions={setDiscussions}
+                forkedContent={forkedContent}
+                materials={materials}
+                discussions={discussions}
+                handleUpdateFork={handleUpdateFork}
+                setForkedContent={setForkedContent}
+                setActiveTab={setActiveTab}
+              />
             </div>
-            <WeekGroupedCourse
-              modules={mergedModules}
-              durationWeeks={classroom.durationWeeks}
-              courseId={courseForks.length === 1 ? courseForks[0].contentId : null}
-              courseName={courseForks.length === 1 ? courseForks[0].title : classroom.name}
-              courseTopic={classroom.subject || classroom.name}
-              difficulty={classroom.academicLevel || "intermediate"}
-              classroomId={classroom.id}
-              isInstructor={isInstructor}
-              hiddenModules={flatHiddenModules}
-              hiddenLessons={flatHiddenLessons}
-              forkEntry={courseForks.length === 1 ? courseForks[0] : null}
-              onToggleHideModule={(modIdx) => {
-                const src = mergedModules[modIdx]?._contentId;
-                if (!src) return;
-                const fc = courseForks.find((f) => f.contentId === src);
-                if (!fc) return;
-                const current = fc.meta?.hiddenModules || [];
-                const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
-                handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
-              }}
-              onToggleHideLesson={(lessonKey) => {
-                const parts = lessonKey.split(":");
-                const modIdx = parseInt(parts[0], 10);
-                const src = mergedModules[modIdx]?._contentId;
-                if (!src) return;
-                const fc = courseForks.find((f) => f.contentId === src);
-                if (!fc) return;
-                const current = fc.meta?.hiddenLessons || [];
-                const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
-                handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
-              }}
-              openedWeeks={openedWeeks}
-              handleToggleWeek={handleToggleWeek}
-              setConfirmModal={setConfirmModal}
-              completedLessons={completedLessons}
-              toggleLessonComplete={toggleLessonComplete}
-              setAnnouncements={setAnnouncements}
-              setDiscussions={setDiscussions}
-              forkedContent={forkedContent}
-              materials={materials}
-              discussions={discussions}
-              handleUpdateFork={handleUpdateFork}
-              setForkedContent={setForkedContent}
-              setActiveTab={setActiveTab}
-            />
-          </div>
-        );
+          );
+        }
+        if (isInstructor) {
+          return (
+            <div className="pt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Layers className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Structure</h3>
+              </div>
+              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-center">
+                <Layers className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">No course structure yet. Generate modules or fork a course to get started.</p>
+                <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading || !classroom.durationWeeks} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors">
+                  {courseGenLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  {courseGenLoading ? "Generating..." : "Generate Course Structure"}
+                </button>
+                {!classroom.durationWeeks && <p className="text-[10px] text-slate-400 mt-1.5">Set course duration first in Settings</p>}
+              </div>
+            </div>
+          );
+        }
+        return null;
       })()}
+
+      {/* Class Structure */}
+      {isInstructor && courseModules.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Class Structure ({courseModules.length} weeks)</h4>
+            <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
+              {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+              {courseGenLoading ? "Generating..." : "Regenerate"}
+            </button>
+          </div>
+          <div className="space-y-2">
+            {courseModules.map((mod, i) => (
+              <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                <button onClick={() => setExpandedModule(expandedModule === i ? null : i)} className="flex items-center gap-3 w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
+                    {expandedModule === i ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {expandedModule === i && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
+                        {(mod.lessons || []).map((lesson, li) => (
+                          <div key={li} className="flex items-center gap-2.5 py-2 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                            <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                              <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
+                              <p className="text-[9px] text-slate-400">{lesson.type} · {lesson.duration}min</p>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={() => handleGenerateModuleAssignments(mod)} disabled={courseGenLoading} className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 border border-dashed border-green-300 dark:border-green-600/30 rounded-lg text-[10px] font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors disabled:opacity-40">
+                          {courseGenLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                          {courseGenLoading ? "Generating..." : "Generate Assignments for This Week"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Announcements */}
       {announcements?.length > 0 && (

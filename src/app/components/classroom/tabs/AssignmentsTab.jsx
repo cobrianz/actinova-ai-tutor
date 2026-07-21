@@ -200,62 +200,9 @@ export default function AssignmentsTab({ classroomState }) {
             <div className="flex gap-2"><button onClick={handlePostAnnouncement} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition-colors">Post</button><button onClick={() => setShowNewAnnouncement(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button></div>
           </motion.div>
         )}
-        {assignments.length === 0 && courseModules.length === 0 ? (
+        {assignments.length === 0 ? (
           <EmptyState icon={ClipboardList} title="No assignments yet" description={isInstructor ? "Create your first assignment or generate a course structure with AI" : "No assignments have been posted yet"} action={isInstructor ? "Create Assignment" : undefined} onAction={() => setShowCreateAssignment(true)} />
         ) : <>
-        {/* Course Structure (AI-generated modules) */}
-        {isInstructor && courseModules.length > 0 && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Course Structure ({courseModules.length} modules)</h4>
-              <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
-                {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                {courseGenLoading ? "Generating..." : "Regenerate"}
-              </button>
-            </div>
-            <div className="space-y-2">
-              {courseModules.map((mod, i) => (
-                <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                  <button onClick={() => setExpandedModule(expandedModule === i ? null : i)} className="flex items-center gap-3 w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{mod.title}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{mod.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
-                      {expandedModule === i ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                    </div>
-                  </button>
-                  <AnimatePresence>
-                    {expandedModule === i && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                        <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
-                          {(mod.lessons || []).map((lesson, li) => (
-                            <div key={li} className="flex items-center gap-2.5 py-2 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                              <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                                <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
-                                <p className="text-[9px] text-slate-400">{lesson.type} · {lesson.duration}min</p>
-                              </div>
-                            </div>
-                          ))}
-                          <button onClick={() => handleGenerateModuleAssignments(mod)} disabled={courseGenLoading} className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 border border-dashed border-green-300 dark:border-green-600/30 rounded-lg text-[10px] font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors disabled:opacity-40">
-                            {courseGenLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                            {courseGenLoading ? "Generating..." : "Generate Assignments for This Week"}
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Forked Content */}
         {forkedContent.length > 0 && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
