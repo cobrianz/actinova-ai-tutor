@@ -355,6 +355,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const handleGenerateModuleAssignments = async (module) => {
     setCourseGenLoading(true);
+    let generated = 0;
     try {
       const res = await apiClient.post("/api/classrooms/ai-generate", {
         task: "course_assignments", name: module.title, subject: classroom.subject,
@@ -364,15 +365,43 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const data = await res.json();
       if (data.result) {
         for (const a of data.result) {
+          if (a.type === "quiz") {
+            try {
+              const quizRes = await apiClient.post(`/api/classrooms/${classroom.id}/module-quiz`, {
+                moduleIdx: classroom.modules?.findIndex((m) => m.title === module.title) ?? 0,
+              });
+              const quizData = await quizRes.json();
+              if (quizData.success) {
+                await apiClient.post(`/api/classrooms/${classroom.id}/assignments`, {
+                  title: a.title, description: a.description, instructions: a.instructions || "",
+                  type: "quiz", category: a.category || "Quiz",
+                  maxScore: a.maxScore, passingScore: a.passingScore, weight: a.weight,
+                  rubric: a.rubric || [], weekNumber: module.weekNumber,
+                });
+                generated++;
+                continue;
+              }
+            } catch {}
+          }
+          if (a.type === "discussion") {
+            try {
+              const discRes = await apiClient.post(`/api/classrooms/${classroom.id}/discussions`, {
+                title: a.title, description: a.description || a.instructions || "",
+              });
+              if (discRes.ok) fetchDiscussions();
+            } catch {}
+          }
           const assignRes = await apiClient.post(`/api/classrooms/${classroom.id}/assignments`, {
-            title: a.title, description: a.description, type: a.type, category: a.category,
+            title: a.title, description: a.description, instructions: a.instructions || "",
+            type: a.type, category: a.category,
             maxScore: a.maxScore, passingScore: a.passingScore, weight: a.weight,
             rubric: a.rubric || [], weekNumber: module.weekNumber,
           });
           const assignData = await assignRes.json();
-          if (assignData.success) setAssignments((prev) => [assignData.assignment, ...prev]);
+          if (assignData.success) { setAssignments((prev) => [assignData.assignment, ...prev]); generated++; }
         }
-        toast.success(`${data.result.length} assignments generated for ${module.title}!`);
+        fetchForkedContent();
+        toast.success(`${generated} assignments generated for ${module.title}!`);
       } else { toast.error("Failed to generate assignments"); }
     } catch { toast.error("Failed to generate assignments"); } finally { setCourseGenLoading(false); }
   };
@@ -404,6 +433,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   }, [showForkPanel]);
 
   useEffect(() => { if (isInstructor) fetchStudents(); }, [isInstructor, fetchStudents]);
+  useEffect(() => { fetchMaterials(); fetchDiscussions(); }, [fetchMaterials, fetchDiscussions]);
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
@@ -566,7 +596,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     getWeeks, announcements,
     openedWeeks, handleToggleWeek,
     completedLessons, toggleLessonComplete,
-    handleRemoveStudent,
+    handleRemoveStudent, setActiveTab,
   };
 
   return (

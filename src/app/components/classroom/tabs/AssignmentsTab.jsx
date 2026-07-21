@@ -307,37 +307,59 @@ export default function AssignmentsTab({ classroomState }) {
           </div>
         )}
 
-        {assignments.map((assignment) => {
-          const due = getDueStatus(assignment.dueDate); const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom; const TypeIcon = tc.icon; const progress = assignment.myProgress;
-          return (
-            <motion.div key={assignment.id} whileHover={{ y: -1 }} onClick={() => setSelectedAssignment(assignment)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-colors cursor-pointer">
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-lg ${tc.color} flex items-center justify-center flex-shrink-0`}><TypeIcon className="w-4 h-4" /></div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{assignment.title}</h4>
-                    {due && <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${due.color}`}>{due.label}</span>}
-                    {assignment.weight > 0 && <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{assignment.weight}%</span>}
+        {(() => {
+          const grouped = {};
+          assignments.forEach((a) => {
+            const wk = a.weekNumber || 0;
+            if (!grouped[wk]) grouped[wk] = [];
+            grouped[wk].push(a);
+          });
+          const sortedWeeks = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+          return sortedWeeks.map((wk) => (
+            <div key={wk} className="space-y-2">
+              {sortedWeeks.length > 1 && (
+                <div className="flex items-center gap-2 px-1 pt-1">
+                  <div className="w-5 h-5 rounded-md bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[8px] font-bold text-indigo-600">{wk > 0 ? `W${wk}` : "—"}</span>
                   </div>
-                  {assignment.description && <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">{assignment.description}</p>}
-                  <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                    <span className="capitalize">{assignment.type}</span>
-                    {assignment.category && <span className="flex items-center gap-0.5"><Tag className="w-3 h-3" />{assignment.category}</span>}
-                    {assignment.dueDate && <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3" />{new Date(assignment.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
-                    {progress && <span className="flex items-center gap-0.5"><span className={`w-1.5 h-1.5 rounded-full ${progress.status === "completed" ? "bg-green-400" : progress.status === "in_progress" ? "bg-amber-400" : "bg-slate-300"}`} />{progress.status === "completed" ? "Done" : progress.status === "in_progress" ? `${progress.progress}%` : "Not started"}</span>}
-                  </div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{wk > 0 ? `Week ${wk}` : "Unassigned"}</span>
+                  <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
                 </div>
-                {!isInstructor ? (
-                  <div className="flex-shrink-0 mt-1">
-                    {progress?.status === "completed" ? <span className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-lg"><CheckCircle2 className="w-3 h-3" /> Done</span>
-                      : progress?.status === "in_progress" ? <button onClick={(e) => { e.stopPropagation(); handleMarkComplete(assignment.id); }} className="flex items-center gap-1 text-[10px] font-semibold text-white bg-green-500 hover:bg-green-600 px-2 py-1 rounded-lg transition-colors"><Check className="w-3 h-3" /> Mark Complete</button>
-                      : <button onClick={(e) => { e.stopPropagation(); handleStartAssignment(assignment.id); }} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20 px-2 py-1 rounded-lg transition-colors"><Play className="w-3 h-3" /> Start</button>}
-                  </div>
-                ) : <ArrowRight className="w-4 h-4 text-slate-300 -rotate-45 flex-shrink-0 mt-1" />}
-              </div>
-            </motion.div>
-          );
-        })}
+              )}
+              {grouped[wk].map((assignment) => {
+                const due = getDueStatus(assignment.dueDate); const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom; const TypeIcon = tc.icon; const progress = assignment.myProgress;
+                return (
+                  <motion.div key={assignment.id} whileHover={{ y: -1 }} onClick={() => setSelectedAssignment(assignment)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-colors cursor-pointer">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-9 h-9 rounded-lg ${tc.color} flex items-center justify-center flex-shrink-0`}><TypeIcon className="w-4 h-4" /></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{assignment.title}</h4>
+                          {due && <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${due.color}`}>{due.label}</span>}
+                          {assignment.weight > 0 && <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{assignment.weight}%</span>}
+                        </div>
+                        {assignment.description && <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">{assignment.description}</p>}
+                        <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                          <span className="capitalize">{assignment.type}</span>
+                          {assignment.category && <span className="flex items-center gap-0.5"><Tag className="w-3 h-3" />{assignment.category}</span>}
+                          {assignment.dueDate && <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3" />{new Date(assignment.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
+                          {progress && <span className="flex items-center gap-0.5"><span className={`w-1.5 h-1.5 rounded-full ${progress.status === "completed" ? "bg-green-400" : progress.status === "in_progress" ? "bg-amber-400" : "bg-slate-300"}`} />{progress.status === "completed" ? "Done" : progress.status === "in_progress" ? `${progress.progress}%` : "Not started"}</span>}
+                        </div>
+                      </div>
+                      {!isInstructor ? (
+                        <div className="flex-shrink-0 mt-1">
+                          {progress?.status === "completed" ? <span className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-lg"><CheckCircle2 className="w-3 h-3" /> Done</span>
+                            : progress?.status === "in_progress" ? <button onClick={(e) => { e.stopPropagation(); handleMarkComplete(assignment.id); }} className="flex items-center gap-1 text-[10px] font-semibold text-white bg-green-500 hover:bg-green-600 px-2 py-1 rounded-lg transition-colors"><Check className="w-3 h-3" /> Mark Complete</button>
+                            : <button onClick={(e) => { e.stopPropagation(); handleStartAssignment(assignment.id); }} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20 px-2 py-1 rounded-lg transition-colors"><Play className="w-3 h-3" /> Start</button>}
+                        </div>
+                      ) : <ArrowRight className="w-4 h-4 text-slate-300 -rotate-45 flex-shrink-0 mt-1" />}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ));
+        })()}
       </>}
     </>)}
     </div>

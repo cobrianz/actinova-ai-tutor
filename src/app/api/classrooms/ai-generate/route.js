@@ -48,8 +48,8 @@ async function handlePost(request) {
       break;
 
     case "course_assignments":
-      systemPrompt = `You are an academic assessment designer. Given a course module, generate appropriate assignments as a JSON array. Each assignment must have: title (string), description (string), type (one of: "quiz", "lab", "project", "essay", "report", "discussion", "presentation", "flashcards", "custom"), weekNumber (number), category (string like "Homework", "Lab", "Quiz", "Project"), maxScore (number, default 100), passingScore (number, default 60), weight (number, percentage 1-20), and rubric (array of {criterion, description, maxPoints}). Generate 2-4 assignments per module. Return ONLY a valid JSON array, no markdown, no other text.`;
-      userPrompt = `Generate assignments for the module "${name}" (${subject || "General"}). Week number: ${durationWeeks || 1}. ${content ? `Module description: ${content}` : ""} Create 2-4 diverse assignments (mix of quizzes, labs, projects, discussions) that assess the module's learning objectives. Each should have a realistic rubric.`;
+      systemPrompt = `You are an academic assessment designer. Given a course module, generate appropriate assignments as a JSON array. Each assignment must have: title (string), description (string, 1 sentence summary), instructions (string, detailed markdown instructions with objectives, requirements, submission guidelines, and grading criteria — 3-5 paragraphs), type (one of: "quiz", "lab", "project", "essay", "report", "discussion", "presentation", "flashcards", "custom"), weekNumber (number), category (string like "Homework", "Lab", "Quiz", "Project"), maxScore (number, default 100), passingScore (number, default 60), weight (number, percentage 1-20), and rubric (array of {criterion, description, maxPoints}). Generate 2-4 assignments per module. Return ONLY a valid JSON array, no markdown, no other text.`;
+      userPrompt = `Generate assignments for the module "${name}" (${subject || "General"}). Week number: ${durationWeeks || 1}. ${content ? `Module description: ${content}` : ""} Create 2-4 diverse assignments (mix of quizzes, labs, projects, discussions) that assess the module's learning objectives. Each must include detailed instructions (3-5 paragraphs) and a realistic rubric.`;
       break;
 
     default:
@@ -58,7 +58,7 @@ async function handlePost(request) {
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    max_tokens: task === "rubric" ? 1000 : task === "course_structure" ? 8000 : task === "course_assignments" ? 4000 : 2000,
+    max_tokens: task === "rubric" ? 1000 : task === "course_structure" ? 8000 : task === "course_assignments" ? 8000 : 2000,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },

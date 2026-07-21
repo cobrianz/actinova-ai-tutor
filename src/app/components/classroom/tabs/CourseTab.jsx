@@ -43,7 +43,7 @@ export default function CourseTab({ classroomState }) {
     completedLessons, toggleLessonComplete,
     setAnnouncements, setDiscussions, setForkedContent,
     materials, discussions,
-    inputCls, labelCls, sectionCls,
+    inputCls, labelCls, sectionCls, setActiveTab,
   } = classroomState;
 
   const [editingFork, setEditingFork] = useState(null);
@@ -271,7 +271,7 @@ export default function CourseTab({ classroomState }) {
                     {/* Header row */}
                     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#E8E6DF] dark:bg-slate-700/50">
                       {hasModules ? (
-                        <button onClick={() => { setExpandedFork(isExpanded ? null : `${fc.contentType}-${fc.contentId}`); setQuizData(null); }} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
                             <Icon className="w-4 h-4" />
                           </div>
@@ -288,10 +288,7 @@ export default function CourseTab({ classroomState }) {
                               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{fc.meta.modules.length} modules</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                          </div>
-                        </button>
+                        </div>
                       ) : (
                         <button onClick={() => {
                           const key = `${fc.contentType}-${fc.contentId}`;
@@ -341,45 +338,6 @@ export default function CourseTab({ classroomState }) {
                       )}
                     </div>
 
-                    {/* Expanded: week-grouped modules for courses, flat for others */}
-                    {hasModules && isExpanded && (
-                      <WeekGroupedCourse
-                        modules={fc.meta.modules}
-                        durationWeeks={classroom.durationWeeks}
-                        courseId={fc.contentId}
-                        courseName={fc.title}
-                        courseTopic={classroom.subject || classroom.name}
-                        difficulty={classroom.academicLevel || "intermediate"}
-                        classroomId={classroom.id}
-                        isInstructor={isInstructor}
-                        hiddenModules={fc.meta?.hiddenModules || []}
-                        hiddenLessons={fc.meta?.hiddenLessons || []}
-                        forkEntry={fc}
-                        onToggleHideModule={(modIdx) => {
-                          const current = fc.meta?.hiddenModules || [];
-                          const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
-                          handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
-                        }}
-                        onToggleHideLesson={(lessonKey) => {
-                          const current = fc.meta?.hiddenLessons || [];
-                          const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
-                          handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
-                        }}
-                        openedWeeks={openedWeeks}
-                        handleToggleWeek={handleToggleWeek}
-                        setConfirmModal={setConfirmModal}
-                        completedLessons={completedLessons}
-                        toggleLessonComplete={toggleLessonComplete}
-                        setAnnouncements={setAnnouncements}
-                        setDiscussions={setDiscussions}
-                        forkedContent={forkedContent}
-                        materials={materials}
-                        discussions={discussions}
-                        handleUpdateFork={handleUpdateFork}
-                        setForkedContent={setForkedContent}
-                      />
-                    )}
-
                     {/* Expanded: inline quiz */}
                     {!hasModules && isExpanded && fc.contentType === "quiz" && (
                       <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
@@ -425,6 +383,82 @@ export default function CourseTab({ classroomState }) {
           </div>
         </div>
       )}
+
+      {/* Class Structure — merged modules from all course forks */}
+      {(() => {
+        const courseForks = (forkedContent || []).filter((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
+        if (courseForks.length === 0) return null;
+        const mergedModules = [];
+        const mergedHiddenModules = [];
+        const mergedHiddenLessons = [];
+        for (const fc of courseForks) {
+          for (const mod of fc.meta.modules) {
+            mergedModules.push({ ...mod, _contentId: fc.contentId });
+          }
+          for (const idx of (fc.meta?.hiddenModules || [])) {
+            mergedHiddenModules.push({ contentId: fc.contentId, idx });
+          }
+          for (const key of (fc.meta?.hiddenLessons || [])) {
+            mergedHiddenLessons.push({ contentId: fc.contentId, key });
+          }
+        }
+        const flatHiddenModules = mergedHiddenModules.map((h) => h.idx);
+        const flatHiddenLessons = mergedHiddenLessons.map((h) => h.key);
+        return (
+          <div className="pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-4 h-4 text-indigo-500" />
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Structure</h3>
+            </div>
+            <WeekGroupedCourse
+              modules={mergedModules}
+              durationWeeks={classroom.durationWeeks}
+              courseId={courseForks.length === 1 ? courseForks[0].contentId : null}
+              courseName={courseForks.length === 1 ? courseForks[0].title : classroom.name}
+              courseTopic={classroom.subject || classroom.name}
+              difficulty={classroom.academicLevel || "intermediate"}
+              classroomId={classroom.id}
+              isInstructor={isInstructor}
+              hiddenModules={flatHiddenModules}
+              hiddenLessons={flatHiddenLessons}
+              forkEntry={courseForks.length === 1 ? courseForks[0] : null}
+              onToggleHideModule={(modIdx) => {
+                const src = mergedModules[modIdx]?._contentId;
+                if (!src) return;
+                const fc = courseForks.find((f) => f.contentId === src);
+                if (!fc) return;
+                const current = fc.meta?.hiddenModules || [];
+                const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
+                handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
+              }}
+              onToggleHideLesson={(lessonKey) => {
+                const parts = lessonKey.split(":");
+                const modIdx = parseInt(parts[0], 10);
+                const src = mergedModules[modIdx]?._contentId;
+                if (!src) return;
+                const fc = courseForks.find((f) => f.contentId === src);
+                if (!fc) return;
+                const current = fc.meta?.hiddenLessons || [];
+                const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
+                handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
+              }}
+              openedWeeks={openedWeeks}
+              handleToggleWeek={handleToggleWeek}
+              setConfirmModal={setConfirmModal}
+              completedLessons={completedLessons}
+              toggleLessonComplete={toggleLessonComplete}
+              setAnnouncements={setAnnouncements}
+              setDiscussions={setDiscussions}
+              forkedContent={forkedContent}
+              materials={materials}
+              discussions={discussions}
+              handleUpdateFork={handleUpdateFork}
+              setForkedContent={setForkedContent}
+              setActiveTab={setActiveTab}
+            />
+          </div>
+        );
+      })()}
 
       {/* Recent Announcements */}
       {announcements?.length > 0 && (
@@ -554,7 +588,7 @@ function WeekGroupedCourse({
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
   openedWeeks, handleToggleWeek, setConfirmModal, completedLessons, toggleLessonComplete,
   setAnnouncements, setDiscussions, forkedContent, materials, discussions,
-  handleUpdateFork, setForkedContent,
+  handleUpdateFork, setForkedContent, setActiveTab,
 }) {
   const [addMenuWeek, setAddMenuWeek] = useState(null);
   const [attachTab, setAttachTab] = useState("quiz");
@@ -728,6 +762,30 @@ function WeekGroupedCourse({
                 </div>
               );
             })}
+
+            {/* Attached materials & discussions for this week */}
+            {isOpen && (() => {
+              const weekMats = (materials || []).filter((m) => m.weekNumber === wg.week);
+              const weekDiscs = (discussions || []).filter((d) => d.weekNumber === wg.week);
+              if (weekMats.length === 0 && weekDiscs.length === 0) return null;
+              return (
+                <div className="ml-7 space-y-1.5">
+                  {weekMats.map((mat) => (
+                    <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
+                      <FileText className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      <span className="text-[10px] font-semibold text-green-700 dark:text-green-300 truncate">{mat.title}</span>
+                      {mat.url && <ExternalLink className="w-2.5 h-2.5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
+                    </a>
+                  ))}
+                  {weekDiscs.map((disc) => (
+                    <button key={disc._id || disc.id} onClick={() => { setAnnouncements && setActiveTab && setActiveTab("discussions"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors w-full text-left">
+                      <MessageSquare className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 truncate">{disc.title}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         );
       })}
