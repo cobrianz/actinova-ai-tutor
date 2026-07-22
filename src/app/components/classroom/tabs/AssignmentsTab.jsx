@@ -2,14 +2,12 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, ArrowLeft, ArrowRight, Layers, ClipboardList, Megaphone,
-  UserPlus, Loader2, Sparkles, BookOpen, ChevronUp, ChevronDown, Lock,
+  Plus, ArrowLeft, ArrowRight, Layers, ClipboardList,
+  Loader2, Sparkles, BookOpen, ChevronUp, ChevronDown, Lock,
   Unlock, Trash2, CheckCircle2, Tag, Calendar, Check, Play, FileText,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import EmptyState from "../EmptyState";
-import InvitePanel from "../InvitePanel";
-import ForkContentPanel from "../ForkContentPanel";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/csrfClient";
 
@@ -51,7 +49,7 @@ function SubmissionsView({ assignment, classroomId }) {
     } catch (err) { console.error("handleGrade:", err); } finally { setGradingId(null); }
   };
 
-  const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom;
+  const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG._default;
   const TypeIcon = tc.icon;
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
@@ -225,7 +223,7 @@ export default function AssignmentsTab({ classroomState }) {
     handlePostAnnouncement, assignmentForm, studentStats,
     CreateAssignmentPanel, AssignmentDetailPanel,
     inputCls, labelCls, sectionCls,
-    materials, discussions,
+    materials, discussions, focusedDiscussionId, setFocusedDiscussionId, setActiveTab,
   } = classroomState;
 
   return (
@@ -245,14 +243,13 @@ export default function AssignmentsTab({ classroomState }) {
           onEdit={() => handleEditAssignment(selectedAssignment)}
           onSubmissions={() => handleViewSubmissions(selectedAssignment)}
           onSubmit={handleSubmitAssignment}
+          setActiveTab={setActiveTab}
+          setFocusedDiscussionId={setFocusedDiscussionId}
         />
       </>) : (<>
-        {isInstructor && (
+        {isInstructor && !showCreateAssignment && (
           <div className="flex items-center gap-2">
-            <button onClick={() => { setEditingAssignment(null); setShowCreateAssignment(!showCreateAssignment); }} className={`flex items-center gap-2 flex-1 p-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showCreateAssignment ? "border-green-400 text-green-600" : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-green-400 hover:text-green-600"}`}><Plus className="w-4 h-4" /> {showCreateAssignment ? "Close Form" : "Add Assignment"}</button>
-            <button onClick={() => setShowForkPanel(!showForkPanel)} className={`flex items-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showForkPanel ? "border-purple-400 text-purple-600" : "border-purple-200 dark:border-purple-500/30 text-purple-600 hover:border-purple-400"}`}><Layers className="w-4 h-4" /> {showForkPanel ? "Close" : "Fork"}</button>
-            <button onClick={() => setShowNewAnnouncement(!showNewAnnouncement)} className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-amber-200 dark:border-amber-500/30 rounded-xl text-sm text-amber-600 hover:border-amber-400 transition-colors bg-white dark:bg-slate-900"><Megaphone className="w-4 h-4" /> Announce</button>
-            <button onClick={() => setShowInvite(!showInvite)} className={`flex items-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl text-sm transition-colors bg-white dark:bg-slate-900 ${showInvite ? "border-green-400 text-green-600" : "border-green-200 dark:border-green-500/30 text-green-600 hover:border-green-400"}`}><UserPlus className="w-4 h-4" /> {showInvite ? "Close" : "Invite"}</button>
+            <button onClick={() => { setEditingAssignment(null); setShowCreateAssignment(true); }} className="flex items-center gap-2 flex-1 p-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-500 hover:border-green-400 hover:text-green-600 transition-colors bg-white dark:bg-slate-900"><Plus className="w-4 h-4" /> Add Assignment</button>
           </div>
         )}
         {isInstructor && classroom.durationWeeks > 0 && courseModules.length === 0 && (
@@ -261,35 +258,8 @@ export default function AssignmentsTab({ classroomState }) {
             {courseGenLoading ? "Generating Course Structure..." : "Generate Full Course Structure with AI"}
           </button>
         )}
-        {isInstructor && showInvite && (
-          <InvitePanel classroom={classroom} onClose={() => setShowInvite(false)} />
-        )}
-        {isInstructor && showForkPanel && (
-          <ForkContentPanel
-            classroom={classroom}
-            onClose={() => setShowForkPanel(false)}
-            onForkContent={handleForkContent}
-            browseResults={classroomState.browseResults}
-            browseLoading={classroomState.browseLoading}
-            browseQuery={classroomState.browseQuery}
-            setBrowseQuery={classroomState.setBrowseQuery}
-            browseType={classroomState.browseType}
-            setBrowseType={classroomState.setBrowseType}
-            onBrowse={classroomState.fetchBrowseContent}
-            forking={classroomState.forking}
-            forkedIdSet={classroomState.forkedIdSet}
-            browseError={classroomState.browseError}
-          />
-        )}
         {isInstructor && showCreateAssignment && (
-          <CreateAssignmentPanel classroomId={classroom.id} classroomName={classroom.name} onClose={() => { setShowCreateAssignment(false); setEditingAssignment(null); }} onCreated={handleAssignmentSaved} initialForm={assignmentForm} editAssignment={editingAssignment} forkedContent={forkedContent || []} materials={materials || []} discussions={discussions || []} />
-        )}
-        {isInstructor && showNewAnnouncement && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={sectionCls}>
-            <div><label className={labelCls}>Title</label><input value={newAnnTitle} onChange={(e) => setNewAnnTitle(e.target.value)} placeholder="Announcement title" className={inputCls} /></div>
-            <div><label className={labelCls}>Content</label><textarea value={newAnnContent} onChange={(e) => setNewAnnContent(e.target.value)} placeholder="What do you want to announce?" rows={3} className={inputCls + " resize-none"} /></div>
-            <div className="flex gap-2"><button onClick={handlePostAnnouncement} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition-colors">Post</button><button onClick={() => setShowNewAnnouncement(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button></div>
-          </motion.div>
+          <CreateAssignmentPanel classroomId={classroom.id} classroomName={classroom.name} onClose={() => { setShowCreateAssignment(false); setEditingAssignment(null); }} onCreated={handleAssignmentSaved} initialForm={assignmentForm} editAssignment={editingAssignment} forkedContent={forkedContent || []} materials={materials || []} discussions={discussions || []} courseModules={courseModules || []} durationWeeks={classroom.durationWeeks || 12} />
         )}
         {assignments.length === 0 ? (
           <EmptyState icon={ClipboardList} title="No assignments yet" description={isInstructor ? "Create your first assignment or generate a course structure with AI" : "No assignments have been posted yet"} action={isInstructor ? "Create Assignment" : undefined} onAction={() => setShowCreateAssignment(true)} />
@@ -308,7 +278,7 @@ export default function AssignmentsTab({ classroomState }) {
             <div className="space-y-2">
               {forkedContent.map((fc, i) => {
                 const isLocked = isForkedContentLocked(fc);
-                const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG.custom;
+                const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG._default;
                 const TypeIcon = cfg.icon;
                 const typeColor = cfg.color;
                 return (
@@ -365,9 +335,16 @@ export default function AssignmentsTab({ classroomState }) {
                 </div>
               )}
               {grouped[wk].map((assignment) => {
-                const due = getDueStatus(assignment.dueDate); const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom; const TypeIcon = tc.icon; const progress = assignment.myProgress;
+                const due = getDueStatus(assignment.dueDate); const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG._default; const TypeIcon = tc.icon; const progress = assignment.myProgress;
                 return (
-                  <motion.div key={assignment.id} whileHover={{ y: -1 }} onClick={() => setSelectedAssignment(assignment)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-colors cursor-pointer">
+                  <motion.div key={assignment.id} whileHover={{ y: -1 }} onClick={() => {
+                    if (assignment.type === "discussion" && assignment.meta?.discussionId) {
+                      setFocusedDiscussionId?.(assignment.meta.discussionId);
+                      setActiveTab?.("discussions");
+                    } else {
+                      setSelectedAssignment(assignment);
+                    }
+                  }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-colors cursor-pointer">
                     <div className="flex items-start gap-3">
                       <div className={`w-9 h-9 rounded-lg ${tc.color} flex items-center justify-center flex-shrink-0`}><TypeIcon className="w-4 h-4" /></div>
                       <div className="flex-1 min-w-0">

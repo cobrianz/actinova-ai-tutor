@@ -60,3 +60,24 @@ async function handlePatch(request, { params }) {
 }
 
 export const PATCH = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePatch);
+
+async function handleDelete(request, { params }) {
+  await connectToDatabase();
+  const user = request.user;
+  const { id } = await params;
+  const { discussionId } = await request.json();
+
+  const classroom = await (await import("@/models/Classroom")).default.findById(id).lean();
+  if (!classroom || classroom.instructorId?.toString() !== user._id?.toString()) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  const DiscussionPost = (await import("@/models/DiscussionPost")).default;
+  await DiscussionPost.deleteMany({ discussionId });
+  const deleted = await Discussion.findByIdAndDelete(discussionId);
+  if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  return NextResponse.json({ success: true });
+}
+
+export const DELETE = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handleDelete);

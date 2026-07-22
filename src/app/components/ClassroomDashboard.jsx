@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import ClassroomDetail from "./classroom/ClassroomDetail";
 
-const CREATOR_STEPS = ["Basic Info", "Course Settings", "Duration", "Content", "Syllabus", "Review"];
+const CREATOR_STEPS = ["Basic Info", "Course Settings", "Duration", "Content", "Review"];
 
 function CreateClassroomForm({ onClose, onCreated }) {
   const router = useRouter();
@@ -33,12 +33,11 @@ function CreateClassroomForm({ onClose, onCreated }) {
     return {
       name: "", description: "", subject: "", maxStudents: 50, semester: "",
       academicLevel: "undergraduate", gradingScheme: "percentage",
-      prerequisites: "", syllabus: "", durationWeeks: 8, startDate: "",
+      prerequisites: "", durationWeeks: 8, startDate: "",
     };
   });
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiSyllabusLoading, setAiSyllabusLoading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("create_classroom_draft", JSON.stringify({ ...form, _step: step }));
@@ -63,17 +62,6 @@ function CreateClassroomForm({ onClose, onCreated }) {
     } catch { toast.error("Failed to generate description"); } finally { setAiLoading(false); }
   };
 
-  const handleGenerateSyllabus = async () => {
-    if (!form.name.trim()) { toast.error("Enter a classroom name first"); return; }
-    setAiSyllabusLoading(true);
-    try {
-      const res = await apiClient.post("/api/classrooms/ai-generate", { task: "syllabus", name: form.name, subject: form.subject, content: form.description, durationWeeks: form.durationWeeks });
-      const data = await res.json();
-      if (data.result) { setForm((prev) => ({ ...prev, syllabus: data.result })); toast.success("Syllabus generated!"); }
-      else { toast.error("Failed to generate syllabus"); }
-    } catch { toast.error("Failed to generate syllabus"); } finally { setAiSyllabusLoading(false); }
-  };
-
   const handleCreate = async () => {
     if (!form.name.trim()) { toast.error("Classroom name is required"); return; }
     setLoading(true);
@@ -83,7 +71,6 @@ function CreateClassroomForm({ onClose, onCreated }) {
         maxStudents: parseInt(form.maxStudents) || 50, semester: form.semester,
         academicLevel: form.academicLevel, gradingScheme: form.gradingScheme,
         prerequisites: form.prerequisites ? form.prerequisites.split(",").map((s) => s.trim()).filter(Boolean) : [],
-        syllabus: form.syllabus,
         durationWeeks: parseInt(form.durationWeeks) || 0,
         startDate: form.startDate || null,
       };
@@ -231,21 +218,6 @@ function CreateClassroomForm({ onClose, onCreated }) {
                 )}
 
                 {step === 4 && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className={labelCls}>Syllabus</label>
-                        <button type="button" onClick={handleGenerateSyllabus} disabled={aiSyllabusLoading || !form.name.trim()} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
-                          {aiSyllabusLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                          {aiSyllabusLoading ? "Generating..." : "Generate with AI"}
-                        </button>
-                      </div>
-                      <textarea value={form.syllabus} onChange={(e) => update("syllabus", e.target.value)} placeholder="Course syllabus..." rows={8} className={inputCls + " resize-none"} />
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 5 && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                     <div className="rounded-xl border border-green-200 bg-green-50/60 p-5 dark:border-green-900 dark:bg-green-950/20">
                       <p className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-300 mb-3">Review & Create</p>

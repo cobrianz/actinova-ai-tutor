@@ -92,6 +92,14 @@ const assignmentSchema = new mongoose.Schema(
     },
     aiGenerated: { type: Boolean, default: false },
     weekNumber: { type: Number, default: 0, min: 0 },
+    meta: { type: mongoose.Schema.Types.Mixed, default: null },
+    quizQuestions: [{
+      text: { type: String, default: "" },
+      type: { type: String, enum: ["multiple-choice", "true-false", "multiple-select", "short-answer"], default: "multiple-choice" },
+      points: { type: Number, default: 2 },
+      options: [{ type: String }],
+      correctAnswer: { type: mongoose.Schema.Types.Mixed, default: null },
+    }],
   },
   { timestamps: true }
 );

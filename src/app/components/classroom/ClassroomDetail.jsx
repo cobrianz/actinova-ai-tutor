@@ -62,6 +62,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [discussions, setDiscussions] = useState([]);
   const [discussionsLoading, setDiscussionsLoading] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
+  const [focusedDiscussionId, setFocusedDiscussionId] = useState(null);
   const [discussionPosts, setDiscussionPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [newDiscTitle, setNewDiscTitle] = useState(() => {
@@ -193,6 +194,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     name: classroom.name || "", subject: classroom.subject || "", description: classroom.description || "",
     semester: classroom.semester || "", academicLevel: classroom.academicLevel || "undergraduate",
     gradingScheme: classroom.gradingScheme || "percentage", syllabus: classroom.syllabus || "",
+    officeHours: classroom.officeHours || "",
     schedule: classroom.schedule || { days: [], startTime: "", endTime: "", location: "" },
     prerequisites: classroom.prerequisites || [],
     settings: classroom.settings || {
@@ -379,7 +381,11 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
               const discRes = await apiClient.post(`/api/classrooms/${classroom.id}/discussions`, {
                 title: a.title, description: a.description || a.instructions || "",
               });
-              if (discRes.ok) fetchDiscussions();
+              if (discRes.ok) {
+                const discData = await discRes.json();
+                a._discussionId = discData.discussion?._id || discData.discussion?.id;
+                fetchDiscussions();
+              }
             } catch (e) { console.error("Failed to create module discussion:", e); }
           }
           const assignRes = await apiClient.post(`/api/classrooms/${classroom.id}/assignments`, {
@@ -387,6 +393,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
             type: a.type, category: a.category,
             maxScore: a.maxScore, passingScore: a.passingScore, weight: a.weight,
             rubric: a.rubric || [], weekNumber: module.weekNumber,
+            meta: a._discussionId ? { discussionId: a._discussionId } : undefined,
           });
           const assignData = await assignRes.json();
           if (assignData.success) { setAssignments((prev) => [assignData.assignment, ...prev]); generated++; }
@@ -510,7 +517,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   };
   const handleSaveSettings = async () => {
     setSettingsSaving(true);
-    try { const payload = { name: settingsForm.name, subject: settingsForm.subject, description: settingsForm.description, semester: settingsForm.semester, academicLevel: settingsForm.academicLevel, gradingScheme: settingsForm.gradingScheme, syllabus: settingsForm.syllabus, schedule: settingsForm.schedule, prerequisites: settingsForm.prerequisites, settings: settingsForm.settings }; const res = await apiClient.patch(`/api/classrooms/${classroom.id}`, payload); const data = await res.json(); if (data.success) toast.success("Settings saved!"); else toast.error(data.error || "Failed to save"); } catch { toast.error("Failed to save settings"); } finally { setSettingsSaving(false); }
+    try { const payload = { name: settingsForm.name, subject: settingsForm.subject, description: settingsForm.description, semester: settingsForm.semester, academicLevel: settingsForm.academicLevel, gradingScheme: settingsForm.gradingScheme, syllabus: settingsForm.syllabus, officeHours: settingsForm.officeHours, schedule: settingsForm.schedule, prerequisites: settingsForm.prerequisites, settings: settingsForm.settings }; const res = await apiClient.patch(`/api/classrooms/${classroom.id}`, payload); const data = await res.json(); if (data.success) toast.success("Settings saved!"); else toast.error(data.error || "Failed to save"); } catch { toast.error("Failed to save settings"); } finally { setSettingsSaving(false); }
   };
   const handleDeleteClassroom = async () => {
     if (!confirm("Are you absolutely sure? This will archive the classroom and all its data.")) return;
@@ -570,11 +577,12 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     CreateAssignmentPanel, AssignmentDetailPanel,
     inputCls, labelCls, sectionCls,
     discussions, discussionsLoading, selectedDiscussion, setSelectedDiscussion,
+    focusedDiscussionId, setFocusedDiscussionId,
     discussionPosts, postsLoading, newDiscTitle, setNewDiscTitle,
     newDiscDesc, setNewDiscDesc, showNewDiscussion, setShowNewDiscussion,
     replyContent, setReplyContent, replyingTo, setReplyingTo,
     discAiLoading, handleCreateDiscussion, handleCreatePost,
-    handleGenerateDiscussionPrompt, fetchDiscussions,
+    handleGenerateDiscussionPrompt, fetchDiscussions, fetchPosts,
     materials, materialsLoading, showNewMaterial, setShowNewMaterial,
     newMat, setNewMat, handleCreateMaterial,
     grades, gradesLoading, handleExportGrades,

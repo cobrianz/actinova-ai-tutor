@@ -69,8 +69,13 @@ const classroomSchema = new mongoose.Schema(
     }],
     syllabus: {
       type: String,
-      maxlength: 5000,
+      maxlength: 10000,
       default: "",
+    },
+    officeHours: {
+      type: String,
+      default: "",
+      maxlength: 500,
     },
     announcements: [{
       title: { type: String, required: true },

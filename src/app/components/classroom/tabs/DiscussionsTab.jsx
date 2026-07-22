@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, ArrowLeft, X, Clock, Loader2,
   Sparkles, MessageSquare, Pin, Unlock, Send,
-  CornerDownRight, ChevronDown, ChevronUp,
+  CornerDownRight, ChevronDown, ChevronUp, Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/csrfClient";
 
@@ -58,10 +58,20 @@ export default function DiscussionsTab({ classroomState }) {
     showNewDiscussion, setShowNewDiscussion, replyContent, setReplyContent,
     replyingTo, setReplyingTo, discAiLoading,
     handleCreateDiscussion, handleCreatePost, handleGenerateDiscussionPrompt,
-    fetchDiscussions, inputCls, labelCls,
+    fetchDiscussions, inputCls, labelCls, focusedDiscussionId, setFocusedDiscussionId, fetchPosts,
   } = classroomState;
 
   const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
+
+  useEffect(() => {
+    if (focusedDiscussionId && discussions.length > 0 && !selectedDiscussion) {
+      const target = discussions.find((d) => (d._id || d.id) === focusedDiscussionId);
+      if (target) {
+        setSelectedDiscussion(target);
+        setFocusedDiscussionId(null);
+      }
+    }
+  }, [focusedDiscussionId, discussions, selectedDiscussion, setSelectedDiscussion, setFocusedDiscussionId]);
 
   if (selectedDiscussion) {
     return (
@@ -79,6 +89,7 @@ export default function DiscussionsTab({ classroomState }) {
         handleCreatePost={handleCreatePost}
         inputCls={inputCls}
         fetchDiscussions={fetchDiscussions}
+        fetchPosts={fetchPosts}
       />
     );
   }
@@ -224,7 +235,7 @@ function DiscussionCard({ disc, onClick, index }) {
   );
 }
 
-function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions }) {
+function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions, fetchPosts }) {
   const [expandedReplies, setExpandedReplies] = useState({});
   const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
 
@@ -270,6 +281,9 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
               <button onClick={async () => { try { await apiClient.patch(`/api/classrooms/${classroom.id}/discussions/${discussion._id || discussion.id}`, { isClosed: !discussion.isClosed }); setSelectedDiscussion({ ...discussion, isClosed: !discussion.isClosed }); } catch (err) { console.error("toggleClose:", err); } }} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title={discussion.isClosed ? "Reopen" : "Close"}>
                 {discussion.isClosed ? <Unlock className="w-4 h-4" /> : <X className="w-4 h-4" />}
               </button>
+              <button onClick={async () => { if (!confirm("Delete this discussion and all its posts?")) return; try { await apiClient.delete(`/api/classrooms/${classroom.id}/discussions`, { discussionId: discussion._id || discussion.id }); setSelectedDiscussion(null); fetchDiscussions(); } catch (err) { console.error("deleteDiscussion:", err); } }} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors" title="Delete discussion">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
@@ -305,6 +319,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
                   inputCls={inputCls} repliesMap={repliesMap}
                   replyingTo={replyingTo} canPost={canPost}
                   isInstructor={isInstructor} classroomId={classroom.id}
+                  fetchPosts={fetchPosts}
                 />
               </motion.div>
             );
@@ -346,7 +361,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
   );
 }
 
-function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost, isInstructor, classroomId }) {
+function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost, isInstructor, classroomId, fetchPosts }) {
   const postId = post._id || post.id;
   const [showGrade, setShowGrade] = useState(false);
   const [gradeScore, setGradeScore] = useState(post.score ?? "");
@@ -364,6 +379,7 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
         feedback: gradeFeedback,
       });
       setShowGrade(false);
+      if (fetchPosts) fetchPosts(discussion._id || discussion.id);
     } catch (err) { console.error("Grade save failed:", err); }
     setSavingGrade(false);
   };
@@ -403,9 +419,14 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
                     <button onClick={() => setShowGrade(false)} className="px-2 py-1 bg-secondary text-muted-foreground rounded text-[10px] font-semibold">Cancel</button>
                   </div>
                 </div>
+              ) : post.score != null ? (
+                <button onClick={() => setShowGrade(true)} className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg text-[10px] font-bold text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors">
+                  <span>Graded: {post.score}/{post.maxScore || 100}</span>
+                  <span className="text-green-500/60 font-normal">Edit</span>
+                </button>
               ) : (
                 <button onClick={() => setShowGrade(true)} className="text-[10px] font-semibold text-amber-600 hover:text-amber-700">
-                  {post.score != null ? `Graded: ${post.score}/${post.maxScore || 100}` : "Grade this post"}
+                  Grade this post
                 </button>
               )}
             </div>

@@ -1,16 +1,14 @@
-import { BookOpen, FileText, CheckCircle2, Edit3, Layers, MessageSquare, Code, Presentation, Settings, Video, ExternalLink } from "lucide-react";
+import { FileText, CheckCircle2, Edit3, Layers, MessageSquare, Code, Presentation, Video, ExternalLink } from "lucide-react";
 
 export const ASSIGNMENT_TYPES = [
-  { value: "course", label: "Course", icon: BookOpen },
-  { value: "flashcards", label: "Flashcards", icon: FileText },
   { value: "quiz", label: "Quiz", icon: CheckCircle2 },
+  { value: "exam", label: "Exam", icon: CheckCircle2 },
   { value: "report", label: "Report", icon: Edit3 },
   { value: "essay", label: "Essay", icon: Edit3 },
   { value: "project", label: "Project", icon: Layers },
   { value: "discussion", label: "Discussion", icon: MessageSquare },
   { value: "lab", label: "Lab", icon: Code },
   { value: "presentation", label: "Presentation", icon: Presentation },
-  { value: "custom", label: "Custom", icon: Settings },
 ];
 
 export const MATERIAL_TYPES = [
@@ -23,16 +21,15 @@ export const MATERIAL_TYPES = [
 ];
 
 export const TYPE_CONFIG = {
-  course: { icon: BookOpen, color: "bg-blue-500/10 text-blue-600" },
-  flashcards: { icon: FileText, color: "bg-purple-500/10 text-purple-600" },
   quiz: { icon: CheckCircle2, color: "bg-amber-500/10 text-amber-600" },
+  exam: { icon: CheckCircle2, color: "bg-red-500/10 text-red-600" },
   report: { icon: Edit3, color: "bg-rose-500/10 text-rose-600" },
   essay: { icon: Edit3, color: "bg-pink-500/10 text-pink-600" },
   project: { icon: Layers, color: "bg-indigo-500/10 text-indigo-600" },
   discussion: { icon: MessageSquare, color: "bg-teal-500/10 text-teal-600" },
   lab: { icon: Code, color: "bg-orange-500/10 text-orange-600" },
   presentation: { icon: Presentation, color: "bg-cyan-500/10 text-cyan-600" },
-  custom: { icon: Settings, color: "bg-slate-500/10 text-slate-600" },
+  _default: { icon: FileText, color: "bg-slate-500/10 text-slate-600" },
 };
 
 export const MATERIAL_ICON_MAP = {

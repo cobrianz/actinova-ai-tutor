@@ -27,7 +27,7 @@ async function handlePost(request, { params }) {
   }
 
   const body = await request.json();
-  const { assignmentId, text } = body;
+  const { assignmentId, text, score } = body;
 
   if (!assignmentId) {
     return NextResponse.json({ error: "Assignment ID required" }, { status: 400 });
@@ -55,6 +55,7 @@ async function handlePost(request, { params }) {
     submittedAt: new Date(),
     lastAccessedAt: new Date(),
   };
+  if (score != null) update.score = Number(score);
 
   const doc = await StudentProgress.findOneAndUpdate(filter, update, {
     new: true,

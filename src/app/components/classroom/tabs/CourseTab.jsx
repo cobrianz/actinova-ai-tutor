@@ -7,8 +7,8 @@ import {
   BookOpen, Calendar, Clock, MapPin, GraduationCap, Layers, Megaphone,
   ChevronDown, ChevronUp, Target, FileText, Lock, Unlock, ExternalLink,
   Award, Sparkles, Loader2, Link2, Trash2, Plus, Settings, Info,
-  Eye, EyeOff, MessageSquare, ClipboardList, ExternalLink as LinkIcon,
-  Check, Paperclip,
+  Eye, EyeOff, MessageSquare, ClipboardList, ClipboardCheck, ExternalLink as LinkIcon,
+  Check, Paperclip, GitFork,
 } from "lucide-react";
 import { TYPE_CONFIG } from "../constants";
 import ForkContentPanel from "../ForkContentPanel";
@@ -18,6 +18,110 @@ import LessonTable from "@/components/LessonTable";
 import ConfirmModal from "@/components/ConfirmModal";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
+
+function renderMarkdown(text) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  const elements = [];
+  let i = 0;
+  let key = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^#{1,3}\s+/.test(line)) {
+      const level = line.match(/^(#{1,3})/)[1].length;
+      const txt = line.replace(/^#{1,3}\s+/, "");
+      const cls = level === 1 ? "text-lg font-bold mt-4 mb-2" : level === 2 ? "text-base font-bold mt-3 mb-1.5" : "text-sm font-bold mt-2 mb-1";
+      elements.push(<p key={key++} className={`${cls} text-slate-900 dark:text-white`}>{txt}</p>);
+      i++;
+    } else if (/^---+$/.test(line.trim())) {
+      elements.push(<hr key={key++} className="my-3 border-slate-200 dark:border-slate-700" />);
+      i++;
+    } else if (line.trim().startsWith("|") && i + 1 < lines.length && /^\|[\s:-]+\|/.test(lines[i + 1].trim())) {
+      const headerCells = line.split("|").filter((c) => c.trim()).map((c) => c.trim());
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        rows.push(lines[i].split("|").filter((c) => c.trim()).map((c) => c.trim()));
+        i++;
+      }
+      elements.push(
+        <div key={key++} className="overflow-x-auto my-3">
+          <table className="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <thead>
+              <tr className="bg-slate-100 dark:bg-slate-800">
+                {headerCells.map((cell, ci) => (
+                  <th key={ci} className="px-3 py-2 text-left font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">{renderInline(cell)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-3 py-2 text-slate-600 dark:text-slate-400">{renderInline(cell)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    } else if (/^[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*]\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ul key={key++} className="list-disc list-outside ml-6 space-y-1 my-2">
+          {items.map((item, j) => <li key={j} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{renderInline(item)}</li>)}
+        </ul>
+      );
+    } else if (/^\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ol key={key++} className="list-decimal list-outside ml-6 space-y-1 my-2">
+          {items.map((item, j) => <li key={j} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{renderInline(item)}</li>)}
+        </ol>
+      );
+    } else if (line.trim() === "") {
+      i++;
+    } else {
+      elements.push(<p key={key++} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{renderInline(line)}</p>);
+      i++;
+    }
+  }
+  return elements;
+}
+
+function renderInline(text) {
+  const parts = [];
+  let remaining = text;
+  let key = 0;
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+    const italicMatch = remaining.match(/\*(.+?)\*/);
+    const firstBold = boldMatch ? remaining.indexOf(boldMatch[0]) : Infinity;
+    const firstItalic = italicMatch ? remaining.indexOf(italicMatch[0]) : Infinity;
+    if (firstBold <= firstItalic && boldMatch) {
+      if (firstBold > 0) parts.push(<span key={key++}>{remaining.slice(0, firstBold)}</span>);
+      parts.push(<strong key={key++} className="font-bold text-slate-900 dark:text-white">{boldMatch[1]}</strong>);
+      remaining = remaining.slice(firstBold + boldMatch[0].length);
+    } else if (italicMatch) {
+      if (firstItalic > 0) parts.push(<span key={key++}>{remaining.slice(0, firstItalic)}</span>);
+      parts.push(<em key={key++}>{italicMatch[1]}</em>);
+      remaining = remaining.slice(firstItalic + italicMatch[0].length);
+    } else {
+      parts.push(<span key={key++}>{remaining}</span>);
+      break;
+    }
+  }
+  return parts;
+}
 
 function groupModulesByWeek(modules, durationWeeks) {
   if (!modules?.length) return [];
@@ -46,15 +150,18 @@ export default function CourseTab({ classroomState }) {
     setAnnouncements, setDiscussions, setForkedContent,
     materials, discussions, handleAttachMaterial, handleAttachDiscussion,
     inputCls, labelCls, sectionCls, setActiveTab,
-    assignments, setSelectedAssignment,
+    assignments, setSelectedAssignment, focusedDiscussionId, setFocusedDiscussionId,
+    user,
   } = classroomState;
 
   const [editingFork, setEditingFork] = useState(null);
   const [expandedFork, setExpandedFork] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", onConfirm: null, confirmColor: "red" });
-  const [expandedQuiz, setExpandedQuiz] = useState(null);
   const [quizData, setQuizData] = useState(null);
   const [quizLoading, setQuizLoading] = useState(false);
+  const [syllabusLoading, setSyllabusLoading] = useState(false);
+  const [editingSyllabus, setEditingSyllabus] = useState(false);
+  const [syllabusDraft, setSyllabusDraft] = useState("");
 
   const fetchQuizContent = useCallback(async (contentId) => {
     setQuizLoading(true);
@@ -73,8 +180,68 @@ export default function CourseTab({ classroomState }) {
     }
   }, [classroom.id]);
 
+  const handleGenerateSyllabus = useCallback(async () => {
+    if (!classroom.startDate) { toast.error("Set a class start date first"); return; }
+    const courseForks = (forkedContent || []).filter((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
+    const hasModules = courseModules?.length > 0 || courseForks.length > 0;
+    if (!hasModules) { toast.error("Generate course structure or fork a course first"); return; }
+    setSyllabusLoading(true);
+    try {
+      const start = new Date(classroom.startDate);
+      const weeks = classroom.durationWeeks || 12;
+      const end = new Date(start.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+      const mid = new Date(start.getTime() + Math.floor(weeks / 2) * 7 * 24 * 60 * 60 * 1000);
+
+      const modulesForSyllabus = courseForks.length > 0
+        ? courseForks.flatMap((fc) => (fc.meta.modules || []).map((m) => ({ weekNumber: m.weekNumber, title: m.title, description: m.description })))
+        : courseModules.map((m) => ({ weekNumber: m.weekNumber, title: m.title, description: m.description }));
+
+      const res = await apiClient.post("/api/classrooms/ai-generate", {
+        task: "syllabus_gen",
+        name: classroom.name,
+        subject: classroom.subject,
+        content: classroom.description,
+        durationWeeks: weeks,
+        academicLevel: classroom.academicLevel,
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        midtermDate: mid.toISOString(),
+        instructorName: user?.name || "",
+        instructorEmail: user?.email || "",
+        officeHours: classroom.officeHours || "",
+        modules: modulesForSyllabus,
+        gradingScheme: classroom.gradingScheme || "percentage",
+        schedule: classroom.schedule || {},
+        prerequisites: classroom.prerequisites || [],
+      });
+      const data = await res.json();
+      if (data.result) {
+        await apiClient.patch(`/api/classrooms/${classroom.id}`, { syllabus: data.result });
+        toast.success("Syllabus generated!");
+        window.location.reload();
+      } else {
+        toast.error(data.error || "Failed to generate syllabus");
+      }
+    } catch {
+      toast.error("Failed to generate syllabus");
+    } finally {
+      setSyllabusLoading(false);
+    }
+  }, [classroom, courseModules, forkedContent, user]);
+
+  const handleSaveSyllabus = useCallback(async () => {
+    try {
+      await apiClient.patch(`/api/classrooms/${classroom.id}`, { syllabus: syllabusDraft });
+      toast.success("Syllabus saved");
+      setEditingSyllabus(false);
+      window.location.reload();
+    } catch {
+      toast.error("Failed to save syllabus");
+    }
+  }, [classroom.id, syllabusDraft]);
+
   const levelLabels = { highschool: "High School", undergraduate: "Undergraduate", graduate: "Graduate", phd: "PhD", professional: "Professional" };
-  const gradeLabels = { percentage: "Percentage (0–100%)", letter: "Letter Grades (A–F)", passfail: "Pass / Fail", gpa: "GPA Scale (0.0–4.0)" };
+  const gradingLabels = { percentage: "Percentage", letter: "Letter Grades", passfail: "Pass / Fail", gpa: "GPA Scale" };
 
   const scheduleDays = classroom.schedule?.days?.length
     ? classroom.schedule.days.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(", ")
@@ -124,25 +291,30 @@ export default function CourseTab({ classroomState }) {
       {/* Instructor Actions */}
       {isInstructor && (
         <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setShowForkPanel(!showForkPanel)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-              showForkPanel
-                ? "bg-purple-500 text-white shadow-lg shadow-purple-500/25"
-                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300 hover:text-purple-600"
-            }`}
-          >
-            <Link2 className="w-3.5 h-3.5" />
-            {showForkPanel ? "Close Fork" : "Fork Content"}
-          </button>
-          {classroom.durationWeeks > 0 && !courseModules?.length && (
+          {(() => {
+            const hasForkedCourse = (forkedContent || []).some((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
+            return (
+              <button
+                onClick={() => setShowForkPanel(!showForkPanel)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  showForkPanel
+                    ? "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-600"
+                    : "bg-green-500 text-white hover:bg-green-600"
+                }`}
+              >
+                <GitFork className="w-3.5 h-3.5" />
+                {showForkPanel ? "Close" : hasForkedCourse ? "Fork More Content" : "Fork Course"}
+              </button>
+            );
+          })()}
+          {classroom.durationWeeks > 0 && !courseModules?.length && !(forkedContent || []).some((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0) && (
             <button
               onClick={handleGenerateCourseStructure}
               disabled={courseGenLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-green-500/20"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 transition-colors"
             >
               {courseGenLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              Generate Course Structure
+              Generate Structure
             </button>
           )}
         </div>
@@ -185,7 +357,7 @@ export default function CourseTab({ classroomState }) {
               )}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">Not set</p>
+            <p className="text-xs text-slate-400 italic">No schedule set</p>
           )}
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
@@ -193,7 +365,7 @@ export default function CourseTab({ classroomState }) {
             <Award className="w-4 h-4 text-amber-500" />
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grading</h3>
           </div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">{gradeLabels[classroom.gradingScheme] || "Percentage"}</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">{gradingLabels[classroom.gradingScheme] || "Percentage"}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -204,11 +376,11 @@ export default function CourseTab({ classroomState }) {
             <div>
               <p className="text-sm font-semibold text-slate-900 dark:text-white">
                 {new Date(classroom.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                {classroom.durationWeeks > 0 && ` — ${classroom.durationWeeks} weeks`}
               </p>
-              {classroom.durationWeeks > 0 && (
-                <p className="text-xs text-slate-500 mt-0.5">{classroom.durationWeeks} weeks</p>
-              )}
             </div>
+          ) : classroom.durationWeeks > 0 ? (
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{classroom.durationWeeks} weeks</p>
           ) : (
             <p className="text-xs text-slate-400 italic">Not set</p>
           )}
@@ -231,297 +403,423 @@ export default function CourseTab({ classroomState }) {
       )}
 
       {/* Syllabus */}
+      {isInstructor && !classroom.syllabus && (courseModules?.length > 0 || (forkedContent || []).some((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0)) && (
+        <button
+          onClick={handleGenerateSyllabus}
+          disabled={syllabusLoading}
+          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex items-center justify-center gap-2 text-sm font-semibold text-teal-600 hover:border-teal-300 hover:bg-teal-50 dark:hover:bg-teal-500/5 transition-all disabled:opacity-50"
+        >
+          {syllabusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+          {syllabusLoading ? "Generating Syllabus..." : "Generate Syllabus"}
+        </button>
+      )}
       {classroom.syllabus && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <FileText className="w-4 h-4 text-teal-500" />
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Syllabus</h3>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-teal-500" />
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Syllabus</h3>
+            </div>
+            {isInstructor && (
+              <div className="flex items-center gap-2">
+                {editingSyllabus ? (
+                  <>
+                    <button onClick={handleSaveSyllabus} className="flex items-center gap-1 px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-semibold hover:bg-teal-600 transition-colors">
+                      <Check className="w-3 h-3" /> Save
+                    </button>
+                    <button onClick={() => setEditingSyllabus(false)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setSyllabusDraft(classroom.syllabus); setEditingSyllabus(true); }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <Settings className="w-3 h-3" /> Edit
+                    </button>
+                    <button
+                      onClick={handleGenerateSyllabus}
+                      disabled={syllabusLoading}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-teal-100 dark:bg-teal-500/15 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-semibold hover:bg-teal-200 dark:hover:bg-teal-500/25 transition-colors disabled:opacity-50"
+                    >
+                      {syllabusLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                      Regenerate
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{classroom.syllabus}</div>
+          {editingSyllabus ? (
+            <textarea
+              value={syllabusDraft}
+              onChange={(e) => setSyllabusDraft(e.target.value)}
+              rows={20}
+              className="w-full text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-4 font-mono resize-y leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Syllabus content (markdown)..."
+            />
+          ) : (
+            <div className="prose-sm max-w-none">{renderMarkdown(classroom.syllabus)}</div>
+          )}
         </div>
       )}
 
 
 
-      {/* Forked Content */}
-      {forkedContent?.length > 0 && (
-        <div className="rounded-2xl">
-          {isInstructor && (
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-indigo-500" />
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Content ({forkedContent.length})</h3>
+      {/* Class Structure — AI-generated learning modules */}
+      {(() => {
+        const hasModules = courseModules?.length > 0;
+        if (!hasModules && !isInstructor) return null;
+        if (!hasModules) {
+          return (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
+              <Layers className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">No class structure yet</p>
+              <p className="text-xs text-slate-400 mb-4">Generate a structure with AI or fork a course from the library</p>
+              <div className="flex items-center justify-center gap-3">
+                <button onClick={() => setShowForkPanel(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors">
+                  <GitFork className="w-3.5 h-3.5" /> Fork Course
+                </button>
+                {classroom.durationWeeks > 0 && (
+                  <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 transition-colors">
+                    {courseGenLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    Generate Structure
+                  </button>
+                )}
               </div>
-              <button
-                onClick={() => setShowForkPanel(true)}
-                className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                <Plus className="w-3 h-3" /> Add More
-              </button>
+              {!classroom.durationWeeks && <p className="text-[10px] text-slate-400 mt-2">Set course duration first in Settings</p>}
             </div>
-          )}
+          );
+        }
+        return (
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" /> Class Structure ({courseModules.length} weeks)
+              </h4>
+              {isInstructor && (
+                <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
+                  {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  {courseGenLoading ? "Generating..." : "Regenerate"}
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {courseModules.map((mod, i) => (
+                <ModuleCard
+                  key={i}
+                  mod={mod}
+                  index={i}
+                  classroomId={classroom.id}
+                  isInstructor={isInstructor}
+                  setCourseModules={setCourseModules}
+                  setActiveTab={setActiveTab}
+                  startDate={classroom.startDate}
+                  weekAssignments={(assignments || []).filter((a) => a.weekNumber === mod.weekNumber)}
+                  onOpenAssignment={(a) => setSelectedAssignment(a)}
+                  onOpenDiscussion={(discId) => { setFocusedDiscussionId(discId); setActiveTab("discussions"); }}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Course Modules — forked courses, each under its own course name */}
+      {(() => {
+        const courseForks = (forkedContent || []).filter((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
+        if (courseForks.length === 0) return null;
+
+        return (
           <div className="space-y-4">
-            {forkedContent.map((fc, i) => {
-              const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG.custom;
-              const Icon = cfg.icon;
-              const locked = isInstructor ? !fc.unlocked : isForkedContentLocked?.(fc);
-              const isEditing = editingFork === `${fc.contentType}-${fc.contentId}`;
-              const isExpanded = expandedFork === `${fc.contentType}-${fc.contentId}`;
-              const hasModules = fc.contentType === "course" && fc.meta?.modules?.length > 0;
+            {isInstructor && (
+              <div className="flex items-center justify-between px-1">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <GitFork className="w-3.5 h-3.5 text-indigo-500" /> Course Modules ({courseForks.length} {courseForks.length === 1 ? "course" : "courses"})
+                </h4>
+                <button onClick={() => setShowForkPanel(true)} className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                  <Plus className="w-3 h-3" /> Add More
+                </button>
+              </div>
+            )}
+            {courseForks.map((fc, forkIdx) => {
+              const forkModules = (fc.meta?.modules || []).map((m) => ({ ...m, _contentId: fc.contentId }));
+              const hiddenModules = (fc.meta?.hiddenModules || []).map((idx) => idx);
+              const hiddenLessons = (fc.meta?.hiddenLessons || []).map((key) => key);
               return (
-                <div key={i}>
-                  <div className="rounded-lg overflow-hidden">
-                    {/* Header row */}
-                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#E8E6DF] dark:bg-slate-700/50">
-                      {hasModules ? (
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{fc.title}</p>
-                            {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {fc.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-semibold">Week {fc.weekNumber}</span>}
-                              {locked ? (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold flex items-center gap-0.5"><Lock className="w-2.5 h-2.5" /> Locked</span>
-                              ) : (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>
-                              )}
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{fc.meta.modules.length} modules</span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <button onClick={() => {
-                          const key = `${fc.contentType}-${fc.contentId}`;
-                          const next = expandedFork === key ? null : key;
-                          setExpandedFork(next);
-                          setQuizData(null);
-                          if (next && fc.contentType === "quiz") {
-                            fetchQuizContent(fc.contentId);
-                          }
-                        }} className="flex items-center gap-3 flex-1 min-w-0 text-left group">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{fc.title}</p>
-                            {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {fc.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-semibold">Week {fc.weekNumber}</span>}
-                              {locked ? (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold flex items-center gap-0.5"><Lock className="w-2.5 h-2.5" /> Locked</span>
-                              ) : (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>
-                              )}
-                              {fc.meta?.questionCount > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{fc.meta.questionCount} questions</span>}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                          </div>
-                        </button>
-                      )}
-                      {isInstructor && (
-                        <div className="flex items-center gap-0.5 flex-shrink-0">
-                          <button onClick={() => setEditingFork(isEditing ? null : `${fc.contentType}-${fc.contentId}`)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Settings">
-                            <Settings className="w-3.5 h-3.5 text-slate-400" />
-                          </button>
-                          <button onClick={() => setConfirmModal({ open: true, title: locked ? "Unlock Content" : "Lock Content", message: locked ? "Students will be able to access this content. Continue?" : "Students won't be able to access this content. Continue?", confirmColor: locked ? "blue" : "red", onConfirm: () => handleToggleForkUnlock(fc.contentType, fc.contentId) })} className={`p-1 rounded transition-colors ${locked ? "bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20" : "bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20"}`} title={locked ? "Unlock" : "Lock"}>
-                            {locked ? <Lock className="w-3.5 h-3.5 text-red-500" /> : <Unlock className="w-3.5 h-3.5 text-green-500" />}
-                          </button>
-                          <button onClick={() => setConfirmModal({ open: true, title: "Remove Content", message: `Remove "${fc.title}" from this classroom? This cannot be undone.`, confirmColor: "red", onConfirm: () => handleUnforkContent(fc.contentType, fc.contentId, fc.title) })} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                      {!isInstructor && locked && (
-                        <Lock className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
-                      )}
+                <div key={forkIdx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
                     </div>
-
-                    {/* Expanded: inline quiz */}
-                    {!hasModules && isExpanded && fc.contentType === "quiz" && (
-                      <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
-                        {quizLoading ? (
-                          <div className="flex items-center justify-center py-8">
-                            <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
-                          </div>
-                        ) : quizData?.questions?.length > 0 ? (
-                          <QuizInterface
-                            topic={quizData.course || classroom.subject || classroom.name}
-                            quizData={quizData}
-                            onBack={() => { setExpandedQuiz(null); setQuizData(null); }}
-                            onQuizComplete={(results) => {
-                              if (results) toast.success(`Quiz completed! Score: ${results.score}%`);
-                            }}
-                            allowRetake={quizData.allowRetake !== false}
-                            allowReview={quizData.allowReview !== false}
-                            allowDownload={quizData.allowDownload !== false}
-                          />
-                        ) : (
-                          <p className="text-xs text-slate-400 text-center py-4">No questions available</p>
-                        )}
-                      </div>
-                    )}
-
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{fc.title}</p>
+                      {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
+                    </div>
                   </div>
-
-                  {/* Instructor Edit Panel */}
-                  {isInstructor && isEditing && (
-                    <ForkEditPanel
-                      fork={fc}
-                      maxWeeks={maxWeeks}
-                      onSave={(updates) => {
-                        handleUpdateFork(fc.contentType, fc.contentId, updates);
-                        setEditingFork(null);
-                      }}
-                      onCancel={() => setEditingFork(null)}
-                    />
-                  )}
+                  <WeekGroupedCourse
+                    modules={forkModules}
+                    durationWeeks={classroom.durationWeeks}
+                    courseId={fc.contentId}
+                    courseName={fc.title}
+                    courseTopic={classroom.subject || classroom.name}
+                    difficulty={classroom.academicLevel || "intermediate"}
+                    classroomId={classroom.id}
+                    isInstructor={isInstructor}
+                    hiddenModules={hiddenModules}
+                    hiddenLessons={hiddenLessons}
+                    forkEntry={fc}
+                    onToggleHideModule={(modIdx) => {
+                      const current = fc.meta?.hiddenModules || [];
+                      const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
+                      handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
+                    }}
+                    onToggleHideLesson={(lessonKey) => {
+                      const current = fc.meta?.hiddenLessons || [];
+                      const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
+                      handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
+                    }}
+                    openedWeeks={openedWeeks}
+                    handleToggleWeek={handleToggleWeek}
+                    setConfirmModal={setConfirmModal}
+                    completedLessons={completedLessons}
+                    toggleLessonComplete={toggleLessonComplete}
+                    setAnnouncements={setAnnouncements}
+                    setDiscussions={setDiscussions}
+                    forkedContent={forkedContent}
+                    handleUpdateFork={handleUpdateFork}
+                    setForkedContent={setForkedContent}
+                    setActiveTab={setActiveTab}
+                    startDate={classroom.startDate}
+                    weekAssignments={assignments || []}
+                    onOpenAssignment={(a) => setSelectedAssignment(a)}
+                    onOpenDiscussion={(discId) => { setFocusedDiscussionId(discId); setActiveTab("discussions"); }}
+                  />
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* Class Structure — merged modules from all course forks */}
+      {/* Materials — only if forked non-quiz content exists */}
       {(() => {
-        const courseForks = (forkedContent || []).filter((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
-        const modulesFromCourse = courseModules?.length > 0 ? courseModules : [];
-        const allModules = [];
-        for (const fc of courseForks) {
-          for (const mod of fc.meta.modules) {
-            allModules.push({ ...mod, _contentId: fc.contentId });
-          }
-        }
-        if (allModules.length === 0 && modulesFromCourse.length > 0) {
-          for (const mod of modulesFromCourse) {
-            allModules.push({ ...mod, _contentId: null });
-          }
-        }
-        const mergedHiddenModules = [];
-        const mergedHiddenLessons = [];
-        for (const fc of courseForks) {
-          for (const idx of (fc.meta?.hiddenModules || [])) {
-            mergedHiddenModules.push({ contentId: fc.contentId, idx });
-          }
-          for (const key of (fc.meta?.hiddenLessons || [])) {
-            mergedHiddenLessons.push({ contentId: fc.contentId, key });
-          }
-        }
-        const flatHiddenModules = mergedHiddenModules.map((h) => h.idx);
-        const flatHiddenLessons = mergedHiddenLessons.map((h) => h.key);
-        if (allModules.length > 0) {
+        const otherForks = (forkedContent || []).filter((fc) => fc.contentType !== "course" || !fc.meta?.modules?.length);
+        const otherMaterialForks = otherForks.filter((fc) => !["quiz"].includes(fc.contentType));
+        if (otherMaterialForks.length === 0) return null;
+
+        const renderForkItem = (fc, i) => {
+          const cfg = TYPE_CONFIG[fc.contentType] || TYPE_CONFIG._default;
+          const Icon = cfg.icon;
+          const locked = isInstructor ? !fc.unlocked : isForkedContentLocked?.(fc);
+          const isEditing = editingFork === `${fc.contentType}-${fc.contentId}`;
+          const isExpanded = expandedFork === `${fc.contentType}-${fc.contentId}`;
           return (
-            <div className="pt-4">
-              {courseModules.length > 0 && (
-                <>
-                  <div className="flex items-center justify-between mb-3 px-1">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Class Structure ({courseModules.length} weeks)</h4>
-                    {isInstructor && (
-                      <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading} className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
-                        {courseGenLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                        {courseGenLoading ? "Generating..." : "Regenerate"}
+            <div key={i}>
+              <div className="rounded-lg overflow-hidden">
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#E8E6DF] dark:bg-slate-700/50">
+                  <button onClick={() => {
+                    const key = `${fc.contentType}-${fc.contentId}`;
+                    const next = expandedFork === key ? null : key;
+                    setExpandedFork(next);
+                    setQuizData(null);
+                  }} className="flex items-center gap-3 flex-1 min-w-0 text-left group">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{fc.title}</p>
+                      {fc.description && <p className="text-[10px] text-slate-400 truncate">{fc.description}</p>}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {fc.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-semibold">Week {fc.weekNumber}</span>}
+                        {locked ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold flex items-center gap-0.5"><Lock className="w-2.5 h-2.5" /> Locked</span>
+                        ) : (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                    </div>
+                  </button>
+                  {isInstructor && (
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      <button onClick={() => setEditingFork(isEditing ? null : `${fc.contentType}-${fc.contentId}`)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Settings">
+                        <Settings className="w-3.5 h-3.5 text-slate-400" />
                       </button>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {courseModules.map((mod, i) => (
-                      <ModuleCard
-                        key={i}
-                        mod={mod}
-                        index={i}
-                        classroomId={classroom.id}
-                        isInstructor={isInstructor}
-                        setCourseModules={setCourseModules}
-                        setForkedContent={setForkedContent}
-                        materials={materials}
-                        discussions={discussions}
-                        handleAttachMaterial={handleAttachMaterial}
-                        handleAttachDiscussion={handleAttachDiscussion}
-                        setActiveTab={setActiveTab}
-                        handleGenerateModuleAssignments={handleGenerateModuleAssignments}
-                        assignments={assignments}
-                        setSelectedAssignment={setSelectedAssignment}
-                      />
-                    ))}
-                  </div>
-                </>
+                      <button onClick={() => setConfirmModal({ open: true, title: locked ? "Unlock Content" : "Lock Content", message: locked ? "Students will be able to access this content. Continue?" : "Students won't be able to access this content. Continue?", confirmColor: locked ? "blue" : "red", onConfirm: () => handleToggleForkUnlock(fc.contentType, fc.contentId) })} className={`p-1 rounded transition-colors ${locked ? "bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20" : "bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20"}`} title={locked ? "Unlock" : "Lock"}>
+                        {locked ? <Lock className="w-3.5 h-3.5 text-red-500" /> : <Unlock className="w-3.5 h-3.5 text-green-500" />}
+                      </button>
+                      <button onClick={() => setConfirmModal({ open: true, title: "Remove Content", message: `Remove "${fc.title}" from this classroom? This cannot be undone.`, confirmColor: "red", onConfirm: () => handleUnforkContent(fc.contentType, fc.contentId, fc.title) })} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  {!isInstructor && locked && (
+                    <Lock className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                  )}
+                </div>
+              </div>
+
+              {isInstructor && isEditing && (
+                <ForkEditPanel
+                  fork={fc}
+                  maxWeeks={maxWeeks}
+                  onSave={(updates) => {
+                    handleUpdateFork(fc.contentType, fc.contentId, updates);
+                    setEditingFork(null);
+                  }}
+                  onCancel={() => setEditingFork(null)}
+                />
               )}
-              <WeekGroupedCourse
-                modules={allModules}
-                durationWeeks={classroom.durationWeeks}
-                courseId={courseForks.length === 1 ? courseForks[0].contentId : null}
-                courseName={courseForks.length === 1 ? courseForks[0].title : classroom.name}
-                courseTopic={classroom.subject || classroom.name}
-                difficulty={classroom.academicLevel || "intermediate"}
-                classroomId={classroom.id}
-                isInstructor={isInstructor}
-                hiddenModules={flatHiddenModules}
-                hiddenLessons={flatHiddenLessons}
-                forkEntry={courseForks.length === 1 ? courseForks[0] : null}
-                onToggleHideModule={(modIdx) => {
-                  const src = allModules[modIdx]?._contentId;
-                  if (!src) return;
-                  const fc = courseForks.find((f) => f.contentId === src);
-                  if (!fc) return;
-                  const current = fc.meta?.hiddenModules || [];
-                  const next = current.includes(modIdx) ? current.filter((i) => i !== modIdx) : [...current, modIdx];
-                  handleUpdateFork(fc.contentType, fc.contentId, { hiddenModules: next });
-                }}
-                onToggleHideLesson={(lessonKey) => {
-                  const parts = lessonKey.split(":");
-                  const modIdx = parseInt(parts[0], 10);
-                  const src = allModules[modIdx]?._contentId;
-                  if (!src) return;
-                  const fc = courseForks.find((f) => f.contentId === src);
-                  if (!fc) return;
-                  const current = fc.meta?.hiddenLessons || [];
-                  const next = current.includes(lessonKey) ? current.filter((k) => k !== lessonKey) : [...current, lessonKey];
-                  handleUpdateFork(fc.contentType, fc.contentId, { hiddenLessons: next });
-                }}
-                openedWeeks={openedWeeks}
-                handleToggleWeek={handleToggleWeek}
-                setConfirmModal={setConfirmModal}
-                completedLessons={completedLessons}
-                toggleLessonComplete={toggleLessonComplete}
-                setAnnouncements={setAnnouncements}
-                setDiscussions={setDiscussions}
-                forkedContent={forkedContent}
-                materials={materials}
-                discussions={discussions}
-                handleAttachMaterial={handleAttachMaterial}
-                handleAttachDiscussion={handleAttachDiscussion}
-                handleUpdateFork={handleUpdateFork}
-                setForkedContent={setForkedContent}
-                setActiveTab={setActiveTab}
-              />
             </div>
           );
-        }
-        if (isInstructor) {
-          return (
-            <div className="pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Layers className="w-4 h-4 text-indigo-500" />
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Structure</h3>
+        };
+
+        return (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Materials ({otherMaterialForks.length})</h3>
               </div>
-              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-center">
-                <Layers className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">No course structure yet. Generate modules or fork a course to get started.</p>
-                <button onClick={handleGenerateCourseStructure} disabled={courseGenLoading || !classroom.durationWeeks} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors">
-                  {courseGenLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  {courseGenLoading ? "Generating..." : "Generate Course Structure"}
+              {isInstructor && (
+                <button onClick={() => setShowForkPanel(true)} className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                  <Plus className="w-3 h-3" /> Add More
                 </button>
-                {!classroom.durationWeeks && <p className="text-[10px] text-slate-400 mt-1.5">Set course duration first in Settings</p>}
-              </div>
+              )}
             </div>
-          );
-        }
-        return null;
+            <div className="space-y-2">
+              {otherMaterialForks.map((fc, i) => renderForkItem(fc, i))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Assignments — always visible, instructor can generate or fork */}
+      {(() => {
+        const examForks = (forkedContent || []).filter((fc) => fc.contentType === "quiz");
+
+        return (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ClipboardCheck className="w-4 h-4 text-purple-500" />
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Assignments</h3>
+            </div>
+
+            {/* Existing assignments list */}
+            {(() => {
+              const allItems = [
+                ...examForks.map((fc) => ({ ...fc, _source: "fork" })),
+                ...(assignments || []).map((a) => ({ ...a, _source: "api", _id: a.id || a._id })),
+              ].sort((a, b) => (a.weekNumber || 0) - (b.weekNumber || 0));
+
+              if (allItems.length === 0) {
+                return <p className="text-xs text-slate-400 italic text-center py-4">No assignments yet. Generate one above or fork from the library.</p>;
+              }
+
+              const grouped = {};
+              allItems.forEach((item) => {
+                const wk = item.weekNumber || 0;
+                if (!grouped[wk]) grouped[wk] = [];
+                grouped[wk].push(item);
+              });
+              const sortedWeeks = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+
+              return sortedWeeks.map((wk) => (
+                <div key={wk} className="space-y-2 mb-3">
+                  {sortedWeeks.length > 1 && (
+                    <div className="flex items-center gap-2 px-1 pt-1">
+                      <div className="w-5 h-5 rounded-md bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[8px] font-bold text-purple-600">{wk > 0 ? `W${wk}` : "—"}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{wk > 0 ? `Week ${wk}` : "Unassigned"}</span>
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                  )}
+                  {grouped[wk].map((item, i) => {
+                    const isFork = item._source === "fork";
+                    const itemType = isFork ? item.contentType : item.type;
+                    const cfg = TYPE_CONFIG[itemType] || TYPE_CONFIG._default;
+                    const Icon = cfg?.icon || FileText;
+                    const locked = isFork ? (isInstructor ? !item.unlocked : isForkedContentLocked?.(item)) : false;
+                    const isExpanded = isFork ? expandedFork === `${item.contentType}-${item.contentId}` : false;
+                    const isDiscussion = itemType === "discussion" || item.meta?.discussionId;
+
+                    return (
+                      <div key={i}>
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#E8E6DF] dark:bg-slate-700/50 hover:bg-[#dedbd4] dark:hover:bg-slate-700/70 transition-colors">
+                          <button onClick={() => {
+                            if (isFork) {
+                              const key = `${item.contentType}-${item.contentId}`;
+                              setExpandedFork(expandedFork === key ? null : key);
+                              setQuizData(null);
+                              if (expandedFork !== key && item.contentType === "quiz") fetchQuizContent(item.contentId);
+                            } else if (isDiscussion) {
+                              setFocusedDiscussionId?.(item.meta?.discussionId);
+                              setActiveTab?.("discussions");
+                            } else {
+                              setSelectedAssignment(item);
+                              setActiveTab?.("assignments");
+                            }
+                          }} className="flex items-center gap-3 flex-1 min-w-0 text-left group">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.color || "bg-slate-500/10"}`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{item.title}</p>
+                              {item.description && <p className="text-[10px] text-slate-400 truncate">{item.description}</p>}
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {item.weekNumber > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 font-semibold">Week {item.weekNumber}</span>}
+                                {isFork && locked && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold flex items-center gap-0.5"><Lock className="w-2.5 h-2.5" /> Locked</span>}
+                                {isFork && !locked && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-semibold flex items-center gap-0.5"><Unlock className="w-2.5 h-2.5" /> Active</span>}
+                                {!isFork && item.maxScore > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-semibold">Max {item.maxScore} pts</span>}
+                                {item.meta?.questionCount > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">{item.meta.questionCount} questions</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {isFork ? (isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />) : <ExternalLink className="w-3.5 h-3.5 text-slate-300" />}
+                            </div>
+                          </button>
+                          {isFork && isInstructor && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              <button onClick={() => setEditingFork(editingFork === `${item.contentType}-${item.contentId}` ? null : `${item.contentType}-${item.contentId}`)} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Settings">
+                                <Settings className="w-3.5 h-3.5 text-slate-400" />
+                              </button>
+                              <button onClick={() => setConfirmModal({ open: true, title: "Remove Content", message: `Remove "${item.title}" from this classroom?`, confirmColor: "red", onConfirm: () => handleUnforkContent(item.contentType, item.contentId, item.title) })} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors" title="Remove">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                          {!isFork && !isInstructor && (
+                            <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1 flex-shrink-0">View <ExternalLink className="w-3 h-3" /></span>
+                          )}
+                        </div>
+                        {isFork && isExpanded && item.contentType === "quiz" && (
+                          <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+                            {quizLoading ? (
+                              <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-purple-500" /></div>
+                            ) : quizData?.questions?.length > 0 ? (
+                              <QuizInterface topic={quizData.course || classroom.subject || classroom.name} quizData={quizData} onBack={() => { setExpandedFork(null); setQuizData(null); }} onQuizComplete={(results) => { if (results) toast.success(`Quiz completed! Score: ${results.score}%`); }} allowRetake={quizData.allowRetake !== false} allowReview={quizData.allowReview !== false} allowDownload={quizData.allowDownload !== false} />
+                            ) : (
+                              <p className="text-xs text-slate-400 text-center py-4">No questions available</p>
+                            )}
+                          </div>
+                        )}
+                        {isFork && isInstructor && editingFork === `${item.contentType}-${item.contentId}` && (
+                          <ForkEditPanel fork={item} maxWeeks={maxWeeks} onSave={(updates) => { handleUpdateFork(item.contentType, item.contentId, updates); setEditingFork(null); }} onCancel={() => setEditingFork(null)} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ));
+            })()}
+          </div>
+        );
       })()}
 
       {/* Empty state for students */}
@@ -659,24 +957,11 @@ function WeekGroupedCourse({
   modules, durationWeeks, courseId, courseName, courseTopic, difficulty, classroomId,
   isInstructor, hiddenModules, hiddenLessons, onToggleHideModule, onToggleHideLesson,
   openedWeeks, handleToggleWeek, setConfirmModal, completedLessons, toggleLessonComplete,
-  setAnnouncements, setDiscussions, forkedContent, materials, discussions,
-  handleAttachMaterial, handleAttachDiscussion,
-  handleUpdateFork, setForkedContent, setActiveTab,
+  setAnnouncements, setDiscussions, forkedContent,
+  handleUpdateFork, setForkedContent, setActiveTab, startDate,
+  weekAssignments, onOpenAssignment, onOpenDiscussion,
 }) {
-  const [addMenuWeek, setAddMenuWeek] = useState(null);
-  const [attachTab, setAttachTab] = useState("quiz");
-  const [attachLoading, setAttachLoading] = useState(null);
   const weekGroups = groupModulesByWeek(modules, durationWeeks);
-
-  const handleAttachQuiz = async (fc, weekNumber) => {
-    setAttachLoading(`${fc.contentId}`);
-    try {
-      handleUpdateFork(fc.contentType, fc.contentId, { weekNumber });
-      toast.success(`"${fc.title}" attached to Week ${weekNumber}`);
-      setAddMenuWeek(null);
-    } catch { toast.error("Failed to attach quiz"); }
-    setAttachLoading(null);
-  };
 
   return (
     <div className="space-y-4 pt-4">
@@ -698,6 +983,7 @@ function WeekGroupedCourse({
                 <span className="text-[9px] font-bold text-indigo-600">W{wg.week}</span>
               </div>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Week {wg.week}</span>
+              <span className="text-[9px] text-slate-400">{getWeekDates(wg.week, startDate) || ""}</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
               {isInstructor && (
                 <div className="flex items-center gap-2">
@@ -708,12 +994,6 @@ function WeekGroupedCourse({
                     <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${isWeekOpen ? "translate-x-4" : "translate-x-0.5"}`} />
                   </button>
                   <span className={`text-[9px] font-semibold ${isWeekOpen ? "text-green-600" : "text-red-500"}`}>{isWeekOpen ? "Open" : "Closed"}</span>
-                   <button
-                    onClick={() => setAddMenuWeek(addMenuWeek === wg.week ? null : wg.week)}
-                    className="flex items-center gap-1 text-[9px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-                  >
-                    <Paperclip className="w-2.5 h-2.5" /> Attach
-                  </button>
                 </div>
               )}
             </div>
@@ -725,70 +1005,6 @@ function WeekGroupedCourse({
                 <p className="text-[10px] text-slate-500 font-medium">Week {wg.week} is not yet open. Your instructor will unlock it soon.</p>
               </div>
             )}
-
-            {/* Weekly Attach Dropdown */}
-            {isInstructor && addMenuWeek === wg.week && (() => {
-              const weekQuizzes = (forkedContent || []).filter((fc) => fc.contentType === "quiz" && (!fc.weekNumber || fc.weekNumber === 0));
-              const weekMaterials = (materials || []).filter((m) => !m.weekNumber || m.weekNumber === 0);
-              const weekDiscussions = (discussions || []).filter((d) => !d.weekNumber || d.weekNumber === 0);
-              const tabs = [
-                { id: "quiz", label: "Quizzes", icon: ClipboardList, count: weekQuizzes.length, active: "bg-purple-500/15 text-purple-700" },
-                { id: "material", label: "Materials", icon: FileText, count: weekMaterials.length, active: "bg-green-500/15 text-green-700" },
-                { id: "discussion", label: "Discussions", icon: MessageSquare, count: weekDiscussions.length, active: "bg-blue-500/15 text-blue-700" },
-              ];
-              return (
-                <div className="ml-7 p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Attach to Week {wg.week}</p>
-                  <div className="flex gap-1">
-                    {tabs.map((t) => (
-                      <button key={t.id} onClick={() => setAttachTab(attachTab === t.id ? null : t.id)} className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-semibold transition-colors ${attachTab === t.id ? t.active : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600"}`}>
-                        <t.icon className="w-2.5 h-2.5" /> {t.label}
-                        {t.count > 0 && <span className="ml-0.5 px-1 py-0 rounded-full bg-slate-300/50 dark:bg-slate-600/50 text-[8px]">{t.count}</span>}
-                      </button>
-                    ))}
-                  </div>
-                  {attachTab === "quiz" && (
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {weekQuizzes.length === 0 ? (
-                        <p className="text-[9px] text-slate-400 py-1">No unassigned quizzes</p>
-                      ) : weekQuizzes.map((fc) => (
-                        <button key={fc.contentId} onClick={() => handleAttachQuiz(fc, wg.week)} disabled={attachLoading === `${fc.contentId}`} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors text-left disabled:opacity-50">
-                          <ClipboardList className="w-3 h-3 text-purple-500 flex-shrink-0" />
-                          <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{fc.title}</span>
-                          {attachLoading === `${fc.contentId}` ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {attachTab === "material" && (
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {weekMaterials.length === 0 ? (
-                        <p className="text-[9px] text-slate-400 py-1">No unassigned materials</p>
-                      ) : weekMaterials.map((mat) => (
-                        <button key={mat._id || mat.id} onClick={() => { handleAttachMaterial(mat, wg.week); setAddMenuWeek(null); }} disabled={attachLoading === (mat._id || mat.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500/50 transition-colors text-left disabled:opacity-50">
-                          <FileText className="w-3 h-3 text-green-500 flex-shrink-0" />
-                          <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{mat.title}</span>
-                          {attachLoading === (mat._id || mat.id) ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {attachTab === "discussion" && (
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {weekDiscussions.length === 0 ? (
-                        <p className="text-[9px] text-slate-400 py-1">No unassigned discussions</p>
-                      ) : weekDiscussions.map((disc) => (
-                        <button key={disc._id || disc.id} onClick={() => { handleAttachDiscussion(disc, wg.week); setAddMenuWeek(null); }} disabled={attachLoading === (disc._id || disc.id)} className="flex items-center gap-2 w-full px-2 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors text-left disabled:opacity-50">
-                          <MessageSquare className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                          <span className="text-[9px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{disc.title}</span>
-                          {attachLoading === (disc._id || disc.id) ? <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-400" /> : <Plus className="w-2.5 h-2.5 text-slate-400" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
 
             {/* Modules in this week */}
             {isOpen && wg.modules.map((mod) => {
@@ -815,30 +1031,30 @@ function WeekGroupedCourse({
                 </div>
               );
             })}
-
-            {/* Attached materials & discussions for this week */}
-            {isOpen && (() => {
-              const weekMats = (materials || []).filter((m) => m.weekNumber === wg.week);
-              const weekDiscs = (discussions || []).filter((d) => d.weekNumber === wg.week);
-              if (weekMats.length === 0 && weekDiscs.length === 0) return null;
-              return (
-                <div className="ml-7 space-y-1.5">
-                  {weekMats.map((mat) => (
-                    <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800/50 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
-                      <FileText className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      <span className="text-[10px] font-semibold text-green-700 dark:text-green-300 truncate">{mat.title}</span>
-                      {mat.url && <ExternalLink className="w-2.5 h-2.5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
-                    </a>
-                  ))}
-                  {weekDiscs.map((disc) => (
-                    <button key={disc._id || disc.id} onClick={() => { setAnnouncements && setActiveTab && setActiveTab("discussions"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors w-full text-left">
-                      <MessageSquare className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                      <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 truncate">{disc.title}</span>
+            {isOpen && weekAssignments && weekAssignments.filter((a) => a.weekNumber === wg.week).length > 0 && (
+              <div className="ml-7 mt-1 space-y-1">
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Week Assignments</p>
+                {weekAssignments.filter((a) => a.weekNumber === wg.week).map((a) => {
+                  const isQuiz = a.type === "quiz";
+                  const isDiscussion = a.type === "discussion" || a.meta?.discussionId;
+                  return (
+                    <button key={a.id || a._id} onClick={() => {
+                      if (isQuiz) onOpenAssignment?.(a);
+                      else if (isDiscussion) onOpenDiscussion?.(a.meta?.discussionId);
+                      else onOpenAssignment?.(a);
+                    }} className="flex items-center gap-2 w-full py-1.5 px-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors text-left">
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${isQuiz ? "bg-purple-500/10" : isDiscussion ? "bg-blue-500/10" : "bg-amber-500/10"}`}>
+                        {isQuiz ? <ClipboardCheck className="w-3 h-3 text-purple-500" /> : isDiscussion ? <MessageSquare className="w-3 h-3 text-blue-500" /> : <FileText className="w-3 h-3 text-amber-500" />}
+                      </div>
+                      <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{a.title}</span>
+                      <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${isQuiz ? "bg-purple-500/10 text-purple-600" : isDiscussion ? "bg-blue-500/10 text-blue-600" : "bg-amber-500/10 text-amber-600"}`}>
+                        {isQuiz ? "Quiz" : isDiscussion ? "Discussion" : "Assignment"}
+                      </span>
                     </button>
-                  ))}
-                </div>
-              );
-            })()}
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
@@ -1062,25 +1278,22 @@ function ForkedModuleCard({
   );
 }
 
-function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setForkedContent, materials, discussions, handleAttachMaterial, handleAttachDiscussion, setActiveTab, handleGenerateModuleAssignments, assignments, setSelectedAssignment }) {
+function getWeekDates(weekNumber, startDate) {
+  if (!startDate || !weekNumber) return null;
+  const start = new Date(startDate);
+  const weekStart = new Date(start.getTime() + (weekNumber - 1) * 7 * 24 * 60 * 60 * 1000);
+  const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const fmt = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${fmt(weekStart)} – ${fmt(weekEnd)}`;
+}
+
+function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setActiveTab, startDate, weekAssignments, onOpenAssignment, onOpenDiscussion }) {
   const [expanded, setExpanded] = useState(false);
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonContent, setLessonContent] = useState("");
   const [generating, setGenerating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
-  const [generatingQuiz, setGeneratingQuiz] = useState(false);
-  const [showAttach, setShowAttach] = useState(false);
-  const [showAssignmentType, setShowAssignmentType] = useState(false);
-  const [generatingAssignments, setGeneratingAssignments] = useState(false);
-
-  const typeColors = {
-    lecture: "bg-blue-500/10 text-blue-600",
-    lab: "bg-orange-500/10 text-orange-600",
-    reading: "bg-teal-500/10 text-teal-600",
-    video: "bg-purple-500/10 text-purple-600",
-    activity: "bg-green-500/10 text-green-600",
-  };
 
   const handleLessonClick = (li) => {
     if (activeLesson === li) {
@@ -1135,84 +1348,23 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
     } catch { toast.error("Failed to save"); }
   };
 
-  const handleGenerateQuiz = async () => {
-    setGeneratingQuiz(true);
-    try {
-      const res = await apiClient.post(`/api/classrooms/${classroomId}/module-quiz`, { moduleIdx: index });
-      const data = await res.json();
-      if (res.ok && data.quiz) {
-        setForkedContent?.((prev) => [...prev, {
-          contentType: "quiz",
-          contentId: data.quiz._id,
-          title: data.quiz.title,
-          description: `Auto-generated quiz for ${mod.title}`,
-          weekNumber: mod.weekNumber || 0,
-          unlocked: true,
-          meta: { course: mod.title, questionCount: data.quiz.questionCount },
-        }]);
-        toast.success(`Quiz generated: ${data.quiz.questionCount} questions`);
-      } else {
-        toast.error(data.error || "Failed to generate quiz");
-      }
-    } catch { toast.error("Failed to generate quiz"); }
-    setGeneratingQuiz(false);
-  };
-
-  const hasQuiz = false;
-
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center gap-3 w-full p-3 text-left bg-blue-50 dark:bg-blue-950/50">
+      <div className="flex items-center gap-3 w-full p-3 text-left bg-green-700 hover:bg-green-600 text-white rounded-lg transition-colors cursor-pointer group">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-bold text-green-600">W{mod.weekNumber}</span>
+          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-bold text-white">W{mod.weekNumber}</span>
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-xs font-bold text-slate-900 dark:text-white truncate text-left">{mod.title}</p>
-            {mod.description && <p className="text-[10px] text-slate-400 truncate text-left">{mod.description}</p>}
+            <p className="text-xs font-bold text-white truncate text-left">{mod.title}</p>
+            {mod.description && <p className="text-[10px] text-white/70 truncate text-left">{mod.description}</p>}
+            <p className="text-[9px] text-white/60 mt-0.5">{getWeekDates(mod.weekNumber, startDate) || `Week ${mod.weekNumber}`}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[9px] font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
-            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+            <span className="text-[9px] font-medium text-white/80 bg-white/20 px-1.5 py-0.5 rounded-full">{mod.lessons?.length || 0} lessons</span>
+            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-white/70" /> : <ChevronDown className="w-3.5 h-3.5 text-white/70" />}
           </div>
         </button>
-        {isInstructor && (
-          <div className="flex items-center gap-1 flex-shrink-0 relative">
-            <button onClick={handleGenerateQuiz} disabled={generatingQuiz} className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors disabled:opacity-50" title="Generate quiz from module">
-              {generatingQuiz ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <ClipboardList className="w-2.5 h-2.5" />}
-              <span className="hidden sm:inline">Quiz</span>
-            </button>
-            <button onClick={() => setShowAttach(!showAttach)} className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors" title="Attach materials or discussions">
-              <Paperclip className="w-2.5 h-2.5" />
-              <span className="hidden sm:inline">Attach</span>
-            </button>
-            <AnimatePresence>
-              {showAttach && (
-                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 p-2 max-h-60 overflow-y-auto">
-                  {materials?.filter((m) => !m.weekNumber || m.weekNumber === 0).length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Materials</p>
-                      {materials.filter((m) => !m.weekNumber || m.weekNumber === 0).map((m) => (
-                        <button key={m._id || m.id} onClick={() => { handleAttachMaterial?.(m._id || m.id, mod.weekNumber); setShowAttach(false); }} className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 truncate transition-colors">{m.title}</button>
-                      ))}
-                    </div>
-                  )}
-                  {discussions?.filter((d) => !d.weekNumber || d.weekNumber === 0).length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Discussions</p>
-                      {discussions.filter((d) => !d.weekNumber || d.weekNumber === 0).map((d) => (
-                        <button key={d._id || d.id} onClick={() => { handleAttachDiscussion?.(d._id || d.id, mod.weekNumber); setShowAttach(false); }} className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 truncate transition-colors">{d.title}</button>
-                      ))}
-                    </div>
-                  )}
-                  {(!materials?.filter((m) => !m.weekNumber || m.weekNumber === 0).length && !discussions?.filter((d) => !d.weekNumber || d.weekNumber === 0).length) && (
-                    <p className="text-[10px] text-slate-400 text-center py-2">No unassigned items to attach</p>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
       </div>
       {expanded && (
         <div className="pt-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
@@ -1221,19 +1373,19 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
             const hasContent = !!lesson.content;
             return (
               <div key={li}>
-                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-3 transition-colors text-left ${isActive ? "bg-green-500/10 dark:bg-green-500/10" : "bg-[#E8E6DF] dark:bg-slate-800/50 hover:bg-[#dddbd4] dark:hover:bg-slate-800"}`}>
-                  <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
+                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-3 rounded-lg transition-colors text-left ${isActive ? "bg-green-600 text-white" : "bg-green-600 text-white hover:bg-green-500"}`}>
+                  <div className="w-6 h-6 rounded bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[9px] font-bold text-white">{li + 1}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold text-slate-900 dark:text-white truncate">{lesson.title}</p>
+                    <p className="text-[11px] font-semibold text-white truncate">{lesson.title}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${typeColors[lesson.type] || "bg-slate-500/10 text-slate-600"}`}>{lesson.type}</span>
-                      {lesson.duration && <span className="text-[9px] text-slate-400">{lesson.duration}min</span>}
-                      {hasContent && <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">Content</span>}
+                      <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20 text-white">lecture</span>
+                      {lesson.duration && <span className="text-[9px] text-white/70">{lesson.duration}min</span>}
+                      {hasContent && <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-white/20 text-white">Content</span>}
                     </div>
                   </div>
-                  {isActive ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+                  {isActive ? <ChevronUp className="w-3 h-3 text-white/70" /> : <ChevronDown className="w-3 h-3 text-white/70" />}
                 </button>
                 {isActive && (
                   <div className="mt-1 p-2 overflow-hidden bg-white dark:bg-slate-900">
@@ -1288,76 +1440,34 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
               </div>
             );
           })}
-        </div>
-      )}
-      {expanded && (() => {
-        const moduleAssignments = (assignments || []).filter((a) => (a.weekNumber || 0) === mod.weekNumber);
-        if (moduleAssignments.length === 0) return null;
-        return (
-          <div className="px-3 pt-1 pb-2 space-y-1.5">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assignments</p>
-            {moduleAssignments.map((a) => (
-              <button key={a.id || a._id} onClick={() => { setSelectedAssignment?.(a); setActiveTab?.("assignments"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 cursor-pointer transition-colors w-full text-left">
-                <ClipboardList className="w-3 h-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 truncate">{a.title}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] capitalize text-amber-500">{a.type}</span>
-                    {a.maxScore && <span className="text-[8px] text-amber-400">/{a.maxScore}pts</span>}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        );
-      })()}
-      {expanded && isInstructor && (mod.lessons?.length || 0) > 0 && (
-        <div className="px-3 pb-3 mt-1">
-          {generatingAssignments ? (
-            <div className="flex items-center justify-center gap-2 py-3 bg-green-50 dark:bg-green-500/10 rounded-lg">
-              <Loader2 className="w-4 h-4 animate-spin text-green-600" />
-              <span className="text-[11px] font-bold text-green-600 dark:text-green-400">Generating assignments...</span>
+          {weekAssignments && weekAssignments.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 px-1">Week Assignments</p>
+              {weekAssignments.map((a) => {
+                const isQuiz = a.type === "quiz";
+                const isDiscussion = a.type === "discussion" || a.meta?.discussionId;
+                return (
+                  <button key={a.id || a._id} onClick={() => {
+                    if (isQuiz) { onOpenAssignment?.(a); }
+                    else if (isDiscussion) { onOpenDiscussion?.(a.meta?.discussionId); }
+                    else { onOpenAssignment?.(a); }
+                  }} className="flex items-center gap-2 w-full py-1.5 px-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors text-left mb-1">
+                    <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${isQuiz ? "bg-purple-500/10" : isDiscussion ? "bg-blue-500/10" : "bg-amber-500/10"}`}>
+                      {isQuiz ? <ClipboardCheck className="w-3 h-3 text-purple-500" /> : isDiscussion ? <MessageSquare className="w-3 h-3 text-blue-500" /> : <FileText className="w-3 h-3 text-amber-500" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate">{a.title}</p>
+                    </div>
+                    <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${isQuiz ? "bg-purple-500/10 text-purple-600" : isDiscussion ? "bg-blue-500/10 text-blue-600" : "bg-amber-500/10 text-amber-600"}`}>
+                      {isQuiz ? "Quiz" : isDiscussion ? "Discussion" : "Assignment"}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          ) : showAssignmentType ? (
-            <div className="flex items-center justify-center gap-1.5 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
-              <span className="text-[9px] font-semibold text-slate-500 mr-1">Type:</span>
-              {["quiz", "assignment", "discussion"].map((t) => (
-                <button key={t} onClick={async () => { setGeneratingAssignments(true); setShowAssignmentType(false); try { await handleGenerateModuleAssignments?.({ ...mod, assignmentType: t }); } finally { setGeneratingAssignments(false); } }} className="px-2 py-1 rounded-md text-[9px] font-semibold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors capitalize">{t}</button>
-              ))}
-              <button onClick={() => setShowAssignmentType(false)} className="ml-auto text-[9px] text-slate-400 hover:text-slate-600">Cancel</button>
-            </div>
-          ) : (
-            <button onClick={() => setShowAssignmentType(true)} className="flex items-center justify-center gap-1.5 w-full py-2 text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20 cursor-pointer transition-all duration-300">
-              <svg className="w-3 h-3 animate-[spin_3s_linear_infinite]" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor" />
-              </svg>
-              Generate Assignment
-            </button>
           )}
         </div>
       )}
-      {(() => {
-        const weekMats = (materials || []).filter((m) => m.weekNumber === mod.weekNumber && mod.weekNumber > 0);
-        const weekDiscs = (discussions || []).filter((d) => d.weekNumber === mod.weekNumber && mod.weekNumber > 0);
-        if (weekMats.length === 0 && weekDiscs.length === 0) return null;
-        return (
-          <div className="px-3 pt-3 pb-3 space-y-1.5">
-            {weekMats.map((mat) => (
-              <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800/50 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
-                <FileText className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span className="text-[10px] font-semibold text-green-700 dark:text-green-300 truncate">{mat.title}</span>
-                {mat.url && <ExternalLink className="w-2.5 h-2.5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />}
-              </a>
-            ))}
-            {weekDiscs.map((disc) => (
-              <button key={disc._id || disc.id} onClick={() => { setActiveTab && setActiveTab("discussions"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors w-full text-left">
-                <MessageSquare className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 truncate">{disc.title}</span>
-              </button>
-            ))}
-          </div>
-        );
-      })()}
     </div>
   );
 }

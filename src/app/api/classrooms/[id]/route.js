@@ -42,6 +42,9 @@ async function handleDelete(request, { params }) {
       await Discussion.deleteMany({ classroomId: id }, { session });
 
       await ClassroomMessage.deleteMany({ classroomId: id }, { session });
+
+      // Clean up student progress / submissions
+      await StudentProgress.deleteMany({ classroomId: id }, { session });
     });
   } finally {
     await session.endSession();
@@ -65,7 +68,7 @@ async function handlePatch(request, { params }) {
     return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
-  const { name, description, subject, maxStudents, semester, academicLevel, gradingScheme, prerequisites, syllabus, schedule, startDate, durationWeeks, settings, openedWeeks, modules } = body;
+  const { name, description, subject, maxStudents, semester, academicLevel, gradingScheme, prerequisites, syllabus, officeHours, schedule, startDate, durationWeeks, settings, openedWeeks, modules } = body;
 
   if (startDate && new Date(startDate) < new Date(new Date().toDateString())) {
     return NextResponse.json(
@@ -84,6 +87,7 @@ async function handlePatch(request, { params }) {
   if (gradingScheme !== undefined) update.gradingScheme = gradingScheme;
   if (prerequisites !== undefined) update.prerequisites = prerequisites;
   if (syllabus !== undefined) update.syllabus = syllabus;
+  if (officeHours !== undefined) update.officeHours = officeHours;
   if (schedule !== undefined) update.schedule = schedule;
   if (startDate !== undefined) update.startDate = startDate;
   if (durationWeeks !== undefined) update.durationWeeks = durationWeeks;

@@ -23,7 +23,7 @@ async function handlePost(request, { params }) {
   }
 
   const body = await request.json();
-  const { title, description, instructions, courseId, type, category, dueDate, availableFrom, availableUntil, maxScore, passingScore, weight, rubric, attachments, allowLateSubmissions, maxAttempts, isGroupAssignment, weekNumber } = body;
+  const { title, description, instructions, courseId, type, category, dueDate, availableFrom, availableUntil, maxScore, passingScore, weight, rubric, attachments, allowLateSubmissions, maxAttempts, isGroupAssignment, weekNumber, meta } = body;
 
   if (!title?.trim()) {
     return NextResponse.json(
@@ -53,6 +53,7 @@ async function handlePost(request, { params }) {
     maxAttempts: maxAttempts ?? 0,
     isGroupAssignment: isGroupAssignment || false,
     weekNumber: weekNumber || 0,
+    meta: meta || null,
   });
 
   // Create progress records for all enrolled students
@@ -161,4 +162,27 @@ async function handleGet(request, { params }) {
 
 export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePost);
 export const GET = combineMiddleware(withErrorHandling, withAuth)(handleGet);
+
+async function handlePatch(request, { params }) {
+  await connectToDatabase();
+  const user = request.user;
+  const { id } = await params;
+  const body = await request.json();
+  const { assignmentId, quizQuestions } = body;
+
+  const classroom = await Classroom.findById(id).lean();
+  if (!classroom || classroom.instructorId?.toString() !== user._id?.toString()) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  const update = {};
+  if (quizQuestions) update.quizQuestions = quizQuestions;
+
+  const assignment = await Assignment.findByIdAndUpdate(assignmentId, update, { new: true }).lean();
+  if (!assignment) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  return NextResponse.json({ success: true, assignment });
+}
+
+export const PATCH = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePatch);
 export const dynamic = "force-dynamic";

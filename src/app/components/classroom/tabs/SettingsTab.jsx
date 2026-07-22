@@ -51,6 +51,7 @@ export default function SettingsTab({ classroomState }) {
           <div><label className={labelCls}>Academic Level</label><select value={settingsForm.academicLevel} onChange={(e) => setSettingsForm({ ...settingsForm, academicLevel: e.target.value })} className={inputCls + " appearance-none"}><option value="highschool">High School</option><option value="undergraduate">Undergraduate</option><option value="graduate">Graduate</option><option value="phd">PhD</option><option value="professional">Professional</option></select></div>
         </div>
         <div><label className={labelCls}>Grading Scheme</label><select value={settingsForm.gradingScheme} onChange={(e) => setSettingsForm({ ...settingsForm, gradingScheme: e.target.value })} className={inputCls + " appearance-none"}><option value="percentage">Percentage</option><option value="letter">Letter Grades</option><option value="passfail">Pass/Fail</option><option value="gpa">GPA Scale</option></select></div>
+        <div><label className={labelCls}>Office Hours</label><input value={settingsForm.officeHours || ""} onChange={(e) => setSettingsForm({ ...settingsForm, officeHours: e.target.value })} placeholder="e.g. Mon/Wed 2-4 PM, Room 305" className={inputCls} /></div>
       </div>
       <div className={sectionCls}>
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Bookmark className="w-4 h-4 text-amber-500" /> Prerequisites</h3>

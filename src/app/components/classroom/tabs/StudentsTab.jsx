@@ -5,9 +5,11 @@ import { motion } from "framer-motion";
 import {
   UserPlus, Users, CheckCircle2, Clock, ArrowLeft, BarChart2,
   TrendingUp, Mail, Eye, Loader2, Trash2, Search, ChevronUp, ChevronDown,
+  Layers, Megaphone, Plus, Sparkles,
 } from "lucide-react";
 import EmptyState from "../EmptyState";
 import InvitePanel from "../InvitePanel";
+import ForkContentPanel from "../ForkContentPanel";
 
 function getGradeInfo(progress) {
   if (progress >= 90) return { label: "A", cls: "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400" };
@@ -96,10 +98,14 @@ export default function StudentsTab({ classroomState }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState("name");
   const [sortDir, setSortDir] = useState("asc");
+  const [showForkPanel, setShowForkPanel] = useState(false);
 
   const {
     classroom, isInstructor, students, studentStats,
     loading, showInvite, setShowInvite, handleRemoveStudent,
+    handlePostAnnouncement, handleForkContent, forkedIdSet,
+    showNewAnnouncement, setShowNewAnnouncement,
+    newAnnTitle, setNewAnnTitle, newAnnContent, setNewAnnContent,
   } = classroomState;
 
   const handleSort = (key) => {
@@ -137,12 +143,38 @@ export default function StudentsTab({ classroomState }) {
   return (
     <div className="space-y-4">
       {showInvite && <InvitePanel classroom={classroom} onClose={() => setShowInvite(false)} />}
+      {showForkPanel && (
+        <ForkContentPanel
+          classroom={classroom}
+          onClose={() => setShowForkPanel(false)}
+          onForkContent={handleForkContent}
+          browseResults={classroomState.browseResults}
+          browseLoading={classroomState.browseLoading}
+          browseQuery={classroomState.browseQuery}
+          setBrowseQuery={classroomState.setBrowseQuery}
+          browseType={classroomState.browseType}
+          setBrowseType={classroomState.setBrowseType}
+          onBrowse={classroomState.fetchBrowseContent}
+          forking={classroomState.forking}
+          forkedIdSet={forkedIdSet}
+          browseError={classroomState.browseError}
+        />
+      )}
 
-      {!showInvite && (
-        <button onClick={() => setShowInvite(true)}
-          className="flex items-center gap-2 w-full p-3 border-2 border-dashed border-green-200 dark:border-green-500/30 rounded-xl text-sm text-green-600 hover:border-green-400 transition-colors">
-          <UserPlus className="w-4 h-4" /> Invite Students
-        </button>
+      {isInstructor && !showInvite && !showForkPanel && (
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowInvite(true)} className="flex items-center gap-2 flex-1 p-3 border-2 border-dashed border-green-200 dark:border-green-500/30 rounded-xl text-sm text-green-600 hover:border-green-400 transition-colors bg-white dark:bg-slate-900"><UserPlus className="w-4 h-4" /> Invite</button>
+          <button onClick={() => setShowForkPanel(true)} className="flex items-center gap-2 flex-1 p-3 border-2 border-dashed border-purple-200 dark:border-purple-500/30 rounded-xl text-sm text-purple-600 hover:border-purple-400 transition-colors bg-white dark:bg-slate-900"><Layers className="w-4 h-4" /> Fork</button>
+          <button onClick={() => setShowNewAnnouncement(!showNewAnnouncement)} className="flex items-center gap-2 flex-1 p-3 border-2 border-dashed border-amber-200 dark:border-amber-500/30 rounded-xl text-sm text-amber-600 hover:border-amber-400 transition-colors bg-white dark:bg-slate-900"><Megaphone className="w-4 h-4" /> Announce</button>
+        </div>
+      )}
+
+      {isInstructor && showNewAnnouncement && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
+          <div><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block">Title</label><input value={newAnnTitle} onChange={(e) => setNewAnnTitle(e.target.value)} placeholder="Announcement title" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30" /></div>
+          <div><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block">Content</label><textarea value={newAnnContent} onChange={(e) => setNewAnnContent(e.target.value)} placeholder="What do you want to announce?" rows={3} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 resize-none" /></div>
+          <div className="flex gap-2"><button onClick={handlePostAnnouncement} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition-colors">Post</button><button onClick={() => setShowNewAnnouncement(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button></div>
+        </motion.div>
       )}
 
       {/* Stats row */}
