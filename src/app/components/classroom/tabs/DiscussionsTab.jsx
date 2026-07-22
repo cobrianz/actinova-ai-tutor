@@ -264,10 +264,10 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
           </div>
           {isInstructor && (
             <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={async () => { try { await apiClient.patch(`/api/classrooms/${classroom.id}/discussions/${discussion._id || discussion.id}`, { isPinned: !discussion.isPinned }); setSelectedDiscussion({ ...discussion, isPinned: !discussion.isPinned }); fetchDiscussions(); } catch {} }} className="p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500 transition-colors" title={discussion.isPinned ? "Unpin" : "Pin"}>
+              <button onClick={async () => { try { await apiClient.patch(`/api/classrooms/${classroom.id}/discussions/${discussion._id || discussion.id}`, { isPinned: !discussion.isPinned }); setSelectedDiscussion({ ...discussion, isPinned: !discussion.isPinned }); fetchDiscussions(); } catch (err) { console.error("togglePin:", err); } }} className="p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500 transition-colors" title={discussion.isPinned ? "Unpin" : "Pin"}>
                 <Pin className="w-4 h-4" />
               </button>
-              <button onClick={async () => { try { await apiClient.patch(`/api/classrooms/${classroom.id}/discussions/${discussion._id || discussion.id}`, { isClosed: !discussion.isClosed }); setSelectedDiscussion({ ...discussion, isClosed: !discussion.isClosed }); } catch {} }} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title={discussion.isClosed ? "Reopen" : "Close"}>
+              <button onClick={async () => { try { await apiClient.patch(`/api/classrooms/${classroom.id}/discussions/${discussion._id || discussion.id}`, { isClosed: !discussion.isClosed }); setSelectedDiscussion({ ...discussion, isClosed: !discussion.isClosed }); } catch (err) { console.error("toggleClose:", err); } }} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title={discussion.isClosed ? "Reopen" : "Close"}>
                 {discussion.isClosed ? <Unlock className="w-4 h-4" /> : <X className="w-4 h-4" />}
               </button>
             </div>

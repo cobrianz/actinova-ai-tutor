@@ -20,6 +20,7 @@ const secondaryItems = [
   { name: "Test Yourself", id: "quizzes", icon: HelpCircle },
   { name: "Premium", id: "premium-courses", icon: Star },
   { name: "Planner", id: "study-plans", icon: CalendarCheck },
+  { name: "Analytics", id: "analytics", icon: TrendingUp },
 ];
 
 function NavBtn({ icon: Icon, label, isActive, onClick }) {

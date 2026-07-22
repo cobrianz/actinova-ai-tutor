@@ -93,7 +93,7 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
         if (onSubmit) onSubmit(data.progress);
         setText("");
       }
-    } catch {} finally {
+    } catch (err) { console.error("AssignmentDetailPanel:handleSubmit", err); } finally {
       setSubmitting(false);
     }
   };

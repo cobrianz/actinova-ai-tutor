@@ -27,7 +27,7 @@ function SubmissionsView({ assignment, classroomId }) {
         const res = await apiClient.get(`/api/classrooms/${classroomId}/assignments/${assignment.id}`);
         const data = await res.json();
         if (data.success && data.assignment?.studentProgress) setSubmissions(data.assignment.studentProgress);
-      } catch {} finally { setLoading(false); }
+      } catch (err) { console.error("SubmissionsView fetch:", err); } finally { setLoading(false); }
     };
     fetch();
   }, [classroomId, assignment.id]);
@@ -48,7 +48,7 @@ function SubmissionsView({ assignment, classroomId }) {
       if (data.success) {
         setSubmissions((prev) => prev.map((s) => s.id === studentId ? { ...s, score: Number(score), feedback } : s));
       }
-    } catch {} finally { setGradingId(null); }
+    } catch (err) { console.error("handleGrade:", err); } finally { setGradingId(null); }
   };
 
   const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom;

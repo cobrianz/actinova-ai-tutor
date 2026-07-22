@@ -520,6 +520,15 @@ export default function CourseTab({ classroomState }) {
         return null;
       })()}
 
+      {/* Empty state for students */}
+      {!isInstructor && (forkedContent || []).length === 0 && courseModules.length === 0 && (!announcements || announcements.length === 0) && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center">
+          <BookOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">No content yet</p>
+          <p className="text-xs text-slate-400">Your instructor hasn't posted any course content yet. Check back soon!</p>
+        </div>
+      )}
+
       {announcements?.length > 0 && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">

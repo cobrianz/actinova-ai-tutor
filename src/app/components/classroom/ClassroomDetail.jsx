@@ -80,14 +80,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [replyingTo, setReplyingTo] = useState(null);
   const [discAiLoading, setDiscAiLoading] = useState(false);
 
-  const [notes, setNotes] = useState([]);
-  const [notesLoading, setNotesLoading] = useState(false);
-  const [showNewNote, setShowNewNote] = useState(false);
-  const [newNoteTitle, setNewNoteTitle] = useState("");
-  const [newNoteContent, setNewNoteContent] = useState("");
-  const [newNoteTags, setNewNoteTags] = useState("");
-  const [noteAiLoading, setNoteAiLoading] = useState(false);
-
   const [materials, setMaterials] = useState([]);
   const [materialsLoading, setMaterialsLoading] = useState(false);
   const [showNewMaterial, setShowNewMaterial] = useState(() => {
@@ -97,7 +89,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   const [newMat, setNewMat] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem(`classroom_${classroom.id}_new_mat`);
-      if (saved) { try { return JSON.parse(saved); } catch {} }
+      if (saved) { try { return JSON.parse(saved); } catch (e) { console.error("Failed to parse saved material form:", e); } }
     }
     return { title: "", description: "", type: "document", url: "", weekNumber: 0, category: "", isRequired: false };
   });
@@ -152,7 +144,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const res = await apiClient.get(`/api/classrooms/${classroom.id}/lesson-complete`);
       const data = await res.json();
       if (data.success) setCompletedLessons(data.completed || []);
-    } catch {}
+    } catch (e) { console.error("Failed to fetch completed lessons:", e); }
   }, [classroom.id]);
 
   useEffect(() => { fetchCompletedLessons(); }, [fetchCompletedLessons]);
@@ -163,7 +155,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
         const res = await apiClient.get(`/api/classrooms/${classroom.id}/opened-weeks`);
         const data = await res.json();
         if (data.success) setOpenedWeeks(data.openedWeeks || []);
-      } catch {}
+      } catch (e) { console.error("Failed to poll opened weeks:", e); }
     }, 10000);
     return () => clearInterval(interval);
   }, [classroom.id]);
@@ -175,7 +167,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       if (data.success) {
         setCompletedLessons((prev) => complete ? [...prev, lessonKey] : prev.filter((k) => k !== lessonKey));
       }
-    } catch {}
+    } catch (e) { console.error("Failed to toggle lesson completion:", e); }
   };
 
   const handleToggleWeek = async (weekNumber) => {
@@ -212,13 +204,12 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
 
-  const fetchDiscussions = useCallback(async () => { setDiscussionsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions`); const data = await res.json(); if (data.success) setDiscussions(data.discussions); } catch {} finally { setDiscussionsLoading(false); } }, [classroom.id]);
-  const fetchNotes = useCallback(async () => { setNotesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/notes`); const data = await res.json(); if (data.success) setNotes(data.notes); } catch {} finally { setNotesLoading(false); } }, [classroom.id]);
-  const fetchPosts = useCallback(async (discussionId) => { setPostsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions/${discussionId}/posts`); const data = await res.json(); if (data.success) setDiscussionPosts(data.posts); } catch {} finally { setPostsLoading(false); } }, [classroom.id]);
-  const fetchMaterials = useCallback(async () => { setMaterialsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/materials`); const data = await res.json(); if (data.success) setMaterials(data.materials); } catch {} finally { setMaterialsLoading(false); } }, [classroom.id]);
-  const fetchStudents = useCallback(async () => { if (!isInstructor) return; setLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/students`); const data = await res.json(); if (data.success) { setStudents(data.students); setStudentStats(data.stats); } } catch {} finally { setLoading(false); } }, [classroom.id, isInstructor]);
-  const fetchGrades = useCallback(async () => { setGradesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/grades`); const data = await res.json(); if (data.success) setGrades(data.students || []); } catch {} finally { setGradesLoading(false); } }, [classroom.id]);
-  const fetchAnalytics = useCallback(async () => { setAnalyticsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/analytics`); const data = await res.json(); if (data.success) setAnalytics(data); } catch {} finally { setAnalyticsLoading(false); } }, [classroom.id]);
+  const fetchDiscussions = useCallback(async () => { setDiscussionsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions`); const data = await res.json(); if (data.success) setDiscussions(data.discussions); } catch (e) { console.error("Failed to fetch discussions:", e); } finally { setDiscussionsLoading(false); } }, [classroom.id]);
+  const fetchPosts = useCallback(async (discussionId) => { setPostsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/discussions/${discussionId}/posts`); const data = await res.json(); if (data.success) setDiscussionPosts(data.posts); } catch (e) { console.error("Failed to fetch discussion posts:", e); } finally { setPostsLoading(false); } }, [classroom.id]);
+  const fetchMaterials = useCallback(async () => { setMaterialsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/materials`); const data = await res.json(); if (data.success) setMaterials(data.materials); } catch (e) { console.error("Failed to fetch materials:", e); } finally { setMaterialsLoading(false); } }, [classroom.id]);
+  const fetchStudents = useCallback(async () => { if (!isInstructor) return; setLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/students`); const data = await res.json(); if (data.success) { setStudents(data.students); setStudentStats(data.stats); } } catch (e) { console.error("Failed to fetch students:", e); } finally { setLoading(false); } }, [classroom.id, isInstructor]);
+  const fetchGrades = useCallback(async () => { setGradesLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/grades`); const data = await res.json(); if (data.success) setGrades(data.students || []); } catch (e) { console.error("Failed to fetch grades:", e); } finally { setGradesLoading(false); } }, [classroom.id]);
+  const fetchAnalytics = useCallback(async () => { setAnalyticsLoading(true); try { const res = await apiClient.get(`/api/classrooms/${classroom.id}/analytics`); const data = await res.json(); if (data.success) setAnalytics(data); } catch (e) { console.error("Failed to fetch analytics:", e); } finally { setAnalyticsLoading(false); } }, [classroom.id]);
 
   const fetchBrowseContent = useCallback(async (overrideType, overrideQuery) => {
     setBrowseLoading(true);
@@ -229,7 +220,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const t = overrideType || browseType;
       const qVal = overrideQuery !== undefined ? overrideQuery : browseQuery;
       const q = qVal ? `&q=${encodeURIComponent(qVal)}` : "";
-      const res = await fetch(`/api/classrooms/${classroom.id}/browse?type=${t}${q}`, { credentials: "include", signal: controller.signal });
+      const res = await apiClient.get(`/api/classrooms/${classroom.id}/browse?type=${t}${q}`, { signal: controller.signal });
       if (!res.ok) { setBrowseError("fetch_failed"); return; }
       const data = await res.json();
       if (data.success) setBrowseResults({ courses: data.courses || [], quizzes: data.quizzes || [], flashcards: data.flashcards || [], reports: data.reports || [] });
@@ -251,7 +242,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
         setForkedContent(data.forkedContent);
         setForkedIdSet(new Set(data.forkedContent.map((fc) => `${fc.contentType}-${fc.contentId?.toString() || fc.contentId}`)));
       }
-    } catch {}
+    } catch (e) { console.error("Failed to fetch forked content:", e); }
   }, [classroom.id]);
 
   const handleForkContent = async (contentType, contentId, title) => {
@@ -381,7 +372,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
                 generated++;
                 continue;
               }
-            } catch {}
+            } catch (e) { console.error("Failed to create module quiz:", e); }
           }
           if (a.type === "discussion") {
             try {
@@ -389,7 +380,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
                 title: a.title, description: a.description || a.instructions || "",
               });
               if (discRes.ok) fetchDiscussions();
-            } catch {}
+            } catch (e) { console.error("Failed to create module discussion:", e); }
           }
           const assignRes = await apiClient.post(`/api/classrooms/${classroom.id}/assignments`, {
             title: a.title, description: a.description, instructions: a.instructions || "",
@@ -408,7 +399,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const handleExportGrades = async () => {
     try {
-      const res = await fetch(`/api/classrooms/${classroom.id}/grades?format=csv`, { credentials: "include" });
+      const res = await apiClient.get(`/api/classrooms/${classroom.id}/grades?format=csv`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href = url; a.download = `grades-${classroom.name.replace(/\s+/g, "-")}.csv`;
@@ -440,7 +431,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
         const res = await apiClient.get(`/api/classrooms/${classroom.id}/assignments`);
         const data = await res.json();
         if (data.success) setAssignments(data.assignments || []);
-      } catch {}
+      } catch (e) { console.error("Failed to fetch assignments:", e); }
     };
     if (!classroom.assignments?.length) fetchAssignments();
   }, [classroom.id, classroom.assignments?.length]);
@@ -503,20 +494,11 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     setDiscAiLoading(true);
     try { const res = await apiClient.post("/api/classrooms/ai-generate", { task: "discussion_prompt", name: newDiscTitle || "general topic", subject: classroom.subject, classroomName: classroom.name }); const data = await res.json(); if (data.result) { setNewDiscTitle(newDiscTitle || "Discussion"); setNewDiscDesc(data.result); toast.success("Prompt generated!"); } } catch { toast.error("Failed to generate prompt"); } finally { setDiscAiLoading(false); }
   };
-  const handleCreateNote = async () => {
-    if (!newNoteTitle.trim()) { toast.error("Title required"); return; }
-    try { const res = await apiClient.post(`/api/classrooms/${classroom.id}/notes`, { title: newNoteTitle, content: newNoteContent, tags: newNoteTags.split(",").map((t) => t.trim()).filter(Boolean) }); const data = await res.json(); if (data.success) { setNotes([data.note, ...notes]); setNewNoteTitle(""); setNewNoteContent(""); setNewNoteTags(""); setShowNewNote(false); toast.success("Note created!"); } } catch { toast.error("Failed to create note"); }
-  };
   const handleAttachMaterial = async (materialId, weekNumber) => {
     try { const res = await apiClient.patch(`/api/classrooms/${classroom.id}/materials`, { materialId, weekNumber }); const data = await res.json(); if (data.success) { setMaterials((prev) => prev.map((m) => (m._id || m.id) === materialId ? { ...m, weekNumber } : m)); toast.success("Material attached!"); } else { toast.error(data.error || "Failed"); } } catch { toast.error("Failed to attach material"); }
   };
   const handleAttachDiscussion = async (discussionId, weekNumber) => {
     try { const res = await apiClient.patch(`/api/classrooms/${classroom.id}/discussions`, { discussionId, weekNumber }); const data = await res.json(); if (data.success) { setDiscussions((prev) => prev.map((d) => (d._id || d.id) === discussionId ? { ...d, weekNumber } : d)); toast.success("Discussion attached!"); } else { toast.error(data.error || "Failed"); } } catch { toast.error("Failed to attach discussion"); }
-  };
-  const handleGenerateNote = async () => {
-    if (!newNoteTitle.trim()) { toast.error("Enter a topic first"); return; }
-    setNoteAiLoading(true);
-    try { const res = await apiClient.post("/api/classrooms/ai-generate", { task: "generate_note", name: newNoteTitle, subject: classroom.subject, classroomName: classroom.name }); const data = await res.json(); if (data.result) { setNewNoteContent(data.result); toast.success("Note generated!"); } } catch { toast.error("Failed to generate note"); } finally { setNoteAiLoading(false); }
   };
   const handleCreateMaterial = async () => {
     if (!newMat.title.trim()) { toast.error("Title required"); return; }
@@ -595,9 +577,6 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     handleGenerateDiscussionPrompt, fetchDiscussions,
     materials, materialsLoading, showNewMaterial, setShowNewMaterial,
     newMat, setNewMat, handleCreateMaterial,
-    notes, notesLoading, showNewNote, setShowNewNote,
-    newNoteTitle, setNewNoteTitle, newNoteContent, setNewNoteContent,
-    newNoteTags, setNewNoteTags, noteAiLoading, handleCreateNote, handleGenerateNote, fetchNotes,
     grades, gradesLoading, handleExportGrades,
     analytics, analyticsLoading,
     students, loading, showInvite: showInvite,

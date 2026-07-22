@@ -36,7 +36,7 @@ export default function CreateAssignmentPanel({ classroomId, classroomName, onCl
 
   useEffect(() => {
     const fetchCourses = async () => {
-      try { const res = await apiClient.get("/api/library?type=course&limit=50"); const data = await res.json(); if (data.items) setCourses(data.items.filter((i) => i.type === "course").map((c) => ({ id: c.courseId || c._id || c.id, title: c.title || c.topic || "Untitled" }))); } catch {} finally { setLoadingCourses(false); }
+      try { const res = await apiClient.get("/api/library?type=course&limit=50"); const data = await res.json(); if (data.items) setCourses(data.items.filter((i) => i.type === "course").map((c) => ({ id: c.courseId || c._id || c.id, title: c.title || c.topic || "Untitled" }))); } catch (err) { console.error("CreateAssignmentPanel:fetchCourses", err); } finally { setLoadingCourses(false); }
     };
     fetchCourses();
   }, []);

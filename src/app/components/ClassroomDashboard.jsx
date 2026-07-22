@@ -21,14 +21,14 @@ function CreateClassroomForm({ onClose, onCreated }) {
 
   const [step, setStep] = useState(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("create_classroom_draft") : null;
-    if (saved) { try { const parsed = JSON.parse(saved); return parsed._step ?? 0; } catch {} }
+    if (saved) { try { const parsed = JSON.parse(saved); return parsed._step ?? 0; } catch (err) { console.error("CreateClassroomForm:parseStep", err); } }
     return 0;
   });
 
   const [form, setForm] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("create_classroom_draft");
-      if (saved) { try { const parsed = JSON.parse(saved); delete parsed._step; return parsed; } catch {} }
+      if (saved) { try { const parsed = JSON.parse(saved); delete parsed._step; return parsed; } catch (err) { console.error("CreateClassroomForm:parseForm", err); } }
     }
     return {
       name: "", description: "", subject: "", maxStudents: 50, semester: "",
@@ -427,7 +427,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
 
   const fetchClassrooms = useCallback(async () => {
     setLoading(true);
-    try { const res = await apiClient.get("/api/classrooms"); const data = await res.json(); if (data.success) setClassrooms(data.classrooms); } catch {} finally { setLoading(false); }
+    try { const res = await apiClient.get("/api/classrooms"); const data = await res.json(); if (data.success) setClassrooms(data.classrooms); } catch (err) { console.error("ClassroomDashboard:fetchClassrooms", err); } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchClassrooms(); }, [fetchClassrooms]);
@@ -453,7 +453,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
           const found = (data.classrooms || []).find((c) => c.id === classroomId);
           if (found) setSelectedClassroom(found);
         }
-      } catch {}
+      } catch (err) { console.error("ClassroomDashboard:tryRestore", err); }
     };
     tryRestore();
   // Re-run when classrooms load so a refresh that fetches classrooms late still restores

@@ -63,7 +63,7 @@ export default function SettingsTab({ classroomState }) {
       </div>
       <div className={sectionCls}>
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Globe className="w-4 h-4 text-teal-500" /> Feature Toggles</h3>
-        {[{ key: "enableDiscussions", label: "Discussions" }, { key: "enableNotes", label: "Notes" }, { key: "enableMaterials", label: "Materials" }].map(({ key, label }) => (
+        {[{ key: "enableDiscussions", label: "Discussions" }, { key: "enableMaterials", label: "Materials" }].map(({ key, label }) => (
           <div key={key} className="flex items-center justify-between"><span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</span><button onClick={() => setSettingsForm({ ...settingsForm, settings: { ...settingsForm.settings, [key]: !settingsForm.settings[key] } })} className={toggleCls(settingsForm.settings[key])}><span className={toggleDot(settingsForm.settings[key])} /></button></div>
         ))}
       </div>

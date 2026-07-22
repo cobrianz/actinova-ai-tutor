@@ -261,7 +261,7 @@ function ThreadView({ classroomId, user, isInstructor, studentId, studentName, i
       const res = await apiClient.get(url);
       const data = await res.json();
       if (data.success) setMessages(data.messages || []);
-    } catch { } finally { setLoading(false); }
+    } catch (err) { console.error("ThreadView:fetchMessages", err); } finally { setLoading(false); }
   }, [classroomId, isInstructor, studentId]);
 
   useEffect(() => { fetch(); }, [fetch]);
@@ -368,7 +368,7 @@ function InstructorInbox({ classroomId, user, students }) {
         const res = await apiClient.get(`/api/classrooms/${classroomId}/messages`);
         const data = await res.json();
         if (data.success) setThreads(data.threads || []);
-      } catch { } finally { setLoading(false); }
+      } catch (err) { console.error("InstructorInbox:fetchThreads", err); } finally { setLoading(false); }
     };
     load();
   }, [classroomId, selected]);
