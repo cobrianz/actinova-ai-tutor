@@ -1001,7 +1001,7 @@ function ForkedModuleCard({
 
                 {/* Lesson Content Area */}
                   {isActive && !hidden && (
-                  <div className="mt-1.5 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
+                  <div className="mt-6 overflow-hidden bg-white dark:bg-slate-900">
                     {loading && !contentChecked ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
@@ -1010,9 +1010,9 @@ function ForkedModuleCard({
                         </div>
                       </div>
                     ) : contentChecked && lessonContent ? (
-                      <div className="p-4">
-                        <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
-                          <div className="space-y-4">
+                      <div className="bg-white dark:bg-slate-900">
+                        <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none break-words leading-relaxed" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
+                          <div className="space-y-6" id="lesson-content-container">
                             {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
                           </div>
                         </div>
@@ -1155,7 +1155,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
   const hasQuiz = false;
 
   return (
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+    <div className="overflow-hidden">
       <div className="flex items-center gap-3 w-full p-3 text-left bg-blue-50 dark:bg-blue-950/50">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
@@ -1209,13 +1209,13 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
         )}
       </div>
       {expanded && (
-        <div className="px-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
+        <div className="pt-3 pb-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800">
           {(mod.lessons || []).map((lesson, li) => {
             const isActive = activeLesson === li;
             const hasContent = !!lesson.content;
             return (
               <div key={li}>
-                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-2 rounded-lg transition-colors text-left ${isActive ? "bg-green-500/10 dark:bg-green-500/10" : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
+                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-3 transition-colors text-left ${isActive ? "bg-green-500/10 dark:bg-green-500/10" : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
                   <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
                     <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
                   </div>
@@ -1230,7 +1230,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
                   {isActive ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
                 </button>
                 {isActive && (
-                  <div className="mt-1 rounded-lg overflow-hidden bg-[#EDECE8] dark:bg-slate-800">
+                  <div className="mt-1 p-2 overflow-hidden bg-white dark:bg-slate-900">
                     {generating ? (
                       <div className="py-6 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-700 dark:text-green-400">
@@ -1247,14 +1247,14 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
                         </div>
                       </div>
                     ) : hasContent ? (
-                      <div className="p-4 relative group">
+                      <div className="bg-white dark:bg-slate-900 relative group">
                         {isInstructor && (
                           <button onClick={() => { setEditing(true); setEditContent(lessonContent); }} className="absolute top-2 right-2 p-1.5 rounded-md bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 dark:hover:bg-slate-700" title="Edit content">
                             <FileText className="w-3 h-3 text-slate-500" />
                           </button>
                         )}
-                        <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
-                          <div className="space-y-4">
+                        <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none break-words leading-relaxed" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
+                          <div className="space-y-6" id="lesson-content-container">
                             {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
                           </div>
                         </div>
@@ -1289,7 +1289,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
         const weekDiscs = (discussions || []).filter((d) => d.weekNumber === mod.weekNumber && mod.weekNumber > 0);
         if (weekMats.length === 0 && weekDiscs.length === 0) return null;
         return (
-          <div className="px-3 pb-3 space-y-1.5">
+          <div className="px-3 pt-3 pb-3 space-y-1.5">
             {weekMats.map((mat) => (
               <a key={mat._id || mat.id} href={mat.url || "#"} target={mat.url ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800/50 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors group">
                 <FileText className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
