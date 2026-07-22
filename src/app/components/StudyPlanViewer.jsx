@@ -90,6 +90,21 @@ export default function StudyPlanViewer({ plan, studyPlanId, onBack, onDelete, s
   const [editingTasks, setEditingTasks] = useState([]);
   const [savingDay, setSavingDay] = useState(false);
   const [regeneratingDay, setRegeneratingDay] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const { downloadStudyPlanAsPDF } = await import("@/lib/pdfUtils");
+      await downloadStudyPlanAsPDF(localPlan);
+      toast.success("Study plan downloaded successfully");
+    } catch (err) {
+      console.error("PDF Download error:", err);
+      toast.error("Failed to download PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const currentDayIdx = getCurrentDayIndex();
   const nextIncomplete = useMemo(() => findNextIncompleteDay(localPlan?.weeks), [localPlan]);

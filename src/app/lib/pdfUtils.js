@@ -2702,3 +2702,271 @@ export const downloadLetterAsDOCX = async (
         saveAs(blob, `${fileName}.docx`);
     }
 };
+
+export const downloadStudyPlanAsPDF = async (plan) => {
+    if (!plan) throw new Error("No study plan data provided");
+
+    const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+    });
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+    const HEADER_LINE_Y = 12;
+    const CONTENT_START_Y = 20;
+    let y = CONTENT_START_Y;
+    const pageBottom = pageHeight - 22;
+
+    // Header & Footer Helper
+    const addPageDecoration = (pageNum, totalPages) => {
+        // Header line
+        pdf.setDrawColor(...COLORS.divider);
+        pdf.setLineWidth(0.2);
+        pdf.line(margin, HEADER_LINE_Y, pageWidth - margin, HEADER_LINE_Y);
+
+        // Footer
+        pdf.setDrawColor(...COLORS.divider);
+        pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(...COLORS.textLight);
+        pdf.text("Actirova AI Study Planner", margin, pageHeight - 10);
+        pdf.text(`Copyright (c) Actirova AI Tutor. All rights reserved.`, pageWidth / 2, pageHeight - 10, { align: "center" });
+        pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+    };
+
+    const checkNewPage = (neededSpace) => {
+        if (y + neededSpace > pageBottom) {
+            pdf.addPage();
+            y = CONTENT_START_Y;
+            return true;
+        }
+        return false;
+    };
+
+    // --- COVER PAGE ---
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
+
+    y = 34;
+    try {
+        pdf.addImage("/logo.png", (pageWidth - 40) / 2, y, 40, 40);
+        y += 45;
+    } catch (e) {
+        y = 80;
+    }
+    y += 16;
+
+    pdf.setTextColor(...COLORS.text);
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(44);
+    pdf.text("ACTIROVA", pageWidth / 2, y, { align: "center" });
+
+    y += 12;
+    pdf.setFontSize(22);
+    pdf.text("STUDY PLANNER", pageWidth / 2, y, { align: "center" });
+
+    y = 150;
+    // Border Box for title
+    pdf.setDrawColor(...COLORS.primary);
+    pdf.setLineWidth(0.5);
+    pdf.roundedRect(margin - 5, y - 15, contentWidth + 10, 80, 2, 2, "D");
+
+    pdf.setTextColor(...COLORS.primary);
+    pdf.setFontSize(14);
+    pdf.text("CUSTOM STUDY PLAN", pageWidth / 2, y, { align: "center" });
+
+    y += 15;
+    pdf.setTextColor(...COLORS.text);
+    pdf.setFontSize(26);
+    const titleLines = pdf.splitTextToSize(plan.title || "Personalized Study Plan", contentWidth - 10);
+    pdf.text(titleLines, pageWidth / 2, y, { align: "center" });
+
+    y += (titleLines.length * 10) + 10;
+
+    // Badges / Stats
+    pdf.setFontSize(12);
+    pdf.setTextColor(...COLORS.text);
+    pdf.setFont("times", "bold");
+    pdf.text(`Difficulty: ${plan.difficulty || "General"}  |  Duration: ${plan.durationWeeks} Weeks`, pageWidth / 2, y, { align: "center" });
+
+    y += 8;
+    pdf.setFont("times", "normal");
+    pdf.setTextColor(...COLORS.textLight);
+    if (plan.totalEstimatedHours) {
+        pdf.text(`~${plan.totalEstimatedHours} hours total estimated time`, pageWidth / 2, y, { align: "center" });
+        y += 8;
+    }
+    pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: "center" });
+
+    // --- OVERVIEW PAGE ---
+    pdf.addPage();
+    y = CONTENT_START_Y + 5;
+
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(22);
+    pdf.setTextColor(...COLORS.primary);
+    pdf.text("Plan Overview", margin, y);
+    y += 10;
+
+    pdf.setFont("times", "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(...COLORS.text);
+    if (plan.overview) {
+        const overviewLines = pdf.splitTextToSize(plan.overview, contentWidth);
+        pdf.text(overviewLines, margin, y);
+        y += (overviewLines.length * 6) + 10;
+    }
+
+    if (plan.resources && plan.resources.length > 0) {
+        checkNewPage(40);
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(16);
+        pdf.setTextColor(...COLORS.secondary);
+        pdf.text("Recommended Resources", margin, y);
+        y += 8;
+
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(...COLORS.text);
+        plan.resources.forEach((resource) => {
+            checkNewPage(8);
+            const resLines = pdf.splitTextToSize(`• ${resource}`, contentWidth);
+            pdf.text(resLines, margin, y);
+            y += (resLines.length * 5) + 2;
+        });
+        y += 6;
+    }
+
+    // --- WEEKS / MODULES ---
+    for (const week of plan.weeks || []) {
+        pdf.addPage();
+        y = CONTENT_START_Y + 5;
+
+        // Week Title Banner
+        pdf.setFillColor(...COLORS.primaryLight);
+        pdf.setDrawColor(...COLORS.primary);
+        pdf.setLineWidth(0.3);
+        pdf.roundedRect(margin, y, contentWidth, 20, 1.5, 1.5, "FD");
+
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(14);
+        pdf.setTextColor(...COLORS.primary);
+        pdf.text(`WEEK ${week.weekNumber}`, margin + 5, y + 7);
+
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(12);
+        pdf.setTextColor(...COLORS.text);
+        const wTitleLines = pdf.splitTextToSize(week.title, contentWidth - 15);
+        pdf.text(wTitleLines, margin + 5, y + 13);
+        y += 28;
+
+        if (week.milestone) {
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(10);
+            pdf.setTextColor(...COLORS.textLight);
+            const mText = `Milestone: ${week.milestone}`;
+            const mLines = pdf.splitTextToSize(mText, contentWidth);
+            pdf.text(mLines, margin, y);
+            y += (mLines.length * 5) + 6;
+        }
+
+        if (week.goals && week.goals.length > 0) {
+            pdf.setFont("times", "bold");
+            pdf.setFontSize(11);
+            pdf.setTextColor(...COLORS.text);
+            pdf.text("Learning Goals:", margin, y);
+            y += 6;
+
+            pdf.setFont("times", "normal");
+            pdf.setFontSize(10);
+            week.goals.forEach((goal) => {
+                const gLines = pdf.splitTextToSize(`- ${goal}`, contentWidth - 5);
+                pdf.text(gLines, margin + 2, y);
+                y += (gLines.length * 5) + 1;
+            });
+            y += 6;
+        }
+
+        // Days
+        for (const day of week.days || []) {
+            if (!day.tasks || day.tasks.length === 0) continue;
+
+            checkNewPage(35);
+            pdf.setFont("times", "bold");
+            pdf.setFontSize(12);
+            pdf.setTextColor(...COLORS.secondary);
+            pdf.text(day.day, margin, y);
+            y += 5;
+
+            // Draw line under day
+            pdf.setDrawColor(...COLORS.divider);
+            pdf.setLineWidth(0.1);
+            pdf.line(margin, y, pageWidth - margin, y);
+            y += 5;
+
+            // Day tasks table / list
+            for (const task of day.tasks) {
+                const taskHeight = 15 + (task.description ? 10 : 0);
+                checkNewPage(taskHeight);
+
+                // Draw Check box
+                pdf.setDrawColor(...COLORS.textLight);
+                pdf.setLineWidth(0.2);
+                pdf.rect(margin, y, 4, 4);
+
+                // Draw badge (Type)
+                const typeLabel = String(task.type || "lesson").toUpperCase();
+                pdf.setFont("times", "bold");
+                pdf.setFontSize(8);
+                pdf.setTextColor(...COLORS.primary);
+                pdf.text(`[${typeLabel}]`, margin + 8, y + 3.5);
+
+                // Draw title
+                pdf.setFont("times", "bold");
+                pdf.setFontSize(10.5);
+                pdf.setTextColor(...COLORS.text);
+                const tTitle = task.title;
+                const tTitleWidth = contentWidth - 45;
+                const tTitleLines = pdf.splitTextToSize(tTitle, tTitleWidth);
+                pdf.text(tTitleLines, margin + 28, y + 3.5);
+
+                // Draw duration
+                pdf.setFont("times", "normal");
+                pdf.setFontSize(9);
+                pdf.setTextColor(...COLORS.textLight);
+                pdf.text(`${task.estimatedMinutes || 30} mins`, pageWidth - margin, y + 3.5, { align: "right" });
+
+                const linesOffset = (tTitleLines.length * 5);
+                y += Math.max(5, linesOffset);
+
+                // Description
+                if (task.description) {
+                    pdf.setFont("times", "normal");
+                    pdf.setFontSize(9.5);
+                    pdf.setTextColor(...COLORS.textLight);
+                    const descLines = pdf.splitTextToSize(task.description, contentWidth - 32);
+                    pdf.text(descLines, margin + 28, y);
+                    y += (descLines.length * 4.5);
+                }
+                
+                y += 5; // Task spacer
+            }
+            y += 4; // Day spacer
+        }
+    }
+
+    // Add page decoration for all pages
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let i = 2; i <= totalPages; i++) {
+        pdf.setPage(i);
+        addPageDecoration(i, totalPages);
+    }
+
+    savePdf(pdf, `${plan.title.replace(/[^a-z0-9]/gi, '_')}_StudyPlan.pdf`);
+};

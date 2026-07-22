@@ -292,12 +292,12 @@ function CreateClassroomForm({ onClose, onCreated }) {
 }
 
 const CARD_ACCENTS = [
-  { bg: "bg-violet-200/80 dark:bg-violet-900/50", card: "bg-violet-50 dark:bg-violet-950/25", border: "border-violet-200/80 dark:border-violet-800/40", footer: "border-violet-200/60 dark:border-violet-800/30", text: "text-violet-600 dark:text-violet-400", hover: "hover:border-violet-400 dark:hover:border-violet-500", badge: "bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400" },
-  { bg: "bg-blue-200/80 dark:bg-blue-900/50", card: "bg-blue-50 dark:bg-blue-950/25", border: "border-blue-200/80 dark:border-blue-800/40", footer: "border-blue-200/60 dark:border-blue-800/30", text: "text-blue-600 dark:text-blue-400", hover: "hover:border-blue-400 dark:hover:border-blue-500", badge: "bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400" },
-  { bg: "bg-emerald-200/80 dark:bg-emerald-900/50", card: "bg-emerald-50 dark:bg-emerald-950/25", border: "border-emerald-200/80 dark:border-emerald-800/40", footer: "border-emerald-200/60 dark:border-emerald-800/30", text: "text-emerald-600 dark:text-emerald-400", hover: "hover:border-emerald-400 dark:hover:border-emerald-500", badge: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" },
-  { bg: "bg-amber-200/80 dark:bg-amber-900/50", card: "bg-amber-50 dark:bg-amber-950/25", border: "border-amber-200/80 dark:border-amber-800/40", footer: "border-amber-200/60 dark:border-amber-800/30", text: "text-amber-600 dark:text-amber-400", hover: "hover:border-amber-400 dark:hover:border-amber-500", badge: "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400" },
-  { bg: "bg-rose-200/80 dark:bg-rose-900/50", card: "bg-rose-50 dark:bg-rose-950/25", border: "border-rose-200/80 dark:border-rose-800/40", footer: "border-rose-200/60 dark:border-rose-800/30", text: "text-rose-600 dark:text-rose-400", hover: "hover:border-rose-400 dark:hover:border-rose-500", badge: "bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400" },
-  { bg: "bg-cyan-200/80 dark:bg-cyan-900/50", card: "bg-cyan-50 dark:bg-cyan-950/25", border: "border-cyan-200/80 dark:border-cyan-800/40", footer: "border-cyan-200/60 dark:border-cyan-800/30", text: "text-cyan-600 dark:text-cyan-400", hover: "hover:border-cyan-400 dark:hover:border-cyan-500", badge: "bg-cyan-100 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400" },
+  { bg: "bg-violet-300 dark:bg-violet-800/60", card: "bg-violet-50 dark:bg-violet-950/30", border: "border-violet-300 dark:border-violet-700/50", footer: "border-violet-200 dark:border-violet-700/40", text: "text-violet-700 dark:text-violet-300", hover: "hover:border-violet-500 dark:hover:border-violet-400", badge: "bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300" },
+  { bg: "bg-blue-300 dark:bg-blue-800/60", card: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-300 dark:border-blue-700/50", footer: "border-blue-200 dark:border-blue-700/40", text: "text-blue-700 dark:text-blue-300", hover: "hover:border-blue-500 dark:hover:border-blue-400", badge: "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" },
+  { bg: "bg-emerald-300 dark:bg-emerald-800/60", card: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-300 dark:border-emerald-700/50", footer: "border-emerald-200 dark:border-emerald-700/40", text: "text-emerald-700 dark:text-emerald-300", hover: "hover:border-emerald-500 dark:hover:border-emerald-400", badge: "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300" },
+  { bg: "bg-amber-300 dark:bg-amber-800/60", card: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-300 dark:border-amber-700/50", footer: "border-amber-200 dark:border-amber-700/40", text: "text-amber-700 dark:text-amber-300", hover: "hover:border-amber-500 dark:hover:border-amber-400", badge: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300" },
+  { bg: "bg-rose-300 dark:bg-rose-800/60", card: "bg-rose-50 dark:bg-rose-950/30", border: "border-rose-300 dark:border-rose-700/50", footer: "border-rose-200 dark:border-rose-700/40", text: "text-rose-700 dark:text-rose-300", hover: "hover:border-rose-500 dark:hover:border-rose-400", badge: "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300" },
+  { bg: "bg-cyan-300 dark:bg-cyan-800/60", card: "bg-cyan-50 dark:bg-cyan-950/30", border: "border-cyan-300 dark:border-cyan-700/50", footer: "border-cyan-200 dark:border-cyan-700/40", text: "text-cyan-700 dark:text-cyan-300", hover: "hover:border-cyan-500 dark:hover:border-cyan-400", badge: "bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300" },
 ];
 
 function hashString(str = "") {
@@ -400,8 +400,8 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
         <span className="text-[10px] text-slate-400">
           {new Date(classroom.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </span>
-        <span className={`text-[11px] font-semibold flex items-center gap-1 ${accent.text}`}>
-          Open <ArrowRight className="w-3 h-3" />
+        <span className={`text-[10px] font-semibold flex items-center gap-1 px-2 py-1 rounded-md ${accent.bg} ${accent.text}`}>
+          Open <ArrowRight className="w-3 h-3 -rotate-45" />
         </span>
       </div>
     </motion.div>
