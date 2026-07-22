@@ -351,7 +351,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
       const res = await apiClient.post("/api/classrooms/ai-generate", {
         task: "course_assignments", name: module.title, subject: classroom.subject,
         content: module.description, durationWeeks: module.weekNumber,
-        classroomName: classroom.name,
+        classroomName: classroom.name, assignmentType: module.assignmentType || "all",
       });
       const data = await res.json();
       if (data.result) {

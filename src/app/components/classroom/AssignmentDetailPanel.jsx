@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, ChevronDown, ListOrdered, CheckCircle2, Check, Play, Edit3, Eye, Send, Loader2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ListOrdered, CheckCircle2, Check, Play, Edit3, Eye, Send, Loader2, MessageSquare, Save } from "lucide-react";
 import { TYPE_CONFIG } from "./constants";
 import { apiClient } from "@/lib/csrfClient";
+import AssignmentEditor from "./AssignmentEditor";
 
 function renderInstructions(text) {
   if (!text) return null;
@@ -64,6 +65,13 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
   const [showRubric, setShowRubric] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [text, setText] = useState("");
+  const [instructorComment, setInstructorComment] = useState("");
+  const [savingComment, setSavingComment] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(null);
   const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG.custom;
   const TypeIcon = tc.icon;
 
@@ -96,6 +104,56 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
     } catch (err) { console.error("AssignmentDetailPanel:handleSubmit", err); } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleStartQuiz = async () => {
+    setQuizLoading(true);
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/ai-generate`, {
+        task: "course_assignments",
+        name: assignment.title,
+        subject: assignment.category,
+        content: assignment.instructions,
+        durationWeeks: assignment.weekNumber || 1,
+        classroomName: "",
+        assignmentType: "quiz",
+      });
+      const data = await res.json();
+      if (data.result && data.result[0]?.rubric) {
+        const questions = (data.result[0].rubric || []).map((r, i) => ({
+          id: i,
+          text: r.criterion,
+          description: r.description,
+          points: r.maxPoints || 10,
+        }));
+        setQuizQuestions(questions);
+      }
+    } catch (err) { console.error("Quiz generation failed:", err); }
+    setQuizLoading(false);
+  };
+
+  const handleQuizSubmit = async () => {
+    setSubmitting(true);
+    let score = 0;
+    let total = 0;
+    if (quizQuestions) {
+      quizQuestions.forEach((q) => {
+        total += q.points;
+        if (quizAnswers[q.id]) score += q.points;
+      });
+    }
+    const percentage = total > 0 ? Math.round((score / total) * assignment.maxScore) : 0;
+    setQuizScore({ score: percentage, total: assignment.maxScore });
+    setQuizSubmitted(true);
+    try {
+      const res = await apiClient.post(`/api/classrooms/${classroomId}/submissions`, {
+        assignmentId: assignment.id,
+        text: `Quiz completed. Score: ${percentage}/${assignment.maxScore}`,
+      });
+      const data = await res.json();
+      if (data.success && onSubmit) onSubmit(data.progress);
+    } catch (err) { console.error("Quiz submit failed:", err); }
+    setSubmitting(false);
   };
 
   return (
@@ -211,6 +269,41 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
             </div>
           )}
 
+          {isInstructor && (
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Student Comment</p>
+              </div>
+              <textarea
+                value={instructorComment}
+                onChange={(e) => setInstructorComment(e.target.value)}
+                placeholder="Add a comment for the student to see..."
+                rows={3}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              />
+              <button
+                onClick={async () => {
+                  if (!instructorComment.trim()) return;
+                  setSavingComment(true);
+                  try {
+                    await apiClient.put(`/api/classrooms/${classroomId}/progress`, {
+                      assignmentId: assignment.id,
+                      studentId: progress?.studentId,
+                      feedback: instructorComment,
+                    });
+                  } catch (err) { console.error(err); }
+                  setSavingComment(false);
+                }}
+                disabled={savingComment || !instructorComment.trim()}
+                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-semibold hover:bg-amber-600 disabled:opacity-50 transition-colors"
+              >
+                {savingComment ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                Save Comment
+              </button>
+            </div>
+          )}
+
           {!isInstructor && isSubmitted && (
             <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Submission</p>
@@ -227,18 +320,62 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
         <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           {!isInstructor ? (
             <div className="space-y-3">
-              {progress?.status === "completed" && !isSubmitted ? (
+              {quizSubmitted && quizScore ? (
+                <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg p-4 text-center">
+                  <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-green-700 dark:text-green-400">Quiz Complete!</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-300 mt-1">{quizScore.score}/{quizScore.total}</p>
+                </div>
+              ) : quizQuestions ? (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quiz Questions ({quizQuestions.length})</p>
+                  {quizQuestions.map((q, i) => (
+                    <div key={q.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white mb-2">{i + 1}. {q.text}</p>
+                      {q.description && <p className="text-[10px] text-slate-500 mb-2">{q.description}</p>}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-slate-400">Points:</span>
+                        <span className="text-[9px] font-bold text-green-600">{q.points}</span>
+                      </div>
+                      <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!quizAnswers[q.id]}
+                          onChange={(e) => setQuizAnswers({ ...quizAnswers, [q.id]: e.target.checked })}
+                          className="rounded border-slate-300 text-green-500 focus:ring-green-500"
+                        />
+                        <span className="text-[10px] text-slate-600 dark:text-slate-400">I understand this concept</span>
+                      </label>
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleQuizSubmit}
+                    disabled={submitting}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
+                  >
+                    {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    {submitting ? "Submitting..." : "Submit Quiz"}
+                  </button>
+                </div>
+              ) : progress?.status === "completed" && !isSubmitted ? (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600"><CheckCircle2 className="w-4 h-4" /> Assignment Completed</span>
               ) : progress?.status === "in_progress" || (!progress && assignment.type !== "quiz") ? (
                 <>
-                  {!isSubmitted && (
+                  {!isSubmitted && assignment.type === "quiz" ? (
+                    <button
+                      onClick={handleStartQuiz}
+                      disabled={quizLoading}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
+                    >
+                      {quizLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                      {quizLoading ? "Generating Quiz..." : "Start Quiz"}
+                    </button>
+                  ) : !isSubmitted ? (
                     <div className="space-y-3">
-                      <textarea
+                      <AssignmentEditor
                         value={text}
-                        onChange={(e) => setText(e.target.value)}
+                        onChange={setText}
                         placeholder="Type your submission here..."
-                        rows={6}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400"
                       />
                       <button
                         onClick={handleSubmit}
@@ -249,8 +386,7 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                         {submitting ? "Submitting..." : "Submit Assignment"}
                       </button>
                     </div>
-                  )}
-                  {isSubmitted && (
+                  ) : (
                     <button onClick={onComplete} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
                       <Check className="w-4 h-4" /> Mark Complete
                     </button>

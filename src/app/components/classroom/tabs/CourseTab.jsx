@@ -46,6 +46,7 @@ export default function CourseTab({ classroomState }) {
     setAnnouncements, setDiscussions, setForkedContent,
     materials, discussions, handleAttachMaterial, handleAttachDiscussion,
     inputCls, labelCls, sectionCls, setActiveTab,
+    assignments, setSelectedAssignment,
   } = classroomState;
 
   const [editingFork, setEditingFork] = useState(null);
@@ -442,6 +443,9 @@ export default function CourseTab({ classroomState }) {
                         handleAttachMaterial={handleAttachMaterial}
                         handleAttachDiscussion={handleAttachDiscussion}
                         setActiveTab={setActiveTab}
+                        handleGenerateModuleAssignments={handleGenerateModuleAssignments}
+                        assignments={assignments}
+                        setSelectedAssignment={setSelectedAssignment}
                       />
                     ))}
                   </div>
@@ -1058,7 +1062,7 @@ function ForkedModuleCard({
   );
 }
 
-function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setForkedContent, materials, discussions, handleAttachMaterial, handleAttachDiscussion, setActiveTab }) {
+function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, setForkedContent, materials, discussions, handleAttachMaterial, handleAttachDiscussion, setActiveTab, handleGenerateModuleAssignments, assignments, setSelectedAssignment }) {
   const [expanded, setExpanded] = useState(false);
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonContent, setLessonContent] = useState("");
@@ -1067,6 +1071,8 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
   const [editContent, setEditContent] = useState("");
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
+  const [showAssignmentType, setShowAssignmentType] = useState(false);
+  const [generatingAssignments, setGeneratingAssignments] = useState(false);
 
   const typeColors = {
     lecture: "bg-blue-500/10 text-blue-600",
@@ -1215,7 +1221,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
             const hasContent = !!lesson.content;
             return (
               <div key={li}>
-                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-3 transition-colors text-left ${isActive ? "bg-green-500/10 dark:bg-green-500/10" : "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
+                <button onClick={() => handleLessonClick(li)} className={`flex items-center gap-2.5 w-full py-2 px-3 transition-colors text-left ${isActive ? "bg-green-500/10 dark:bg-green-500/10" : "bg-[#E8E6DF] dark:bg-slate-800/50 hover:bg-[#dddbd4] dark:hover:bg-slate-800"}`}>
                   <div className="w-6 h-6 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
                     <span className="text-[9px] font-bold text-slate-500">{li + 1}</span>
                   </div>
@@ -1282,6 +1288,52 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
               </div>
             );
           })}
+        </div>
+      )}
+      {expanded && (() => {
+        const moduleAssignments = (assignments || []).filter((a) => (a.weekNumber || 0) === mod.weekNumber);
+        if (moduleAssignments.length === 0) return null;
+        return (
+          <div className="px-3 pt-1 pb-2 space-y-1.5">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assignments</p>
+            {moduleAssignments.map((a) => (
+              <button key={a.id || a._id} onClick={() => { setSelectedAssignment?.(a); setActiveTab?.("assignments"); }} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 cursor-pointer transition-colors w-full text-left">
+                <ClipboardList className="w-3 h-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 truncate">{a.title}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] capitalize text-amber-500">{a.type}</span>
+                    {a.maxScore && <span className="text-[8px] text-amber-400">/{a.maxScore}pts</span>}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+      {expanded && isInstructor && (mod.lessons?.length || 0) > 0 && (
+        <div className="px-3 pb-3 mt-1">
+          {generatingAssignments ? (
+            <div className="flex items-center justify-center gap-2 py-3 bg-green-50 dark:bg-green-500/10 rounded-lg">
+              <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+              <span className="text-[11px] font-bold text-green-600 dark:text-green-400">Generating assignments...</span>
+            </div>
+          ) : showAssignmentType ? (
+            <div className="flex items-center justify-center gap-1.5 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <span className="text-[9px] font-semibold text-slate-500 mr-1">Type:</span>
+              {["quiz", "assignment", "discussion"].map((t) => (
+                <button key={t} onClick={async () => { setGeneratingAssignments(true); setShowAssignmentType(false); try { await handleGenerateModuleAssignments?.({ ...mod, assignmentType: t }); } finally { setGeneratingAssignments(false); } }} className="px-2 py-1 rounded-md text-[9px] font-semibold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors capitalize">{t}</button>
+              ))}
+              <button onClick={() => setShowAssignmentType(false)} className="ml-auto text-[9px] text-slate-400 hover:text-slate-600">Cancel</button>
+            </div>
+          ) : (
+            <button onClick={() => setShowAssignmentType(true)} className="flex items-center justify-center gap-1.5 w-full py-2 text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20 cursor-pointer transition-all duration-300">
+              <svg className="w-3 h-3 animate-[spin_3s_linear_infinite]" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor" />
+              </svg>
+              Generate Assignment
+            </button>
+          )}
         </div>
       )}
       {(() => {

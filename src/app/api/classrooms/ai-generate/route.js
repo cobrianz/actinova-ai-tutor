@@ -62,7 +62,7 @@ async function handlePost(request) {
     );
   }
 
-  const { task, name, subject, content, classroomName, assignmentTitle, durationWeeks, academicLevel, existingModules } = await request.json();
+  const { task, name, subject, content, classroomName, assignmentTitle, durationWeeks, academicLevel, existingModules, assignmentType } = await request.json();
 
   let systemPrompt = "";
   let userPrompt = "";
@@ -104,22 +104,32 @@ async function handlePost(request) {
       break;
 
     case "course_assignments":
-      systemPrompt = `You are an academic assessment designer. Given a course module, generate appropriate assignments as a JSON array. Each assignment must have: title (string), description (string, 1 sentence summary), instructions (string, detailed markdown instructions with objectives, requirements, submission guidelines, and grading criteria — 3-5 paragraphs), type (one of: "quiz", "lab", "project", "essay", "report", "discussion", "presentation", "flashcards", "custom"), weekNumber (number), category (string like "Homework", "Lab", "Quiz", "Project"), maxScore (number, default 100), passingScore (number, default 60), weight (number, percentage 1-20), and rubric (array of {criterion, description, maxPoints}). Generate 2-4 assignments per module. Return ONLY a valid JSON array, no markdown, no other text.`;
-      userPrompt = `Generate assignments for the module "${name}" (${subject || "General"}). Week number: ${durationWeeks || 1}. ${content ? `Module description: ${content}` : ""} Create 2-4 diverse assignments (mix of quizzes, labs, projects, discussions) that assess the module's learning objectives. Each must include detailed instructions (3-5 paragraphs) and a realistic rubric.`;
+      systemPrompt = `Generate assignments as a JSON array. Each: title, description (1 sentence), instructions (markdown, 2-3 paragraphs), type ("quiz"|"lab"|"project"|"essay"|"report"|"discussion"|"presentation"|"custom"), weekNumber, category ("Homework"|"Lab"|"Quiz"|"Project"), maxScore (100), passingScore (60), weight (5-15), rubric [{criterion, description, maxPoints}]. Generate 2-3 assignments. Return ONLY valid JSON array.`;
+      const typeFilter = assignmentType && assignmentType !== "all" ? ` Preferred type: "${assignmentType}" (2 of 3 should be this type).` : "";
+      userPrompt = `Module "${name}" (${subject || "General"}). Week ${durationWeeks || 1}.${typeFilter} ${content ? `Desc: ${content}` : ""} Create 2-3 assignments with rubric.`;
       break;
 
     default:
       return NextResponse.json({ error: "Invalid task" }, { status: 400 });
   }
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    max_tokens: task === "rubric" ? 1000 : task === "course_structure" ? 8000 : task === "course_assignments" ? 8000 : 2000,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-  });
+  let completion;
+  try {
+    completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: task === "rubric" ? 1000 : task === "course_structure" ? 6000 : task === "course_assignments" ? 3000 : 2000,
+      timeout: 25000,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    });
+  } catch (err) {
+    if (err.code === "ETIMEDOUT" || err.message?.includes("timed out")) {
+      return NextResponse.json({ error: "AI request timed out. Please try again." }, { status: 504 });
+    }
+    throw err;
+  }
 
   const result = completion.choices[0]?.message?.content?.trim();
 
@@ -131,6 +141,9 @@ async function handlePost(request) {
     } catch {
       if (task === "rubric") {
         return NextResponse.json({ result: [{ criterion: "Content Quality", description: "Accuracy and depth of content", maxPoints: 25 }, { criterion: "Organization", description: "Structure and flow", maxPoints: 20 }, { criterion: "Analysis", description: "Critical thinking and analysis", maxPoints: 25 }, { criterion: "Writing", description: "Grammar, clarity, and style", maxPoints: 15 }, { criterion: "References", description: "Proper citations and sources", maxPoints: 15 }] });
+      }
+      if (task === "course_assignments") {
+        return NextResponse.json({ result: [{ title: `${name} - Assignment`, description: `Assignment for ${name}`, instructions: `Complete the following assignment for ${name}.\n\n**Objectives:**\n- Demonstrate understanding of key concepts\n- Apply learned material\n\n**Requirements:**\n- Submit a well-structured response\n- Include references where appropriate\n- Follow academic integrity guidelines`, type: "essay", category: "Homework", maxScore: 100, passingScore: 60, weight: 10, rubric: [{ criterion: "Content", description: "Accuracy and depth", maxPoints: 30 }, { criterion: "Organization", description: "Structure and clarity", maxPoints: 25 }, { criterion: "Analysis", description: "Critical thinking", maxPoints: 25 }, { criterion: "Writing", description: "Grammar and style", maxPoints: 20 }] }] });
       }
       return NextResponse.json({ error: "Failed to parse AI response. Please try again." }, { status: 500 });
     }

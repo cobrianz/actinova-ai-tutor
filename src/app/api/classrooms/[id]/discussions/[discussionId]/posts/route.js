@@ -4,6 +4,7 @@ import { withCsrf } from "@/lib/withCsrf";
 import { connectToDatabase } from "@/lib/mongodb";
 import Discussion from "@/models/Discussion";
 import DiscussionPost from "@/models/DiscussionPost";
+import Classroom from "@/models/Classroom";
 
 async function handleGet(request, { params }) {
   await connectToDatabase();
@@ -58,3 +59,32 @@ async function handlePost(request, { params }) {
 
 export const GET = combineMiddleware(withErrorHandling)(handleGet);
 export const POST = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePost);
+
+async function handlePatch(request, { params }) {
+  await connectToDatabase();
+  const user = request.user;
+  const { id, discussionId } = await params;
+  const { postId, score, maxScore, feedback } = await request.json();
+
+  const classroom = await Classroom.findById(id).lean();
+  if (!classroom || classroom.instructorId?.toString() !== user._id?.toString()) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  const post = await DiscussionPost.findByIdAndUpdate(
+    postId,
+    {
+      score: score != null ? Number(score) : undefined,
+      maxScore: maxScore != null ? Number(maxScore) : undefined,
+      feedback: feedback != null ? String(feedback) : undefined,
+      gradedBy: user._id,
+      gradedAt: new Date(),
+    },
+    { new: true }
+  ).populate("authorId", "name email");
+
+  if (!post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+  return NextResponse.json({ success: true, post });
+}
+
+export const PATCH = combineMiddleware(withErrorHandling, withCsrf, withAuth)(handlePatch);

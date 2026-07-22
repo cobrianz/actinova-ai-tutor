@@ -34,6 +34,11 @@ const discussionPostSchema = new mongoose.Schema(
       emoji: { type: String },
       userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     }],
+    score: { type: Number, default: null },
+    maxScore: { type: Number, default: 100 },
+    feedback: { type: String, default: "", maxlength: 2000 },
+    gradedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    gradedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -304,6 +304,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
                   replyContent={replyContent} handleCreatePost={handleCreatePost}
                   inputCls={inputCls} repliesMap={repliesMap}
                   replyingTo={replyingTo} canPost={canPost}
+                  isInstructor={isInstructor} classroomId={classroom.id}
                 />
               </motion.div>
             );
@@ -345,8 +346,28 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
   );
 }
 
-function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost }) {
+function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost, isInstructor, classroomId }) {
   const postId = post._id || post.id;
+  const [showGrade, setShowGrade] = useState(false);
+  const [gradeScore, setGradeScore] = useState(post.score ?? "");
+  const [gradeFeedback, setGradeFeedback] = useState(post.feedback || "");
+  const [gradeMax, setGradeMax] = useState(post.maxScore || 100);
+  const [savingGrade, setSavingGrade] = useState(false);
+
+  const handleSaveGrade = async () => {
+    setSavingGrade(true);
+    try {
+      await apiClient.patch(`/api/classrooms/${classroomId}/discussions/${discussion._id || discussion.id}/posts`, {
+        postId,
+        score: Number(gradeScore),
+        maxScore: Number(gradeMax),
+        feedback: gradeFeedback,
+      });
+      setShowGrade(false);
+    } catch (err) { console.error("Grade save failed:", err); }
+    setSavingGrade(false);
+  };
+
   return (
     <div className={`bg-card border rounded-xl overflow-hidden ${isInstructorPost ? "border-l-[3px] border-l-green-500 border-border" : "border-border"}`}>
       <div className="flex gap-3 p-4">
@@ -358,6 +379,37 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
             {post.isEdited && <span className="text-[10px] text-muted-foreground/60 italic">(edited)</span>}
           </div>
           <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+          {/* Grade display for students */}
+          {!isInstructor && post.score != null && (
+            <div className="mt-2 p-2 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg">
+              <p className="text-[10px] font-bold text-green-700 dark:text-green-400">Score: {post.score}/{post.maxScore || 100}</p>
+              {post.feedback && <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">{post.feedback}</p>}
+            </div>
+          )}
+          {/* Grade button for instructors */}
+          {isInstructor && !isInstructorPost && (
+            <div className="mt-2 pt-2 border-t border-border/50">
+              {showGrade ? (
+                <div className="space-y-2 p-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-amber-700">Score:</span>
+                    <input type="number" value={gradeScore} onChange={(e) => setGradeScore(e.target.value)} className="w-16 px-2 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded text-xs" placeholder="0" />
+                    <span className="text-[10px] text-amber-600">/</span>
+                    <input type="number" value={gradeMax} onChange={(e) => setGradeMax(e.target.value)} className="w-16 px-2 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded text-xs" placeholder="100" />
+                  </div>
+                  <textarea value={gradeFeedback} onChange={(e) => setGradeFeedback(e.target.value)} placeholder="Feedback for student..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded text-xs resize-none" />
+                  <div className="flex gap-1">
+                    <button onClick={handleSaveGrade} disabled={savingGrade} className="px-2 py-1 bg-amber-500 text-white rounded text-[10px] font-bold hover:bg-amber-600 disabled:opacity-50">{savingGrade ? "Saving..." : "Save Grade"}</button>
+                    <button onClick={() => setShowGrade(false)} className="px-2 py-1 bg-secondary text-muted-foreground rounded text-[10px] font-semibold">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setShowGrade(true)} className="text-[10px] font-semibold text-amber-600 hover:text-amber-700">
+                  {post.score != null ? `Graded: ${post.score}/${post.maxScore || 100}` : "Grade this post"}
+                </button>
+              )}
+            </div>
+          )}
           {!discussion.isClosed && (
             <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50">
               {replies.length > 0 && (
