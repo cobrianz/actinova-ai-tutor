@@ -23,6 +23,9 @@ async function handleGet(request, { params }) {
 
   const isInstructor = classroom.instructorId.toString() === user._id.toString();
 
+  const limit = Math.min(100, parseInt(searchParams.get("limit")) || 50);
+  const skip = Math.max(0, parseInt(searchParams.get("skip")) || 0);
+
   if (!isInstructor) {
     // Student: only their own thread
     const messages = await ClassroomMessage.find({
@@ -32,9 +35,11 @@ async function handleGet(request, { params }) {
         { senderId: classroom.instructorId, recipientId: user._id },
       ],
     })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
-    return NextResponse.json({ success: true, messages });
+    return NextResponse.json({ success: true, messages: messages.reverse() });
   }
 
   // Instructor with specific student thread
@@ -46,9 +51,11 @@ async function handleGet(request, { params }) {
         { senderId: user._id, recipientId: studentId },
       ],
     })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
-    return NextResponse.json({ success: true, messages });
+    return NextResponse.json({ success: true, messages: messages.reverse() });
   }
 
   // Instructor: return summary of all threads (last message per student)

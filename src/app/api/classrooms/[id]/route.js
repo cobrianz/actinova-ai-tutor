@@ -6,6 +6,10 @@ import Classroom from "@/models/Classroom";
 import Enrollment from "@/models/Enrollment";
 import Assignment from "@/models/Assignment";
 import StudentProgress from "@/models/StudentProgress";
+import CourseMaterial from "@/models/CourseMaterial";
+import Discussion from "@/models/Discussion";
+import DiscussionPost from "@/models/DiscussionPost";
+import ClassroomMessage from "@/models/ClassroomMessage";
 import mongoose from "mongoose";
 
 async function handleDelete(request, { params }) {
@@ -28,6 +32,16 @@ async function handleDelete(request, { params }) {
       await Classroom.updateOne({ _id: id }, { isActive: false }, { session });
       await Enrollment.updateMany({ classroomId: id }, { status: "removed" }, { session });
       await Assignment.updateMany({ classroomId: id }, { isActive: false }, { session });
+
+      // Cascade delete associated entities
+      await CourseMaterial.deleteMany({ classroomId: id }, { session });
+      
+      const discussions = await Discussion.find({ classroomId: id }).session(session);
+      const discussionIds = discussions.map((d) => d._id);
+      await DiscussionPost.deleteMany({ discussionId: { $in: discussionIds } }, { session });
+      await Discussion.deleteMany({ classroomId: id }, { session });
+
+      await ClassroomMessage.deleteMany({ classroomId: id }, { session });
     });
   } finally {
     await session.endSession();

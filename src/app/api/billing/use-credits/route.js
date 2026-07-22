@@ -6,13 +6,14 @@ import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
 import { PRODUCTS, hasItem } from "@/lib/planLimits";
+import { grantMarketplaceCourseAccess } from "@/lib/courseCommerce";
 
 async function handlePost(request) {
   const user = request.user;
 
   try {
     const body = await request.json();
-    const { itemType } = body;
+    const { itemType, courseId } = body;
 
     if (!itemType) {
       return NextResponse.json({ error: "itemType is required" }, { status: 400 });
@@ -67,6 +68,22 @@ async function handlePost(request) {
         },
       }
     );
+
+    // If a courseId was provided, create enrollment so "Start Learning" works
+    if (courseId) {
+      try {
+        await grantMarketplaceCourseAccess({
+          db,
+          userId: user._id,
+          courseId,
+          reference: `credit_unlock_${itemType}`,
+          amount: 0,
+          currency: "credits",
+        });
+      } catch (e) {
+        console.error("Failed to create enrollment after credit unlock:", e);
+      }
+    }
 
     return NextResponse.json({
       success: true,

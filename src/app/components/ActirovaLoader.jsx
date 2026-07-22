@@ -31,6 +31,15 @@ export default function ActirovaLoader({ text = "course" }) {
     return () => clearInterval(interval);
   }, [statuses.length]);
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
   return (
     <div
       data-actirova-loader="true"

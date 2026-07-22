@@ -8,9 +8,15 @@ import DiscussionPost from "@/models/DiscussionPost";
 async function handleGet(request, { params }) {
   await connectToDatabase();
   const { discussionId } = await params;
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(100, parseInt(searchParams.get("limit")) || 50);
+  const skip = Math.max(0, parseInt(searchParams.get("skip")) || 0);
+
   const posts = await DiscussionPost.find({ discussionId })
     .populate("authorId", "name email")
     .sort({ createdAt: 1 })
+    .skip(skip)
+    .limit(limit)
     .lean();
   return NextResponse.json({ success: true, posts });
 }

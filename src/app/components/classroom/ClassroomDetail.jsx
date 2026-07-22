@@ -156,7 +156,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
         const data = await res.json();
         if (data.success) setOpenedWeeks(data.openedWeeks || []);
       } catch (e) { console.error("Failed to poll opened weeks:", e); }
-    }, 10000);
+    }, 60000);
     return () => clearInterval(interval);
   }, [classroom.id]);
 

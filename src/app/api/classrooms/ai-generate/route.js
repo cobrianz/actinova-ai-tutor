@@ -2,10 +2,66 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { withAuth, withErrorHandling, combineMiddleware } from "@/lib/middleware";
 import { withCsrf } from "@/lib/withCsrf";
+import { connectToDatabase } from "@/lib/mongodb";
+import mongoose from "mongoose";
+import { PRODUCTS } from "@/lib/planLimits";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function handlePost(request) {
+  const { db } = await connectToDatabase();
+  const user = request.user;
+
+  // Fetch user for fresh credit count
+  const freshUser = await db.collection("users").findOne(
+    { _id: new mongoose.Types.ObjectId(user._id) }
+  );
+
+  if (!freshUser) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  // Check if user is premium
+  const isPremium =
+    freshUser.isPremium ||
+    (freshUser.subscription &&
+      (freshUser.subscription.plan === "pro" || freshUser.subscription.plan === "enterprise") &&
+      freshUser.subscription.status === "active");
+
+  const product = PRODUCTS.find((p) => p.id === "classroom_ai_generation");
+  const cost = product?.creditCost || 10;
+
+  if (!isPremium) {
+    const currentCredits = freshUser.credits || 0;
+    if (currentCredits < cost) {
+      return NextResponse.json(
+        {
+          error: `Insufficient credits for classroom AI generation. This action costs ${cost} credits.`,
+          required: cost,
+          available: currentCredits,
+          code: "INSUFFICIENT_CREDITS"
+        },
+        { status: 402 }
+      );
+    }
+
+    // Deduct credits
+    await db.collection("users").updateOne(
+      { _id: new mongoose.Types.ObjectId(user._id) },
+      {
+        $inc: { credits: -cost },
+        $push: {
+          billingHistory: {
+            type: "credit_usage",
+            itemType: "classroom_ai_generation",
+            creditsSpent: cost,
+            createdAt: new Date(),
+          },
+        },
+      }
+    );
+  }
+
   const { task, name, subject, content, classroomName, assignmentTitle, durationWeeks, academicLevel, existingModules } = await request.json();
 
   let systemPrompt = "";

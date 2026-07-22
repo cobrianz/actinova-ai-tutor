@@ -31,6 +31,225 @@ import { useAuth } from "./AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
 import { PRODUCTS } from "@/lib/planLimits";
 
+const CARD_ACCENTS = [
+  { bg: "bg-violet-200/80 dark:bg-violet-900/50", card: "bg-violet-50 dark:bg-violet-950/25", border: "border-violet-200/80 dark:border-violet-800/40", footer: "border-violet-200/60 dark:border-violet-800/30", text: "text-violet-600 dark:text-violet-400", bar: "bg-violet-500" },
+  { bg: "bg-blue-200/80 dark:bg-blue-900/50", card: "bg-blue-50 dark:bg-blue-950/25", border: "border-blue-200/80 dark:border-blue-800/40", footer: "border-blue-200/60 dark:border-blue-800/30", text: "text-blue-600 dark:text-blue-400", bar: "bg-blue-500" },
+  { bg: "bg-emerald-200/80 dark:bg-emerald-900/50", card: "bg-emerald-50 dark:bg-emerald-950/25", border: "border-emerald-200/80 dark:border-emerald-800/40", footer: "border-emerald-200/60 dark:border-emerald-800/30", text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" },
+  { bg: "bg-amber-200/80 dark:bg-amber-900/50", card: "bg-amber-50 dark:bg-amber-950/25", border: "border-amber-200/80 dark:border-amber-800/40", footer: "border-amber-200/60 dark:border-amber-800/30", text: "text-amber-600 dark:text-amber-400", bar: "bg-amber-500" },
+  { bg: "bg-rose-200/80 dark:bg-rose-900/50", card: "bg-rose-50 dark:bg-rose-950/25", border: "border-rose-200/80 dark:border-rose-800/40", footer: "border-rose-200/60 dark:border-rose-800/30", text: "text-rose-600 dark:text-rose-400", bar: "bg-rose-500" },
+  { bg: "bg-cyan-200/80 dark:bg-cyan-900/50", card: "bg-cyan-50 dark:bg-cyan-950/25", border: "border-cyan-200/80 dark:border-cyan-800/40", footer: "border-cyan-200/60 dark:border-cyan-800/30", text: "text-cyan-600 dark:text-cyan-400", bar: "bg-cyan-500" },
+];
+
+const DIFFICULTY_BADGES = {
+  beginner: { label: "Beginner", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400" },
+  intermediate: { label: "Intermediate", className: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400" },
+  advanced: { label: "Advanced", className: "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400" },
+  expert: { label: "Expert", className: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400" },
+};
+
+function hashString(str = "") {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+function getCardAccent(seed = "") {
+  return CARD_ACCENTS[hashString(seed) % CARD_ACCENTS.length];
+}
+
+function LibraryCourseCard({
+  course,
+  viewMode,
+  isPremium,
+  isAtCourseUsageLimit,
+  isEnterprise,
+  onPin,
+  onMakePremium,
+  onDownload,
+}) {
+  const accent = getCardAccent(course.title || course.topic || course.id);
+  const diff = (course.difficulty || "beginner").toLowerCase();
+  const diffBadge = DIFFICULTY_BADGES[diff] || DIFFICULTY_BADGES.beginner;
+
+  const showPremiumBtn =
+    course.format === "course" &&
+    !(
+      course.premiumAccessExpiresAt &&
+      new Date(course.premiumAccessExpiresAt) > new Date()
+    ) &&
+    (!isPremium || (isAtCourseUsageLimit && !isEnterprise));
+
+  const canDownload =
+    course.format !== "questions" &&
+    course.format !== "flashcards";
+
+  const isLocked = !isPremium && !course.isGenerated;
+  const learnHref = `/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`;
+  const continueLabel = course.progress === 100 ? "Review" : "Continue";
+
+  const continueButton = (
+    <Link
+      href={learnHref}
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-[10px] font-semibold shrink-0 transition-colors"
+    >
+      {continueLabel}
+      <ArrowRight size={10} className="-rotate-45" />
+    </Link>
+  );
+
+  const actionButtons = (
+    <div className="flex items-center gap-0.5 shrink-0">
+      <button
+        onClick={() => onPin(course.id)}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+        title={course.isPinned ? "Unpin" : "Pin (max 3)"}
+      >
+        <Pin size={13} className={course.isPinned ? "fill-amber-500 text-amber-500" : ""} />
+      </button>
+      {showPremiumBtn && (
+        <button
+          onClick={() => onMakePremium(course)}
+          className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          title="Make premium ($6)"
+        >
+          <Crown size={13} />
+        </button>
+      )}
+      {canDownload && (
+        <button
+          onClick={() => {
+            if (course.progress < 100) {
+              toast.info("Please complete the course or wait for all lessons to generate before downloading.");
+              return;
+            }
+            onDownload(course);
+          }}
+          className={`p-1.5 rounded-lg transition-colors ${
+            isPremium && course.progress === 100
+              ? "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+              : "text-muted-foreground/40 cursor-not-allowed"
+          }`}
+          title={
+            !isPremium
+              ? "Pro Feature: Download PDF"
+              : course.progress === 100
+              ? "Download PDF"
+              : "Complete course to download"
+          }
+        >
+          <Download size={13} />
+        </button>
+      )}
+    </div>
+  );
+
+  const footer = (
+    <div className={`flex items-center justify-between text-[10px] text-muted-foreground pt-3 border-t ${accent.footer}`}>
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${accent.bar}`} />
+        <span className="font-medium">{course.completedLessons}/{course.totalLessons}</span>
+        <span>·</span>
+        <span>{course.estimatedTime}</span>
+        <span>·</span>
+        <span>{course.progress}%</span>
+      </div>
+      {isLocked ? (
+        <span className="text-muted-foreground/50 shrink-0">Locked</span>
+      ) : (
+        continueButton
+      )}
+    </div>
+  );
+
+  if (viewMode === "list") {
+    return (
+      <motion.div
+        layout
+        variants={{
+          hidden: { opacity: 0, scale: 0.98 },
+          visible: { opacity: 1, scale: 1, y: 0 },
+        }}
+        className={`group flex items-center gap-4 rounded-xl border p-4 transition-colors ${accent.card} ${accent.border} hover:brightness-[0.98] dark:hover:brightness-110`}
+      >
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${accent.bg}`}>
+          <BookOpen size={18} className={accent.text} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h3 className="font-semibold text-sm text-foreground line-clamp-1">{course.title}</h3>
+            <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium shrink-0 ${diffBadge.className}`}>
+              {diffBadge.label}
+            </span>
+            {course.isPinned && <Pin size={11} className="fill-amber-500 text-amber-500 shrink-0" />}
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`flex-1 h-1 rounded-full overflow-hidden max-w-xs ${accent.bg}`}>
+              <div className={`h-full rounded-full ${accent.bar}`} style={{ width: `${course.progress}%` }} />
+            </div>
+            <span className="text-[10px] text-muted-foreground shrink-0">{course.progress}%</span>
+          </div>
+        </div>
+        {actionButtons}
+        {!isLocked && continueButton}
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      layout
+      variants={{
+        hidden: { opacity: 0, scale: 0.98 },
+        visible: { opacity: 1, scale: 1, y: 0 },
+      }}
+      whileHover={{ y: -2 }}
+      className={`group rounded-xl border overflow-hidden transition-colors ${accent.card} ${accent.border} hover:brightness-[0.98] dark:hover:brightness-110`}
+    >
+      <div className={`h-1 ${accent.bg}`}>
+        <div
+          className={`h-full ${accent.bar} transition-all duration-500`}
+          style={{ width: `${course.progress}%` }}
+        />
+      </div>
+
+      <div className="p-4">
+        <div className="flex items-start gap-3 mb-2">
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${accent.bg}`}>
+            <BookOpen size={16} className={accent.text} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${diffBadge.className}`}>
+                {diffBadge.label}
+              </span>
+              {course.isPinned && (
+                <span className="flex items-center gap-0.5 text-[9px] font-medium text-amber-600 dark:text-amber-400">
+                  <Pin size={9} className="fill-current" />
+                  Pinned
+                </span>
+              )}
+            </div>
+            <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
+              {course.title}
+            </h3>
+          </div>
+          {actionButtons}
+        </div>
+
+        {course.description && (
+          <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 pl-12">
+            {course.description}
+          </p>
+        )}
+
+        {footer}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Library({ setActiveContent }) {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState("grid");
@@ -576,13 +795,18 @@ export default function Library({ setActiveContent }) {
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="bg-card border border-border rounded-lg p-6 animate-pulse"
+              className="rounded-xl border border-border overflow-hidden animate-pulse"
             >
-              <div className="h-4 bg-muted-foreground/20 rounded mb-4 w-3/4"></div>
-              <div className="h-3 bg-muted-foreground/20 rounded mb-6"></div>
-              <div className="flex gap-3">
-                <div className="h-8 w-20 bg-muted-foreground/20 rounded-full"></div>
-                <div className="h-8 w-24 bg-muted-foreground/20 rounded-full"></div>
+              <div className="h-1 bg-muted" />
+              <div className="p-4 space-y-3">
+                <div className="flex gap-3">
+                  <div className="w-9 h-9 bg-muted rounded-lg shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-muted rounded w-1/4" />
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                  </div>
+                </div>
+                <div className="h-3 bg-muted rounded w-full" />
               </div>
             </div>
           ))}
@@ -633,106 +857,17 @@ export default function Library({ setActiveContent }) {
                 return true;
               })
               .map((course) => (
-                <motion.div
+                <LibraryCourseCard
                   key={course.id}
-                  layout
-                  variants={{
-                    hidden: { opacity: 0, scale: 0.95 },
-                    visible: { opacity: 1, scale: 1, y: 0 },
-                  }}
-                  whileHover={{ y: -4 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:border-green-300 dark:hover:border-green-600 transition-all duration-200"
-                >
-                  <div className="h-1 bg-slate-100 dark:bg-slate-800">
-                    <div
-                      className="h-full bg-green-500 transition-all duration-1000"
-                      style={{ width: `${course.progress}%` }}
-                    />
-                  </div>
-
-                  <div className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
-                        <BookOpen size={16} className="text-green-600 dark:text-green-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors min-w-0">
-                          {course.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          onClick={() => handlePin(course.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                          title={course.isPinned ? "Unpin" : "Pin (max 3)"}
-                        >
-                          <Pin size={13} className={course.isPinned ? "fill-amber-500 text-amber-500" : ""} />
-                        </button>
-                        {(() => {
-                          if (course.format !== "course") return false;
-                          const hasActiveCourseUnlock = Boolean(
-                            course.premiumAccessExpiresAt &&
-                              new Date(course.premiumAccessExpiresAt) > new Date()
-                          );
-                          if (hasActiveCourseUnlock) return false;
-                          return !isPremium || (isAtCourseUsageLimit && !isEnterprise);
-                        })() && (
-                          <button
-                            onClick={() => handleMakePremium(course)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                            title="Make premium ($6)"
-                          >
-                            <Crown size={13} />
-                          </button>
-                        )}
-                        {course.format !== "questions" && course.format !== "flashcards" && (
-                          <button
-                            onClick={() => {
-                              if (course.progress < 100) {
-                                toast.info("Please complete the course or wait for all lessons to generate before downloading.");
-                                return;
-                              }
-                              handleDownload(course);
-                            }}
-                            className={`p-1.5 rounded-lg transition-colors ${isPremium ? (course.progress === 100 ? "text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20" : "opacity-40 cursor-not-allowed") : "opacity-40 cursor-not-allowed"}`}
-                            title={!isPremium ? "Pro Feature: Download PDF" : (course.progress === 100 ? "Download PDF" : "Complete course to download")}
-                          >
-                            <Download size={13} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {course.description && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mb-3">
-                        {course.description}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        <span className="font-medium">{course.completedLessons}/{course.totalLessons}</span>
-                        <span>·</span>
-                        <span>{course.estimatedTime}</span>
-                        <span>·</span>
-                        <span>{course.progress}%</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!isPremium && !course.isGenerated ? (
-                          <span className="text-slate-300 dark:text-slate-600 text-[10px]">Locked</span>
-                        ) : (
-                          <Link
-                            href={`/learn/${encodeURIComponent(course.topic)}?format=${course.format}&difficulty=${course.difficulty}`}
-                            className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                          >
-                            {course.progress === 100 ? "Review" : "Continue"} <ArrowRight size={10} className="-rotate-45" />
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+                  course={course}
+                  viewMode={viewMode}
+                  isPremium={isPremium}
+                  isAtCourseUsageLimit={isAtCourseUsageLimit}
+                  isEnterprise={isEnterprise}
+                  onPin={handlePin}
+                  onMakePremium={handleMakePremium}
+                  onDownload={handleDownload}
+                />
               ))}
           </motion.div>
         </AnimatePresence>

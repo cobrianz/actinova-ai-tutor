@@ -235,6 +235,7 @@ export default function PremiumCourses() {
       setBusyCourseId(course.id);
       const response = await apiClient.post("/api/billing/use-credits", {
         itemType: "course_generation",
+        courseId: course.id,
       });
       const data = await response.json();
       if (!response.ok || !data.success) {

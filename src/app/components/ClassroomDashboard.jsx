@@ -291,9 +291,31 @@ function CreateClassroomForm({ onClose, onCreated }) {
   );
 }
 
+const CARD_ACCENTS = [
+  { bg: "bg-violet-200/80 dark:bg-violet-900/50", card: "bg-violet-50 dark:bg-violet-950/25", border: "border-violet-200/80 dark:border-violet-800/40", footer: "border-violet-200/60 dark:border-violet-800/30", text: "text-violet-600 dark:text-violet-400", hover: "hover:border-violet-400 dark:hover:border-violet-500", badge: "bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400" },
+  { bg: "bg-blue-200/80 dark:bg-blue-900/50", card: "bg-blue-50 dark:bg-blue-950/25", border: "border-blue-200/80 dark:border-blue-800/40", footer: "border-blue-200/60 dark:border-blue-800/30", text: "text-blue-600 dark:text-blue-400", hover: "hover:border-blue-400 dark:hover:border-blue-500", badge: "bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400" },
+  { bg: "bg-emerald-200/80 dark:bg-emerald-900/50", card: "bg-emerald-50 dark:bg-emerald-950/25", border: "border-emerald-200/80 dark:border-emerald-800/40", footer: "border-emerald-200/60 dark:border-emerald-800/30", text: "text-emerald-600 dark:text-emerald-400", hover: "hover:border-emerald-400 dark:hover:border-emerald-500", badge: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" },
+  { bg: "bg-amber-200/80 dark:bg-amber-900/50", card: "bg-amber-50 dark:bg-amber-950/25", border: "border-amber-200/80 dark:border-amber-800/40", footer: "border-amber-200/60 dark:border-amber-800/30", text: "text-amber-600 dark:text-amber-400", hover: "hover:border-amber-400 dark:hover:border-amber-500", badge: "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400" },
+  { bg: "bg-rose-200/80 dark:bg-rose-900/50", card: "bg-rose-50 dark:bg-rose-950/25", border: "border-rose-200/80 dark:border-rose-800/40", footer: "border-rose-200/60 dark:border-rose-800/30", text: "text-rose-600 dark:text-rose-400", hover: "hover:border-rose-400 dark:hover:border-rose-500", badge: "bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400" },
+  { bg: "bg-cyan-200/80 dark:bg-cyan-900/50", card: "bg-cyan-50 dark:bg-cyan-950/25", border: "border-cyan-200/80 dark:border-cyan-800/40", footer: "border-cyan-200/60 dark:border-cyan-800/30", text: "text-cyan-600 dark:text-cyan-400", hover: "hover:border-cyan-400 dark:hover:border-cyan-500", badge: "bg-cyan-100 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400" },
+];
+
+function hashString(str = "") {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+function getCardAccent(seed = "") {
+  return CARD_ACCENTS[hashString(seed) % CARD_ACCENTS.length];
+}
+
 function ClassroomCard({ classroom, role, onClick, onDelete }) {
   const [deleting, setDeleting] = useState(false);
   const isOverdue = classroom.dueAssignments > 0;
+  const accent = getCardAccent(classroom.name || classroom.id || "");
 
   const handleDelete = async (e) => {
     e.stopPropagation();
@@ -314,17 +336,19 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
-      className="text-left w-full rounded-xl border p-4 transition-all border-slate-200 bg-white hover:border-green-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-400/30 cursor-pointer"
+      className={`text-left w-full rounded-xl border p-4 transition-all hover:brightness-[0.98] dark:hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-green-400/30 cursor-pointer ${accent.card} ${accent.border} ${accent.hover}`}
     >
       {/* Top row: icon + name + delete */}
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <GraduationCap size={16} className="text-green-600 dark:text-green-400 shrink-0" />
-          <span className="text-[13px] font-semibold text-slate-800 dark:text-white truncate">{classroom.name}</span>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${accent.bg}`}>
+            <GraduationCap size={16} className={accent.text} />
+          </div>
+          <span className="text-[13px] font-semibold text-slate-800 dark:text-white truncate flex-1">{classroom.name}</span>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 pt-1">
           {classroom.semester && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 uppercase tracking-wider">
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${accent.badge}`}>
               {classroom.semester}
             </span>
           )}
@@ -341,12 +365,12 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
       </div>
 
       {/* Description */}
-      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 pl-12">
         {classroom.description || classroom.subject || "No description yet."}
       </p>
 
       {/* Stats row */}
-      <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <div className="mt-3 flex items-center gap-3 flex-wrap pl-12">
         {role === "instructor" && (
           <span className="flex items-center gap-1 text-[10px] text-slate-400">
             <Users className="w-3 h-3" />
@@ -372,11 +396,11 @@ function ClassroomCard({ classroom, role, onClick, onDelete }) {
       </div>
 
       {/* Footer */}
-      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div className={`mt-3 pt-3 border-t ${accent.footer} flex items-center justify-between`}>
         <span className="text-[10px] text-slate-400">
           {new Date(classroom.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </span>
-        <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
+        <span className={`text-[11px] font-semibold flex items-center gap-1 ${accent.text}`}>
           Open <ArrowRight className="w-3 h-3" />
         </span>
       </div>
@@ -398,6 +422,20 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
   setSidebarCollapsedRef.current = setSidebarCollapsed;
   const [joining, setJoining] = useState(false);
   const isInstructor = user?.role === "instructor" || user?.role === "admin";
+
+  const selectClassroom = useCallback(async (classroom) => {
+    try {
+      const res = await apiClient.get(`/api/classrooms?id=${classroom.id}`);
+      const data = await res.json();
+      if (data.success && data.classroom) {
+        setSelectedClassroom(data.classroom);
+      } else {
+        setSelectedClassroom(classroom);
+      }
+    } catch {
+      setSelectedClassroom(classroom);
+    }
+  }, []);
 
   useEffect(() => {
     const view = searchParams.get("view");
@@ -439,19 +477,21 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
     if (selectedClassroom?.id === classroomId) return;
 
     const tryRestore = async () => {
-      // Try from already-loaded list first
-      if (classrooms.length > 0) {
-        const found = classrooms.find((c) => c.id === classroomId);
-        if (found) { setSelectedClassroom(found); return; }
-      }
-      // Otherwise fetch fresh
+      // Always fetch full classroom data with modules and forkedContent
       try {
-        const res = await apiClient.get("/api/classrooms");
+        const res = await apiClient.get(`/api/classrooms?id=${classroomId}`);
         const data = await res.json();
-        if (data.success) {
-          setClassrooms(data.classrooms);
-          const found = (data.classrooms || []).find((c) => c.id === classroomId);
-          if (found) setSelectedClassroom(found);
+        if (data.success && data.classroom) {
+          setSelectedClassroom(data.classroom);
+        } else {
+          // Fallback to list
+          const listRes = await apiClient.get("/api/classrooms");
+          const listData = await listRes.json();
+          if (listData.success) {
+            setClassrooms(listData.classrooms);
+            const found = (listData.classrooms || []).find((c) => c.id === classroomId);
+            if (found) setSelectedClassroom(found);
+          }
         }
       } catch (err) { console.error("ClassroomDashboard:tryRestore", err); }
     };
@@ -532,7 +572,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2"><AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" /><span className="text-xs font-bold text-amber-700 dark:text-amber-400">Upcoming Deadlines</span></div>
           <div className="space-y-1.5">{upcomingDeadlines.map((d) => { const hoursLeft = (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60); const urgent = hoursLeft < 24; return (
-            <button key={d.id} onClick={() => { const cls = classrooms.find((c) => c.id === d.classroomId); if (cls) { setSelectedClassroom(cls); router.push(`/dashboard?tab=classrooms&classroom=${cls.id}`); } }} className="flex items-center gap-2 w-full text-left group">
+            <button key={d.id} onClick={() => { const cls = classrooms.find((c) => c.id === d.classroomId); if (cls) { selectClassroom(cls); router.push(`/dashboard?tab=classrooms&classroom=${cls.id}`); } }} className="flex items-center gap-2 w-full text-left group">
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${urgent ? "bg-red-400 animate-pulse" : "bg-amber-400"}`} /><span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium truncate flex-1 group-hover:underline">{d.title}</span><span className="text-[10px] text-amber-600 dark:text-amber-500 flex-shrink-0">{urgent ? `${Math.round(hoursLeft)}h` : `${Math.round(hoursLeft / 24)}d`}</span>
             </button>
           );})}</div>
@@ -555,7 +595,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {classrooms.map((classroom) => (
-            <ClassroomCard key={classroom.id} classroom={classroom} role={isInstructor ? "instructor" : "student"} onClick={() => { setSelectedClassroom(classroom); router.push(`/dashboard?tab=classrooms&classroom=${classroom.id}`); }} onDelete={handleDeleteClassroom} />
+            <ClassroomCard key={classroom.id} classroom={classroom} role={isInstructor ? "instructor" : "student"} onClick={() => { selectClassroom(classroom); router.push(`/dashboard?tab=classrooms&classroom=${classroom.id}`); }} onDelete={handleDeleteClassroom} />
           ))}
         </div>
       )}

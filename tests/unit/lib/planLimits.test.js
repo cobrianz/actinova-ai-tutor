@@ -10,8 +10,8 @@ import {
 
 describe("planLimits", () => {
   describe("PRODUCTS", () => {
-    it("has 5 product types", () => {
-      expect(PRODUCTS).toHaveLength(5);
+    it("has 9 product types", () => {
+      expect(PRODUCTS).toHaveLength(9);
     });
 
     it("each product has id, name, and creditCost", () => {
@@ -29,11 +29,15 @@ describe("planLimits", () => {
       expect(course.creditCost).toBe(40);
     });
 
-    it("other products cost 25 credits", () => {
-      const others = PRODUCTS.filter((p) => p.id !== "course_generation");
+    it("other generation products cost 25 credits, and special products cost different", () => {
+      const others = PRODUCTS.filter((p) => p.id !== "course_generation" && p.id !== "pdf_chat" && p.id !== "classroom_ai_generation");
       for (const product of others) {
         expect(product.creditCost).toBe(25);
       }
+      const pdfChat = PRODUCTS.find((p) => p.id === "pdf_chat");
+      expect(pdfChat.creditCost).toBe(5);
+      const classAi = PRODUCTS.find((p) => p.id === "classroom_ai_generation");
+      expect(classAi.creditCost).toBe(10);
     });
   });
 

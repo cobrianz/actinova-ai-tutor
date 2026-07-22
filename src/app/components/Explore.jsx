@@ -867,6 +867,10 @@ export default function Explore() {
   const [generatedCourses, setGeneratedCourses] = useState([]);
   const [exploringCategory, setExploringCategory] = useState(null);
   const [bookmarkedItems, setBookmarkedItems] = useState(new Set());
+  const [adaptiveRecommendations, setAdaptiveRecommendations] = useState([]);
+  const [adaptiveProfile, setAdaptiveProfile] = useState(null);
+  const [loadingAdaptive, setLoadingAdaptive] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [minimizedSections, setMinimizedSections] = useState(new Set());
   const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(9);
@@ -942,6 +946,7 @@ export default function Explore() {
   useEffect(() => {
     fetchExploreData();
     loadPersistedCourses();
+    fetchAdaptiveRecommendations();
   }, []);
 
   const loadPersistedCourses = async () => {
@@ -1043,6 +1048,23 @@ export default function Explore() {
       console.error("Error fetching explore data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAdaptiveRecommendations = async () => {
+    if (!user) return;
+    try {
+      setLoadingAdaptive(true);
+      const res = await apiClient.get("/api/explore/adaptive-recommendations");
+      if (res.ok) {
+        const data = await res.json();
+        setAdaptiveRecommendations(data.recommendations || []);
+        setAdaptiveProfile(data.adaptiveProfile || null);
+      }
+    } catch (error) {
+      console.error("Error fetching adaptive recommendations:", error);
+    } finally {
+      setLoadingAdaptive(false);
     }
   };
 
@@ -1332,6 +1354,93 @@ export default function Explore() {
           </div>
         </div>
       </div>
+
+      {/* Adaptive Recommendations */}
+      {user && (
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xs font-bold text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>Recommended for You</h2>
+                <p className="text-[11px] text-slate-500">
+                  {adaptiveProfile ? `${adaptiveProfile.masteryScore}% mastery · Personalized picks` : 'Personalized based on your learning pattern'}
+                </p>
+              </div>
+            </div>
+            <button onClick={() => toggleSectionMinimized("adaptive")} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+              {minimizedSections.has("adaptive") ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {!minimizedSections.has("adaptive") && (
+            <>
+              {loadingAdaptive ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {[...Array(6)].map((_, i) => <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />)}
+                </div>
+              ) : adaptiveRecommendations.length === 0 ? (
+                <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <Sparkles className="w-10 h-10 text-violet-300 mx-auto mb-3" />
+                  <p className="text-slate-500 text-xs">Complete courses and quizzes to get personalized recommendations</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {adaptiveRecommendations.map((rec, i) => {
+                    const diffKey = (rec.difficulty || "beginner").toLowerCase();
+                    const c = DIFF_COLORS[diffKey] || DIFF_COLORS.beginner;
+                    return (
+                      <div key={i} className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 ${c.border} transition-all duration-200 cursor-pointer flex flex-col`}
+                        onClick={() => {
+                          handleGenerateCourse({ title: rec.title, difficulty: rec.difficulty, description: rec.description, tags: rec.tags });
+                        }}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center shrink-0`}>
+                            <Sparkles size={16} className={c.icon} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-slate-900 dark:group-hover:text-white transition-colors min-w-0">
+                              {rec.title}
+                            </h3>
+                          </div>
+                          <span className={`shrink-0 px-1.5 py-0.5 text-[9px] font-semibold rounded-full ${c.bg} ${c.text}`}>{rec.difficulty || 'Beginner'}</span>
+                        </div>
+
+                        {rec.reason && (
+                          <div className="flex items-start gap-1.5 text-[10px] text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 rounded-md px-2 py-1.5 mb-3">
+                            <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
+                            <span className="line-clamp-2">{rec.reason}</span>
+                          </div>
+                        )}
+
+                        {rec.description && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 flex-1">
+                            {rec.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                            <span className="font-medium">{rec.category}</span>
+                          </div>
+                          <button onClick={e => { e.stopPropagation(); handleGenerateCourse({ title: rec.title, difficulty: rec.difficulty, description: rec.description, tags: rec.tags }); }}
+                            disabled={generatingCourse === rec.title}
+                            className={`font-bold ${c.text} flex items-center gap-1 group-hover:translate-x-0.5 transition-transform disabled:opacity-50`}>
+                            {generatingCourse === rec.title ? <><div className={`w-3 h-3 border-2 ${c.bg} border-t-current rounded-full animate-spin`} /> Generating...</> : <>Generate <Sparkles className="w-3 h-3" /></>}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Trending Topics */}
       <div className="mb-10">
