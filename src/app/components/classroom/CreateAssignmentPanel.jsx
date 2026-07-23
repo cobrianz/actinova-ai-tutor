@@ -82,6 +82,7 @@ export default function CreateAssignmentPanel({
         quizQuestions: editAssignment.quizQuestions || [],
         questionCount: editAssignment.meta?.questionCount || 20,
         difficulty: editAssignment.meta?.difficulty || "medium",
+        isTimed: editAssignment.meta?.isTimed ?? true,
         timeLimitMinutes: editAssignment.meta?.timeLimitMinutes || 30,
       };
     }
@@ -93,7 +94,7 @@ export default function CreateAssignmentPanel({
       title: "", instructions: "", type: "essay",
       weekNumber: 1, maxScore: 100, passingScore: 60,
       maxAttempts: 1, rubric: [], quizQuestions: [],
-      questionCount: 20, difficulty: "medium", timeLimitMinutes: 30,
+      questionCount: 20, difficulty: "medium", isTimed: true, timeLimitMinutes: 30,
     };
   });
   const [loading, setLoading] = useState(false);
@@ -201,7 +202,7 @@ export default function CreateAssignmentPanel({
         maxAttempts: form.maxAttempts,
         rubric: form.rubric.length > 0 ? form.rubric : undefined,
         weekNumber: typeof form.weekNumber === "string" ? 0 : form.weekNumber,
-        meta: (form.type === "quiz" || form.type === "exam") ? { questionCount: form.questionCount, difficulty: form.difficulty, timeLimitMinutes: form.timeLimitMinutes } : undefined,
+        meta: (form.type === "quiz" || form.type === "exam") ? { questionCount: form.questionCount, difficulty: form.difficulty, isTimed: form.isTimed, timeLimitMinutes: form.timeLimitMinutes } : undefined,
         quizQuestions: (form.type === "quiz" || form.type === "exam") && form.quizQuestions.length > 0 ? form.quizQuestions : undefined,
       };
       const res = isEdit
@@ -288,26 +289,40 @@ export default function CreateAssignmentPanel({
 
         {/* Quiz-specific: question count + difficulty + time limit */}
         {(form.type === "quiz" || form.type === "exam") && (
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className={labelCls}>Questions</label>
-              <input type="number" min={5} max={50} value={form.questionCount}
-                onChange={(e) => setForm({ ...form, questionCount: parseInt(e.target.value) || 20 })} className={inputCls} />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Questions</label>
+                <input type="number" min={5} max={50} value={form.questionCount}
+                  onChange={(e) => setForm({ ...form, questionCount: parseInt(e.target.value) || 20 })} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Difficulty</label>
+                <select value={form.difficulty}
+                  onChange={(e) => setForm({ ...form, difficulty: e.target.value })} className={inputCls}>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>Difficulty</label>
-              <select value={form.difficulty}
-                onChange={(e) => setForm({ ...form, difficulty: e.target.value })} className={inputCls}>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
+            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-lg px-4 py-3 border border-slate-200 dark:border-slate-700">
+              <div>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Timed Quiz</p>
+                <p className="text-[10px] text-slate-400">Students have a time limit to complete the quiz</p>
+              </div>
+              <button type="button" onClick={() => setForm({ ...form, isTimed: !form.isTimed })}
+                className={`relative w-10 h-5 rounded-full transition-colors ${form.isTimed ? "bg-green-500" : "bg-slate-300 dark:bg-slate-600"}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isTimed ? "translate-x-5" : ""}`} />
+              </button>
             </div>
-            <div>
-              <label className={labelCls}>Time (min)</label>
-              <input type="number" min={1} max={180} value={form.timeLimitMinutes}
-                onChange={(e) => setForm({ ...form, timeLimitMinutes: parseInt(e.target.value) || 30 })} className={inputCls} />
-            </div>
+            {form.isTimed && (
+              <div>
+                <label className={labelCls}>Time Limit (minutes)</label>
+                <input type="number" min={1} max={180} value={form.timeLimitMinutes}
+                  onChange={(e) => setForm({ ...form, timeLimitMinutes: parseInt(e.target.value) || 30 })} className={inputCls} />
+              </div>
+            )}
           </div>
         )}
 

@@ -40,14 +40,69 @@ function Badge({ children, color = "slate" }) {
 
 function renderDescription(text) {
   if (!text) return null;
-  // Split on **bold** markers and render bold spans
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+  const lines = text.split("\n");
+  const elements = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Detect markdown table: line with | and next line is separator |---|
+    if (line.includes("|") && i + 1 < lines.length && /^\|?\s*[-:]+[-|:\s]*$/.test(lines[i + 1].trim())) {
+      const headers = line.split("|").map((c) => c.trim()).filter(Boolean);
+      i += 2; // skip header + separator
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim() !== "") {
+        rows.push(lines[i].split("|").map((c) => c.trim()).filter(Boolean));
+        i++;
+      }
+      elements.push(
+        <div key={`table-${i}`} className="overflow-x-auto my-2">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr>{headers.map((h, hi) => <th key={hi} className="px-2 py-1.5 text-left font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri}>{row.map((cell, ci) => <td key={ci} className="px-2 py-1.5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{cell}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    } else if (/^#{1,3}\s+/.test(line)) {
+      elements.push(<p key={i} className="font-bold text-foreground text-sm mt-3 first:mt-0 mb-1">{line.replace(/^#{1,3}\s+/, "").split(/(\*\*[^*]+\*\*)/g).map((part, pi) => part.startsWith("**") && part.endsWith("**") ? <strong key={pi} className="font-bold">{part.slice(2, -2)}</strong> : <span key={pi}>{part}</span>)}</p>);
+      i++;
+    } else if (/^[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*]\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ul key={`ul-${i}`} className="list-disc list-outside ml-8 space-y-1 text-xs my-2">
+          {items.map((item, j) => <li key={j} className="text-muted-foreground">{item.split(/(\*\*[^*]+\*\*)/g).map((part, pi) => part.startsWith("**") && part.endsWith("**") ? <strong key={pi} className="font-bold text-foreground">{part.slice(2, -2)}</strong> : <span key={pi}>{part}</span>)}</li>)}
+        </ul>
+      );
+    } else if (/^\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ol key={`ol-${i}`} className="list-decimal list-outside ml-8 space-y-1 text-xs my-2">
+          {items.map((item, j) => <li key={j} className="text-muted-foreground">{item.split(/(\*\*[^*]+\*\*)/g).map((part, pi) => part.startsWith("**") && part.endsWith("**") ? <strong key={pi} className="font-bold text-foreground">{part.slice(2, -2)}</strong> : <span key={pi}>{part}</span>)}</li>)}
+        </ol>
+      );
+    } else if (line.trim() === "") {
+      i++;
+    } else {
+      elements.push(<p key={i} className="text-xs text-muted-foreground leading-relaxed">{line.split(/(\*\*[^*]+\*\*)/g).map((part, pi) => part.startsWith("**") && part.endsWith("**") ? <strong key={pi} className="font-bold text-foreground">{part.slice(2, -2)}</strong> : <span key={pi}>{part}</span>)}</p>);
+      i++;
     }
-    return <span key={i}>{part}</span>;
-  });
+  }
+  return elements;
 }
 
 export default function DiscussionsTab({ classroomState }) {
@@ -59,6 +114,7 @@ export default function DiscussionsTab({ classroomState }) {
     replyingTo, setReplyingTo, discAiLoading,
     handleCreateDiscussion, handleCreatePost, handleGenerateDiscussionPrompt,
     fetchDiscussions, inputCls, labelCls, focusedDiscussionId, setFocusedDiscussionId, fetchPosts,
+    assignments,
   } = classroomState;
 
   const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
@@ -74,6 +130,7 @@ export default function DiscussionsTab({ classroomState }) {
   }, [focusedDiscussionId, discussions, selectedDiscussion, setSelectedDiscussion, setFocusedDiscussionId]);
 
   if (selectedDiscussion) {
+    const linkedAssignment = (assignments || []).find((a) => a.type === "discussion" && a.meta?.discussionId === (selectedDiscussion._id || selectedDiscussion.id));
     return (
       <ThreadView
         discussion={selectedDiscussion}
@@ -90,6 +147,7 @@ export default function DiscussionsTab({ classroomState }) {
         inputCls={inputCls}
         fetchDiscussions={fetchDiscussions}
         fetchPosts={fetchPosts}
+        linkedAssignment={linkedAssignment}
       />
     );
   }
@@ -188,16 +246,17 @@ export default function DiscussionsTab({ classroomState }) {
         <div className="space-y-2">
           {discussions
             .sort((a, b) => { if (a.isPinned && !b.isPinned) return -1; if (!a.isPinned && b.isPinned) return 1; return new Date(b.createdAt || 0) - new Date(a.createdAt || 0); })
-            .map((disc, i) => (
-              <DiscussionCard key={disc._id || disc.id} disc={disc} onClick={() => setSelectedDiscussion(disc)} index={i} />
-            ))}
+            .map((disc, i) => {
+              const linkedAssignment = (assignments || []).find((a) => a.type === "discussion" && a.meta?.discussionId === (disc._id || disc.id));
+              return <DiscussionCard key={disc._id || disc.id} disc={disc} onClick={() => setSelectedDiscussion(disc)} index={i} linkedAssignment={linkedAssignment} />;
+            })}
         </div>
       )}
     </div>
   );
 }
 
-function DiscussionCard({ disc, onClick, index }) {
+function DiscussionCard({ disc, onClick, index, linkedAssignment }) {
   return (
     <motion.button
       initial={{ opacity: 0, y: 6 }}
@@ -213,6 +272,7 @@ function DiscussionCard({ disc, onClick, index }) {
             {disc.author?.role === "instructor" && <Badge color="green">Instructor</Badge>}
             {disc.isPinned && <Badge color="amber"><Pin className="w-2 h-2 inline mr-0.5" />Pinned</Badge>}
             {disc.isClosed && <Badge color="red">Closed</Badge>}
+            {linkedAssignment && <Badge color="green">Assignment &middot; {linkedAssignment.maxScore} pts</Badge>}
             <span className="text-[10px] text-muted-foreground ml-auto">{formatTime(disc.createdAt)}</span>
           </div>
           <h3 className="text-sm font-bold text-foreground leading-snug group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">{disc.title}</h3>
@@ -235,7 +295,7 @@ function DiscussionCard({ disc, onClick, index }) {
   );
 }
 
-function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions, fetchPosts }) {
+function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions, fetchPosts, linkedAssignment }) {
   const [expandedReplies, setExpandedReplies] = useState({});
   const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
 
@@ -264,6 +324,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
               <span className="text-sm font-bold text-foreground">{discussion.author?.name || "Instructor"}</span>
               {discussion.isPinned && <Badge color="amber"><Pin className="w-2 h-2 inline mr-0.5" />Pinned</Badge>}
               {discussion.isClosed && <Badge color="red">Closed</Badge>}
+              {linkedAssignment && <Badge color="green">Assignment &middot; {linkedAssignment.maxScore} pts</Badge>}
             </div>
             <h2 className="text-lg font-bold text-foreground leading-snug" style={{ fontFamily: "var(--font-fraunces)" }}>{discussion.title}</h2>
             {discussion.description && <p className="text-sm text-muted-foreground mt-2 leading-relaxed whitespace-pre-wrap">{renderDescription(discussion.description)}</p>}

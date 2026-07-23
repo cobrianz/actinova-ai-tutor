@@ -264,6 +264,28 @@ function renderInstructions(text) {
     if (/^#{1,3}\s+/.test(line)) {
       elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{parseInlineMarkdown(line.replace(/^#{1,3}\s+/, ""))}</p>);
       i++;
+    } else if (line.includes("|") && i + 1 < lines.length && /^\|?\s*[-:]+[-|:\s]*$/.test(lines[i + 1].trim())) {
+      const headers = line.split("|").map((c) => c.trim()).filter(Boolean);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim() !== "") {
+        rows.push(lines[i].split("|").map((c) => c.trim()).filter(Boolean));
+        i++;
+      }
+      elements.push(
+        <div key={`table-${i}`} className="overflow-x-auto my-2">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr>{headers.map((h, hi) => <th key={hi} className="px-2 py-1.5 text-left font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">{parseInlineMarkdown(h)}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri}>{row.map((cell, ci) => <td key={ci} className="px-2 py-1.5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{parseInlineMarkdown(cell)}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
     } else if (isSectionHeader(line)) {
       elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{parseInlineMarkdown(line.replace(/:$/, ""))}</p>);
       i++;
@@ -418,10 +440,13 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
     setQuizLoading(true);
     try {
       const timeLimit = assignment.meta?.timeLimitMinutes || 30;
+      const isTimed = assignment.meta?.isTimed !== false;
       if (assignment.quizQuestions?.length > 0) {
         setQuizQuestions(assignment.quizQuestions);
-        setQuizTimeLeft(timeLimit * 60);
-        setQuizTimerActive(true);
+        if (isTimed) {
+          setQuizTimeLeft(timeLimit * 60);
+          setQuizTimerActive(true);
+        }
         setQuizLoading(false);
         return;
       }
@@ -442,8 +467,10 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
           correctAnswer: q.correctAnswer,
         }));
         setQuizQuestions(questions);
-        setQuizTimeLeft(timeLimit * 60);
-        setQuizTimerActive(true);
+        if (isTimed) {
+          setQuizTimeLeft(timeLimit * 60);
+          setQuizTimerActive(true);
+        }
         try {
           await apiClient.patch(`/api/classrooms/${classroomId}/assignments/${assignment.id}`, { quizQuestions: questions });
         } catch (e) { console.error("Failed to save quiz questions:", e); }
@@ -532,6 +559,16 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                 <p className="text-xs font-bold text-slate-900 dark:text-white">{assignment.maxScore} pts</p>
               </div>
             )}
+            {(assignment.type === "quiz" || assignment.type === "exam") && (
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Timing</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white">
+                  {assignment.meta?.isTimed !== false
+                    ? `${assignment.meta?.timeLimitMinutes || 30} min`
+                    : "Untimed"}
+                </p>
+              </div>
+            )}
           </div>
 
           {(assignment.availableFrom || assignment.availableUntil) && (
@@ -595,6 +632,9 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${quizTimeLeft <= 60 ? "bg-red-500 text-white animate-pulse" : quizTimeLeft <= 300 ? "bg-amber-500 text-white" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>
                       {String(Math.floor(quizTimeLeft / 60)).padStart(2, "0")}:{String(quizTimeLeft % 60).padStart(2, "0")}
                     </span>
+                  )}
+                  {!quizSubmitted && assignment.meta?.isTimed === false && (
+                    <span className="text-[10px] font-semibold text-green-600 bg-green-100 dark:bg-green-500/20 px-2 py-0.5 rounded-full">Untimed</span>
                   )}
                   {assignment.meta?.questionCount && (
                     <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">{assignment.quizQuestions?.length || assignment.meta.questionCount} questions</span>
@@ -699,10 +739,6 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
 
           {isInstructor && (
             <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
-                <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Student Comment</p>
-              </div>
               <textarea
                 value={instructorComment}
                 onChange={(e) => setInstructorComment(e.target.value)}
