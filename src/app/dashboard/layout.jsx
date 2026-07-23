@@ -61,9 +61,9 @@ export default function DashboardLayout({ children }) {
     <ProtectedRoute>
       <ThemeProvider>
         <DailyLoginBonus />
-        <div className="h-screen bg-background flex flex-col relative">
-          <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
-          <div className="flex flex-1 overflow-hidden relative z-10">
+          <div className="h-screen bg-background flex flex-col relative">
+            {!isFullscreen && <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />}
+            <div className="flex flex-1 overflow-hidden relative z-10">
             {!hideDashboardNav && !isClassroomDetail && !isFullscreen && (
               <div className="hidden lg:block flex-shrink-0 w-[240px] h-full z-50 overflow-hidden">
                 <Sidebar
