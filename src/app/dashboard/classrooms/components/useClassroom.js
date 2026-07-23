@@ -843,6 +843,6 @@ export default function useClassroom(classroom, searchParams, onBack) {
     setDiscussions, setForkedContent,
     // Styling constants
     inputCls, labelCls, sectionCls,
-    toggleCls, toggleDot,
+    toggleCls, toggleDot, daysOfWeek: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
   };
 }

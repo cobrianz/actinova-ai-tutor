@@ -471,14 +471,14 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">{isInstructor ? "My Classrooms" : "My Classes"}</h2>
           <p className="text-xs text-slate-500 mt-0.5">{isInstructor ? "Manage your classes and track student progress" : "View assignments and track your progress"}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {!isInstructor && <button onClick={() => setShowJoin(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"><UserPlus className="w-3.5 h-3.5" /> Join</button>}
-          {isInstructor && <button onClick={openCreate} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors"><Plus className="w-3.5 h-3.5" /> New Classroom</button>}
+        <div className="flex items-center gap-2 shrink-0">
+          {!isInstructor && <button onClick={() => setShowJoin(true)} className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-semibold transition-colors bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"><UserPlus className="w-3.5 h-3.5" /><span className="hidden sm:inline">Join</span><span className="sm:hidden">Join</span></button>}
+          {isInstructor && <button onClick={openCreate} className="flex items-center gap-1 px-2 py-1.5 sm:px-3 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors"><Plus className="w-3.5 h-3.5" /><span className="hidden sm:inline">New Classroom</span><span className="sm:hidden">New</span></button>}
         </div>
       </div>
 

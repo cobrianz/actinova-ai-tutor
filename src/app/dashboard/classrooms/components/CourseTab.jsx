@@ -182,13 +182,12 @@ export default function CourseTab({ classroomState }) {
   }, [classroom.id]);
 
   const handleGenerateSyllabus = useCallback(async () => {
-    if (!classroom.startDate) { toast.error("Set a class start date first"); return; }
     const courseForks = (forkedContent || []).filter((fc) => fc.contentType === "course" && fc.meta?.modules?.length > 0);
     const hasModules = courseModules?.length > 0 || courseForks.length > 0;
     if (!hasModules) { toast.error("Generate course structure or fork a course first"); return; }
     setSyllabusLoading(true);
     try {
-      const start = new Date(classroom.startDate);
+      const start = classroom.startDate ? new Date(classroom.startDate) : new Date();
       const weeks = classroom.durationWeeks || 12;
       const end = new Date(start.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
       const mid = new Date(start.getTime() + Math.floor(weeks / 2) * 7 * 24 * 60 * 60 * 1000);

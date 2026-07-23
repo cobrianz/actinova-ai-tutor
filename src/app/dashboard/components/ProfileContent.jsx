@@ -17,11 +17,16 @@ import {
   Users,
   TrendingUp,
   BookOpen,
+  Sun,
+  Moon,
+  Bell,
 } from "lucide-react";
 import NotificationSettings from "./NotificationSettings";
+import NotificationBell from "./NotificationBell";
 import BadgesPage from "./BadgesPage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/AuthProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
 import { CREDIT_PACKS } from "@/lib/planLimits";
@@ -38,9 +43,12 @@ import { Bar } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip);
 
+const BILLING_PAGE_SIZE = 8;
+
 export default function ProfileContent() {
   const router = useRouter();
   const { user, logout, refreshToken } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
@@ -53,6 +61,7 @@ export default function ProfileContent() {
   const [kesRate, setKesRate] = useState(155);
   const [kesRateLoading, setKesRateLoading] = useState(true);
   const [teachingStats, setTeachingStats] = useState(null);
+  const [billingPage, setBillingPage] = useState(1);
   const isInstructor = user?.role === "instructor" || user?.role === "admin";
 
   useEffect(() => {
@@ -169,15 +178,53 @@ export default function ProfileContent() {
     );
   };
 
+  // Billing pagination helpers
+  const billingHistory = profileData?.user?.billingHistory
+    ? [...profileData.user.billingHistory].reverse()
+    : [];
+  const billingTotalPages = Math.max(1, Math.ceil(billingHistory.length / BILLING_PAGE_SIZE));
+  const billingSlice = billingHistory.slice(
+    (billingPage - 1) * BILLING_PAGE_SIZE,
+    billingPage * BILLING_PAGE_SIZE
+  );
+
   return (
     <div className="min-h-full bg-background text-foreground">
-      <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      {/* pt accounts for no top navbar on mobile */}
+      <main className="mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-24 sm:pb-8">
+        <div className="space-y-6 sm:space-y-8">
 
           {/* ── Premium Profile Header ── */}
-          <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-green-500/[0.03] p-8">
+          <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-green-500/[0.03] p-6 sm:p-8">
             <div className="absolute top-0 right-0 w-96 h-96 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+            {/* Mobile-only quick actions bar */}
+            <div className="sm:hidden flex items-center gap-2 mb-5 pb-4 border-b border-border/50 overflow-x-auto scrollbar-none">
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors shrink-0"
+                aria-label="Toggle theme"
+              >
+                {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                <span className="text-xs">{theme === "light" ? "Dark" : "Light"}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("notifications")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors shrink-0"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="text-xs">Alerts</span>
+              </button>
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors shrink-0"
+                aria-label="Log out"
+              >
+                <span className="text-xs">Log out</span>
+              </button>
+            </div>
+
             <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
               <Avatar className="w-24 h-24 ring-4 ring-green-500/20 ring-offset-2 ring-offset-background">
                 <AvatarImage src={profileData?.user?.avatar || user?.avatar} alt={profileData?.user?.firstName || user?.name} />
@@ -254,28 +301,25 @@ export default function ProfileContent() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Tabs */}
-              <div className="flex gap-2 p-1 bg-secondary/50 rounded-xl w-fit">
-                <button
-                  onClick={() => setActiveTab("overview")}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    activeTab === "overview"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Overview
-                </button>
-                <button
-                  onClick={() => setActiveTab("achievements")}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    activeTab === "achievements"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Achievements
-                </button>
+              {/* Tabs — scrollable on mobile */}
+              <div className="overflow-x-auto scrollbar-none -mx-1 px-1">
+                <div className="flex gap-1.5 p-1 bg-secondary/50 rounded-xl w-max min-w-full sm:w-fit">
+                  {["overview", "achievements", "notifications"].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                        activeTab === tab
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tab === "notifications" ? (
+                        <span className="flex items-center gap-1.5"><Bell className="w-3.5 h-3.5" />Notifications</span>
+                      ) : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {activeTab === "overview" && (
@@ -520,57 +564,133 @@ export default function ProfileContent() {
 
                 {/* Billing History */}
                 <div>
-                  <h3 className="font-bold flex items-center gap-2 mb-4 text-foreground">
-                    <Clock size={18} /> Billing History
-                  </h3>
-                  {profileData?.user?.billingHistory?.length > 0 ? (
-                    <div className="space-y-3">
-                      {[...profileData.user.billingHistory].reverse().map((entry, i) => {
-                        const date = entry.paidAt || entry.date;
-                        return (
-                          <div
-                            key={entry._id ? String(entry._id) : `${entry.reference || "billing"}-${i}`}
-                            className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
-                          >
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className={`p-2 rounded-lg shrink-0 ${
-                                entry.status === "success"
-                                  ? "bg-green-500/10 text-green-600"
-                                  : entry.status === "failed"
-                                    ? "bg-destructive/10 text-destructive"
-                                    : "bg-amber-500/10 text-amber-600"
-                              }`}>
-                                {entry.status === "success"
-                                  ? <CheckCircle size={16} />
-                                  : entry.status === "failed"
-                                    ? <AlertCircle size={16} />
-                                    : <Clock size={16} />
-                                }
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold flex items-center gap-2 text-foreground">
+                      <Clock size={18} /> Billing History
+                    </h3>
+                    {billingHistory.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {billingHistory.length} transaction{billingHistory.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+
+                  {billingHistory.length > 0 ? (
+                    <>
+                      <div className="space-y-3">
+                        {billingSlice.map((entry, i) => {
+                          // DB stores: type, amount, currency, paymentMethod, reference, createdAt, credits (for credit purchases)
+                          const date = entry.createdAt || entry.paidAt || entry.date;
+                          const globalIdx = (billingPage - 1) * BILLING_PAGE_SIZE + i;
+
+                          const TYPE_LABELS = {
+                            credit_purchase: "Credit Purchase",
+                            premium_generation: "Premium Generation",
+                            marketplace_course: "Course Purchase",
+                            resume_export: "Resume Export",
+                            classroom_creation: "Classroom Creation",
+                          };
+                          const label = TYPE_LABELS[entry.type] || entry.type?.replace(/_/g, " ") || "Transaction";
+                          const subtitle = [
+                            entry.credits ? `${entry.credits} credits` : null,
+                            entry.courseTitle || null,
+                            entry.topic ? `Topic: ${entry.topic}` : null,
+                            entry.exportFormat ? `Format: ${entry.exportFormat.toUpperCase()}` : null,
+                          ].filter(Boolean).join(" · ");
+
+                          return (
+                            <div
+                              key={entry._id ? String(entry._id) : `${entry.reference || "billing"}-${globalIdx}`}
+                              className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-2 rounded-lg shrink-0 bg-green-500/10 text-green-600">
+                                  <CheckCircle size={16} />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-foreground capitalize">{label}</p>
+                                  {subtitle && (
+                                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {date ? new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                                    {entry.paymentMethod ? ` · ${entry.paymentMethod}` : ""}
+                                    {entry.reference ? ` · ${entry.reference.slice(0, 12)}...` : ""}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <p className="font-semibold text-foreground truncate">{entry.description || entry.plan || "Transaction"}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {date ? new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "—"}
-                                  {entry.paymentMethod ? ` · ${entry.paymentMethod}` : ""}
+                              <div className="text-right shrink-0 ml-3">
+                                <p className="text-sm font-bold text-foreground">
+                                  {entry.currency || "NGN"} {entry.amount?.toLocaleString() || "—"}
                                 </p>
+                                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-green-500/10 text-green-600">
+                                  paid
+                                </span>
                               </div>
                             </div>
-                            <div className="text-right shrink-0 ml-4">
-                              <p className={`font-bold ${entry.status === "success" ? "text-foreground" : entry.status === "failed" ? "text-destructive" : "text-amber-600"}`}>
-                                {entry.currency || "NGN"} {entry.amount?.toLocaleString() || "—"}
-                              </p>
-                              <p className={`text-[10px] font-semibold uppercase tracking-wider ${
-                                entry.status === "success" ? "text-green-600" : entry.status === "failed" ? "text-destructive" : "text-amber-600"
-                              }`}>
-                                {entry.status || "unknown"}
-                              </p>
-                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Pagination */}
+                      {billingTotalPages > 1 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5 pt-4 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground text-center sm:text-left">
+                            Page {billingPage} of {billingTotalPages} &middot; Showing {billingSlice.length} of {billingHistory.length}
+                          </p>
+                          <div className="flex items-center justify-center gap-1 flex-wrap">
+                            <button
+                              onClick={() => setBillingPage(1)}
+                              disabled={billingPage === 1}
+                              className="px-2 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              First
+                            </button>
+                            <button
+                              onClick={() => setBillingPage((p) => Math.max(1, p - 1))}
+                              disabled={billingPage === 1}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              Prev
+                            </button>
+                            {Array.from({ length: billingTotalPages }, (_, i) => i + 1)
+                              .filter((p) => Math.abs(p - billingPage) <= 2)
+                              .map((p) => (
+                                <button
+                                  key={p}
+                                  onClick={() => setBillingPage(p)}
+                                  className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                                    p === billingPage
+                                      ? "bg-green-500 text-white shadow-sm"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              ))}
+                            <button
+                              onClick={() => setBillingPage((p) => Math.min(billingTotalPages, p + 1))}
+                              disabled={billingPage === billingTotalPages}
+                              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              Next
+                            </button>
+                            <button
+                              onClick={() => setBillingPage(billingTotalPages)}
+                              disabled={billingPage === billingTotalPages}
+                              className="px-2 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              Last
+                            </button>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No billing history yet.</p>
+                    <div className="py-10 text-center rounded-xl bg-muted/20">
+                      <Clock className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No billing history yet.</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -578,6 +698,24 @@ export default function ProfileContent() {
             </div>
               )}
               {activeTab === "achievements" && <BadgesPage />}
+
+              {/* ── Notifications Tab ── */}
+              {activeTab === "notifications" && (
+                <div className="space-y-6">
+                  {/* Inline Notifications Panel */}
+                  <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+                    <div className="p-5 border-b border-border bg-muted/20 flex items-center justify-between">
+                      <h2 className="text-sm font-bold text-foreground flex items-center gap-2" style={{ fontFamily: "var(--font-fraunces)" }}>
+                        <Bell className="w-4 h-4 text-green-500" /> Recent Notifications
+                      </h2>
+                    </div>
+                    <NotificationBell inlineMode />
+                  </div>
+
+                  {/* Notification Preferences */}
+                  <NotificationSettings />
+                </div>
+              )}
             </div>
           )}
         </div>

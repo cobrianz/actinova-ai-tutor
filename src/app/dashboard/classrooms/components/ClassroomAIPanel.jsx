@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Bot, User, X, Loader2, RefreshCw, HelpCircle, BookOpen, Lightbulb } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
@@ -10,7 +12,7 @@ export default function ClassroomAIPanel({ classroom, user, activeTab, isInstruc
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: `Hello! I am your AI Teaching Assistant for ${classroom?.name || "this classroom"}. How can I assist you with course content, assignments, or study strategies today?`,
+      content: `Hello! I am your AI Teaching Assistant for **${classroom?.name || "this classroom"}**. How can I assist you with course content, assignments, or study strategies today?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -27,17 +29,97 @@ export default function ClassroomAIPanel({ classroom, user, activeTab, isInstruc
     }
   }, [messages, isOpen]);
 
-  const quickPrompts = isInstructor
-    ? [
-        "Suggest a quick quiz topic for next week",
-        "How can I help struggling students?",
-        "Draft an announcement for upcoming assignment",
-      ]
-    : [
-        "Explain key topics in this course",
-        "How should I prepare for upcoming assignments?",
-        "Give me study tips for this subject",
-      ];
+  useEffect(() => {
+    if (!classroom?.id) return;
+    try {
+      const saved = localStorage.getItem(`classroom_ai_chat_${classroom.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      }
+    } catch {}
+  }, [classroom?.id]);
+
+  useEffect(() => {
+    if (!classroom?.id || messages.length <= 1) return;
+    try {
+      localStorage.setItem(`classroom_ai_chat_${classroom.id}`, JSON.stringify(messages));
+    } catch {}
+  }, [messages, classroom?.id]);
+
+  const getDynamicPrompts = () => {
+    if (isInstructor) {
+      switch (activeTab) {
+        case "assignments":
+          return [
+            "Help me generate 3 assignment instructions",
+            "Suggest grading rubric criteria for a project",
+            "Draft a feedback template for students",
+          ];
+        case "grades":
+          return [
+            "Analyze class grade distribution",
+            "How can I help students failing this course?",
+            "Draft an email to students with low scores",
+          ];
+        case "attendance":
+          return [
+            "Summarize student attendance trends",
+            "Draft attendance warning email for at-risk students",
+            "What strategies improve class attendance?",
+          ];
+        case "materials":
+          return [
+            "Suggest supplementary reading list for this subject",
+            "Create a study guide outline for Module 1",
+            "Generate lecture summary notes",
+          ];
+        default:
+          return [
+            "Suggest a quick quiz topic for next week",
+            "Draft a class announcement for upcoming deadlines",
+            "How can I structure next week's lesson plan?",
+          ];
+      }
+    } else {
+      switch (activeTab) {
+        case "assignments":
+          return [
+            "How should I structure my upcoming assignment?",
+            "Give me a study plan to finish my assignments on time",
+            "Explain common mistakes to avoid on quizzes",
+          ];
+        case "grades":
+          return [
+            "How can I improve my weighted average score?",
+            "What assignments have the highest weight in my grade?",
+            "Help me set target scores for remaining work",
+          ];
+        case "attendance":
+          return [
+            "What is the class attendance requirement?",
+            "How does attendance impact my final grade?",
+            "Help me write an absence excuse note",
+          ];
+        case "calendar":
+          return [
+            "What are all my upcoming due dates this month?",
+            "How should I schedule my weekly study hours?",
+            "Remind me of major exam and project dates",
+          ];
+        default:
+          return [
+            "Explain core concepts in this course step by step",
+            "Give me 5 practice questions for this subject",
+            "Summarize what I need to focus on this week",
+          ];
+      }
+    }
+  };
+
+  const quickPrompts = getDynamicPrompts();
 
   const handleSend = async (textToSend) => {
     const query = textToSend || input;
@@ -49,13 +131,12 @@ export default function ClassroomAIPanel({ classroom, user, activeTab, isInstruc
     setLoading(true);
 
     try {
-      const topicContext = `${classroom?.name || "Classroom"} - ${classroom?.subject || "Course"} (${activeTab} section)`;
-      const res = await apiClient.post("/api/chat", {
-        message: query.trim(),
-        topic: topicContext,
-        conversationHistory: messages.map((m) => ({ role: m.role, content: m.content })),
-      });
-
+      const endpoint = classroom?.id ? `/api/classrooms/${classroom.id}/chat` : "/api/chat";
+      const payload = classroom?.id
+        ? { message: query.trim(), activeTab, conversationHistory: messages.map((m) => ({ role: m.role, content: m.content })) }
+        : { message: query.trim(), topic: `${classroom?.name || "Classroom"} - ${classroom?.subject || "Course"}`, conversationHistory: messages.map((m) => ({ role: m.role, content: m.content })) };
+      
+      const res = await apiClient.post(endpoint, payload);
       const data = await res.json();
       if (data.response) {
         setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
@@ -100,12 +181,34 @@ export default function ClassroomAIPanel({ classroom, user, activeTab, isInstruc
                 <p className="text-[10px] text-muted-foreground">{classroom?.name || "Academic Assistant"}</p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  if (confirm("Clear conversation history?")) {
+                    const initial = [
+                      {
+                        role: "assistant",
+                        content: `Hello! I am your AI Teaching Assistant for **${classroom?.name || "this classroom"}**. How can I assist you with course content, assignments, or study strategies today?`,
+                      },
+                    ];
+                    setMessages(initial);
+                    if (classroom?.id) {
+                      localStorage.removeItem(`classroom_ai_chat_${classroom.id}`);
+                    }
+                  }
+                }}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Clear Chat History"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages Feed */}
@@ -121,13 +224,47 @@ export default function ClassroomAIPanel({ classroom, user, activeTab, isInstruc
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-xl p-3 leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[85%] rounded-xl p-3 leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-green-600 text-white rounded-tr-none"
-                      : "bg-card border border-border text-foreground rounded-tl-none"
+                      ? "bg-green-600 text-white rounded-tr-none whitespace-pre-wrap"
+                      : "bg-card border border-border text-foreground rounded-tl-none prose prose-xs dark:prose-invert max-w-none"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "user" ? (
+                    msg.content
+                  ) : (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed text-xs">{children}</p>,
+                        strong: ({ children }) => <strong className="font-bold text-foreground">{children}</strong>,
+                        em: ({ children }) => <em className="italic">{children}</em>,
+                        ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2 text-xs pl-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-2 text-xs pl-1">{children}</ol>,
+                        li: ({ children }) => <li className="text-xs leading-normal">{children}</li>,
+                        h1: ({ children }) => <h1 className="text-sm font-bold mt-2 mb-1 text-foreground">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-xs font-bold mt-2 mb-1 text-foreground">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-xs font-semibold mt-1.5 mb-1 text-foreground">{children}</h3>,
+                        code: ({ inline, children }) =>
+                          inline ? (
+                            <code className="bg-secondary px-1.5 py-0.5 rounded text-[11px] font-mono text-green-600 dark:text-green-400">
+                              {children}
+                            </code>
+                          ) : (
+                            <pre className="bg-secondary p-2 rounded-lg text-[11px] font-mono overflow-x-auto my-2 border border-border">
+                              <code>{children}</code>
+                            </pre>
+                          ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-2 border-green-500 pl-2.5 my-2 italic text-muted-foreground text-xs">
+                            {children}
+                          </blockquote>
+                        ),
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  )}
                 </div>
                 {msg.role === "user" && (
                   <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center shrink-0">

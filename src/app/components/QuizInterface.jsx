@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -38,6 +39,8 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadedQuestions, setLoadedQuestions] = useState([]);
   const [totalQuestions, setTotalQuestions] = useState(10);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [unansweredCount, setUnansweredCount] = useState(0);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
@@ -162,15 +165,14 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
     }
   };
 
-  const handleSubmit = async () => {
-    const unansweredCount = loadedQuestions.filter((q) => !answers[q._id]).length;
-    if (unansweredCount > 0 && !submitted) {
-      const proceed = window.confirm(
-        `You have ${unansweredCount} unanswered question${unansweredCount > 1 ? "s" : ""}. Are you sure you want to submit?`
-      );
-      if (!proceed) return;
-    }
+  const handleConfirmSubmit = () => {
+    const unanswered = loadedQuestions.filter((q) => !answers[q._id]).length;
+    setUnansweredCount(unanswered);
+    setShowConfirmModal(true);
+  };
 
+  const handleExecuteSubmit = async () => {
+    setShowConfirmModal(false);
     let totalScore = 0;
     loadedQuestions.forEach((card) => {
       const userAnswer = answers[card._id];
@@ -392,19 +394,14 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
                     style={{ transitionDelay: `${index * 30}ms` }}
                   >
                     {/* Question Header */}
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="flex-shrink-0 w-9 h-9 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-bold text-sm">
-                        {globalIndex + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm sm:text-base font-semibold text-foreground leading-relaxed">
-                          {q.text}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs font-medium">
-                            {q.points} pt{q.points !== 1 ? "s" : ""}
-                          </span>
-                        </div>
+                    <div className="mb-4">
+                      <h3 className="text-sm sm:text-base font-semibold text-foreground leading-relaxed">
+                        {globalIndex + 1}. {q.text}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs font-medium">
+                          {q.points} pt{q.points !== 1 ? "s" : ""}
+                        </span>
                       </div>
                     </div>
 
@@ -413,7 +410,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
                       <RadioGroup
                         onValueChange={(value) => handleAnswerChange(q._id, value)}
                         disabled={submitted}
-                        className="space-y-2 ml-12"
+                        className="space-y-2 ml-0 sm:ml-12"
                       >
                         {q.options.map((option, optIndex) => {
                           const isSelected = answers[q._id] === option;
@@ -456,7 +453,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
                         })}
                       </RadioGroup>
                     ) : (q.type === "fill_blank" || q.type === "short_answer") ? (
-                      <div className="ml-12 space-y-2">
+                      <div className="ml-0 sm:ml-12 space-y-2">
                         <Input
                           type="text"
                           placeholder={q.type === "fill_blank" ? "Type your answer..." : "Type your answer..."}
@@ -481,7 +478,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
                         )}
                       </div>
                     ) : (
-                      <div className="space-y-2 ml-12">
+                      <div className="space-y-2 ml-0 sm:ml-12">
                         {q.options.map((option, optIndex) => {
                           const selectedAnswers = answers[q._id] || [];
                           const isSelected = selectedAnswers.includes(option);
@@ -535,7 +532,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
 
                     {/* Explanation Display (after submit) */}
                     {submitted && q.explanation && (
-                      <div className="mt-3 ml-12 flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 border border-border px-3 py-2.5 rounded-lg">
+                      <div className="mt-3 ml-0 sm:ml-12 flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 border border-border px-3 py-2.5 rounded-lg">
                         <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-yellow-500" />
                         <span>{q.explanation}</span>
                       </div>
@@ -543,7 +540,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
 
                     {/* Correct Answer Display (after submit) */}
                     {submitted && (
-                      <div className="mt-3 ml-12">
+                      <div className="mt-3 ml-0 sm:ml-12">
                         {JSON.stringify(answers[q._id]) !==
                         JSON.stringify(q.correctAnswer) ? (
                           <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-lg">
@@ -717,7 +714,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
                   </Button>
                 </Link>
                 <Button
-                  onClick={handleSubmit}
+                  onClick={handleConfirmSubmit}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto sm:px-8"
                 >
                   Submit Assessment
@@ -727,6 +724,56 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
           )}
         </div>
       </div>
+
+      {/* Premium Inline Submit Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-card border border-border rounded-2xl max-w-md w-full shadow-2xl p-6 overflow-hidden relative"
+            >
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-foreground mb-1">
+                    Submit Assessment?
+                  </h3>
+                  {unansweredCount > 0 ? (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      You have <strong className="text-destructive font-bold">{unansweredCount} unanswered</strong> question{unansweredCount > 1 ? "s" : ""} left. Are you sure you want to finish and submit your answers?
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      You have answered all questions. Are you ready to submit and grade your assessment?
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="border-border rounded-xl text-xs font-semibold py-2 px-4 hover:bg-muted"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleExecuteSubmit}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-semibold py-2 px-5"
+                >
+                  Confirm & Submit
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

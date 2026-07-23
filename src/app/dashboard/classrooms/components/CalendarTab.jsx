@@ -139,27 +139,32 @@ export default function CalendarTab({ classroomState }) {
 
   const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const selectedDayKey = selectedDay ? `${currentYear}-${currentMonth}-${selectedDay}` : null;
+  const selectedDayEvents = selectedDayKey ? (eventsByDate[selectedDayKey] || []) : [];
+
   return (
     <div className="space-y-3">
       {/* Calendar Grid */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+      <div className="bg-card border border-border rounded-xl p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => navigateMonth(-1)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          <button onClick={() => navigateMonth(-1)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+          <h3 className="text-sm font-bold text-foreground">
             {MONTH_NAMES[currentMonth]} {currentYear}
           </h3>
-          <button onClick={() => navigateMonth(1)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          <button onClick={() => navigateMonth(1)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
         </div>
 
         {/* Day names */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DAY_NAMES.map((d) => (
-            <div key={d} className="text-center text-[10px] font-semibold text-slate-400 uppercase">{d}</div>
+            <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground uppercase">{d}</div>
           ))}
         </div>
 
@@ -175,35 +180,73 @@ export default function CalendarTab({ classroomState }) {
             const hasClass = classDaysInMonth.has(day);
             const inRange = isInCourseRange(day);
             const todayMatch = isToday(day);
+            const isSelected = selectedDay === day;
 
             return (
-              <div
+              <button
                 key={day}
-                className={`relative rounded-lg p-1 min-h-[44px] text-center transition-colors ${
-                  todayMatch
+                onClick={() => setSelectedDay(isSelected ? null : day)}
+                className={`relative rounded-lg p-1 min-h-[48px] text-center transition-all cursor-pointer hover:bg-secondary/60 ${
+                  isSelected
+                    ? "ring-2 ring-green-500 bg-green-50/50 dark:bg-green-500/10"
+                    : todayMatch
                     ? "bg-green-500/15 ring-1 ring-green-500/40"
                     : inRange
-                      ? "bg-slate-50 dark:bg-slate-800/50"
-                      : ""
+                    ? "bg-secondary/30"
+                    : ""
                 }`}
               >
-                <span className={`text-[11px] font-semibold ${todayMatch ? "text-green-700 dark:text-green-400" : "text-slate-700 dark:text-slate-300"}`}>
+                <span className={`text-[11px] font-semibold ${todayMatch ? "text-green-700 dark:text-green-400 font-extrabold" : "text-foreground"}`}>
                   {day}
                 </span>
                 {hasClass && (
-                  <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-green-500" />
                 )}
                 {dayEvents.length > 0 && (
-                  <div className="flex gap-0.5 justify-center mt-0.5 flex-wrap">
+                  <div className="flex gap-0.5 justify-center mt-1 flex-wrap">
                     {dayEvents.slice(0, 3).map((ev, j) => (
                       <div key={j} className={`w-1.5 h-1.5 rounded-full ${ev.color}`} />
                     ))}
                   </div>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
+
+        {/* Selected Day Agenda Drawer */}
+        {selectedDay && (
+          <div className="mt-3 pt-3 border-t border-border bg-secondary/20 p-3 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-foreground">
+                Agenda for {MONTH_NAMES[currentMonth]} {selectedDay}, {currentYear}
+              </span>
+              <button onClick={() => setSelectedDay(null)} className="text-[10px] text-muted-foreground hover:text-foreground">
+                Close
+              </button>
+            </div>
+            {selectedDayEvents.length === 0 && !classDaysInMonth.has(selectedDay) ? (
+              <p className="text-xs text-muted-foreground">No events scheduled for this day.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {classDaysInMonth.has(selectedDay) && (
+                  <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 font-semibold bg-green-50 dark:bg-green-500/10 p-2 rounded-lg">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    Regular Scheduled Class
+                    {startTime && endTime && <span className="text-[10px] text-muted-foreground font-normal">({startTime} - {endTime})</span>}
+                  </div>
+                )}
+                {selectedDayEvents.map((ev, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs text-foreground p-2 rounded-lg bg-card border border-border">
+                    <div className={`w-2 h-2 rounded-full ${ev.color}`} />
+                    <span className="font-medium flex-1 truncate">{ev.title}</span>
+                    <span className="text-[9px] uppercase font-bold text-muted-foreground px-1.5 py-0.5 rounded bg-secondary">{ev.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Legend */}
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">

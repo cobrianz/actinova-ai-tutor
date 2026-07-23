@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }) {
   const setActiveContent = () => {};
 
   const toggleSidebar = () => {
-    if (hideDashboardNav) {
+    if (hideDashboardNav || isClassroomDetail) {
       setClassroomSidebarCollapsed((prev) => !prev);
     } else {
       setSidebarOpen((prev) => !prev);
@@ -64,7 +64,12 @@ export default function DashboardLayout({ children }) {
       <ThemeProvider>
         <DailyLoginBonus />
           <div className="h-screen bg-background flex flex-col relative">
-            {!isFullscreen && <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />}
+            {/* Top navbar — hidden on mobile (uses bottom DashboardMobileNav instead) */}
+            {!isFullscreen && (
+              <div className="hidden sm:block">
+                <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
+              </div>
+            )}
             <div className="flex flex-1 overflow-hidden relative z-10">
             {!hideDashboardNav && !isClassroomDetail && !isFullscreen && (
               <div className="hidden lg:block flex-shrink-0 w-[240px] h-full z-50 overflow-hidden">

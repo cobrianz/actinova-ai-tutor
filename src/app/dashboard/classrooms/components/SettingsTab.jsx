@@ -20,10 +20,12 @@ import { toast } from "sonner";
  * @param {Function} props.classroomState.toggleCls - (on: boolean) => string
  * @param {Function} props.classroomState.toggleDot - (on: boolean) => string
  */
+import { daysOfWeek as DAYS_OF_WEEK } from "./constants";
+
 export default function SettingsTab({ classroomState }) {
   const {
     classroom, settingsForm, setSettingsForm, settingsSaving,
-    handleSaveSettings, handleDeleteClassroom, daysOfWeek,
+    handleSaveSettings, handleDeleteClassroom, daysOfWeek = DAYS_OF_WEEK,
     inputCls, labelCls, sectionCls, toggleCls, toggleDot,
   } = classroomState;
 

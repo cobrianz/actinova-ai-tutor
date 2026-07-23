@@ -56,7 +56,7 @@ export default function AnalyticsTab({ classroomState }) {
   if (analyticsLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 animate-pulse">
               <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-3" />
@@ -87,15 +87,13 @@ export default function AnalyticsTab({ classroomState }) {
   const atRisk = analytics.atRisk || [];
 
   return (
-    <div className="space-y-4">
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-indigo-500/10" />
-        <div className="absolute top-3 right-3 w-32 h-32 rounded-full bg-purple-500/5 blur-3xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center">
-              <BarChart2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+    <div className="space-y-6">
+      {/* Header Info */}
+      <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-5 h-5 text-green-500" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white" style={{ fontFamily: "var(--font-fraunces)" }}>Analytics Overview</h2>
@@ -106,11 +104,54 @@ export default function AnalyticsTab({ classroomState }) {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Students" value={overview.totalStudents || 0} sub={`${overview.activeStudents || 0} active this week`} icon={Users} color="text-blue-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="Students" value={overview.totalStudents || classroomState?.students?.length || 0} sub={`${overview.activeStudents || 0} active this week`} icon={Users} color="text-blue-500" />
         <StatCard label="Assignments" value={overview.totalAssignments || assignments.length} sub={`${assignmentAnalytics.length} graded`} icon={ClipboardList} color="text-green-500" />
         <StatCard label="Avg Completion" value={`${overview.avgCompletionRate || 0}%`} sub="across all students" icon={Target} color="text-purple-500" />
         <StatCard label="Class Average" value={`${overview.avgScore || 0}%`} sub="average score" icon={GraduationCap} color="text-amber-500" />
+      </div>
+
+      {/* Feature Breakdown Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center shrink-0">
+            <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-foreground">{classroomState?.courseModules?.length || 0} Modules</p>
+            <p className="text-[10px] text-muted-foreground">Course structure</p>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+            <ClipboardList className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-foreground">{classroomState?.materials?.length || 0} Materials</p>
+            <p className="text-[10px] text-muted-foreground">Attached resources</p>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+            <BarChart2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-foreground">{classroomState?.discussions?.length || 0} Discussions</p>
+            <p className="text-[10px] text-muted-foreground">Active threads</p>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-foreground">{classroomState?.announcements?.length || 0} Announcements</p>
+            <p className="text-[10px] text-muted-foreground">Posted notices</p>
+          </div>
+        </div>
       </div>
 
       {/* Charts Row */}

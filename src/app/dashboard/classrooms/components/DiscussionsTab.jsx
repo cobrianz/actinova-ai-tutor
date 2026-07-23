@@ -159,7 +159,7 @@ export default function DiscussionsTab({ classroomState }) {
   return (
     <div className="space-y-4">
       {/* Header row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="text-base font-bold text-foreground" style={{ fontFamily: "var(--font-fraunces)" }}>Discussions</h2>
           <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -167,21 +167,23 @@ export default function DiscussionsTab({ classroomState }) {
           </p>
         </div>
         {canPost ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleGenerateDiscussionPrompt}
               disabled={discAiLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all disabled:opacity-50"
+              className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-semibold bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all disabled:opacity-50"
             >
               {discAiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              AI Prompt
+              <span className="hidden sm:inline">AI Prompt</span>
+              <span className="sm:hidden">AI</span>
             </button>
             <button
               onClick={() => setShowNewDiscussion(!showNewDiscussion)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${showNewDiscussion ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-green-500 text-white hover:bg-green-600"}`}
+              className={`flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-semibold transition-all ${showNewDiscussion ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-green-500 text-white hover:bg-green-600"}`}
             >
               <Plus className="w-3.5 h-3.5" />
-              {showNewDiscussion ? "Cancel" : "New Discussion"}
+              <span className="hidden sm:inline">{showNewDiscussion ? "Cancel" : "New Discussion"}</span>
+              <span className="sm:hidden">{showNewDiscussion ? "Close" : "Post"}</span>
             </button>
           </div>
         ) : (
@@ -277,7 +279,7 @@ function DiscussionCard({ disc, onClick, index, linkedAssignment }) {
             <span className="text-[10px] text-muted-foreground ml-auto">{formatTime(disc.createdAt)}</span>
           </div>
           <h3 className="text-sm font-bold text-foreground leading-snug group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">{disc.title}</h3>
-          {disc.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{renderDescription(disc.description)}</p>}
+          {disc.description && <div className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{renderDescription(disc.description)}</div>}
           <div className="flex items-center gap-3 mt-2">
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <MessageSquare className="w-3 h-3" />
@@ -328,7 +330,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
               {linkedAssignment && <Badge color="green">Assignment &middot; {linkedAssignment.maxScore} pts</Badge>}
             </div>
             <h2 className="text-lg font-bold text-foreground leading-snug" style={{ fontFamily: "var(--font-fraunces)" }}>{discussion.title}</h2>
-            {discussion.description && <p className="text-sm text-muted-foreground mt-2 leading-relaxed whitespace-pre-wrap">{renderDescription(discussion.description)}</p>}
+            {discussion.description && <div className="text-sm text-muted-foreground mt-2 leading-relaxed whitespace-pre-wrap">{renderDescription(discussion.description)}</div>}
             <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
               <span>{discussion.createdAt && new Date(discussion.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
               <span>&middot;</span>

@@ -191,6 +191,43 @@ export default function CreateAssignmentPanel({
     if (!form.title.trim()) { toast.error("Assignment title is required"); return; }
     setLoading(true);
     try {
+      let finalQuestions = form.quizQuestions || [];
+      if ((form.type === "quiz" || form.type === "exam") && finalQuestions.length === 0) {
+        toast.info("Generating quiz questions...");
+        const weekTopics = isExam
+          ? getAllTopicsUpToWeek(form.weekNumber === "midterm" ? Math.floor(durationWeeks / 2) : durationWeeks, courseModules, forkedContent)
+          : getWeekTopics(weekNum, courseModules, forkedContent);
+        const contextStr = weekTopics.length > 0 ? `Topics: ${weekTopics.join(", ")}.` : "";
+        try {
+          const res = await apiClient.post("/api/classrooms/ai-generate", {
+            task: "quiz_questions",
+            name: form.title,
+            subject: classroomName || "",
+            content: `${contextStr} Generate ${form.questionCount} questions with difficulty "${form.difficulty}". Assignment type: ${form.type}. Max score: ${form.maxScore}.`,
+          });
+          const data = await res.json();
+          if (data.result?.questions?.length > 0) {
+            finalQuestions = data.result.questions.map((q, i) => ({
+              id: i,
+              text: q.text || "",
+              type: q.type || "multiple-choice",
+              points: q.points || 2,
+              options: q.options || [],
+              correctAnswer: q.correctAnswer ?? "",
+            }));
+          } else {
+            toast.error("Failed to generate quiz questions. Please try again or use the Generate button first.");
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error("AI quiz generation failed during creation", e);
+          toast.error("AI quiz generation failed. Please try again.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const payload = {
         title: form.title,
         instructions: form.instructions,
@@ -203,8 +240,9 @@ export default function CreateAssignmentPanel({
         rubric: form.rubric.length > 0 ? form.rubric : undefined,
         weekNumber: typeof form.weekNumber === "string" ? 0 : form.weekNumber,
         meta: (form.type === "quiz" || form.type === "exam") ? { questionCount: form.questionCount, difficulty: form.difficulty, isTimed: form.isTimed, timeLimitMinutes: form.timeLimitMinutes } : undefined,
-        quizQuestions: (form.type === "quiz" || form.type === "exam") && form.quizQuestions.length > 0 ? form.quizQuestions : undefined,
+        quizQuestions: (form.type === "quiz" || form.type === "exam") ? finalQuestions : undefined,
       };
+
       const res = isEdit
         ? await apiClient.put(`/api/classrooms/${classroomId}/assignments/${editAssignment.id || editAssignment._id}`, payload)
         : await apiClient.post(`/api/classrooms/${classroomId}/assignments`, payload);
@@ -212,9 +250,15 @@ export default function CreateAssignmentPanel({
       if (data.success) {
         try { localStorage.removeItem(`assignment_draft_${classroomId}`); } catch {}
         toast.success(isEdit ? "Assignment updated!" : "Assignment created!"); onCreated?.(data.assignment, isEdit); onClose();
+      } else {
+        toast.error(data.error || "Failed to save assignment");
       }
-      else toast.error(data.error || "Failed to save assignment");
-    } catch { toast.error("Failed to save assignment"); } finally { setLoading(false); }
+    } catch (err) {
+      console.error("Failed to save assignment:", err);
+      toast.error("Failed to save assignment");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputCls = "w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30";

@@ -2159,46 +2159,71 @@ const ResumeBuilder = () => {
     const CARD_ICONS = { resume: Edit2, "cover-letter": FileText, "application-letter": Target, portfolio: FolderOpen };
 
     const renderHistoryCard = (item) => {
-        const colors = CARD_COLORS[item.type] || CARD_COLORS.resume;
         const Icon = CARD_ICONS[item.type] || FileText;
+
+        const typeAccents = {
+            resume: { bg: "bg-green-300 dark:bg-green-800/60", card: "bg-green-50 dark:bg-green-950/30", border: "border-green-300 dark:border-green-700/50", footer: "border-green-200 dark:border-green-700/40", text: "text-green-700 dark:text-green-300", hover: "hover:border-green-500 dark:hover:border-green-400", badge: "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300" },
+            "cover-letter": { bg: "bg-blue-300 dark:bg-blue-800/60", card: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-300 dark:border-blue-700/50", footer: "border-blue-200 dark:border-blue-700/40", text: "text-blue-700 dark:text-blue-300", hover: "hover:border-blue-500 dark:hover:border-blue-400", badge: "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" },
+            "application-letter": { bg: "bg-violet-300 dark:bg-violet-800/60", card: "bg-violet-50 dark:bg-violet-950/30", border: "border-violet-300 dark:border-violet-700/50", footer: "border-violet-200 dark:border-violet-700/40", text: "text-violet-700 dark:text-violet-300", hover: "hover:border-violet-500 dark:hover:border-violet-400", badge: "bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300" },
+            portfolio: { bg: "bg-amber-300 dark:bg-amber-800/60", card: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-300 dark:border-amber-700/50", footer: "border-amber-200 dark:border-amber-700/40", text: "text-amber-700 dark:text-amber-300", hover: "hover:border-amber-500 dark:hover:border-amber-400", badge: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300" },
+        };
+        const accent = typeAccents[item.type] || typeAccents.resume;
+
+        const description = item.type === "cover-letter" ? `Cover letter for ${item.data?.company || "Company"}`
+            : item.type === "application-letter" ? `Application letter for ${item.data?.company || "Company"}`
+            : item.type === "portfolio" ? `${item.data?.prompts?.length || 0} project ideas`
+            : item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft";
+
         return (
-            <div key={item._id} onClick={() => loadHistoryItem(item)}
-                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className={`w-9 h-9 ${colors.bg} rounded-lg flex items-center justify-center shrink-0`}>
-                        <Icon size={16} className={colors.icon} />
+            <motion.div
+                key={item._id}
+                whileHover={{ y: -2 }}
+                onClick={() => loadHistoryItem(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); loadHistoryItem(item); } }}
+                className={`text-left w-full rounded-xl border p-4 transition-all hover:brightness-[0.98] dark:hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-green-400/30 cursor-pointer flex flex-col justify-between min-h-[160px] ${accent.card} ${accent.border} ${accent.hover}`}
+            >
+                <div>
+                    {/* Top row */}
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                        <span className="text-[13px] font-semibold text-slate-800 dark:text-white truncate flex-1">
+                            {item.title || "Untitled Document"}
+                        </span>
+                        <button
+                            onClick={(e) => deleteHistoryItem(e, item._id)}
+                            className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors shrink-0"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                     </div>
-                    <button onClick={(e) => deleteHistoryItem(e, item._id)}
-                        className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
-                        <Trash2 size={13} />
-                    </button>
+
+                    {/* Description */}
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+                        {description}
+                    </p>
                 </div>
-                <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors mb-1">
-                    {item.title || "Untitled Document"}
-                </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 flex-1">
-                    {item.type === "cover-letter" ? `Cover letter for ${item.data?.company || "Company"}`
-                        : item.type === "application-letter" ? `Application letter for ${item.data?.company || "Company"}`
-                        : item.type === "portfolio" ? `${item.data?.prompts?.length || 0} project ideas`
-                        : item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft"}
-                </p>
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+
+                {/* Footer */}
+                <div className={`mt-3 pt-3 border-t ${accent.footer} flex items-center justify-between`}>
                     <div className="flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                        <span className="capitalize font-medium">{item.type?.replace(/-/g, " ") || "Document"}</span>
-                        <span>·</span>
-                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${accent.badge}`}>
+                            {item.type?.replace(/-/g, " ") || "Document"}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                            {new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </span>
                     </div>
-                    <span className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                        Open <ArrowRight size={10} className="-rotate-45" />
+                    <span className={`text-[10px] font-semibold flex items-center gap-0.5 px-2 py-1 rounded-md ${accent.bg} ${accent.text}`}>
+                        Open <ArrowRight className="w-3 h-3 -rotate-45" />
                     </span>
                 </div>
-            </div>
+            </motion.div>
         );
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto py-6 md:py-10 min-h-screen pb-20 md:pb-10">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 min-h-screen pb-20 md:pb-10">
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4 md:px-4">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
                 <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
@@ -2707,16 +2732,16 @@ const ResumeBuilder = () => {
                     scrollbar-width: none;
                 }
                 @media (max-width: 768px) {
-                    #resume-preview { padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
-                    #resume-preview * { font-size: 10px !important; }
-                    #resume-preview h1 { font-size: 18px !important; margin-bottom: 0.5rem !important; }
-                    #resume-preview h3 { font-size: 12px !important; margin-top: 1rem !important; }
+                    #resume-preview { padding: 12px !important; margin: 0 auto !important; width: 100% !important; max-width: calc(100% - 16px) !important; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important; border-radius: 12px !important; }
+                    #resume-preview * { font-size: 11px !important; }
+                    #resume-preview h1 { font-size: 20px !important; margin-bottom: 0.5rem !important; }
+                    #resume-preview h3 { font-size: 13px !important; margin-top: 1rem !important; }
                     #resume-preview p, #resume-preview div { font-size: 11px !important; line-height: 1.5 !important; }
-                    #resume-preview .text-base { font-size: 11px !important; }
-                    #resume-preview .text-[15px] { font-size: 12px !important; }
-                    #resume-preview .text-[13px] { font-size: 10px !important; }
+                    #resume-preview .text-base { font-size: 12px !important; }
+                    #resume-preview .text-[15px] { font-size: 13px !important; }
+                    #resume-preview .text-[13px] { font-size: 11px !important; }
                     #resume-preview section { margin-bottom: 1.5rem !important; }
-                    #cover-letter-preview, #application-letter-preview { width: 100% !important; max-width: 100% !important; margin: 0 !important; }
+                    #cover-letter-preview, #application-letter-preview { width: 100% !important; max-width: calc(100% - 16px) !important; margin: 0 auto !important; border-radius: 12px !important; }
                 }
             ` }} />
 
@@ -2818,8 +2843,11 @@ const ResumeBuilder = () => {
                         <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'cover-letter' ? "font-bold" : "font-medium"}`}>Cover</span>
                     </button>
                     <button onClick={handleNew}
-                        className="flex items-center justify-center -mt-3 w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200 shadow-lg">
-                        <Plus className="w-7 h-7 stroke-[2.5]" />
+                        className="relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        aria-label="New Document"
+                    >
+                        <Plus className="w-6 h-6 stroke-[1.5]" />
+                        <span className="text-[10px] leading-tight whitespace-nowrap transition-all duration-200 font-medium">New</span>
                     </button>
                     <button onClick={() => setEditorTab('application-letter')}
                         className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${editorTab === 'application-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>

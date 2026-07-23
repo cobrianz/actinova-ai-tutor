@@ -60,7 +60,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           icon={<BookOpen className="w-5 h-5" />}
           label="Courses"
@@ -294,18 +294,18 @@ function StatCard({ icon, label, value, sub, iconColor, iconBg, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`p-4 rounded-2xl border border-border bg-card text-left transition-all hover:border-foreground/20 hover:shadow-sm w-full ${onClick ? "cursor-pointer" : "cursor-default"}`}
+      className={`p-4 rounded-xl border border-border bg-card flex items-center gap-3 text-left transition-all hover:border-foreground/20 hover:shadow-sm w-full ${onClick ? "cursor-pointer" : "cursor-default"}`}
     >
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-xl ${iconBg} ${iconColor} flex items-center justify-center shrink-0`}>
-          {icon}
-        </div>
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <p className="text-xl font-black text-foreground leading-tight">{value}</p>
-          <p className="text-[10px] text-muted-foreground">{sub}</p>
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconBg} ${iconColor}`}>
+        {icon}
+      </div>
+      <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+        <div className="min-w-0">
+          <p className="text-xl sm:text-2xl font-bold text-foreground leading-none">{value}</p>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate">{sub}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-[11px] font-semibold text-foreground">{label}</p>
+          <p className="text-[10px] sm:text-xs font-semibold text-foreground uppercase tracking-wider">{label}</p>
         </div>
       </div>
     </button>
@@ -355,7 +355,7 @@ function ActivityIcon({ type }) {
 function LoadingSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-28 bg-secondary/50 rounded-2xl" />
         ))}

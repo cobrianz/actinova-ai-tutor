@@ -51,7 +51,7 @@ export default function Navbar({ toggleSidebar }) {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={toggleSidebar}
-              className="hidden lg:inline-flex p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
+              className="inline-flex p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -75,7 +75,7 @@ export default function Navbar({ toggleSidebar }) {
               >
                 Dashboard
               </Link>
-              {(user?.role === "instructor" || user?.role === "admin") && (
+              {user && (
                 <Link
                   href="/dashboard/classrooms"
                   className={`text-sm font-medium hover:text-primary transition-colors flex items-center gap-1 ${
@@ -93,10 +93,10 @@ export default function Navbar({ toggleSidebar }) {
 
           {/* Right Section */}
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
-            {/* Theme toggle */}
+            {/* Theme toggle - hidden on mobile, shown in profile */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
+              className="hidden sm:flex p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
@@ -126,10 +126,13 @@ export default function Navbar({ toggleSidebar }) {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <NotificationBell />
+                {/* NotificationBell hidden on mobile, shown in profile */}
+                <div className="hidden sm:block">
+                  <NotificationBell />
+                </div>
                 <button
                   onClick={logout}
-                  className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
+                  className="hidden sm:flex p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
                   aria-label="Log out"
                 >
                   <LogOut className="w-4 h-4" />

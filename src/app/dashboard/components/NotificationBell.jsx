@@ -1,17 +1,19 @@
 "use client";
 
-import { Bell, Check, Info, Zap, Trophy, Share, Settings } from "lucide-react";
+import { Bell, Check, Info, Zap, Trophy, Share, Settings, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { apiClient } from "@/lib/csrfClient";
 
-export default function NotificationBell() {
+export default function NotificationBell({ inlineMode = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [fetching, setFetching] = useState(false);
   const dropdownRef = useRef(null);
 
   const fetchNotifications = async () => {
+    setFetching(true);
     try {
       const res = await apiClient.get("/api/notifications");
       if (res.ok) {
@@ -21,6 +23,8 @@ export default function NotificationBell() {
       }
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -31,6 +35,7 @@ export default function NotificationBell() {
   }, []);
 
   useEffect(() => {
+    if (inlineMode) return;
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -38,13 +43,13 @@ export default function NotificationBell() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [inlineMode]);
 
   const markAllAsRead = async () => {
     if (unreadCount === 0) return;
     try {
       setUnreadCount(0);
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       await apiClient.patch("/api/notifications");
     } catch (error) {
       console.error("Failed to mark notifications as read:", error);
@@ -72,6 +77,92 @@ export default function NotificationBell() {
     return <Info className={defaultClasses} />;
   };
 
+  /* ── Shared notification list body ── */
+  const NotificationList = () => (
+    <>
+      {/* Header row with mark-all-read */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
+        <div className="flex items-center gap-2">
+          {fetching && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+          <span className="text-xs text-muted-foreground">
+            {notifications.length} notification{notifications.length !== 1 ? "s" : ""}
+            {unreadCount > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-600">
+                {unreadCount} unread
+              </span>
+            )}
+          </span>
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllAsRead}
+            className="text-xs text-green-600 dark:text-green-400 font-medium hover:underline flex items-center gap-1"
+          >
+            <Check className="w-3 h-3" /> Mark all read
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div className={inlineMode ? "divide-y divide-border" : "max-h-[350px] overflow-y-auto divide-y divide-border"}>
+        {notifications.length === 0 ? (
+          <div className="py-10 text-center flex flex-col items-center gap-2">
+            <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+              <Bell className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">No notifications yet</p>
+            <p className="text-xs text-muted-foreground/60">You are all caught up</p>
+          </div>
+        ) : (
+          notifications.map((notif) => (
+            <div
+              key={notif._id}
+              className={`p-4 flex gap-3 hover:bg-secondary/50 transition-colors ${!notif.read ? "bg-green-500/5" : ""}`}
+            >
+              <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                {getIcon(notif.type, notif.icon)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-foreground leading-tight">
+                    {notif.title}
+                  </p>
+                  {!notif.read && (
+                    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0 mt-1.5" />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                  {notif.message}
+                </p>
+                <p className="text-[10px] text-muted-foreground/70 mt-1 font-medium">
+                  {formatTimeAgo(notif.createdAt)}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Footer */}
+      {!inlineMode && (
+        <div className="p-2 border-t border-border bg-muted/10 text-center">
+          <a
+            href="/dashboard/profile"
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors flex items-center justify-center gap-1"
+          >
+            <Settings className="w-3 h-3" /> Notification settings
+          </a>
+        </div>
+      )}
+    </>
+  );
+
+  /* ── Inline mode: render list directly ── */
+  if (inlineMode) {
+    return <NotificationList />;
+  }
+
+  /* ── Dropdown mode: toggle button + animated panel ── */
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -92,65 +183,12 @@ export default function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+            className="fixed inset-x-4 top-16 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-80 max-w-sm sm:max-w-none bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden mx-auto sm:mx-0"
           >
             <div className="p-3 border-b border-border flex items-center justify-between bg-muted/30">
               <h3 className="text-sm font-bold text-foreground">Notifications</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs text-green-600 dark:text-green-400 font-medium hover:underline flex items-center gap-1"
-                >
-                  <Check className="w-3 h-3" /> Mark all read
-                </button>
-              )}
             </div>
-            <div className="max-h-[350px] overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="py-8 text-center flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-2">
-                    <Bell className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">No notifications yet</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {notifications.map((notif) => (
-                    <div
-                      key={notif._id}
-                      className={`p-3 flex gap-3 hover:bg-secondary/50 transition-colors ${
-                        !notif.read ? "bg-green-500/5" : ""
-                      }`}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                        {getIcon(notif.type, notif.icon)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-bold text-foreground leading-tight">
-                            {notif.title}
-                          </p>
-                          {!notif.read && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 mt-1" />
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                          {notif.message}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground/80 mt-1 font-medium">
-                          {formatTimeAgo(notif.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="p-2 border-t border-border bg-muted/10 text-center">
-              <a href="/dashboard/profile" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors flex items-center justify-center gap-1">
-                <Settings className="w-3 h-3" /> Notification settings
-              </a>
-            </div>
+            <NotificationList />
           </motion.div>
         )}
       </AnimatePresence>
