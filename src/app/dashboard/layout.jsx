@@ -34,6 +34,8 @@ export default function DashboardLayout({ children }) {
   const activeContent = PATH_TO_TAB[segment] || "generate";
   const isClassroomDetail = pathname.startsWith("/dashboard/classrooms/") && pathname.split("/").length > 3;
   const isChat = activeContent === "chat" || activeContent === "chat-pdf";
+  const isLearn = segment === "learn";
+  const isFullscreen = isChat || isLearn;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideDashboardNav, setHideDashboardNav] = useState(false);
@@ -62,7 +64,7 @@ export default function DashboardLayout({ children }) {
         <div className="h-screen bg-background flex flex-col relative">
           <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
           <div className="flex flex-1 overflow-hidden relative z-10">
-            {!hideDashboardNav && !isClassroomDetail && !isChat && (
+            {!hideDashboardNav && !isClassroomDetail && !isFullscreen && (
               <div className="hidden lg:block flex-shrink-0 w-[240px] h-full z-50 overflow-hidden">
                 <Sidebar
                   setActiveContent={setActiveContent}
@@ -72,9 +74,9 @@ export default function DashboardLayout({ children }) {
                 />
               </div>
             )}
-            <main className={`flex-1 min-w-0 min-h-0 relative ${(hideDashboardNav || isClassroomDetail) ? "overflow-hidden" : isChat ? "overflow-hidden" : "overflow-auto pb-16 md:pb-0"}`}>
+            <main className={`flex-1 min-w-0 min-h-0 relative ${(hideDashboardNav || isClassroomDetail) ? "overflow-hidden" : isFullscreen ? "overflow-hidden" : "overflow-auto pb-16 md:pb-0"}`}>
               <div className="absolute inset-0 -z-10 pointer-events-none bg-[radial-gradient(circle,_rgba(15,23,42,0.12)_1px,_transparent_1px)] dark:bg-[radial-gradient(circle,_rgba(255,255,255,0.06)_1px,_transparent_1px)] bg-[size:20px_20px]" />
-              {isClassroomDetail || isChat ? (
+              {isClassroomDetail || isFullscreen ? (
                 React.Children.map(children, (child) =>
                   React.isValidElement(child)
                     ? React.cloneElement(child, {
@@ -103,7 +105,7 @@ export default function DashboardLayout({ children }) {
               )}
             </main>
           </div>
-          {activeContent !== "career" && !hideDashboardNav && !isClassroomDetail && !isChat && <DashboardMobileNav />}
+          {activeContent !== "career" && !hideDashboardNav && !isClassroomDetail && !isFullscreen && <DashboardMobileNav />}
         </div>
       </ThemeProvider>
     </ProtectedRoute>
