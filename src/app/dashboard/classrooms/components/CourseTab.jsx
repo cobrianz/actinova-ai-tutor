@@ -15,6 +15,7 @@ import { renderLessonBlocks } from "@/lib/contentRenderer";
 import LessonChart from "@/dashboard/learn/components/LessonChart";
 import LessonTable from "@/dashboard/learn/components/LessonTable";
 import ConfirmModal from "@/components/ConfirmModal";
+import ForkContentPanel from "./ForkContentPanel";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
@@ -318,6 +319,7 @@ export default function CourseTab({ classroomState }) {
           )}
         </div>
       )}
+      {showForkPanel && <ForkContentPanel classroom={classroom} onClose={() => setShowForkPanel(false)} browseResults={browseResults} browseLoading={browseLoading} browseQuery={browseQuery} setBrowseQuery={setBrowseQuery} browseType={browseType} setBrowseType={setBrowseType} onBrowse={fetchBrowseContent} forking={forking} forkedIdSet={forkedIdSet} browseError={browseError} />}
 
       {/* Quick Info Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -453,6 +455,7 @@ export default function CourseTab({ classroomState }) {
         const hasModules = courseModules?.length > 0;
         if (!hasModules && !isInstructor) return null;
         if (!hasModules) {
+          if (showForkPanel) return null;
           return (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
               <Layers className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
