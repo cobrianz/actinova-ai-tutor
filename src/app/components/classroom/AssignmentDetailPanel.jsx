@@ -218,6 +218,34 @@ function DiscussionAssignmentView({ assignment, classroomId, tc, TypeIcon }) {
   );
 }
 
+function parseInlineMarkdown(text) {
+  if (!text) return text;
+  const parts = [];
+  let remaining = text;
+  let keyIdx = 0;
+  const boldItalicRegex = /\*\*\*(.+?)\*\*\*/g;
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  const italicRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g;
+  const combined = text.replace(boldItalicRegex, "<b><i>$1</i></b>").replace(boldRegex, "<b>$1</b>").replace(italicRegex, "<i>$1</i>");
+  if (combined !== text) {
+    const parts2 = combined.split(/(<b>.*?<\/b>|<i>.*?<\/i>)/g).filter(Boolean);
+    return parts2.map((part, idx) => {
+      if (part.startsWith("<b>") && part.endsWith("</b>")) {
+        const inner = part.slice(3, -4);
+        if (inner.startsWith("<i>") && inner.endsWith("</i>")) {
+          return <strong key={idx}><em>{inner.slice(3, -4)}</em></strong>;
+        }
+        return <strong key={idx}>{inner}</strong>;
+      }
+      if (part.startsWith("<i>") && part.endsWith("</i>")) {
+        return <em key={idx}>{part.slice(3, -4)}</em>;
+      }
+      return part;
+    });
+  }
+  return text;
+}
+
 function renderInstructions(text) {
   if (!text) return null;
   const lines = text.split("\n");
@@ -234,10 +262,10 @@ function renderInstructions(text) {
     const line = lines[i];
 
     if (/^#{1,3}\s+/.test(line)) {
-      elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{line.replace(/^#{1,3}\s+/, "")}</p>);
+      elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{parseInlineMarkdown(line.replace(/^#{1,3}\s+/, ""))}</p>);
       i++;
     } else if (isSectionHeader(line)) {
-      elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{line.replace(/:$/, "")}</p>);
+      elements.push(<p key={i} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{parseInlineMarkdown(line.replace(/:$/, ""))}</p>);
       i++;
     } else if (/^[-*]\s+/.test(line)) {
       const items = [];
@@ -247,7 +275,7 @@ function renderInstructions(text) {
       }
       elements.push(
         <ul key={`ul-${i}`} className="list-disc list-outside ml-8 space-y-1 text-sm my-2">
-          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{item}</li>)}
+          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{parseInlineMarkdown(item)}</li>)}
         </ul>
       );
     } else if (/^\d+\.\s+/.test(line)) {
@@ -258,13 +286,13 @@ function renderInstructions(text) {
       }
       elements.push(
         <ol key={`ol-${i}`} className="list-decimal list-outside ml-8 space-y-1 text-sm my-2">
-          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{item}</li>)}
+          {items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{parseInlineMarkdown(item)}</li>)}
         </ol>
       );
     } else if (line.trim() === "") {
       i++;
     } else {
-      elements.push(<p key={i} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{line}</p>);
+      elements.push(<p key={i} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{parseInlineMarkdown(line)}</p>);
       i++;
     }
   }
@@ -537,6 +565,60 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
             </div>
           )}
 
+          {!isInstructor && (assignment.type === "quiz" || assignment.type === "exam") && (
+            <div className="border border-amber-200 dark:border-amber-500/20 rounded-xl overflow-hidden">
+              <div className="bg-amber-50 dark:bg-amber-500/10 px-5 py-3 border-b border-amber-200 dark:border-amber-500/20 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4 text-amber-600" />
+                  <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Quiz</p>
+                </div>
+                {assignment.meta?.questionCount && (
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">{assignment.meta.questionCount} questions</span>
+                )}
+              </div>
+              <div className="p-5">
+                {quizSubmitted && quizScore ? (
+                  <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl p-6 text-center">
+                    <Trophy className="w-10 h-10 text-green-500 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-green-700 dark:text-green-400">Quiz Complete!</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-300 mt-1">{quizScore.score}/{quizScore.total}</p>
+                    <p className="text-xs text-green-500 mt-1">{quizScore.rawScore}/{quizScore.rawTotal} correct</p>
+                  </div>
+                ) : quizQuestions ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Questions</p>
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                        <AlertTriangle className="w-3 h-3" />
+                        Answer all questions before submitting
+                      </div>
+                    </div>
+                    {quizQuestions.map((q, i) => (
+                      <QuizQuestion key={q.id || i} question={q} index={i} answer={quizAnswers[q.id]} onAnswer={(val) => setQuizAnswers({ ...quizAnswers, [q.id]: val })} />
+                    ))}
+                    <button
+                      onClick={handleQuizSubmit}
+                      disabled={submitting || Object.keys(quizAnswers).length < quizQuestions.length}
+                      className="flex items-center gap-1.5 px-5 py-2.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
+                    >
+                      {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                      {submitting ? "Submitting..." : "Submit Quiz"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleStartQuiz}
+                    disabled={quizLoading}
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
+                  >
+                    {quizLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                    {quizLoading ? "Generating Questions..." : "Start Quiz"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {!isInstructor && progress && (
             <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
@@ -608,80 +690,35 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
         <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           {!isInstructor ? (
             <div className="space-y-3">
-              {quizSubmitted && quizScore ? (
-                <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl p-6 text-center">
-                  <Trophy className="w-10 h-10 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-green-700 dark:text-green-400">Quiz Complete!</p>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-300 mt-1">{quizScore.score}/{quizScore.total}</p>
-                  <p className="text-xs text-green-500 mt-1">{quizScore.rawScore}/{quizScore.rawTotal} correct</p>
-                </div>
-              ) : quizQuestions ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quiz Questions ({quizQuestions.length})</p>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                      <AlertTriangle className="w-3 h-3" />
-                      Answer all questions before submitting
+              {progress?.status === "completed" && !isSubmitted ? (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600"><CheckCircle2 className="w-4 h-4" /> Assignment Completed</span>
+              ) : !isSubmitted && assignment.type !== "quiz" && assignment.type !== "exam" ? (
+                <div className="space-y-3">
+                  {assignment.type === "lab" && (
+                    <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
+                      <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Lab Environment</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-300">Complete the lab exercises as described in the instructions above, then document your findings and results below.</p>
                     </div>
-                  </div>
-                  {quizQuestions.map((q, i) => (
-                    <QuizQuestion key={q.id || i} question={q} index={i} answer={quizAnswers[q.id]} onAnswer={(val) => setQuizAnswers({ ...quizAnswers, [q.id]: val })} />
-                  ))}
+                  )}
+                  <AssignmentEditor
+                    value={text}
+                    onChange={setText}
+                    placeholder={assignment.type === "lab" ? "Document your lab work, observations, and results here..." : "Type your submission here..."}
+                  />
                   <button
-                    onClick={handleQuizSubmit}
-                    disabled={submitting || Object.keys(quizAnswers).length < quizQuestions.length}
-                    className="flex items-center gap-1.5 px-5 py-2.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
+                    onClick={handleSubmit}
+                    disabled={submitting || !text}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
                   >
                     {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                    {submitting ? "Submitting..." : "Submit Quiz"}
+                    {submitting ? "Submitting..." : "Submit Assignment"}
                   </button>
                 </div>
-              ) : progress?.status === "completed" && !isSubmitted ? (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600"><CheckCircle2 className="w-4 h-4" /> Assignment Completed</span>
-              ) : progress?.status === "in_progress" || (!progress && assignment.type !== "quiz") ? (
-                <>
-                  {!isSubmitted && assignment.type === "quiz" ? (
-                    <button
-                      onClick={handleStartQuiz}
-                      disabled={quizLoading}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
-                    >
-                      {quizLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                      {quizLoading ? "Generating Quiz Questions..." : "Start Quiz"}
-                    </button>
-                  ) : !isSubmitted ? (
-                    <div className="space-y-3">
-                      {assignment.type === "lab" && (
-                        <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
-                          <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Lab Environment</p>
-                          <p className="text-xs text-blue-600 dark:text-blue-300">Complete the lab exercises as described in the instructions above, then document your findings and results below.</p>
-                        </div>
-                      )}
-                      <AssignmentEditor
-                        value={text}
-                        onChange={setText}
-                        placeholder={assignment.type === "lab" ? "Document your lab work, observations, and results here..." : "Type your submission here..."}
-                      />
-                      <button
-                        onClick={handleSubmit}
-                        disabled={submitting || !text}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
-                      >
-                        {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                        {submitting ? "Submitting..." : "Submit Assignment"}
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={onComplete} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
-                      <Check className="w-4 h-4" /> Mark Complete
-                    </button>
-                  )}
-                </>
-              ) : (
-                <button onClick={onStart} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
-                  <Play className="w-4 h-4" /> Start Assignment
+              ) : isSubmitted ? (
+                <button onClick={onComplete} className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
+                  <Check className="w-4 h-4" /> Mark Complete
                 </button>
-              )}
+              ) : null}
             </div>
           ) : (
             <div className="flex items-center gap-2">
