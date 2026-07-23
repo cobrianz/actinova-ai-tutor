@@ -465,7 +465,7 @@ export default function ReportsLibrary({ setActiveContent }) {
         } else {
             params.delete("view");
         }
-        router.replace(`/dashboard?${params.toString()}`);
+        router.replace(`/dashboard/reports-library${params.toString() ? `?${params.toString()}` : ""}`);
     }, [router, searchParams]);
 
     useEffect(() => { fetchReports(); }, []);

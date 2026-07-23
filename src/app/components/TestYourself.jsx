@@ -347,7 +347,7 @@ const TestYourself = () => {
             <p>
               Go to the{" "}
               <Link
-                href="/dashboard?tab=generate"
+                href="/dashboard/generate"
                 className="text-primary hover:underline font-medium"
               >
                 Generate

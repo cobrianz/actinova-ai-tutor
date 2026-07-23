@@ -38,9 +38,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
 
   const setActiveTab = useCallback((tab) => {
     setActiveTabState(tab);
-    const params = new URLSearchParams(window.location.search);
-    params.set('classroomTab', tab);
-    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+    // classroomTab is internal state only — no URL update needed
   }, [router]);
   const [assignments, setAssignments] = useState(classroom.assignments || []);
   const [selectedAssignment, setSelectedAssignment] = useState(null);

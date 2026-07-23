@@ -105,7 +105,7 @@ const TakeQuizPage = ({ params }) => {
       <div className="flex justify-center items-center min-h-screen bg-background">
         <div className="text-center">
           <p className="text-destructive mb-4">Could not load the quiz.</p>
-          <Link href="/dashboard?tab=quizzes">
+          <Link href="/dashboard/quizzes">
             <Button variant="outline">Back to Quizzes</Button>
           </Link>
         </div>
@@ -123,7 +123,7 @@ const TakeQuizPage = ({ params }) => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             <Link
-              href="/dashboard?tab=quizzes"
+              href="/dashboard/quizzes"
               className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
@@ -387,7 +387,7 @@ const TakeQuizPage = ({ params }) => {
           ) : (
             <div className="bg-card rounded-xl p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-                <Link href="/dashboard?tab=quizzes" className="w-full sm:w-auto">
+                <Link href="/dashboard/quizzes" className="w-full sm:w-auto">
                   <Button variant="outline" className="w-full">
                     Cancel
                   </Button>

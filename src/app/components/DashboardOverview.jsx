@@ -68,7 +68,7 @@ export default function DashboardOverview() {
           sub={`${summary.totalCourses} enrolled`}
           iconColor="text-blue-500"
           iconBg="bg-blue-50 dark:bg-blue-900/20"
-          onClick={() => router.push("/dashboard?tab=library")}
+onClick={() => router.push("/dashboard/library")}
         />
         <StatCard
           icon={<Target className="w-5 h-5" />}
@@ -77,7 +77,7 @@ export default function DashboardOverview() {
           sub={`${summary.totalQuizzes} quizzes`}
           iconColor="text-violet-500"
           iconBg="bg-violet-50 dark:bg-violet-900/20"
-          onClick={() => router.push("/dashboard?tab=quizzes")}
+          onClick={() => router.push("/dashboard/quizzes")}
         />
         <StatCard
           icon={<Brain className="w-5 h-5" />}
@@ -86,7 +86,7 @@ export default function DashboardOverview() {
           sub={`${summary.totalFlashcards} total`}
           iconColor="text-emerald-500"
           iconBg="bg-emerald-50 dark:bg-emerald-900/20"
-          onClick={() => router.push("/dashboard?tab=flashcards")}
+          onClick={() => router.push("/dashboard/flashcards")}
         />
         <StatCard
           icon={<Flame className="w-5 h-5" />}
@@ -169,7 +169,7 @@ export default function DashboardOverview() {
             {adaptiveInsights.recommendations?.slice(0, 3).map((item) => (
               <button
                 key={item.title}
-                onClick={() => router.push("/dashboard?tab=study-plans")}
+                onClick={() => router.push("/dashboard/study-plans")}
                 className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-white/10 border border-emerald-200 dark:border-emerald-700/40 px-3 py-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
               >
                 <ArrowRight className="w-3 h-3" />
@@ -188,7 +188,7 @@ export default function DashboardOverview() {
           title="Course Progress"
           accent="blue"
           action={
-            <button onClick={() => router.push("/dashboard?tab=library")} className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-0.5 transition-colors">
+            <button onClick={() => router.push("/dashboard/library")} className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-0.5 transition-colors">
               View all <ChevronRight className="w-3 h-3" />
             </button>
           }
@@ -226,7 +226,7 @@ export default function DashboardOverview() {
           title="Quiz Scores"
           accent="violet"
           action={
-            <button onClick={() => router.push("/dashboard?tab=quizzes")} className="text-xs font-medium text-violet-500 hover:text-violet-600 flex items-center gap-0.5 transition-colors">
+            <button onClick={() => router.push("/dashboard/quizzes")} className="text-xs font-medium text-violet-500 hover:text-violet-600 flex items-center gap-0.5 transition-colors">
               View all <ChevronRight className="w-3 h-3" />
             </button>
           }

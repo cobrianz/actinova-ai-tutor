@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Explore from "./Explore";
 import Generate from "./Generate";
@@ -122,14 +122,14 @@ export default function DashboardContent({ setHideDashboardNav, hideDashboardNav
     }
   }, [searchParams, router]);
 
-  const activeContent = searchParams.get("tab") || "generate";
+  const pathname = usePathname();
+  const segment = pathname.split("/dashboard/")[1]?.split("/")[0] || "generate";
+  const activeContent = segment;
   const isChat = activeContent === "chat";
   const isPdfChat = activeContent === "chat-pdf";
 
   const setActiveContent = (tab) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", tab);
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/dashboard/${tab}`);
   };
 
   const routeComponents = {

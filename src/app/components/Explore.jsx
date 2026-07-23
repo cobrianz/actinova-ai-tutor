@@ -1603,7 +1603,7 @@ export default function Explore() {
                       <Sparkles className="w-8 h-8 text-green-500 mx-auto mb-3" />
                       <p className="text-green-700 dark:text-green-300 font-bold text-xs mb-1" style={{ fontFamily: "var(--font-fraunces)" }}>Can't find what you're looking for?</p>
                       <p className="text-green-500 text-[11px] mb-4">Generate a custom course with AI</p>
-                      <button onClick={() => router.push("/dashboard?tab=generate")}
+                      <button onClick={() => router.push("/dashboard/generate")}
                         className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 mx-auto transition-all">
                         <Sparkles className="w-3.5 h-3.5" /> Generate Custom Course
                       </button>

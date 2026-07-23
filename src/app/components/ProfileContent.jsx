@@ -308,7 +308,7 @@ export default function ProfileContent() {
                         <div className="space-y-2">
                           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recent Classrooms</p>
                           {teachingStats.recentClassrooms.map((c) => (
-                            <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard?tab=classrooms&classroom=${c.id}`)}>
+                            <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/classrooms/${c.id}`)}>
                               <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0"><GraduationCap className="w-4 h-4 text-green-500" /></div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-bold text-foreground truncate">{c.name}</p>

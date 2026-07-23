@@ -76,9 +76,9 @@ export default function Navbar({ toggleSidebar }) {
               </Link>
               {(user?.role === "instructor" || user?.role === "admin") && (
                 <Link
-                  href="/dashboard?tab=classrooms"
+                  href="/dashboard/classrooms"
                   className={`text-sm font-medium hover:text-primary transition-colors flex items-center gap-1 ${
-                    pathname === "/dashboard" && typeof window !== "undefined" && window.location.search.includes("tab=classrooms")
+                    pathname.startsWith("/dashboard/classrooms")
                       ? "text-primary"
                       : "text-foreground"
                   }`}
@@ -127,7 +127,7 @@ export default function Navbar({ toggleSidebar }) {
               <div className="flex items-center space-x-2">
                 <NotificationBell />
                 <Link
-                  href="/dashboard?tab=profile"
+                  href="/dashboard/profile"
                   className="p-1 rounded-lg hover:opacity-80 transition-opacity"
                 >
                 <Avatar className="w-8 h-8 border border-border">

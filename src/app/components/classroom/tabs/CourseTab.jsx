@@ -1246,7 +1246,7 @@ function ForkedModuleCard({
                             </div>
                             <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 text-center">This lesson has no content yet.</p>
                             <a
-                              href={`/dashboard?tab=library&q=${encodeURIComponent(courseName)}`}
+                              href={`/dashboard/library?q=${encodeURIComponent(courseName)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-500/20 transition-colors"

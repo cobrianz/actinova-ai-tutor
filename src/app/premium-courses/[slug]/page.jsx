@@ -54,7 +54,7 @@ export default async function PremiumCourseRedirectPage({ params, searchParams }
     notFound();
   }
 
-  const callbackUrl = `/dashboard?tab=premium-courses&courseSlug=${encodeURIComponent(
+  const callbackUrl = `/dashboard/premium-courses?courseSlug=${encodeURIComponent(
     course.slug || slugifyCourseTitle(course.title)
   )}&courseTitle=${encodeURIComponent(course.title)}&authFlow=shared-course`;
 

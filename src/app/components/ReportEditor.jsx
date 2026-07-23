@@ -219,7 +219,7 @@ export default function ReportEditor({ reportId }) {
                 }
             } else {
                 toast.error("Report not found");
-                router.push("/dashboard?tab=reports-library");
+                router.push("/dashboard/reports-library");
             }
         } catch (error) {
             console.error("Fetch report error:", error);
@@ -1446,7 +1446,7 @@ export default function ReportEditor({ reportId }) {
             <div className="fixed top-[68px] left-0 lg:left-[240px] right-0 z-50 flex items-center justify-center h-10 mt-2">
                 <div className="flex items-center justify-between gap-3 w-full max-w-[800px] px-6 py-1 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm rounded-b-xl">
                     <button
-                        onClick={() => router.push("/dashboard?tab=reports-library")}
+                        onClick={() => router.push("/dashboard/reports-library")}
                         className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors flex-shrink-0"
                     >
                         <ArrowLeft className="h-3.5 w-3.5" /> Back to reports

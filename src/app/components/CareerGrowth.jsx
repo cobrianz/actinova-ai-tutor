@@ -96,18 +96,15 @@ const CareerGrowth = () => {
             setShowPremiumModal(true);
             return;
         }
-        const params = new URLSearchParams(searchParams);
-        if (tool === "overview") {
-            params.delete("tool");
-            // Clear extra params like role
-            params.delete("role");
-        } else {
+        const params = new URLSearchParams();
+        if (tool !== "overview") {
             params.set("tool", tool);
             Object.entries(extraParams).forEach(([key, value]) => {
                 params.set(key, value);
             });
         }
-        router.push(`/dashboard?${params.toString()}`);
+        const qs = params.toString();
+        router.push(`/dashboard/career${qs ? `?${qs}` : ""}`);
     };
 
     const atLimit = user?.usage?.isAtLimit || (!hasPurchased('career_tools') && user?.usage?.remaining === 0);

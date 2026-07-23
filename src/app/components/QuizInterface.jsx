@@ -279,7 +279,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
               </button>
             ) : (
               <Link
-                href="/dashboard?tab=quizzes"
+                href="/dashboard/quizzes"
                 className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
@@ -711,7 +711,7 @@ const QuizInterface = ({ quizData, topic, onBack, existingQuizId, allowRetake = 
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-                <Link href="/dashboard?tab=quizzes" className="w-full sm:w-auto">
+                <Link href="/dashboard/quizzes" className="w-full sm:w-auto">
                   <Button variant="outline" className="border-border w-full">
                     Cancel
                   </Button>

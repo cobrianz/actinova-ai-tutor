@@ -47,7 +47,7 @@ function CreateClassroomForm({ onClose, onCreated }) {
     const params = new URLSearchParams(window.location.search);
     if (params.get("view") !== "creator") {
       params.set("view", "creator");
-      router.replace(`/dashboard?${params.toString()}`);
+      router.replace(`/dashboard/classrooms?${params.toString()}`);
     }
   }, [router, searchParams]);
 
@@ -79,7 +79,7 @@ function CreateClassroomForm({ onClose, onCreated }) {
       if (data.success) {
         toast.success("Classroom created!");
         localStorage.removeItem("create_classroom_draft");
-        router.replace("/dashboard?tab=classrooms");
+        router.replace("/dashboard/classrooms");
         onCreated(data.classroom);
       } else { toast.error(data.error || "Failed to create classroom"); }
     } catch { toast.error("Failed to create classroom"); } finally { setLoading(false); }
@@ -94,7 +94,7 @@ function CreateClassroomForm({ onClose, onCreated }) {
 
   return (
     <div className="space-y-4">
-      <button onClick={() => { localStorage.removeItem("create_classroom_draft"); router.replace("/dashboard?tab=classrooms"); onClose(); }} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px] font-medium transition-colors group">
+      <button onClick={() => { localStorage.removeItem("create_classroom_draft"); router.replace("/dashboard/classrooms"); onClose(); }} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px] font-medium transition-colors group">
         <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />Back to Classrooms
       </button>
       <div className="min-h-[50vh] flex flex-col items-center justify-center px-4">
@@ -483,14 +483,14 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
   const openCreate = () => {
     const params = new URLSearchParams(window.location.search);
     params.set("view", "creator");
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/dashboard/classrooms`);
     setShowCreate(true);
   };
 
   const closeCreate = () => {
     const params = new URLSearchParams(window.location.search);
     params.delete("view");
-    router.replace(`/dashboard?${params.toString()}`);
+    router.replace(`/dashboard/classrooms${params.toString() ? `?${params.toString()}` : ""}`);
     setShowCreate(false);
   };
 
@@ -512,7 +512,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
         classroom={selectedClassroom}
         onBack={() => {
           setSelectedClassroom(null);
-          router.replace("/dashboard?tab=classrooms");
+          router.replace("/dashboard/classrooms");
         }}
         user={user}
         sidebarCollapsed={sidebarCollapsed}
@@ -544,7 +544,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2"><AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" /><span className="text-xs font-bold text-amber-700 dark:text-amber-400">Upcoming Deadlines</span></div>
           <div className="space-y-1.5">{upcomingDeadlines.map((d) => { const hoursLeft = (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60); const urgent = hoursLeft < 24; return (
-            <button key={d.id} onClick={() => { const cls = classrooms.find((c) => c.id === d.classroomId); if (cls) { selectClassroom(cls); router.push(`/dashboard?tab=classrooms&classroom=${cls.id}`); } }} className="flex items-center gap-2 w-full text-left group">
+            <button key={d.id} onClick={() => { const cls = classrooms.find((c) => c.id === d.classroomId); if (cls) { selectClassroom(cls); router.push(`/dashboard/classrooms/${cls.id}`); } }} className="flex items-center gap-2 w-full text-left group">
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${urgent ? "bg-red-400 animate-pulse" : "bg-amber-400"}`} /><span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium truncate flex-1 group-hover:underline">{d.title}</span><span className="text-[10px] text-amber-600 dark:text-amber-500 flex-shrink-0">{urgent ? `${Math.round(hoursLeft)}h` : `${Math.round(hoursLeft / 24)}d`}</span>
             </button>
           );})}</div>
@@ -567,7 +567,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {classrooms.map((classroom) => (
-            <ClassroomCard key={classroom.id} classroom={classroom} role={isInstructor ? "instructor" : "student"} onClick={() => { selectClassroom(classroom); router.push(`/dashboard?tab=classrooms&classroom=${classroom.id}`); }} onDelete={handleDeleteClassroom} />
+            <ClassroomCard key={classroom.id} classroom={classroom} role={isInstructor ? "instructor" : "student"} onClick={() => { selectClassroom(classroom); router.push(`/dashboard/classrooms/${classroom.id}`); }} onDelete={handleDeleteClassroom} />
           ))}
         </div>
       )}

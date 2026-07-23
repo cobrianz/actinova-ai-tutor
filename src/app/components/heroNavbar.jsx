@@ -42,7 +42,7 @@ export default function HeroNavbar({ handleGetStarted }) {
     { href: "/blog", label: "Blog", isAnchor: false },
     { href: "/about", label: "About", isAnchor: false },
     ...(user?.role === "instructor" || user?.role === "admin"
-      ? [{ href: "/dashboard?tab=classrooms", label: "Classrooms", isAnchor: false, icon: GraduationCap }]
+      ? [{ href: "/dashboard/classrooms", label: "Classrooms", isAnchor: false, icon: GraduationCap }]
       : []),
   ];
 

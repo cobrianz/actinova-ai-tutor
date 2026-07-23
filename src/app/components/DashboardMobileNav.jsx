@@ -93,9 +93,7 @@ export default function DashboardMobileNav() {
 
   const navigate = (id) => {
     setMoreOpen(false);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", id);
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/dashboard/${id}`);
   };
 
   return (

@@ -1251,7 +1251,7 @@ export default function LearnContent() {
       toast.success(`Generated ${data.totalCards || 0} flashcards!`);
       
       // Navigate to flashcards tab in dashboard
-      router.push("/dashboard?tab=flashcards");
+      router.push("/dashboard/flashcards");
     } catch (error) {
       console.error("Flashcard generation error:", error);
       toast.error("Failed to generate flashcards. Please try again.");

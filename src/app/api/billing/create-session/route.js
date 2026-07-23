@@ -52,7 +52,7 @@ async function handlePost(request) {
           paymentMethod,
           amountUsd: pack.price,
         };
-        callbackUrl = `${APP_URL}/dashboard?payment=success&purchaseType=credit-purchase`;
+        callbackUrl = `${APP_URL}/dashboard/generate?payment=success&purchaseType=credit-purchase`;
         break;
       }
 
@@ -67,7 +67,7 @@ async function handlePost(request) {
           paymentMethod,
           amountUsd: 29.99,
         };
-        callbackUrl = `${APP_URL}/dashboard?payment=success&purchaseType=premium-generation`;
+        callbackUrl = `${APP_URL}/dashboard/generate?payment=success&purchaseType=premium-generation`;
         break;
       }
 
@@ -114,7 +114,7 @@ async function handlePost(request) {
           paymentMethod,
           amountUsd: 4.99,
         };
-        callbackUrl = `${APP_URL}/dashboard?tab=career&payment=success&purchaseType=resume-export&historyId=${historyId}&exportFormat=${exportFormat || "pdf"}`;
+        callbackUrl = `${APP_URL}/dashboard/career?payment=success&purchaseType=resume-export&historyId=${historyId}&exportFormat=${exportFormat || "pdf"}`;
         break;
       }
 

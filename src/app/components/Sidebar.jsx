@@ -117,11 +117,7 @@ export default function Sidebar({
       return;
     }
     setActiveItem(id);
-    if (setActiveContent) {
-      setActiveContent(id);
-    } else {
-      router.push(`/dashboard?tab=${id}`);
-    }
+    router.push(`/dashboard/${id}`);
     if (screenSize === "small" || screenSize === "medium") {
       setSidebarOpen(false);
     }

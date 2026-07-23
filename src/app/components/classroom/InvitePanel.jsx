@@ -7,7 +7,7 @@ import { Copy, Check, X, UserPlus, Link2 } from "lucide-react";
 function InvitePanel({ classroom, onClose }) {
   const [copied, setCopied] = useState(false);
   const inviteLink = typeof window !== "undefined"
-    ? `${window.location.origin}/dashboard?tab=classrooms&join=${classroom.inviteCode}` : "";
+    ? `${window.location.origin}/dashboard/classrooms?join=${classroom.inviteCode}` : "";
   const handleCopy = (text) => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}

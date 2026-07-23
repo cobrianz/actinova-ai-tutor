@@ -147,7 +147,7 @@ export default function NotificationBell() {
               )}
             </div>
             <div className="p-2 border-t border-border bg-muted/10 text-center">
-              <a href="/dashboard?tab=profile" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors flex items-center justify-center gap-1">
+              <a href="/dashboard/profile" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors flex items-center justify-center gap-1">
                 <Settings className="w-3 h-3" /> Notification settings
               </a>
             </div>
