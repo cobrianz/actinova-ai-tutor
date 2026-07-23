@@ -8,7 +8,8 @@ import { ClassroomProvider } from "../components/ClassroomContext";
 import useClassroom from "../components/useClassroom";
 import ClassroomSidebar from "../components/ClassroomSidebar";
 import ClassroomMobileNav from "../components/ClassroomMobileNav";
-import { ArrowLeft } from "lucide-react";
+import ClassroomAIPanel from "../components/ClassroomAIPanel";
+import { ArrowLeft, Sparkles } from "lucide-react";
 
 export default function ClassroomLayout({ children }) {
   const params = useParams();
@@ -79,6 +80,7 @@ export default function ClassroomLayout({ children }) {
 function ClassroomLayoutInner({ classroom, user, router, sidebarCollapsed, setSidebarCollapsed, onBack, children }) {
   const state = useClassroom(classroom, null, onBack);
   const { tabs, isInstructor, showInvite, setShowInvite } = state;
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const pathname = usePathname();
   const segments = pathname.split("/");
@@ -90,13 +92,14 @@ function ClassroomLayoutInner({ classroom, user, router, sidebarCollapsed, setSi
 
   return (
     <ClassroomProvider value={{ ...state, classroom, user, activeTab, setActiveTab: navigateTab }}>
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden pb-16 lg:pb-0">
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden pb-16 lg:pb-0 relative">
         <ClassroomSidebar
           classroom={classroom}
           tabs={tabs}
           activeTab={activeTab}
           setActiveTab={navigateTab}
           sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
           isInstructor={isInstructor}
           setShowCreateAssignment={state.setShowCreateAssignment}
           setShowInvite={setShowInvite}
@@ -109,6 +112,25 @@ function ClassroomLayoutInner({ classroom, user, router, sidebarCollapsed, setSi
             {children}
           </div>
         </div>
+
+        {/* Floating AI Assistant Trigger */}
+        <button
+          onClick={() => setAiPanelOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-full font-bold text-xs shadow-lg shadow-green-500/25 transition-all hover:scale-105 active:scale-95"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>AI Assistant</span>
+        </button>
+
+        {/* Slide-in AI Panel */}
+        <ClassroomAIPanel
+          classroom={classroom}
+          user={user}
+          activeTab={activeTab}
+          isInstructor={isInstructor}
+          isOpen={aiPanelOpen}
+          onClose={() => setAiPanelOpen(false)}
+        />
       </div>
     </ClassroomProvider>
   );

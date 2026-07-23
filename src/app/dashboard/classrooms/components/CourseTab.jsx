@@ -16,6 +16,7 @@ import LessonChart from "@/dashboard/learn/components/LessonChart";
 import LessonTable from "@/dashboard/learn/components/LessonTable";
 import ConfirmModal from "@/components/ConfirmModal";
 import ForkContentPanel from "./ForkContentPanel";
+import MyProgressWidget from "./MyProgressWidget";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
 
@@ -252,6 +253,13 @@ export default function CourseTab({ classroomState }) {
   return (
     <>
     <div className="space-y-4">
+      {!isInstructor && (
+        <MyProgressWidget
+          classroom={classroom}
+          assignments={assignments}
+          progress={classroomState.progress || []}
+        />
+      )}
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10" />

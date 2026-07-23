@@ -127,6 +127,15 @@ const classroomSchema = new mongoose.Schema(
       forkedAt: { type: Date, default: Date.now },
       meta: { type: mongoose.Schema.Types.Mixed, default: {} },
     }],
+    // Attendance records — one entry per student per session date
+    attendance: [{
+      studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+      date: { type: Date, required: true },
+      status: { type: String, enum: ["present", "absent", "late", "excused"], required: true },
+      note: { type: String, default: "" },
+      markedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      markedAt: { type: Date, default: Date.now },
+    }],
     openedWeeks: [{ type: Number }],
     lessonCompletions: [{
       studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

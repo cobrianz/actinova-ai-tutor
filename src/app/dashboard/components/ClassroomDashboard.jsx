@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, ChevronRight, Clock, Trash2,
   AlertCircle, UserPlus, GraduationCap, ArrowRight, ArrowLeft, ChevronLeft,
-  Sparkles, Loader2, ClipboardList, Calendar,
+  Sparkles, Loader2, ClipboardList, Calendar, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -388,6 +388,7 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [joinCode, setJoinCode] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const setSidebarCollapsedRef = useRef(setSidebarCollapsed);
   setSidebarCollapsedRef.current = setSidebarCollapsed;
   const [joining, setJoining] = useState(false);
@@ -492,6 +493,27 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
         </div>
       )}
 
+      {/* Search and Summary Bar */}
+      {classrooms.length > 0 && !loading && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search classrooms..."
+              className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/30"
+            />
+          </div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground self-start sm:self-auto">
+            <span>Total: <strong className="text-foreground">{classrooms.length}</strong></span>
+            {isInstructor && (
+              <span>Total Students: <strong className="text-foreground">{classrooms.reduce((acc, c) => acc + (c.studentCount || 0), 0)}</strong></span>
+            )}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">{[1, 2, 3].map((i) => <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 animate-pulse"><div className="flex items-start justify-between mb-3"><div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700" /><div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700" /></div><div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-2" /><div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-3" /><div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800"><div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-16" /><div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-16" /></div></div>)}</div>
       ) : classrooms.length === 0 ? (
@@ -507,9 +529,15 @@ export default function ClassroomDashboard({ setHideDashboardNav, sidebarCollaps
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {classrooms.map((classroom) => (
-            <ClassroomCard key={classroom.id} classroom={classroom} role={isInstructor ? "instructor" : "student"} onClick={() => { selectClassroom(classroom); router.push(`/dashboard/classrooms/${classroom.id}`); }} onDelete={handleDeleteClassroom} />
-          ))}
+          {classrooms
+            .filter((c) => {
+              if (!searchQuery.trim()) return true;
+              const q = searchQuery.toLowerCase();
+              return c.name?.toLowerCase().includes(q) || c.subject?.toLowerCase().includes(q) || c.semester?.toLowerCase().includes(q);
+            })
+            .map((classroom) => (
+              <ClassroomCard key={classroom.id} classroom={classroom} role={isInstructor ? "instructor" : "student"} onClick={() => { selectClassroom(classroom); router.push(`/dashboard/classrooms/${classroom.id}`); }} onDelete={handleDeleteClassroom} />
+            ))}
         </div>
       )}
 

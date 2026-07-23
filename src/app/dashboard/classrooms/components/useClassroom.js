@@ -766,6 +766,7 @@ export default function useClassroom(classroom, searchParams, onBack) {
     { id: "assignments", label: "Assignments" },
     { id: "grades", label: "Grades" },
     { id: "analytics", label: "Analytics" },
+    { id: "attendance", label: "Attendance" },
     { id: "discussions", label: "Discussions" },
     { id: "materials", label: "Materials" },
     { id: "students", label: "Students" },
