@@ -62,7 +62,7 @@ function renderSubmissionText(text) {
   return elements;
 }
 
-function SubmissionsView({ assignment, classroomId }) {
+function SubmissionsView({ assignment, classroomId, fetchGrades }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -96,6 +96,7 @@ function SubmissionsView({ assignment, classroomId }) {
       const data = await res.json();
       if (data.success) {
         setSubmissions((prev) => prev.map((s) => s.id === studentId ? { ...s, score: Number(score), feedback } : s));
+        if (fetchGrades) fetchGrades();
       }
     } catch (err) { console.error("handleGrade:", err); } finally { setGradingId(null); }
   };
@@ -151,7 +152,7 @@ function SubmissionsView({ assignment, classroomId }) {
                         {s.submissionText && (
                           <div className="mt-3">
                               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Submission Text</p>
-                            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
                               {/<[a-z][\s\S]*>/i.test(s.submissionText) ? (
                                 <div className="prose prose-xs max-w-none text-xs text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: s.submissionText }} />
                               ) : (
@@ -165,7 +166,7 @@ function SubmissionsView({ assignment, classroomId }) {
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Submitted Files</p>
                             <div className="space-y-1.5">
                               {s.submissionFiles.map((f, i) => (
-                                <a key={i} href={f.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                                <a key={i} href={f.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                   <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                   <span className="text-xs text-slate-700 dark:text-slate-300 truncate">{f.name}</span>
                                   <span className="text-[9px] text-slate-400 flex-shrink-0">{(f.size / 1024).toFixed(0)}KB</span>
@@ -174,7 +175,7 @@ function SubmissionsView({ assignment, classroomId }) {
                             </div>
                           </div>
                         )}
-                        <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg p-3 space-y-2">
+                        <div className="bg-green-50 dark:bg-green-500/10 rounded-lg p-3 space-y-2">
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
                               <label className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Score (/{assignment.maxScore})</label>
@@ -184,7 +185,7 @@ function SubmissionsView({ assignment, classroomId }) {
                                 max={assignment.maxScore}
                                 value={gradeInputs[s.id] ?? s.score ?? ""}
                                 onChange={(e) => setGradeInputs((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                                className="w-full mt-1 px-2 py-1.5 bg-white dark:bg-slate-900 border border-green-200 dark:border-green-500/30 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/30"
+                                className="w-full mt-1 px-2 py-1.5 bg-white dark:bg-slate-900 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/30"
                               />
                             </div>
                           </div>
@@ -195,7 +196,7 @@ function SubmissionsView({ assignment, classroomId }) {
                               onChange={(e) => setFeedbackInputs((prev) => ({ ...prev, [s.id]: e.target.value }))}
                               placeholder="Provide feedback..."
                               rows={2}
-                              className="w-full mt-1 px-2 py-1.5 bg-white dark:bg-slate-900 border border-green-200 dark:border-green-500/30 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30"
+                              className="w-full mt-1 px-2 py-1.5 bg-white dark:bg-slate-900 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30"
                             />
                           </div>
                           <button
@@ -279,13 +280,14 @@ export default function AssignmentsTab({ classroomState }) {
     CreateAssignmentPanel, AssignmentDetailPanel,
     inputCls, labelCls, sectionCls,
     materials, discussions, focusedDiscussionId, setFocusedDiscussionId, setActiveTab,
+    fetchGrades,
   } = classroomState;
 
   return (
     <div className="space-y-3">
       {submissionsAssignment ? (<>
         <button onClick={() => setSubmissionsAssignment(null)} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px] font-medium transition-colors"><ArrowLeft size={14} /> Back to Assignments</button>
-        <SubmissionsView assignment={submissionsAssignment} classroomId={classroom.id} />
+        <SubmissionsView assignment={submissionsAssignment} classroomId={classroom.id} fetchGrades={fetchGrades} />
       </>) : selectedAssignment ? (<>
         <button onClick={() => setSelectedAssignment(null)} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px] font-medium transition-colors"><ArrowLeft size={14} /> Back to Assignments</button>
         <AssignmentDetailPanel

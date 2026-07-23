@@ -585,7 +585,7 @@ export default function ClassroomDetail({ classroom, onBack, user, sidebarCollap
     handleGenerateDiscussionPrompt, fetchDiscussions, fetchPosts,
     materials, materialsLoading, showNewMaterial, setShowNewMaterial,
     newMat, setNewMat, handleCreateMaterial,
-    grades, gradesLoading, handleExportGrades,
+    grades, gradesLoading, handleExportGrades, fetchGrades,
     analytics, analyticsLoading,
     students, loading, showInvite: showInvite,
     settingsForm, setSettingsForm, settingsSaving,

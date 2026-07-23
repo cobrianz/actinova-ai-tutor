@@ -114,7 +114,7 @@ export default function DiscussionsTab({ classroomState }) {
     replyingTo, setReplyingTo, discAiLoading,
     handleCreateDiscussion, handleCreatePost, handleGenerateDiscussionPrompt,
     fetchDiscussions, inputCls, labelCls, focusedDiscussionId, setFocusedDiscussionId, fetchPosts,
-    assignments,
+    assignments, fetchGrades,
   } = classroomState;
 
   const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
@@ -148,6 +148,7 @@ export default function DiscussionsTab({ classroomState }) {
         fetchDiscussions={fetchDiscussions}
         fetchPosts={fetchPosts}
         linkedAssignment={linkedAssignment}
+        fetchGrades={fetchGrades}
       />
     );
   }
@@ -295,7 +296,7 @@ function DiscussionCard({ disc, onClick, index, linkedAssignment }) {
   );
 }
 
-function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions, fetchPosts, linkedAssignment }) {
+function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, classroom, isInstructor, replyingTo, setReplyingTo, replyContent, setReplyContent, handleCreatePost, inputCls, fetchDiscussions, fetchPosts, linkedAssignment, fetchGrades }) {
   const [expandedReplies, setExpandedReplies] = useState({});
   const canPost = isInstructor || classroom.settings?.allowStudentPosts === true;
 
@@ -380,7 +381,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
                   inputCls={inputCls} repliesMap={repliesMap}
                   replyingTo={replyingTo} canPost={canPost}
                   isInstructor={isInstructor} classroomId={classroom.id}
-                  fetchPosts={fetchPosts}
+                  fetchPosts={fetchPosts} fetchGrades={fetchGrades}
                 />
               </motion.div>
             );
@@ -422,7 +423,7 @@ function ThreadView({ discussion, setSelectedDiscussion, posts, postsLoading, cl
   );
 }
 
-function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost, isInstructor, classroomId, fetchPosts }) {
+function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussion, replies, isExpanded, toggle, setReplyingTo, setReplyContent, replyContent, handleCreatePost, inputCls, repliesMap, replyingTo, canPost, isInstructor, classroomId, fetchPosts, fetchGrades }) {
   const postId = post._id || post.id;
   const [showGrade, setShowGrade] = useState(false);
   const [gradeScore, setGradeScore] = useState(post.score ?? "");
@@ -441,6 +442,7 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
       });
       setShowGrade(false);
       if (fetchPosts) fetchPosts(discussion._id || discussion.id);
+      if (fetchGrades) fetchGrades();
     } catch (err) { console.error("Grade save failed:", err); }
     setSavingGrade(false);
   };
@@ -467,21 +469,21 @@ function PostCard({ post, authorName, isInstructorPost, isReplyTarget, discussio
           {isInstructor && !isInstructorPost && (
             <div className="mt-2 pt-2 border-t border-border/50">
               {showGrade ? (
-                <div className="space-y-2 p-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
+                <div className="space-y-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-amber-700">Score:</span>
-                    <input type="number" value={gradeScore} onChange={(e) => setGradeScore(e.target.value)} className="w-16 px-2 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded text-xs" placeholder="0" />
+                    <input type="number" value={gradeScore} onChange={(e) => setGradeScore(e.target.value)} className="w-16 px-2 py-1 bg-white dark:bg-slate-900 rounded text-xs" placeholder="0" />
                     <span className="text-[10px] text-amber-600">/</span>
-                    <input type="number" value={gradeMax} onChange={(e) => setGradeMax(e.target.value)} className="w-16 px-2 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded text-xs" placeholder="100" />
+                    <input type="number" value={gradeMax} onChange={(e) => setGradeMax(e.target.value)} className="w-16 px-2 py-1 bg-white dark:bg-slate-900 rounded text-xs" placeholder="100" />
                   </div>
-                  <textarea value={gradeFeedback} onChange={(e) => setGradeFeedback(e.target.value)} placeholder="Feedback for student..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded text-xs resize-none" />
+                  <textarea value={gradeFeedback} onChange={(e) => setGradeFeedback(e.target.value)} placeholder="Feedback for student..." rows={2} className="w-full px-2 py-1 bg-white dark:bg-slate-900 rounded text-xs resize-none" />
                   <div className="flex gap-1">
                     <button onClick={handleSaveGrade} disabled={savingGrade} className="px-2 py-1 bg-amber-500 text-white rounded text-[10px] font-bold hover:bg-amber-600 disabled:opacity-50">{savingGrade ? "Saving..." : "Save Grade"}</button>
                     <button onClick={() => setShowGrade(false)} className="px-2 py-1 bg-secondary text-muted-foreground rounded text-[10px] font-semibold">Cancel</button>
                   </div>
                 </div>
               ) : post.score != null ? (
-                <button onClick={() => setShowGrade(true)} className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg text-[10px] font-bold text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors">
+                <button onClick={() => setShowGrade(true)} className="inline-flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-500/10 rounded-lg text-[10px] font-bold text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors">
                   <span>Graded: {post.score}/{post.maxScore || 100}</span>
                   <span className="text-green-500/60 font-normal">Edit</span>
                 </button>

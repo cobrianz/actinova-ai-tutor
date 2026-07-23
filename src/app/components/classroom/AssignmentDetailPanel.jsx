@@ -738,13 +738,13 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
           )}
 
           {isInstructor && (
-            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-4">
+            <div className="bg-amber-50 dark:bg-amber-500/10 rounded-lg p-4">
               <textarea
                 value={instructorComment}
                 onChange={(e) => setInstructorComment(e.target.value)}
                 placeholder="Add a comment for the student to see..."
                 rows={3}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/30"
               />
               <button
                 onClick={async () => {
@@ -769,9 +769,9 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
           )}
 
           {!isInstructor && isSubmitted && (
-            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Submission</p>
-              <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+              <div className="bg-white dark:bg-slate-900 rounded-lg p-3">
                 {/<[a-z][\s\S]*>/i.test(progress.submissionText) ? (
                   <div className="prose prose-xs max-w-none text-sm text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: progress.submissionText }} />
                 ) : (
