@@ -129,7 +129,7 @@ const InterviewPrep = () => {
 
     /* ── Setup screen ── */
     if (!isStarted) return (
-        <div className="w-full px-0 py-6 md:py-10">
+        <div className="w-full py-6 md:py-10">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 mb-5">
                     <MessageSquare size={26} className="text-green-600 dark:text-green-400" />
@@ -218,7 +218,7 @@ const InterviewPrep = () => {
 
     /* ── Interview session screen ── */
     return (
-        <div className="w-full px-0 py-6 md:py-10">
+        <div className="w-full py-6 md:py-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main area */}
                 <div className="lg:col-span-2 space-y-5">

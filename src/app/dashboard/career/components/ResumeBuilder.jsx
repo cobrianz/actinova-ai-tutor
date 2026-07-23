@@ -2198,7 +2198,7 @@ const ResumeBuilder = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen pb-28 md:pb-10">
+        <div className="max-w-7xl mx-auto py-6 md:py-10 min-h-screen pb-28 md:pb-10">
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
                 <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>

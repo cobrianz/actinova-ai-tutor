@@ -89,7 +89,7 @@ export default function DashboardLayout({ children }) {
                     : child
                 )
               ) : (
-                <div className="max-w-[110rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
+                <div className="max-w-[110rem] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
                   {React.Children.map(children, (child) =>
                     React.isValidElement(child)
                       ? React.cloneElement(child, {

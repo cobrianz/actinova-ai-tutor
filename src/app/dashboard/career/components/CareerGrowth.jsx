@@ -256,7 +256,7 @@ const CareerGrowth = () => {
     return (
         <div className="relative min-h-screen bg-white dark:bg-slate-950">
 
-            <main className="py-8 sm:py-12 md:py-16 lg:py-20 px-0">
+            <main className="py-8 sm:py-12 md:py-16 lg:py-20">
                 {/* Hero Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

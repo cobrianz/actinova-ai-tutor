@@ -113,7 +113,7 @@ const NetworkAI = () => {
     };
 
     return (
-        <div className="w-full px-0 py-6 sm:py-10">
+        <div className="w-full py-6 sm:py-10">
             {/* Header */}
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 mb-5">

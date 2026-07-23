@@ -174,7 +174,7 @@ const TestYourself = () => {
   }
 
   return (
-    <div className="px-0 py-6 bg-background text-foreground min-h-full">
+    <div className="py-6 bg-background text-foreground min-h-full">
       <header className="mb-6">
         <h1 className="text-xl font-bold tracking-tight flex items-center" style={{ fontFamily: "var(--font-fraunces)" }}>
           <BrainCircuit className="w-5 h-5 mr-2 text-green-500" />

@@ -581,7 +581,7 @@ export default function Library({ setActiveContent }) {
   }
 
   return (
-    <div className="px-0 py-6">
+    <div className="py-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

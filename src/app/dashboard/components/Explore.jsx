@@ -1324,7 +1324,7 @@ export default function Explore() {
   };
 
   return (
-    <div className="px-0 py-6">
+    <div className="py-6">
       {/* Header */}
       <div className="mb-8">
         <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 mb-6">

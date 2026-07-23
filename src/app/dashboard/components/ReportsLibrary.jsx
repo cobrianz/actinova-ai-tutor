@@ -257,7 +257,7 @@ function ReportCreator({ onCreated, onBack }) {
     ];
 
     return (
-        <div className="px-0 py-6">
+        <div className="py-6">
             {showLoader && <ActirovaLoader text="report" />}
             <UpgradeModal
                 isOpen={showUpgradeModal}
@@ -503,7 +503,7 @@ export default function ReportsLibrary({ setActiveContent }) {
     }
 
     return (
-        <div className="px-0 py-6 space-y-6">
+        <div className="py-6 space-y-6">
             {/* Header */}
             <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>

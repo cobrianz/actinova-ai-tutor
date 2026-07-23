@@ -116,7 +116,7 @@ const SkillGapAnalysis = () => {
     };
 
     return (
-        <div className="w-full px-0 py-6 sm:py-10">
+        <div className="w-full py-6 sm:py-10">
             {/* Header */}
             <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 mb-5">
@@ -298,7 +298,7 @@ const SkillGapAnalysis = () => {
 
                 {/* History */}
                 {!result && persistentHistory.length > 0 && (
-                    <div className="w-full max-w-4xl mt-10 px-2 sm:px-0">
+                    <div className="w-full max-w-4xl mt-10">
                         <div className="flex items-center gap-2 mb-6">
                             <Clock size={16} className="text-slate-400" />
                             <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Past Analyses</span>

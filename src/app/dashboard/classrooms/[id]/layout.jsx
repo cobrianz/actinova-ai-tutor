@@ -105,7 +105,7 @@ function ClassroomLayoutInner({ classroom, user, router, sidebarCollapsed, setSi
         <ClassroomMobileNav activeTab={activeTab} setActiveTab={navigateTab} isInstructor={isInstructor} onBack={onBack} />
 
         <div className="flex-1 overflow-y-auto min-w-0">
-          <div className="max-w-[110rem] mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
+          <div className="max-w-[110rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
             {children}
           </div>
         </div>

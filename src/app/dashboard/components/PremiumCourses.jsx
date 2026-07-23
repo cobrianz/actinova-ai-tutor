@@ -321,7 +321,7 @@ export default function PremiumCourses() {
     : `Use 50 Credits`;
 
   return (
-    <div className="w-full px-0 py-6 lg:py-8">
+    <div className="w-full py-6 lg:py-8">
       <motion.div
         className="text-center mb-8 lg:mb-10"
         initial={{ opacity: 0, y: -20 }}

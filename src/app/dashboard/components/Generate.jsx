@@ -416,7 +416,7 @@ export default function Generate({ setActiveContent }) {
           <ActirovaLoader text={format} />
         </div>
       )}
-      <div className="px-3 sm:px-0 py-4 sm:py-6 relative z-10">
+      <div className="py-4 sm:py-6 relative z-10">
         <div className="text-center mb-8 sm:mb-12">
           {/* Badge */}
           <motion.div
