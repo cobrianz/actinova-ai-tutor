@@ -772,7 +772,11 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
             <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Submission</p>
               <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-                <div className="space-y-1">{renderInstructions(progress.submissionText)}</div>
+                {/<[a-z][\s\S]*>/i.test(progress.submissionText) ? (
+                  <div className="prose prose-xs max-w-none text-sm text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: progress.submissionText }} />
+                ) : (
+                  <div className="space-y-1">{renderInstructions(progress.submissionText)}</div>
+                )}
               </div>
               {progress.submittedAt && (
                 <p className="text-[10px] text-slate-400 mt-2">Submitted {new Date(progress.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>

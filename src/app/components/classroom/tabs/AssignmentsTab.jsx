@@ -152,7 +152,11 @@ function SubmissionsView({ assignment, classroomId }) {
                           <div className="mt-3">
                               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Submission Text</p>
                             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-                              <div className="space-y-1">{renderSubmissionText(s.submissionText)}</div>
+                              {/<[a-z][\s\S]*>/i.test(s.submissionText) ? (
+                                <div className="prose prose-xs max-w-none text-xs text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: s.submissionText }} />
+                              ) : (
+                                <div className="space-y-1">{renderSubmissionText(s.submissionText)}</div>
+                              )}
                             </div>
                           </div>
                         )}
