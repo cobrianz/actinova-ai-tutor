@@ -493,7 +493,7 @@ export default function ChatWithPDF() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="relative flex w-full h-full bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="relative flex flex-col w-full h-full min-h-0 bg-slate-50 dark:bg-slate-950">
       {/* Dotted background — only shown during chat phase where there is no full white surface */}
       {phase === "chat" && (
         <div className="absolute inset-0 z-0 pointer-events-none">
@@ -531,7 +531,7 @@ export default function ChatWithPDF() {
 
       {/* Upload phase */}
       {phase === "upload" && (
-        <div className="flex flex-1 flex-col w-full h-full overflow-y-auto">
+        <div className="flex flex-1 flex-col w-full min-h-0 overflow-y-auto">
           {/* Full-width top header bar */}
           <div className="w-full px-6 sm:px-10 lg:px-16 pt-10 pb-6 shrink-0">
             <div className="flex items-center gap-4 mb-1">
@@ -874,11 +874,11 @@ export default function ChatWithPDF() {
         </div>
       )}
       {phase === "chat" && (
-        <div className="flex flex-1 flex-col h-full min-h-0 pb-16 lg:pb-0">
+        <div className="flex flex-1 flex-col min-h-0 h-full pb-16 lg:pb-0">
 
-          {/* ── Top bar — floating, centered, minimal (matches ReportEditor) ── */}
-          <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center h-10 mt-2">
-            <div className="flex items-center justify-between gap-3 w-full max-w-[800px] px-6 py-1 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm rounded-b-xl">
+          {/* ── Top bar — sticky inside component, not fixed to viewport ── */}
+          <div className="sticky top-0 z-20 flex items-center justify-center bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
+            <div className="flex items-center justify-between gap-3 w-full px-4 sm:px-6 py-2">
               <button
                 type="button"
                 onClick={() => setPhase("upload")}
@@ -886,21 +886,21 @@ export default function ChatWithPDF() {
               >
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-6 h-6 rounded-md bg-green-600 flex items-center justify-center shrink-0">
-                  <FileText size={12} className="text-white" />
+              <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
+                <div className="w-5 h-5 rounded-md bg-green-600 flex items-center justify-center shrink-0">
+                  <FileText size={11} className="text-white" />
                 </div>
-                <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-0">{fileName}</p>
+                <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-0 max-w-[140px] sm:max-w-xs">{fileName}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-[11px] text-slate-400">{fileSizeMB} MB</span>
+                <span className="hidden sm:inline text-[11px] text-slate-400">{fileSizeMB} MB</span>
                 <button
                   type="button"
                   onClick={() => setMessages([])}
                   title="Clear chat"
                   className="inline-flex items-center justify-center h-6 w-6 rounded-md text-rose-500 transition-colors hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                 >
-                  <Trash2 size={13} className="h-3.5 w-3.5" />
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>
@@ -935,7 +935,7 @@ export default function ChatWithPDF() {
             role="log"
             aria-live="polite"
             aria-label="Chat messages"
-            className="flex-1 overflow-y-auto pt-14 bg-white dark:bg-slate-900 relative z-10"
+            className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-slate-900 relative z-10"
           >
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full min-h-[40vh] p-6 text-center">
@@ -946,7 +946,7 @@ export default function ChatWithPDF() {
                 <p className="text-xs text-slate-400">Ask anything about your PDF document</p>
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 pb-36 space-y-4">
+              <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-8 py-4 pb-6 space-y-4">
                 <AnimatePresence>
                   {messages.map((message, idx) => {
                     const isUser = message.role === "user";
@@ -967,7 +967,7 @@ export default function ChatWithPDF() {
                           </div>
                         )}
 
-                        <div className={`max-w-[75%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
+                        <div className={`max-w-[90%] sm:max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                           {/* Bubble */}
                           <div className={`px-4 py-3 rounded-2xl text-[14.5px] leading-relaxed ${
                             isUser
@@ -1030,7 +1030,7 @@ export default function ChatWithPDF() {
           </div>
 
           {/* ── Input bar ── */}
-          <div className="sticky bottom-0 left-0 w-full px-4 pb-4 pt-2 bg-gradient-to-t from-slate-50 dark:from-slate-950 via-slate-50/90 dark:via-slate-950/90 to-transparent shrink-0">
+          <div className="sticky bottom-0 left-0 w-full px-3 sm:px-4 pb-3 sm:pb-4 pt-2 bg-gradient-to-t from-slate-50 dark:from-slate-950 via-slate-50/90 dark:via-slate-950/90 to-transparent shrink-0">
             <div className="max-w-3xl mx-auto">
               <div className="flex items-end gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-lg ring-1 ring-transparent focus-within:ring-green-400/30 focus-within:border-green-300 dark:focus-within:border-green-700 transition-all">
                 <textarea
