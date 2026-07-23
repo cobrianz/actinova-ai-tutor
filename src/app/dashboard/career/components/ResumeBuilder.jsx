@@ -2198,8 +2198,8 @@ const ResumeBuilder = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto py-6 md:py-10 min-h-screen pb-28 md:pb-10">
-            <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
+        <div className="w-full max-w-7xl mx-auto py-6 md:py-10 min-h-screen pb-20 md:pb-10">
+            <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4 md:px-4">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
                 <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
             </motion.header>
@@ -2211,7 +2211,7 @@ const ResumeBuilder = () => {
                 </div>
             )}
 
-            <div className="flex flex-col items-center gap-4 md:gap-6">
+            <div className="flex flex-col md:items-center gap-4 md:gap-6">
                 <nav className="hidden md:flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-full">
                     {[
                         { id: 'editor', label: 'Resume', icon: Edit2 },
@@ -2226,35 +2226,6 @@ const ResumeBuilder = () => {
                         </button>
                     ))}
                 </nav>
-
-                <nav className="flex md:hidden overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 w-full">
-                    {[
-                        { id: 'editor', label: 'Resume', icon: Edit2 },
-                        { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
-                        { id: 'application-letter', label: 'Application Letter', icon: Target },
-                        { id: 'portfolio', label: 'Portfolio', icon: FolderOpen }
-                    ].map(tab => (
-                        <button key={tab.id} onClick={() => setEditorTab(tab.id)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-green-600" : "text-slate-500 dark:text-slate-400"}`}>
-                            <tab.icon size={13} />
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-
-                <div className="flex md:hidden w-full gap-2">
-                    <Button variant="outline" onClick={handleNew} className="flex-1 h-9 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 text-[11px] font-bold">
-                        <Plus size={12} className="mr-1" /> New
-                    </Button>
-                    <Button onClick={saveToDatabase} className="flex-1 h-9 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-bold">
-                        <Save size={12} className="mr-1" /> Save
-                    </Button>
-                    {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
-                        <Button variant="outline" onClick={exportToDOCX} className="flex-1 h-9 rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-[11px] font-bold">
-                            <Download size={12} className="mr-1" /> Export
-                        </Button>
-                    )}
-                </div>
 
                 <div className="w-full max-w-4xl hidden md:flex flex-wrap items-center justify-center gap-2">
                     <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-xs">
@@ -2736,7 +2707,7 @@ const ResumeBuilder = () => {
                     scrollbar-width: none;
                 }
                 @media (max-width: 768px) {
-                    #resume-preview { padding: 1rem !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+                    #resume-preview { padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
                     #resume-preview * { font-size: 10px !important; }
                     #resume-preview h1 { font-size: 18px !important; margin-bottom: 0.5rem !important; }
                     #resume-preview h3 { font-size: 12px !important; margin-top: 1rem !important; }
@@ -2834,16 +2805,16 @@ const ResumeBuilder = () => {
                 </div>
             )}
 
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", touchAction: "manipulation" }}>
                 <div className="flex items-center justify-around h-16 px-1">
                     <button onClick={() => setEditorTab('editor')}
-                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'editor' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
-                        <Edit2 className={`w-5 h-5 transition-all duration-200 ${editorTab === 'editor' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'editor' ? "currentColor" : "none"} />
+                        className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${editorTab === 'editor' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <Edit2 className={`w-6 h-6 transition-all duration-200 ${editorTab === 'editor' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'editor' ? "currentColor" : "none"} />
                         <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'editor' ? "font-bold" : "font-medium"}`}>Resume</span>
                     </button>
                     <button onClick={() => setEditorTab('cover-letter')}
-                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'cover-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
-                        <FileText className={`w-5 h-5 transition-all duration-200 ${editorTab === 'cover-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'cover-letter' ? "currentColor" : "none"} />
+                        className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${editorTab === 'cover-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <FileText className={`w-6 h-6 transition-all duration-200 ${editorTab === 'cover-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'cover-letter' ? "currentColor" : "none"} />
                         <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'cover-letter' ? "font-bold" : "font-medium"}`}>Cover</span>
                     </button>
                     <button onClick={handleNew}
@@ -2851,13 +2822,13 @@ const ResumeBuilder = () => {
                         <Plus className="w-7 h-7 stroke-[2.5]" />
                     </button>
                     <button onClick={() => setEditorTab('application-letter')}
-                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'application-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
-                        <Target className={`w-5 h-5 transition-all duration-200 ${editorTab === 'application-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'application-letter' ? "currentColor" : "none"} />
+                        className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${editorTab === 'application-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <Target className={`w-6 h-6 transition-all duration-200 ${editorTab === 'application-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'application-letter' ? "currentColor" : "none"} />
                         <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'application-letter' ? "font-bold" : "font-medium"}`}>App Ltr</span>
                     </button>
                     <button onClick={() => setShowMoreMenu(!showMoreMenu)}
-                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${showMoreMenu ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
-                        <MoreHorizontal className={`w-5 h-5 transition-all duration-200 ${showMoreMenu ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
+                        className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[48px] px-2 py-1 rounded-lg transition-all duration-200 ${showMoreMenu ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <MoreHorizontal className={`w-6 h-6 transition-all duration-200 ${showMoreMenu ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
                         <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${showMoreMenu ? "font-bold" : "font-medium"}`}>More</span>
                     </button>
                 </div>

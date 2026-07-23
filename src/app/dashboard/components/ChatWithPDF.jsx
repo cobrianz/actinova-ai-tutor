@@ -874,10 +874,10 @@ export default function ChatWithPDF() {
         </div>
       )}
       {phase === "chat" && (
-        <div className="flex flex-1 flex-col h-full min-h-0">
+        <div className="flex flex-1 flex-col h-full min-h-0 pb-16 lg:pb-0">
 
           {/* ── Top bar — floating, centered, minimal (matches ReportEditor) ── */}
-          <div className="fixed top-[68px] left-0 lg:left-[240px] right-0 z-50 flex items-center justify-center h-10 mt-2">
+          <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center h-10 mt-2">
             <div className="flex items-center justify-between gap-3 w-full max-w-[800px] px-6 py-1 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm rounded-b-xl">
               <button
                 type="button"

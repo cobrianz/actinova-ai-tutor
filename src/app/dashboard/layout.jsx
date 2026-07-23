@@ -33,9 +33,11 @@ export default function DashboardLayout({ children }) {
   const segment = pathname.split("/dashboard/")[1]?.split("/")[0] || "generate";
   const activeContent = PATH_TO_TAB[segment] || "generate";
   const isClassroomDetail = pathname.startsWith("/dashboard/classrooms/") && pathname.split("/").length > 3;
-  const isChat = activeContent === "chat" || activeContent === "chat-pdf";
+  const isResumeEditor = pathname.startsWith("/dashboard/career/resume");
+  const isChat = activeContent === "chat";
+  const isChatPdf = activeContent === "chat-pdf";
   const isLearn = segment === "learn";
-  const isFullscreen = isChat || isLearn;
+  const isFullscreen = isChat || isChatPdf || isLearn;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideDashboardNav, setHideDashboardNav] = useState(false);
@@ -89,6 +91,21 @@ export default function DashboardLayout({ children }) {
                     : child
                 )
               ) : (
+                pathname.startsWith("/dashboard/career/resume") ? (
+                  <div className="w-full pt-6 sm:pt-8 lg:pt-12 pb-16">
+                    {React.Children.map(children, (child) =>
+                      React.isValidElement(child)
+                        ? React.cloneElement(child, {
+                            classroomSidebarCollapsed,
+                            setClassroomSidebarCollapsed,
+                            setHideDashboardNav,
+                            hideDashboardNav,
+                            setActiveContent,
+                          })
+                        : child
+                    )}
+                  </div>
+                ) : (
                 <div className="max-w-[110rem] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
                   {React.Children.map(children, (child) =>
                     React.isValidElement(child)
@@ -102,10 +119,11 @@ export default function DashboardLayout({ children }) {
                       : child
                   )}
                 </div>
+                )
               )}
             </main>
           </div>
-          {activeContent !== "career" && !hideDashboardNav && !isClassroomDetail && !isFullscreen && <DashboardMobileNav />}
+          {!hideDashboardNav && !isClassroomDetail && !isResumeEditor && (!isFullscreen || isChatPdf) && <DashboardMobileNav />}
         </div>
       </ThemeProvider>
     </ProtectedRoute>
