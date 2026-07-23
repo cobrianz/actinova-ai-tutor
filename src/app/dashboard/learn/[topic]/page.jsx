@@ -1,5 +1,5 @@
-import { ThemeProvider } from "../../components/ThemeProvider";
-import ProtectedRoute from "../../components/ProtectedRoute";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import LearnContent from "@/dashboard/learn/components/LearnContent";
 
 export default function LearnPage() {
