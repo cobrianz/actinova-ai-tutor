@@ -2227,6 +2227,35 @@ const ResumeBuilder = () => {
                     ))}
                 </nav>
 
+                <nav className="flex md:hidden overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 w-full">
+                    {[
+                        { id: 'editor', label: 'Resume', icon: Edit2 },
+                        { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
+                        { id: 'application-letter', label: 'Application Letter', icon: Target },
+                        { id: 'portfolio', label: 'Portfolio', icon: FolderOpen }
+                    ].map(tab => (
+                        <button key={tab.id} onClick={() => setEditorTab(tab.id)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-green-600" : "text-slate-500 dark:text-slate-400"}`}>
+                            <tab.icon size={13} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="flex md:hidden w-full gap-2">
+                    <Button variant="outline" onClick={handleNew} className="flex-1 h-9 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 text-[11px] font-bold">
+                        <Plus size={12} className="mr-1" /> New
+                    </Button>
+                    <Button onClick={saveToDatabase} className="flex-1 h-9 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-bold">
+                        <Save size={12} className="mr-1" /> Save
+                    </Button>
+                    {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
+                        <Button variant="outline" onClick={exportToDOCX} className="flex-1 h-9 rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-[11px] font-bold">
+                            <Download size={12} className="mr-1" /> Export
+                        </Button>
+                    )}
+                </div>
+
                 <div className="w-full max-w-4xl hidden md:flex flex-wrap items-center justify-center gap-2">
                     <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-xs">
                         <Plus size={14} className="mr-1.5" /> {
@@ -2309,7 +2338,7 @@ const ResumeBuilder = () => {
                     {editorTab === 'editor' && (
                         <div className="h-full">
                             {!hasUserEnteredResumeContent(currentResumeData, user) ? (
-                                <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
+                                <div className="flex flex-col items-center justify-center min-h-[600px] p-4 sm:p-12 text-center">
                                     <div className="w-20 h-20 rounded-3xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6">
                                         <FileText className="w-10 h-10 text-green-500" />
                                     </div>
@@ -2430,18 +2459,18 @@ const ResumeBuilder = () => {
                                     <textarea
                                         value={coverLetter}
                                         onChange={e => setCoverLetter(e.target.value)}
-                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
+                                        className="w-full h-full min-h-[900px] p-4 sm:p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
                                     />
                                     <div
                                         id="cover-letter-export"
-                                        className="absolute top-0 left-0 w-full p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
+                                        className="absolute top-0 left-0 w-full p-4 sm:p-8 md:p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
                                     >
                                         {coverLetter}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-                                    <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
+                                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-10 text-center">
+                                    <div className="w-full max-w-md p-6 sm:p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
                                         <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6 mx-auto">
                                             <FileText className="w-8 h-8 text-green-500" />
                                         </div>
@@ -2472,18 +2501,18 @@ const ResumeBuilder = () => {
                                     <textarea
                                         value={applicationLetter}
                                         onChange={e => setApplicationLetter(e.target.value)}
-                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
+                                        className="w-full h-full min-h-[900px] p-4 sm:p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
                                     />
                                     <div
                                         id="application-letter-export"
-                                        className="absolute top-0 left-0 w-full p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
+                                        className="absolute top-0 left-0 w-full p-4 sm:p-8 md:p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
                                     >
                                         {applicationLetter}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-                                    <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
+                                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-10 text-center">
+                                    <div className="w-full max-w-md p-6 sm:p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
                                         <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6 mx-auto">
                                             <Target className="w-8 h-8 text-emerald-500" />
                                         </div>
@@ -2716,6 +2745,7 @@ const ResumeBuilder = () => {
                     #resume-preview .text-[15px] { font-size: 12px !important; }
                     #resume-preview .text-[13px] { font-size: 10px !important; }
                     #resume-preview section { margin-bottom: 1.5rem !important; }
+                    #cover-letter-preview, #application-letter-preview { width: 100% !important; max-width: 100% !important; margin: 0 !important; }
                 }
             ` }} />
 
