@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { toast } from "sonner";
 import Flashcards from "@/components/Flashcards";
@@ -138,6 +139,10 @@ function FlashcardSetCard({ card, isBookmarked, onBookmark, onStudy, onDelete })
 }
 
 export default function FlashcardsLibrary({ setActiveContent }) {
+  const router = useRouter();
+  const handleCreateNew = setActiveContent
+    ? () => setActiveContent("generate")
+    : () => router.push("/dashboard/flashcards/generate");
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFlashcard, setSelectedFlashcard] = useState(null);
@@ -314,7 +319,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
             </button>
           )}
           <button
-            onClick={() => setActiveContent("generate")}
+            onClick={handleCreateNew}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
           >
             <Plus size={13} />
@@ -333,7 +338,7 @@ export default function FlashcardsLibrary({ setActiveContent }) {
             Create your first flashcard set to start learning with spaced repetition
           </p>
           <button
-            onClick={() => setActiveContent("generate")}
+            onClick={handleCreateNew}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
           >
             <Plus size={13} />
