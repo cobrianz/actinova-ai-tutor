@@ -11,6 +11,57 @@ import EmptyState from "../EmptyState";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/csrfClient";
 
+function renderInline(text) {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) return <em key={i}>{part.slice(1, -1)}</em>;
+    return <span key={i}>{part}</span>;
+  });
+}
+
+function renderSubmissionText(text) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  const elements = [];
+  let i = 0;
+  let key = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^#{1,3}\s+/.test(line)) {
+      elements.push(<p key={key++} className="font-bold text-slate-900 dark:text-white text-sm mt-3 first:mt-0 mb-1">{renderInline(line.replace(/^#{1,3}\s+/, ""))}</p>);
+      i++;
+    } else if (line.includes("|") && i + 1 < lines.length && /^\|?\s*[-:]+[-|:\s]*$/.test(lines[i + 1].trim())) {
+      const headers = line.split("|").map((c) => c.trim()).filter(Boolean);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim() !== "") {
+        rows.push(lines[i].split("|").map((c) => c.trim()).filter(Boolean));
+        i++;
+      }
+      elements.push(
+        <div key={key++} className="overflow-x-auto my-2">
+          <table className="w-full text-xs border-collapse">
+            <thead><tr>{headers.map((h, hi) => <th key={hi} className="px-2 py-1.5 text-left font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">{renderInline(h)}</th>)}</tr></thead>
+            <tbody>{rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={ci} className="px-2 py-1.5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{renderInline(cell)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      );
+    } else if (/^[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) { items.push(lines[i].replace(/^[-*]\s+/, "")); i++; }
+      elements.push(<ul key={key++} className="list-disc list-outside ml-8 space-y-1 text-xs my-2">{items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}</ul>);
+    } else if (/^\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) { items.push(lines[i].replace(/^\d+\.\s+/, "")); i++; }
+      elements.push(<ol key={key++} className="list-decimal list-outside ml-8 space-y-1 text-xs my-2">{items.map((item, j) => <li key={j} className="text-slate-700 dark:text-slate-300">{renderInline(item)}</li>)}</ol>);
+    } else if (line.trim() === "") { i++; }
+    else { elements.push(<p key={key++} className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{renderInline(line)}</p>); i++; }
+  }
+  return elements;
+}
+
 function SubmissionsView({ assignment, classroomId }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,9 +150,9 @@ function SubmissionsView({ assignment, classroomId }) {
                       <div className="px-3 pb-3 space-y-3 border-t border-slate-100 dark:border-slate-800">
                         {s.submissionText && (
                           <div className="mt-3">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Submission Text</p>
+                              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Submission Text</p>
                             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-                              <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{s.submissionText}</p>
+                              <div className="space-y-1">{renderSubmissionText(s.submissionText)}</div>
                             </div>
                           </div>
                         )}
