@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, X, Loader2, Sparkles, Plus, Trash2, CheckCircle2,
-  Edit3, Layers, MessageSquare, Code, Presentation,
+  Edit3, Layers, MessageSquare, Code, Presentation, CircleDot,
+  Download, Upload, RefreshCw, Clock,
 } from "lucide-react";
 import { apiClient } from "@/lib/csrfClient";
 import { toast } from "sonner";
@@ -78,8 +79,10 @@ export default function CreateAssignmentPanel({
         passingScore: editAssignment.passingScore ?? 60,
         maxAttempts: editAssignment.maxAttempts ?? 1,
         rubric: editAssignment.rubric || [],
+        quizQuestions: editAssignment.quizQuestions || [],
         questionCount: editAssignment.meta?.questionCount || 20,
         difficulty: editAssignment.meta?.difficulty || "medium",
+        timeLimitMinutes: editAssignment.meta?.timeLimitMinutes || 30,
       };
     }
     try {
@@ -89,12 +92,14 @@ export default function CreateAssignmentPanel({
     return {
       title: "", instructions: "", type: "essay",
       weekNumber: 1, maxScore: 100, passingScore: 60,
-      maxAttempts: 1, rubric: [], questionCount: 20, difficulty: "medium",
+      maxAttempts: 1, rubric: [], quizQuestions: [],
+      questionCount: 20, difficulty: "medium", timeLimitMinutes: 30,
     };
   });
   const [loading, setLoading] = useState(false);
   const [aiInstrLoading, setAiInstrLoading] = useState(false);
   const [aiRubricLoading, setAiRubricLoading] = useState(false);
+  const [aiQuizLoading, setAiQuizLoading] = useState(false);
 
   useEffect(() => {
     if (!isEdit) {
@@ -151,6 +156,36 @@ export default function CreateAssignmentPanel({
     } catch { toast.error("Failed to generate rubric"); } finally { setAiRubricLoading(false); }
   };
 
+  const handleGenerateQuiz = async () => {
+    if (!form.title.trim()) { toast.error("Enter assignment title first"); return; }
+    setAiQuizLoading(true);
+    try {
+      const weekTopics = isExam
+        ? getAllTopicsUpToWeek(form.weekNumber === "midterm" ? Math.floor(durationWeeks / 2) : durationWeeks, courseModules, forkedContent)
+        : getWeekTopics(weekNum, courseModules, forkedContent);
+      const contextStr = weekTopics.length > 0 ? `Topics: ${weekTopics.join(", ")}.` : "";
+      const res = await apiClient.post("/api/classrooms/ai-generate", {
+        task: "quiz_questions",
+        name: form.title,
+        subject: classroomName || "",
+        content: `${contextStr} Generate ${form.questionCount} questions with difficulty "${form.difficulty}". Assignment type: ${form.type}. Max score: ${form.maxScore}.`,
+      });
+      const data = await res.json();
+      if (data.result?.questions?.length > 0) {
+        const questions = data.result.questions.map((q, i) => ({
+          id: i,
+          text: q.text || "",
+          type: q.type || "multiple-choice",
+          points: q.points || 2,
+          options: q.options || [],
+          correctAnswer: q.correctAnswer ?? "",
+        }));
+        setForm((p) => ({ ...p, quizQuestions: questions }));
+        toast.success(`${questions.length} questions generated!`);
+      } else toast.error("No questions generated");
+    } catch { toast.error("Failed to generate quiz questions"); } finally { setAiQuizLoading(false); }
+  };
+
   const handleCreate = async () => {
     if (!form.title.trim()) { toast.error("Assignment title is required"); return; }
     setLoading(true);
@@ -166,7 +201,8 @@ export default function CreateAssignmentPanel({
         maxAttempts: form.maxAttempts,
         rubric: form.rubric.length > 0 ? form.rubric : undefined,
         weekNumber: typeof form.weekNumber === "string" ? 0 : form.weekNumber,
-        meta: form.type === "quiz" ? { questionCount: form.questionCount, difficulty: form.difficulty } : undefined,
+        meta: (form.type === "quiz" || form.type === "exam") ? { questionCount: form.questionCount, difficulty: form.difficulty, timeLimitMinutes: form.timeLimitMinutes } : undefined,
+        quizQuestions: (form.type === "quiz" || form.type === "exam") && form.quizQuestions.length > 0 ? form.quizQuestions : undefined,
       };
       const res = isEdit
         ? await apiClient.put(`/api/classrooms/${classroomId}/assignments/${editAssignment.id || editAssignment._id}`, payload)
@@ -250,9 +286,9 @@ export default function CreateAssignmentPanel({
           </div>
         </div>
 
-        {/* Quiz-specific: question count + difficulty */}
+        {/* Quiz-specific: question count + difficulty + time limit */}
         {(form.type === "quiz" || form.type === "exam") && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className={labelCls}>Questions</label>
               <input type="number" min={5} max={50} value={form.questionCount}
@@ -266,6 +302,11 @@ export default function CreateAssignmentPanel({
                 <option value="medium">Medium</option>
                 <option value="hard">Hard</option>
               </select>
+            </div>
+            <div>
+              <label className={labelCls}>Time (min)</label>
+              <input type="number" min={1} max={180} value={form.timeLimitMinutes}
+                onChange={(e) => setForm({ ...form, timeLimitMinutes: parseInt(e.target.value) || 30 })} className={inputCls} />
             </div>
           </div>
         )}
@@ -355,6 +396,128 @@ export default function CreateAssignmentPanel({
             <Plus className="w-3 h-3" /> Add Criterion
           </button>
         </div>
+
+        {/* Quiz Questions — editable */}
+        {(form.type === "quiz" || form.type === "exam") && (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className={labelCls}>Quiz Questions ({form.quizQuestions.length})</label>
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => {
+                  const json = JSON.stringify(form.quizQuestions, null, 2);
+                  const blob = new Blob([json], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a"); a.href = url; a.download = `${form.title || "quiz"}-questions.json`; a.click(); URL.revokeObjectURL(url);
+                  toast.success("Quiz exported!");
+                }} disabled={form.quizQuestions.length === 0}
+                  className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-40 transition-colors">
+                  <Download size={11} /> Export
+                </button>
+                <button type="button" onClick={() => {
+                  const input = document.createElement("input"); input.type = "file"; input.accept = ".json";
+                  input.onchange = (e) => {
+                    const file = e.target.files?.[0]; if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      try {
+                        const parsed = JSON.parse(ev.target.result);
+                        if (Array.isArray(parsed)) {
+                          const questions = parsed.map((q, i) => ({
+                            id: i, text: q.text || "", type: q.type || "multiple-choice",
+                            points: q.points || 2, options: q.options || [], correctAnswer: q.correctAnswer ?? "",
+                          }));
+                          setForm((p) => ({ ...p, quizQuestions: questions }));
+                          toast.success(`Imported ${questions.length} questions!`);
+                        } else toast.error("Invalid format — expected array of questions");
+                      } catch { toast.error("Invalid JSON file"); }
+                    };
+                    reader.readAsText(file);
+                  };
+                  input.click();
+                }} className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-slate-700 transition-colors">
+                  <Upload size={11} /> Import
+                </button>
+                <button type="button" onClick={handleGenerateQuiz} disabled={aiQuizLoading || !form.title.trim()}
+                  className="flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-700 disabled:opacity-40 transition-colors">
+                  {aiQuizLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  {aiQuizLoading ? "Generating..." : isEdit && form.quizQuestions.length > 0 ? "Regenerate All" : "Generate with AI"}
+                </button>
+              </div>
+            </div>
+            {form.quizQuestions.length > 0 ? (
+              <div className="space-y-3">
+                {form.quizQuestions.map((q, qi) => (
+                  <div key={qi} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold flex-shrink-0 mt-0.5">{qi + 1}</span>
+                      <div className="flex-1 space-y-2">
+                        <input value={q.text} onChange={(e) => {
+                          const next = [...form.quizQuestions]; next[qi] = { ...next[qi], text: e.target.value };
+                          setForm({ ...form, quizQuestions: next });
+                        }} placeholder="Question text"
+                          className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500/30" />
+                        <div className="grid grid-cols-3 gap-2">
+                          <select value={q.type} onChange={(e) => {
+                            const next = [...form.quizQuestions]; next[qi] = { ...next[qi], type: e.target.value, options: e.target.value === "true-false" ? ["True", "False"] : next[qi].options };
+                            setForm({ ...form, quizQuestions: next });
+                          }} className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-green-500/30">
+                            <option value="multiple-choice">Multiple Choice</option>
+                            <option value="true-false">True/False</option>
+                            <option value="short-answer">Short Answer</option>
+                          </select>
+                          <input type="number" min={1} value={q.points} onChange={(e) => {
+                            const next = [...form.quizQuestions]; next[qi] = { ...next[qi], points: parseInt(e.target.value) || 1 };
+                            setForm({ ...form, quizQuestions: next });
+                          }} placeholder="Pts"
+                            className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-900 dark:text-white text-center focus:outline-none focus:ring-1 focus:ring-green-500/30" />
+                          <input value={q.correctAnswer ?? ""} onChange={(e) => {
+                            const next = [...form.quizQuestions]; next[qi] = { ...next[qi], correctAnswer: e.target.value };
+                            setForm({ ...form, quizQuestions: next });
+                          }} placeholder="Correct answer"
+                            className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500/30" />
+                        </div>
+                        {q.type === "multiple-choice" && (
+                          <div className="space-y-1.5 ml-1">
+                            {(q.options || []).map((opt, oi) => (
+                              <div key={oi} className="flex items-center gap-1.5">
+                                <CircleDot className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <input value={opt} onChange={(e) => {
+                                  const next = [...form.quizQuestions]; const opts = [...next[qi].options]; opts[oi] = e.target.value;
+                                  next[qi] = { ...next[qi], options: opts };
+                                  setForm({ ...form, quizQuestions: next });
+                                }} placeholder={`Option ${oi + 1}`}
+                                  className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500/30" />
+                                <button type="button" onClick={() => {
+                                  const next = [...form.quizQuestions]; const opts = next[qi].options.filter((_, j) => j !== oi);
+                                  next[qi] = { ...next[qi], options: opts };
+                                  setForm({ ...form, quizQuestions: next });
+                                }} className="p-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                              </div>
+                            ))}
+                            <button type="button" onClick={() => {
+                              const next = [...form.quizQuestions]; next[qi] = { ...next[qi], options: [...(next[qi].options || []), ""] };
+                              setForm({ ...form, quizQuestions: next });
+                            }} className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-700">
+                              <Plus className="w-3 h-3" /> Add Option
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button type="button" onClick={() => setForm({ ...form, quizQuestions: form.quizQuestions.filter((_, j) => j !== qi) })}
+                        className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-[11px] text-slate-400 italic mb-2">No questions yet. Generate with AI, import, or add manually.</p>}
+            <button type="button" onClick={() => setForm({ ...form, quizQuestions: [...form.quizQuestions, { id: form.quizQuestions.length, text: "", type: "multiple-choice", points: 2, options: ["", "", "", ""], correctAnswer: "" }] })}
+              className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors mt-1.5">
+              <Plus className="w-3 h-3" /> Add Question
+            </button>
+          </div>
+        )}
 
         {/* Submit */}
         <button onClick={handleCreate} disabled={loading || !form.title.trim()}

@@ -518,7 +518,7 @@ export default function CourseTab({ classroomState }) {
                   setActiveTab={setActiveTab}
                   startDate={classroom.startDate}
                   weekAssignments={(assignments || []).filter((a) => a.weekNumber === mod.weekNumber)}
-                  onOpenAssignment={(a) => setSelectedAssignment(a)}
+                  onOpenAssignment={(a) => { setSelectedAssignment(a); setActiveTab("assignments"); }}
                   onOpenDiscussion={(discId) => { setFocusedDiscussionId(discId); setActiveTab("discussions"); }}
                 />
               ))}
@@ -594,7 +594,7 @@ export default function CourseTab({ classroomState }) {
                     setActiveTab={setActiveTab}
                     startDate={classroom.startDate}
                     weekAssignments={assignments || []}
-                    onOpenAssignment={(a) => setSelectedAssignment(a)}
+                    onOpenAssignment={(a) => { setSelectedAssignment(a); setActiveTab("assignments"); }}
                     onOpenDiscussion={(discId) => { setFocusedDiscussionId(discId); setActiveTab("discussions"); }}
                   />
                 </div>

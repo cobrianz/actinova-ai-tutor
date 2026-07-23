@@ -129,6 +129,7 @@ async function handlePut(request, { params }) {
     maxAttempts,
     isGroupAssignment,
     weekNumber,
+    quizQuestions,
   } = body;
 
   if (title !== undefined) assignment.title = title.trim();
@@ -152,6 +153,7 @@ async function handlePut(request, { params }) {
   if (maxAttempts !== undefined) assignment.maxAttempts = maxAttempts;
   if (isGroupAssignment !== undefined) assignment.isGroupAssignment = isGroupAssignment;
   if (weekNumber !== undefined) assignment.weekNumber = weekNumber;
+  if (quizQuestions !== undefined) assignment.quizQuestions = quizQuestions;
 
   await assignment.save();
 
@@ -177,6 +179,7 @@ async function handlePut(request, { params }) {
       maxAttempts: assignment.maxAttempts,
       isGroupAssignment: assignment.isGroupAssignment,
       weekNumber: assignment.weekNumber,
+      quizQuestions: assignment.quizQuestions || [],
       isActive: assignment.isActive,
       createdAt: assignment.createdAt,
     },

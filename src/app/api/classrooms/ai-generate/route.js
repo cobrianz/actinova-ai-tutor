@@ -190,19 +190,21 @@ Generate exactly 2 assignments. Return ONLY valid JSON array, no markdown.`;
       break;
 
     case "quiz_questions":
-      systemPrompt = `You are an expert assessment designer creating quiz questions. Generate EXACTLY 10 high-quality questions mixing: ~60% multiple-choice, ~20% true/false, ~20% multiple-select. Each question tests understanding of key concepts.
+      systemPrompt = `You are an expert assessment designer creating quiz questions. Generate the EXACT number of questions requested by the user. Mix question types: ~60% multiple-choice, ~20% true/false, ~20% short-answer. Each question tests understanding of key concepts.
 
-RULES:
-- Generate EXACTLY 10 questions
-- Each must have: "text", "type", "points" (1-5), "options" (array of strings), "correctAnswer"
+CRITICAL RULE:
+- You MUST generate EXACTLY the number of questions the user requests — no more, no fewer
+- Count carefully before returning
+
+Each question must have: "text", "type", "points" (1-5), "options" (array of strings), "correctAnswer"
 - multiple-choice: 4 options, correctAnswer is the correct option string
-- true-false: options ["True", "False"], correctAnswer is "True" or "False"  
-- multiple-select: 4 options, correctAnswer is array of correct option strings
+- true-false: options ["True", "False"], correctAnswer is "True" or "False"
+- short-answer: options [], correctAnswer is the expected answer string
 - Questions should progress from foundational to advanced
 - Provide clear, unambiguous questions
 
 Return ONLY valid JSON: { "questions": [{ "text", "type", "points", "options", "correctAnswer" }] }`;
-      userPrompt = `Generate 10 quiz questions for: "${name}" (${subject || "General"}). ${content ? `Topic context: ${content}` : ""}`;
+      userPrompt = `Generate quiz questions for: "${name}" (${subject || "General"}). ${content ? `Context: ${content}` : ""}`;
       break;
 
     default:
@@ -232,6 +234,23 @@ Return ONLY valid JSON: { "questions": [{ "text", "type", "points", "options", "
     try {
       const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       const parsed = JSON.parse(cleaned);
+      if (task === "quiz_questions" && parsed.questions) {
+        const countMatch = content?.match(/Generate\s+(\d+)\s+questions/i);
+        const requested = countMatch ? parseInt(countMatch[1]) : null;
+        if (requested && parsed.questions.length !== requested) {
+          if (parsed.questions.length > requested) {
+            parsed.questions = parsed.questions.slice(0, requested);
+          }
+        }
+        parsed.questions = parsed.questions.map((q, i) => ({
+          id: i,
+          text: q.text || `Question ${i + 1}`,
+          type: q.type || "multiple-choice",
+          points: q.points || 2,
+          options: q.options || [],
+          correctAnswer: q.correctAnswer ?? "",
+        }));
+      }
       return NextResponse.json({ result: parsed });
     } catch {
       if (task === "rubric") {

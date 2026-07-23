@@ -367,6 +367,8 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(null);
+  const [quizTimeLeft, setQuizTimeLeft] = useState(null);
+  const [quizTimerActive, setQuizTimerActive] = useState(false);
   const tc = TYPE_CONFIG[assignment.type] || TYPE_CONFIG._default;
   const TypeIcon = tc.icon;
 
@@ -382,6 +384,17 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
   const progress = assignment.myProgress;
   const isSubmitted = progress?.status === "completed" && progress?.submissionText;
   const totalRubricPoints = (assignment.rubric || []).reduce((sum, r) => sum + (r.maxPoints || 0), 0);
+
+  useEffect(() => {
+    if (!quizTimerActive || quizTimeLeft === null || quizSubmitted) return;
+    if (quizTimeLeft <= 0) {
+      setQuizTimerActive(false);
+      handleQuizSubmit();
+      return;
+    }
+    const timer = setInterval(() => setQuizTimeLeft((prev) => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [quizTimerActive, quizTimeLeft, quizSubmitted]);
 
   const handleSubmit = async () => {
     if (!text) return;
@@ -404,8 +417,11 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
   const handleStartQuiz = async () => {
     setQuizLoading(true);
     try {
+      const timeLimit = assignment.meta?.timeLimitMinutes || 30;
       if (assignment.quizQuestions?.length > 0) {
         setQuizQuestions(assignment.quizQuestions);
+        setQuizTimeLeft(timeLimit * 60);
+        setQuizTimerActive(true);
         setQuizLoading(false);
         return;
       }
@@ -426,6 +442,8 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
           correctAnswer: q.correctAnswer,
         }));
         setQuizQuestions(questions);
+        setQuizTimeLeft(timeLimit * 60);
+        setQuizTimerActive(true);
         try {
           await apiClient.patch(`/api/classrooms/${classroomId}/assignments/${assignment.id}`, { quizQuestions: questions });
         } catch (e) { console.error("Failed to save quiz questions:", e); }
@@ -439,9 +457,9 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
     let score = 0;
     let total = 0;
     if (quizQuestions) {
-      quizQuestions.forEach((q) => {
+      quizQuestions.forEach((q, i) => {
         total += q.points;
-        const userAnswer = quizAnswers[q.id];
+        const userAnswer = quizAnswers[q.id ?? i];
         if (q.type === "multiple-select") {
           const correct = Array.isArray(q.correctAnswer) ? q.correctAnswer : [];
           const userArr = Array.isArray(userAnswer) ? userAnswer : [];
@@ -572,9 +590,16 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                   <Play className="w-4 h-4 text-amber-600" />
                   <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Quiz</p>
                 </div>
-                {assignment.meta?.questionCount && (
-                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">{assignment.meta.questionCount} questions</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {quizTimeLeft !== null && quizTimerActive && !quizSubmitted && (
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${quizTimeLeft <= 60 ? "bg-red-500 text-white animate-pulse" : quizTimeLeft <= 300 ? "bg-amber-500 text-white" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>
+                      {String(Math.floor(quizTimeLeft / 60)).padStart(2, "0")}:{String(quizTimeLeft % 60).padStart(2, "0")}
+                    </span>
+                  )}
+                  {assignment.meta?.questionCount && (
+                    <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">{assignment.quizQuestions?.length || assignment.meta.questionCount} questions</span>
+                  )}
+                </div>
               </div>
               <div className="p-5">
                 {quizSubmitted && quizScore ? (
@@ -594,11 +619,11 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                       </div>
                     </div>
                     {quizQuestions.map((q, i) => (
-                      <QuizQuestion key={q.id || i} question={q} index={i} answer={quizAnswers[q.id]} onAnswer={(val) => setQuizAnswers({ ...quizAnswers, [q.id]: val })} />
+                      <QuizQuestion key={q.id || i} question={q} index={i} answer={quizAnswers[q.id ?? i]} onAnswer={(val) => setQuizAnswers((prev) => ({ ...prev, [q.id ?? i]: val }))} />
                     ))}
                     <button
                       onClick={handleQuizSubmit}
-                      disabled={submitting || Object.keys(quizAnswers).length < quizQuestions.length}
+                      disabled={submitting || quizQuestions.some((q, i) => quizAnswers[q.id ?? i] === undefined || quizAnswers[q.id ?? i] === "")}
                       className="flex items-center gap-1.5 px-5 py-2.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 disabled:opacity-50 transition-colors"
                     >
                       {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
@@ -615,6 +640,39 @@ export default function AssignmentDetailPanel({ assignment, isInstructor, classr
                     {quizLoading ? "Generating Questions..." : "Start Quiz"}
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {isInstructor && (assignment.type === "quiz" || assignment.type === "exam") && assignment.quizQuestions?.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quiz Preview</p>
+                <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full">{assignment.quizQuestions.length} questions</span>
+              </div>
+              <div className="space-y-2">
+                {assignment.quizQuestions.map((q, i) => (
+                  <div key={i} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500/10 text-green-600 text-[9px] font-bold flex-shrink-0 mt-0.5">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-900 dark:text-white">{q.text}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">{q.type?.replace("-", " ")}</span>
+                          <span className="text-[9px] font-bold text-green-600">{q.points}pts</span>
+                          {q.correctAnswer && <span className="text-[9px] text-slate-400">Answer: {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(", ") : q.correctAnswer}</span>}
+                        </div>
+                        {q.type === "multiple-choice" && q.options?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {q.options.map((opt, oi) => (
+                              <span key={oi} className={`text-[9px] px-1.5 py-0.5 rounded border ${opt === q.correctAnswer ? "bg-green-50 dark:bg-green-500/10 border-green-300 dark:border-green-500/30 text-green-700 dark:text-green-400" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500"}`}>{opt}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

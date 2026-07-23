@@ -23,7 +23,7 @@ async function handlePost(request, { params }) {
   }
 
   const body = await request.json();
-  const { title, description, instructions, courseId, type, category, dueDate, availableFrom, availableUntil, maxScore, passingScore, weight, rubric, attachments, allowLateSubmissions, maxAttempts, isGroupAssignment, weekNumber, meta } = body;
+  const { title, description, instructions, courseId, type, category, dueDate, availableFrom, availableUntil, maxScore, passingScore, weight, rubric, attachments, allowLateSubmissions, maxAttempts, isGroupAssignment, weekNumber, meta, quizQuestions } = body;
 
   if (!title?.trim()) {
     return NextResponse.json(
@@ -54,6 +54,7 @@ async function handlePost(request, { params }) {
     isGroupAssignment: isGroupAssignment || false,
     weekNumber: weekNumber || 0,
     meta: meta || null,
+    quizQuestions: quizQuestions || [],
   });
 
   // Create progress records for all enrolled students
@@ -92,6 +93,8 @@ async function handlePost(request, { params }) {
       maxAttempts: assignment.maxAttempts,
       isGroupAssignment: assignment.isGroupAssignment,
       weekNumber: assignment.weekNumber,
+      quizQuestions: assignment.quizQuestions || [],
+      meta: assignment.meta || null,
       isActive: assignment.isActive,
       createdAt: assignment.createdAt,
       myProgress: null,
