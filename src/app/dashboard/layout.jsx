@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import Navbar from "@/app/components/Navbar";
-import Sidebar from "@/app/components/Sidebar";
-import DashboardMobileNav from "@/app/components/DashboardMobileNav";
-import { ThemeProvider } from "@/app/components/ThemeProvider";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
+import Navbar from "@/dashboard/components/Navbar";
+import Sidebar from "@/dashboard/components/Sidebar";
+import DashboardMobileNav from "@/dashboard/components/DashboardMobileNav";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import dynamic from "next/dynamic";
 
-const DailyLoginBonus = dynamic(() => import("@/app/components/DailyLoginBonus"), { ssr: false });
+const DailyLoginBonus = dynamic(() => import("@/dashboard/components/DailyLoginBonus"), { ssr: false });
 
 const PATH_TO_TAB = {
   "generate": "generate",
@@ -32,6 +32,8 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const segment = pathname.split("/dashboard/")[1]?.split("/")[0] || "generate";
   const activeContent = PATH_TO_TAB[segment] || "generate";
+  const isClassroomDetail = pathname.startsWith("/dashboard/classrooms/") && pathname.split("/").length > 3;
+  const isChat = activeContent === "chat" || activeContent === "chat-pdf";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hideDashboardNav, setHideDashboardNav] = useState(false);
@@ -58,16 +60,10 @@ export default function DashboardLayout({ children }) {
       <ThemeProvider>
         <DailyLoginBonus />
         <div className="h-screen bg-background flex flex-col relative">
-          {!hideDashboardNav && (
-            <div className="absolute inset-0 z-0 pointer-events-none">
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(255,255,255,0.65),_rgba(255,255,255,0.18))] dark:hidden" />
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(0,0,0,0.3),_rgba(0,0,0,0.05))] opacity-0 dark:opacity-100 hidden dark:block" />
-            </div>
-          )}
           <Navbar toggleSidebar={toggleSidebar} setActiveContent={setActiveContent} />
           <div className="flex flex-1 overflow-hidden relative z-10">
-            {!hideDashboardNav && (
-              <div className="hidden lg:flex flex-shrink-0 relative h-full z-50">
+            {!hideDashboardNav && !isClassroomDetail && !isChat && (
+              <div className="hidden lg:block flex-shrink-0 w-[240px] h-full z-50 overflow-hidden">
                 <Sidebar
                   setActiveContent={setActiveContent}
                   sidebarOpen={sidebarOpen}
@@ -76,21 +72,38 @@ export default function DashboardLayout({ children }) {
                 />
               </div>
             )}
-            <main className={`flex-1 min-h-0 ${hideDashboardNav ? "overflow-hidden" : "overflow-auto pb-16 md:pb-0"}`}>
-              {React.Children.map(children, (child) =>
-                React.isValidElement(child)
-                  ? React.cloneElement(child, {
-                      classroomSidebarCollapsed,
-                      setClassroomSidebarCollapsed,
-                      setHideDashboardNav,
-                      hideDashboardNav,
-                      setActiveContent,
-                    })
-                  : child
+            <main className={`flex-1 min-w-0 min-h-0 relative ${(hideDashboardNav || isClassroomDetail) ? "overflow-hidden" : isChat ? "overflow-hidden" : "overflow-auto pb-16 md:pb-0"}`}>
+              <div className="absolute inset-0 -z-10 pointer-events-none bg-[radial-gradient(circle,_rgba(15,23,42,0.12)_1px,_transparent_1px)] dark:bg-[radial-gradient(circle,_rgba(255,255,255,0.06)_1px,_transparent_1px)] bg-[size:20px_20px]" />
+              {isClassroomDetail || isChat ? (
+                React.Children.map(children, (child) =>
+                  React.isValidElement(child)
+                    ? React.cloneElement(child, {
+                        classroomSidebarCollapsed,
+                        setClassroomSidebarCollapsed,
+                        setHideDashboardNav,
+                        hideDashboardNav,
+                        setActiveContent,
+                      })
+                    : child
+                )
+              ) : (
+                <div className="max-w-[110rem] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-12 pt-6 sm:pt-8 lg:pt-12 pb-16 space-y-4">
+                  {React.Children.map(children, (child) =>
+                    React.isValidElement(child)
+                      ? React.cloneElement(child, {
+                          classroomSidebarCollapsed,
+                          setClassroomSidebarCollapsed,
+                          setHideDashboardNav,
+                          hideDashboardNav,
+                          setActiveContent,
+                        })
+                      : child
+                  )}
+                </div>
               )}
             </main>
           </div>
-          {activeContent !== "career" && !hideDashboardNav && <DashboardMobileNav />}
+          {activeContent !== "career" && !hideDashboardNav && !isClassroomDetail && !isChat && <DashboardMobileNav />}
         </div>
       </ThemeProvider>
     </ProtectedRoute>

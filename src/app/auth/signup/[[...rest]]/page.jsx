@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
-import GoogleIcon from "@/components/GoogleIcon";
+import GoogleIcon from "@/auth/components/GoogleIcon";
 import { isFlutterApp } from "@/lib/appBridge";
-import AuthLayout from "@/components/AuthLayout";
+import AuthLayout from "@/auth/components/AuthLayout";
 import {
   Mail,
   Lock,

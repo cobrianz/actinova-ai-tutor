@@ -7,7 +7,7 @@ import { Key, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../components/AuthProvider";
 import { apiClient } from "@/lib/csrfClient";
-import AuthLayout from "@/components/AuthLayout";
+import AuthLayout from "@/auth/components/AuthLayout";
 
 function VerifyEmailContent() {
   const [code, setCode] = useState("");

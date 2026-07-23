@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateTrendingCourses } from "../../premium-courses/trending/route";
+import { generateTrendingCourses } from "@/api/premium-courses/trending/route";
 import { authorizeCronRequest } from "../_lib";
 
 async function handleCron(request) {

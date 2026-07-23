@@ -1,0 +1,2839 @@
+import React, { useState, useRef, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
+import "jspdf-autotable";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+    FileText, Sparkles, CheckCircle, AlertCircle, TrendingUp,
+    BrainCircuit, ChevronRight, Loader2, ArrowRight, Target,
+    Clock, Trash2, X, Download, Copy, Check, Edit2, AlignLeft,
+    GraduationCap, Star, UserCircle, Briefcase, Layout,
+    User, Mail, Phone, MapPin, Globe, Linkedin, Github,
+    Award, FolderOpen, Languages, Heart, Users, Wrench,
+    Plus, ChevronDown, ChevronUp, ChevronLeft, Flower2, Save, MoreHorizontal,
+    UploadCloud
+} from "lucide-react";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/csrfClient";
+
+// ─── Client-side PDF/DOCX text extraction ─────────────────────────────────────
+import { unzipSync, strFromU8 } from "fflate";
+
+async function extractTextFromPDF(file) {
+    // Dynamic import keeps pdfjs-dist out of the SSR bundle
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map((item) => item.str).join(" "));
+    }
+    return pages.join("\n\n").trim();
+}
+
+async function extractTextFromDOCX(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    const files = unzipSync(data);
+    const docXml = files["word/document.xml"];
+    if (!docXml) throw new Error("Invalid DOCX file");
+    const xml = strFromU8(docXml);
+    const texts = [];
+    const re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+    let match;
+    while ((match = re.exec(xml)) !== null) {
+        texts.push(match[1]);
+    }
+    return texts.join(" ").trim();
+}
+
+async function extractResumeText(file) {
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (ext === "pdf") return extractTextFromPDF(file);
+    if (ext === "docx") return extractTextFromDOCX(file);
+    throw new Error("Unsupported file type. Please upload a PDF or DOCX file.");
+}
+import {
+    downloadLetterAsDOCX,
+    downloadLetterAsPDF,
+    downloadResumeAsPDF,
+    downloadResumeAsDOCX
+} from "@/lib/pdfUtils";
+import { useAuth } from "@/components/AuthProvider";
+import { RESUME_TEMPLATES, getTemplateById } from "@/lib/resumeTemplates";
+import { TEMPLATE_COMPONENTS } from "@/components/ResumeTemplates";
+
+// ─── Initial Form Data ──────────────────────────────────────────
+const initialFormData = {
+    personalInfo: { fullName: "", jobTitle: "", email: "", phone: "", location: "", website: "", linkedin: "", github: "", summary: "" },
+    experience: [], education: [], skills: [], projects: [],
+    certifications: [], awards: [], languages: [],
+    customSections: [],
+};
+
+const hasMeaningfulResumeContent = (resume) => {
+    if (!resume) return false;
+    const personalInfo = resume.personalInfo || {};
+    return !!(
+        personalInfo.fullName ||
+        personalInfo.name ||
+        personalInfo.jobTitle ||
+        personalInfo.summary ||
+        resume.summary ||
+        (resume.experience || []).length > 0 ||
+        (resume.education || []).length > 0 ||
+        (resume.skills || []).length > 0 ||
+        (resume.projects || []).length > 0 ||
+        (resume.certifications || []).length > 0 ||
+        (resume.awards || []).length > 0 ||
+        (resume.languages || []).length > 0
+    );
+};
+
+const RESUME_EXPORT_PRICE_LABEL = "$2.50";
+
+const getUserIdentityDefaults = (user) => ({
+    fullName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || user?.name || "",
+    email: user?.email || "",
+});
+
+const TECHNICAL_PROJECT_KEYWORDS = [
+    "app", "web", "mobile", "software", "platform", "dashboard", "api", "automation",
+    "ai", "ml", "data", "analytics", "system", "site", "tool", "bot", "portal",
+    "react", "next", "node", "python", "javascript", "typescript", "sql", "cloud",
+    "frontend", "backend", "fullstack", "devops", "saas",
+];
+
+const NON_TECHNICAL_PROJECT_KEYWORDS = [
+    "cooking", "chef", "recipe", "bakery", "fashion", "makeup", "hair", "gardening",
+    "farming", "florist", "interior decor", "event planning", "cleaning", "photography",
+    "tailoring", "craft", "restaurant service",
+];
+
+const isPromptEligibleProject = (project) => {
+    const haystack = [
+        project?.title,
+        project?.description,
+        Array.isArray(project?.technologies) ? project.technologies.join(" ") : project?.technologies,
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+    if (!haystack) return false;
+    if (NON_TECHNICAL_PROJECT_KEYWORDS.some((keyword) => haystack.includes(keyword))) return false;
+    return TECHNICAL_PROJECT_KEYWORDS.some((keyword) => haystack.includes(keyword));
+};
+
+const normalizeProfileLink = (field, value) => {
+    const text = String(value || "").trim();
+    if (!text) return "";
+
+    if (field === "github") {
+        if (/github\.com/i.test(text)) return text;
+        if (/^https?:\/\//i.test(text)) return text;
+        return `github.com/${text.replace(/^@/, "")}`;
+    }
+
+    if (field === "linkedin") {
+        if (/linkedin\.com/i.test(text)) return text;
+        if (/^https?:\/\//i.test(text)) return text;
+        return `linkedin.com/in/${text.replace(/^@/, "")}`;
+    }
+
+    return text;
+};
+
+const cleanResumeTextValue = (value) => {
+    const normalized = String(value || "")
+        .replace(/\b(undefined|null)\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    if (!normalized) return "";
+    return /^(undefined|null|n\/a|na)$/i.test(normalized) ? "" : normalized;
+};
+
+const getCareerDraftStorageKey = (type, user) => {
+    const identity = user?._id || user?.id || user?.email || "anonymous";
+    return `career_draft_${identity}_${type}`;
+};
+
+const sanitizeGeneratedResumeData = (resume) => {
+    if (!resume || typeof resume !== "object") return resume;
+
+    const next = {
+        ...resume,
+        personalInfo: {
+            ...(resume.personalInfo || {}),
+        },
+    };
+
+    const personalInfo = next.personalInfo;
+    const fullName = cleanResumeTextValue(personalInfo.fullName);
+    const fallbackName = cleanResumeTextValue(personalInfo.name);
+    const jobTitle = cleanResumeTextValue(personalInfo.jobTitle);
+
+    next.personalInfo.fullName = fullName || fallbackName || "";
+    next.personalInfo.name = fallbackName || next.personalInfo.fullName || "";
+    next.personalInfo.jobTitle = jobTitle;
+
+    [
+        "email",
+        "phone",
+        "location",
+        "website",
+        "linkedin",
+        "github",
+        "summary",
+    ].forEach((field) => {
+        next.personalInfo[field] = cleanResumeTextValue(personalInfo[field]);
+    });
+
+    next.summary = cleanResumeTextValue(next.summary);
+    next.customSections = Array.isArray(next.customSections) ? next.customSections : [];
+
+    return next;
+};
+
+const hasUserEnteredResumeContent = (resume, user) => {
+    if (!resume) return false;
+    const personalInfo = resume.personalInfo || {};
+    const defaults = getUserIdentityDefaults(user);
+    const fullName = (personalInfo.fullName || personalInfo.name || "").trim();
+    const email = (personalInfo.email || "").trim();
+
+    return !!(
+        (fullName && fullName !== defaults.fullName) ||
+        (personalInfo.jobTitle || "").trim() ||
+        (personalInfo.summary || resume.summary || "").trim() ||
+        (email && email !== defaults.email) ||
+        (personalInfo.phone || "").trim() ||
+        (personalInfo.location || "").trim() ||
+        (personalInfo.website || "").trim() ||
+        (personalInfo.linkedin || "").trim() ||
+        (personalInfo.github || "").trim() ||
+        (resume.experience || []).length > 0 ||
+        (resume.education || []).length > 0 ||
+        (resume.skills || []).length > 0 ||
+        (resume.projects || []).length > 0 ||
+        (resume.certifications || []).length > 0 ||
+        (resume.awards || []).length > 0 ||
+        (resume.languages || []).length > 0
+    );
+};
+
+function getCompletionScore(data) {
+    if (!data || !data.personalInfo) return 0;
+    let score = 0, total = 0;
+    ["fullName", "jobTitle", "email", "phone", "location", "summary"].forEach(f => {
+        total += 1;
+        if (data.personalInfo[f]?.trim()) score += 1;
+    });
+    total += 5; // Added 1 for customSections
+    if (data.experience?.length > 0) score += 1;
+    if (data.education?.length > 0) score += 1;
+    if (data.skills?.length >= 3) score += 1;
+    if (data.projects?.length > 0) score += 1;
+    if (data.customSections?.length > 0) score += 1;
+    return Math.round((score / total) * 100);
+}
+
+// ─── UI Helper Components ───────────────────────────────────────
+function SectionHeader({ icon: Icon, title, count, description }) {
+    return (
+        <div className="pb-3 mb-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <Icon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">{title}</h2>
+                    {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>}
+                </div>
+                {count !== undefined && count > 0 && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">{count}</span>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function InputField({ label, value, onChange, placeholder, icon: Icon, type = "text", rows, required }) {
+    const baseClass = "w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400 transition-all";
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+            </label>
+            <div className="relative group">
+                {Icon && <Icon className="absolute w-4 h-4 text-slate-400 left-3 top-1/2 -translate-y-1/2 group-focus-within:text-green-500 transition-colors" />}
+                {rows ? (
+                    <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} className={`${baseClass} resize-none ${Icon ? "pl-10" : ""}`} />
+                ) : (
+                    <input type={type} value={value} onChange={onChange} placeholder={placeholder} className={`${baseClass} ${Icon ? "pl-10" : ""}`} />
+                )}
+            </div>
+        </div>
+    );
+}
+
+function ResumeFileUpload({ onResumeText }) {
+    const [dragOver, setDragOver] = useState(false);
+    const [extracting, setExtracting] = useState(false);
+    const [error, setError] = useState(null);
+    const fileRef = useRef(null);
+
+    const handleFile = async (file) => {
+        if (!file) return;
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!["pdf", "docx"].includes(ext)) {
+            setError("Only PDF and DOCX files are supported.");
+            return;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+            setError("File exceeds the 20 MB limit.");
+            return;
+        }
+        setError(null);
+        setExtracting(true);
+        try {
+            const text = await extractResumeText(file);
+            if (!text || text.length < 10) {
+                setError("Could not extract text from this file. It may be image-based or empty.");
+                return;
+            }
+            onResumeText(text);
+            toast.success(`Resume extracted from ${file.name}`);
+        } catch (err) {
+            console.error("Resume extraction error:", err);
+            setError(err.message || "Failed to extract text from file.");
+        } finally {
+            setExtracting(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div
+                role="button"
+                tabIndex={0}
+                aria-label="Upload resume file (PDF or DOCX)"
+                onClick={() => fileRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileRef.current?.click(); } }}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); }}
+                className={`flex items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-4 cursor-pointer transition-all
+                    focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400
+                    ${dragOver
+                        ? "border-green-400 bg-green-50 dark:bg-green-900/10"
+                        : "border-slate-200 dark:border-slate-700 hover:border-green-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    }`}
+            >
+                <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" onChange={(e) => handleFile(e.target.files?.[0])} />
+                {extracting ? (
+                    <Loader2 size={18} className="text-green-500 animate-spin shrink-0" />
+                ) : (
+                    <UploadCloud size={18} className={`shrink-0 ${dragOver ? "text-green-500" : "text-slate-400"}`} />
+                )}
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {extracting ? "Extracting text…" : "Or upload PDF / DOCX to auto-fill"}
+                </span>
+            </div>
+            {error && (
+                <p className="text-xs text-red-500 dark:text-red-400 px-1">{error}</p>
+            )}
+        </div>
+    );
+}
+
+function CollapsibleCard({ title, subtitle, onRemove, defaultOpen = true, children, index }) {
+    const [open, setOpen] = React.useState(defaultOpen);
+    return (
+        <div className={`border rounded-xl overflow-hidden transition-all duration-200 ${open ? "border-green-200 dark:border-green-800 bg-white dark:bg-slate-900 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-green-200 dark:hover:border-green-800"}`}>
+            <div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none" onClick={() => setOpen(!open)}>
+                <span className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">{(index ?? 0) + 1}</span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{title || "New Entry"}</p>
+                    {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{subtitle}</p>}
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
+                {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+            </div>
+            <div className={`overflow-hidden transition-all duration-300 ${open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"}`}>
+                <div className="px-4 pb-4 flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">{children}</div>
+            </div>
+        </div>
+    );
+}
+
+function AddButton({ onClick, label }) {
+    return (
+        <button onClick={onClick} className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl hover:border-green-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all duration-200 active:scale-[0.98]">
+            <Plus className="w-4 h-4" />{label}
+        </button>
+    );
+}
+
+// ─── Live Resume Preview ────────────────────────────────────────
+function FormResumePreview({ data, onUpdate }) {
+    const [selectedText, setSelectedText] = useState("");
+    const [tooltipPos, setTooltipPos] = useState(null);
+    const containerRef = useRef(null);
+
+    if (!data) return null;
+    const { personalInfo, experience = [], education = [], skills = [], projects = [], customSections = [] } = data;
+
+    const displayName = cleanResumeTextValue(personalInfo.fullName) || cleanResumeTextValue(personalInfo.name);
+    const hasContent = displayName || personalInfo.summary || data.summary || experience.length > 0 || education.length > 0 || skills.length > 0;
+
+    const contactItems = [
+        { icon: Mail, value: personalInfo.email, field: 'email', label: 'Email' },
+        { icon: Phone, value: personalInfo.phone, field: 'phone', label: 'Phone' },
+        { icon: MapPin, value: personalInfo.location, field: 'location', label: 'Location' },
+        { icon: Globe, value: personalInfo.website, field: 'website', label: 'Website' },
+        { icon: Linkedin, value: personalInfo.linkedin, field: 'linkedin', label: 'LinkedIn' },
+        { icon: Github, value: personalInfo.github, field: 'github', label: 'GitHub' },
+    ];
+
+    const handleBlur = (section, field, value, index = null) => {
+        if (!onUpdate) return;
+        const normalizedValue =
+            section === "personalInfo" && (field === "github" || field === "linkedin")
+                ? normalizeProfileLink(field, value)
+                : value;
+        if (index !== null) {
+            onUpdate(section, index, field, normalizedValue);
+        } else {
+            onUpdate(section, field, normalizedValue);
+        }
+    };
+
+    const handleSelection = () => {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        if (text && containerRef.current?.contains(selection.anchorNode)) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            const containerRect = containerRef.current.getBoundingClientRect();
+            setSelectedText(text);
+            setTooltipPos({
+                top: rect.top - containerRect.top - 40,
+                left: rect.left - containerRect.left + (rect.width / 2)
+            });
+        } else {
+            setSelectedText("");
+            setTooltipPos(null);
+        }
+    };
+
+    const SectionTitle = ({ children, onRemove }) => (
+        <div className="flex items-center gap-4 mb-4 mt-8 first:mt-0 group/sec relative">
+            <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-700"></div>
+            <div className="flex items-center gap-2">
+                <h3 className="text-base font-black tracking-[0.1em] text-slate-500 dark:text-slate-300 px-4 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full">{children}</h3>
+                <button onClick={() => handleRefineText('refine', children.toString().toLowerCase())} className="p-1 px-2 rounded-full bg-green-50 dark:bg-green-900/20 text-green-500 dark:text-green-400 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-green-100 dark:hover:bg-green-900/30" title="Refine this section with AI">
+                    <Sparkles size={10} />
+                </button>
+                {onRemove && (
+                    <button onClick={onRemove} className="p-1 px-2 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400 opacity-0 group-hover/sec:opacity-100 transition-opacity hover:bg-rose-100 dark:hover:bg-rose-900/30" title="Remove section">
+                        <Trash2 size={10} />
+                    </button>
+                )}
+            </div>
+            <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-700"></div>
+        </div>
+    );
+
+    const handleRefineText = async (type, sectionContext = null) => {
+        const textToRefine = selectedText.trim() || Object.values(data[sectionContext] || {}).join(" ") || JSON.stringify(data[sectionContext] || "");
+        if (!textToRefine || textToRefine === '""' || textToRefine === "{}") {
+            toast.error("Please select text or add content to this section first to refine.", { id: "refine-empty" });
+            return;
+        }
+        const toastId = toast.loading(type === 'refine' ? 'Refining...' : 'Elaborating...');
+        try {
+            const response = await apiClient.post('/api/career/ai/edit', {
+                text: textToRefine,
+                instruction: type === 'refine'
+                    ? 'Make this more concise, impactful, and professional for a resume.'
+                    : 'Expand this with more detail and specifics while keeping it professional.',
+            });
+            if (response.ok) {
+                const dataFromAi = await response.json();
+                if (dataFromAi.content) {
+                    if (selectedText) {
+                        document.execCommand('insertText', false, dataFromAi.content);
+                        setTooltipPos(null);
+                    } else if (sectionContext) {
+                        toast.success(`AI suggestion for ${sectionContext} copied! Paste it where you need it!`, { id: toastId, duration: 6000 });
+                        navigator.clipboard.writeText(dataFromAi.content);
+                        return;
+                    }
+                    toast.success('Text updated!', { id: toastId });
+                } else {
+                    throw new Error('No content returned');
+                }
+            } else {
+                throw new Error('Failed to refine');
+            }
+        } catch (error) {
+            toast.error('Failed to update text', { id: toastId });
+        }
+    };
+
+    const addSectionType = (type) => {
+        const templates = {
+            experience: { title: "New Role", company: "Company", location: "Location", startDate: "Date", endDate: "Present", description: "Describe your key responsibilities and achievements..." },
+            education: { school: "University", degree: "Degree", location: "Location", startDate: "Date", endDate: "Date", description: "" },
+            skills: "New Skill",
+            projects: { name: "Project Name", description: "Describe the project and its impact", technologies: "React, Node.js" },
+            certifications: { name: "Certification Name", issuer: "Issuing Organization", date: "Date", url: "" },
+            awards: { title: "Award Title", org: "Organization", date: "Date", description: "" },
+            languages: { language: "Language", level: "Proficient" },
+            customSections: { title: "References", content: "Available upon request.", type: "references" },
+        };
+        if (!templates[type]) return;
+        onUpdate(type, 'add', templates[type]);
+    };
+
+    return (
+        <div
+            id="resume-preview"
+            ref={containerRef}
+            onMouseUp={handleSelection}
+            className="p-8 md:p-12 bg-white dark:bg-slate-900 min-h-[1000px] relative text-slate-900 dark:text-slate-100 font-serif"
+        >
+            {tooltipPos && (
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    style={{ position: 'absolute', top: tooltipPos.top, left: tooltipPos.left, transform: 'translateX(-50%)' }}
+                    className="z-[999] flex items-center gap-1 p-1 bg-slate-900 text-white rounded-xl shadow-2xl border border-white/10"
+                >
+                    <button onClick={() => handleRefineText('refine')} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">
+                        <Sparkles size={12} className="text-green-400" /> Refine
+                    </button>
+                    <div className="w-[1px] h-4 bg-white/20" />
+                    <button onClick={() => handleRefineText('elaborate')} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">
+                        <BrainCircuit size={12} className="text-emerald-400" /> Elaborate
+                    </button>
+                </motion.div>
+            )}
+
+            <header className="flex flex-col items-center text-center space-y-1 mb-8">
+                <h1
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(e) => handleBlur('personalInfo', 'fullName', e.target.innerText)}
+                    className="text-5xl font-bold tracking-tight mb-2 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-2"
+                    style={{ letterSpacing: "0.02em" }}
+                >
+                    {displayName || "Your Name"}
+                </h1>
+
+                <p
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(e) => handleBlur('personalInfo', 'jobTitle', e.target.innerText)}
+                    className="text-xl font-medium text-slate-600 dark:text-slate-300 tracking-wide italic outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-2"
+                    style={{ fontSize: "18px" }}
+                >
+                    {personalInfo.jobTitle || "Job Title"}
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 max-w-2xl">
+                    {contactItems.map((item, i) => (
+                        <div key={i} className={`flex items-center gap-1.5 text-[13px] text-slate-500 dark:text-slate-400 ${!item.value ? "opacity-30 hover:opacity-100 transition-opacity" : ""}`}>
+                            <item.icon size={10} className="text-slate-400 dark:text-slate-500" />
+                            <span
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => handleBlur('personalInfo', item.field, e.target.innerText)}
+                                className="outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1 min-w-[20px]"
+                            >
+                                {item.value || item.label}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </header>
+
+            {(personalInfo.summary || data.summary) && (
+                <section className="mb-6 group/sec relative">
+                    <SectionTitle onRemove={() => handleBlur('personalInfo', 'summary', "")}>Summary</SectionTitle>
+                    <p
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => handleBlur('personalInfo', 'summary', e.target.innerText)}
+                        className="text-base leading-relaxed text-justify px-2 italic text-slate-700 dark:text-slate-300 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
+                    >
+                        {personalInfo.summary || data.summary}
+                    </p>
+                </section>
+            )}
+
+            {experience.length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('experience', 'remove', null, null)}>Experience</SectionTitle>
+                    <div className="space-y-6 px-2">
+                        {experience.map((exp, i) => (
+                            <div key={i} className="group transition-all relative">
+                                <button onClick={() => onUpdate('experience', 'remove', i)} className="absolute -left-6 top-1 p-1 rounded-full text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={12} />
+                                </button>
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <div className="flex items-baseline gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 group-hover:scale-125 transition-transform" />
+                                        <h4
+                                            contentEditable
+                                            suppressContentEditableWarning
+                                            onBlur={(e) => handleBlur('experience', 'title', e.target.innerText, i)}
+                                            className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                        >
+                                            {exp.title}
+                                        </h4>
+                                        <span className="text-slate-200 dark:text-slate-700 font-light">|</span>
+                                        <span
+                                            contentEditable
+                                            suppressContentEditableWarning
+                                            onBlur={(e) => handleBlur('experience', 'company', e.target.innerText, i)}
+                                            className="text-[15px] font-semibold text-slate-600 dark:text-slate-300 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                        >
+                                            {exp.company}
+                                        </span>
+                                    </div>
+                                <span
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => handleBlur('experience', 'dateRange', e.target.innerText, i)}
+                                    className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                >
+                                    {exp.dateRange || `${exp.startDate || ""}${exp.startDate || exp.endDate ? " – " : ""}${exp.endDate || ""}`}
+                                </span>
+                                </div>
+                                <p
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => handleBlur('experience', 'description', e.target.innerText, i)}
+                                    className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line border-l-2 border-slate-50 dark:border-slate-800 pl-4 ml-0.5 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
+                                >
+                                    {exp.description}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {education.length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('education', 'remove', null, null)}>Education</SectionTitle>
+                    <div className="space-y-4 px-2">
+                        {education.map((edu, i) => (
+                            <div key={i} className="flex justify-between items-baseline group relative">
+                                <button onClick={() => onUpdate('education', 'remove', i)} className="absolute -left-6 top-1 p-1 rounded-full text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={12} />
+                                </button>
+                                <div className="space-y-0.5">
+                                    <div className="flex items-center gap-2">
+                                        <GraduationCap size={12} className="text-slate-400" />
+                                        <h4
+                                            contentEditable
+                                            suppressContentEditableWarning
+                                            onBlur={(e) => handleBlur('education', 'degree', e.target.innerText, i)}
+                                            className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                        >
+                                            {edu.degree}
+                                        </h4>
+                                    </div>
+                                    <p
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) => handleBlur('education', 'school', e.target.innerText, i)}
+                                        className="text-[15px] font-medium text-slate-500 dark:text-slate-400 pl-5 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                    >
+                                        {edu.school}, {edu.location}
+                                    </p>
+                                </div>
+                                <span
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => handleBlur('education', 'dateRange', e.target.innerText, i)}
+                                    className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                >
+                                    {edu.dateRange || `${edu.startDate || ""}${edu.startDate || edu.endDate ? " – " : ""}${edu.endDate || ""}`}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+
+            {(data.projects || []).length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('projects', 'remove', null, null)}>Projects</SectionTitle>
+                    <div className="space-y-4 px-2">
+                        {(data.projects || []).map((project, i) => (
+                            <div key={i} className="group relative">
+                                <button onClick={() => onUpdate('projects', i, 'remove')} className="absolute -left-6 top-1 p-1 rounded-full text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={12} />
+                                </button>
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <div className="flex items-baseline gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:scale-125 transition-transform" />
+                                        <h4
+                                            contentEditable
+                                            suppressContentEditableWarning
+                                            onBlur={(e) => handleBlur('projects', 'name', e.target.innerText, i)}
+                                            className="text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-none outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                        >
+                                            {project.name}
+                                        </h4>
+                                    </div>
+                                    <span
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) => handleBlur('projects', 'technologies', e.target.innerText, i)}
+                                        className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded px-1"
+                                    >
+                                        {project.technologies}
+                                    </span>
+                                </div>
+                                <p
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => handleBlur('projects', 'description', e.target.innerText, i)}
+                                    className="text-base leading-relaxed text-slate-600 dark:text-slate-300 border-l-2 border-slate-50 dark:border-slate-800 pl-4 ml-0.5 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
+                                >
+                                    {project.description}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {(data.certifications || []).length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('certifications', 'remove', null, null)}>Certifications</SectionTitle>
+                    <div className="space-y-2 px-2">
+                        {(data.certifications || []).map((cert, i) => (
+                            <div key={i} className="group relative flex justify-between items-start">
+                                <button onClick={() => onUpdate('certifications', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
+                                <div>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'name', e.target.innerText)} className="text-[15px] font-bold text-slate-800 dark:text-slate-100 outline-none">{cert.name}</span>
+                                    <span className="mx-2 text-slate-300">·</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'issuer', e.target.innerText)} className="text-[14px] text-slate-500 dark:text-slate-400 outline-none">{cert.issuer}</span>
+                                </div>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('certifications', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 dark:text-slate-500 outline-none whitespace-nowrap ml-2">{cert.date}</span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {(data.awards || []).length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('awards', 'remove', null, null)}>Awards</SectionTitle>
+                    <div className="space-y-2 px-2">
+                        {(data.awards || []).map((award, i) => (
+                            <div key={i} className="group relative flex justify-between items-start">
+                                <button onClick={() => onUpdate('awards', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
+                                <div>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'title', e.target.innerText)} className="text-[15px] font-bold text-slate-800 dark:text-slate-100 outline-none">{award.title}</span>
+                                    <span className="mx-2 text-slate-300">·</span>
+                                    <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'org', e.target.innerText)} className="text-[14px] text-slate-500 dark:text-slate-400 outline-none">{award.org}</span>
+                                </div>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('awards', i, 'date', e.target.innerText)} className="text-[13px] font-semibold text-slate-400 dark:text-slate-500 outline-none whitespace-nowrap ml-2">{award.date}</span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {(data.languages || []).length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('languages', 'remove', null, null)}>Languages</SectionTitle>
+                    <div className="flex flex-wrap gap-x-8 gap-y-2 px-2">
+                        {(data.languages || []).map((lang, i) => (
+                            <div key={i} className="group relative flex items-center gap-2">
+                                <button onClick={() => onUpdate('languages', i, 'remove')} className="absolute -left-5 p-1 text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={10} /></button>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'language', e.target.innerText)} className="text-[15px] font-bold text-slate-800 dark:text-slate-100 outline-none">{lang.language}</span>
+                                <span className="text-slate-200">|</span>
+                                <span contentEditable suppressContentEditableWarning onBlur={(e) => onUpdate('languages', i, 'level', e.target.innerText)} className="text-[14px] text-slate-500 dark:text-slate-400 outline-none">{lang.level}</span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {skills.length > 0 && (
+                <section className="mb-6">
+                    <SectionTitle onRemove={() => onUpdate('skills', 'remove', null, null)}>Skills</SectionTitle>
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-2 px-6">
+                        {skills.map((skill, i) => (
+                            <div key={i} className="flex items-center justify-between text-[15px] group border-b border-slate-50 dark:border-slate-800 pb-1 relative">
+                                <button onClick={() => onUpdate('skills', i, 'remove')} className="absolute -left-6 p-1 rounded-full text-rose-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={10} />
+                                </button>
+                                <span
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => handleBlur('skills', null, e.target.innerText, i)}
+                                    className="text-slate-700 dark:text-slate-200 font-medium group-hover:text-green-600 transition-colors outline-none"
+                                >
+                                    {skill}
+                                </span>
+                                <div className="flex-1 border-b border-dotted border-slate-200 dark:border-slate-700 mx-2 mb-1" />
+                                <Sparkles size={8} className="text-slate-200 dark:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {customSections.length > 0 && (
+                <section className="mb-6">
+                    {customSections.map((section, i) => (
+                        <div key={`${section.type || 'custom'}-${i}`} className="mb-6 group relative">
+                            <SectionTitle onRemove={() => onUpdate('customSections', i, 'remove')}>
+                                {section.title || "Custom Section"}
+                            </SectionTitle>
+                            <p
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => onUpdate('customSections', i, 'content', e.target.innerText)}
+                                className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line px-2 outline-none focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
+                            >
+                                {section.content || ""}
+                            </p>
+                        </div>
+                    ))}
+                </section>
+            )}
+
+            <div className="mt-12 flex justify-center flex-wrap gap-2">
+                {[
+                    { id: 'experience', label: 'Experience' },
+                    { id: 'education', label: 'Education' },
+                    { id: 'skills', label: 'Skills' },
+                    { id: 'projects', label: 'Projects' },
+                    { id: 'certifications', label: 'Certifications' },
+                    { id: 'awards', label: 'Awards' },
+                    { id: 'languages', label: 'Languages' },
+                    { id: 'customSections', label: 'References' },
+                ].map(({ id, label }) => (
+                    <Button key={id} variant="outline" onClick={() => addSectionType(id)} className="rounded-full border-dashed border-2 px-5 text-slate-400 dark:text-slate-500 hover:text-green-600 hover:border-green-300 text-xs bg-white dark:bg-slate-900 dark:border-slate-700">
+                        <Plus size={12} className="mr-1.5" /> {label}
+                    </Button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+const ResumeBuilder = () => {
+    const { user, isEnterprise, hasPurchased } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const mode = searchParams.get("mode") || "both";
+    const initialRole = searchParams.get("role") || "";
+
+    const [resumeText, setResumeText] = useState("");
+    const [jobDescription, setJobDescription] = useState(initialRole);
+    const [loading, setLoading] = useState(false);
+    const [feedback, setFeedback] = useState(null);
+    const [editorTab, setEditorTab] = React.useState("editor");
+    const [history, setHistory] = React.useState([]);
+    const [activeSection, setActiveSection] = useState("personal");
+    const [previewMode, setPreviewMode] = useState("split");
+    const [error, setError] = useState(null);
+    const [generatedResume, setGeneratedResume] = useState(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [coverLetter, setCoverLetter] = useState("");
+    const [applicationLetter, setApplicationLetter] = useState("");
+    const [coverLetterCompany, setCoverLetterCompany] = useState("");
+    const [portfolioPrompts, setPortfolioPrompts] = useState([]);
+    const [isGeneratingCL, setIsGeneratingCL] = useState(false);
+    const [isGeneratingAL, setIsGeneratingAL] = useState(false);
+    const [isGeneratingPP, setIsGeneratingPP] = useState(false);
+    const [jobMatchDescription, setJobMatchDescription] = useState("");
+    const [jobMatchResult, setJobMatchResult] = useState(null);
+    const [isMatchingJob, setIsMatchingJob] = useState(false);
+    const [savedResumeId, setSavedResumeId] = useState(null);
+    const [savedCLId, setSavedCLId] = useState(null);
+    const [savedALId, setSavedALId] = useState(null);
+    const [savedPPId, setSavedPPId] = useState(null);
+    const [showLibraryPicker, setShowLibraryPicker] = useState(false);
+    const [libraryCourses, setLibraryCourses] = useState([]);
+    const [librarySearch, setLibrarySearch] = useState("");
+    const [libraryLoading, setLibraryLoading] = useState(false);
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const moreMenuRef = useRef(null);
+    const [selectedTemplate, setSelectedTemplate] = useState("classic");
+    const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+    const templateDropdownRef = useRef(null);
+    const libraryPickerOpen = showLibraryPicker;
+    const handledExportPaymentRef = useRef("");
+
+    const [formData, setFormData] = useState(initialFormData);
+    const [skillInput, setSkillInput] = useState("");
+    const completionScore = useMemo(() => getCompletionScore(formData), [formData]);
+    const currentResumeData = useMemo(() => ({
+        ...(generatedResume || {}),
+        ...formData,
+        personalInfo: {
+            ...(generatedResume?.personalInfo || {}),
+            ...formData.personalInfo,
+        },
+    }), [formData, generatedResume]);
+    const groupedHistory = useMemo(() => ({
+        resumes: history.filter((item) => item.type === "resume"),
+        coverLetters: history.filter((item) => item.type === "cover-letter"),
+        applicationLetters: history.filter((item) => item.type === "application-letter"),
+        portfolios: history.filter((item) => item.type === "portfolio"),
+    }), [history]);
+    const currentSavedResume = useMemo(
+        () => history.find((item) => item._id === savedResumeId) || null,
+        [history, savedResumeId]
+    );
+    const currentResumeIsPaid = !!currentSavedResume?.metadata?.exportPaid;
+    const hasPaidPlanExportAccess = hasPurchased('career_tools') || isEnterprise;
+    const draftStorageKey = useCallback((type) => getCareerDraftStorageKey(type, user), [user]);
+    const shouldShowPaidResumeExportLabel =
+        editorTab === "editor" && !hasPaidPlanExportAccess && !currentResumeIsPaid;
+    const hasOpenResume =
+        editorTab === "editor" &&
+        !!(savedResumeId || generatedResume || hasUserEnteredResumeContent(currentResumeData, user));
+
+    const normalizedResumeForPersistence = useMemo(() => ({
+        ...currentResumeData,
+        experience: Array.isArray(currentResumeData?.experience) ? currentResumeData.experience : [],
+        education: Array.isArray(currentResumeData?.education) ? currentResumeData.education : [],
+        skills: Array.isArray(currentResumeData?.skills) ? currentResumeData.skills : [],
+        projects: Array.isArray(currentResumeData?.projects) ? currentResumeData.projects : [],
+        certifications: Array.isArray(currentResumeData?.certifications) ? currentResumeData.certifications : [],
+        awards: Array.isArray(currentResumeData?.awards) ? currentResumeData.awards : [],
+        languages: Array.isArray(currentResumeData?.languages) ? currentResumeData.languages : [],
+        customSections: Array.isArray(currentResumeData?.customSections) ? currentResumeData.customSections : [],
+        personalInfo: {
+            ...(currentResumeData?.personalInfo || {}),
+        },
+    }), [currentResumeData]);
+
+    const updatePersonalInfo = useCallback((field, value) => {
+        setFormData(prev => ({ ...prev, personalInfo: { ...prev.personalInfo, [field]: value } }));
+    }, []);
+    const addItem = useCallback((section, template) => {
+        setFormData(prev => ({ ...prev, [section]: [...(prev[section] || []), template] }));
+    }, []);
+    const updateItem = useCallback((section, index, field, value) => {
+        if (index === 'remove' || field === 'remove') {
+            setFormData(prev => ({
+                ...prev,
+                [section]: index === 'remove' ? [] : (prev[section] || []).filter((_, i) => i !== index)
+            }));
+            return;
+        }
+        if (index === 'add' || field === 'add') {
+            const template = index === 'add' ? field : value;
+            setFormData(prev => ({
+                ...prev,
+                [section]: [...(prev[section] || []), template]
+            }));
+            return;
+        }
+        setFormData(prev => ({
+            ...prev,
+            [section]: (prev[section] || []).map((item, i) => i === index ? (typeof item === 'string' ? field : { ...item, [field]: value }) : item)
+        }));
+    }, []);
+    const removeItem = useCallback((section, index) => {
+        setFormData(prev => ({ ...prev, [section]: prev[section].filter((_, i) => i !== index) }));
+    }, []);
+    const addSkill = useCallback((e) => {
+        e.preventDefault();
+        const trimmed = skillInput.trim();
+        if (trimmed && !formData.skills.includes(trimmed)) {
+            setFormData(prev => ({ ...prev, skills: [...prev.skills, trimmed] }));
+            setSkillInput("");
+        }
+    }, [skillInput, formData.skills]);
+
+    const templateHandleBlur = useCallback((section, field, value, index = null) => {
+        const normalizedValue =
+            section === "personalInfo" && (field === "github" || field === "linkedin")
+                ? normalizeProfileLink(field, value)
+                : value;
+        if (section === "personalInfo") {
+            updatePersonalInfo(field, normalizedValue);
+            setGeneratedResume(prev => prev ? { ...prev, personalInfo: { ...prev.personalInfo, [field]: normalizedValue } } : prev);
+        } else if (index !== null) {
+            updateItem(section, index, field, normalizedValue);
+            if (generatedResume) {
+                setGeneratedResume(prev => ({
+                    ...prev,
+                    [section]: prev[section]?.map((item, i) => i === index ? { ...item, [field]: normalizedValue } : item)
+                }));
+            }
+        } else if (section === "skills" && typeof index === "number") {
+            setFormData(prev => ({
+                ...prev,
+                skills: prev.skills.map((s, i) => i === index ? normalizedValue : s)
+            }));
+            if (generatedResume) {
+                setGeneratedResume(prev => ({
+                    ...prev,
+                    skills: prev.skills?.map((s, i) => i === index ? normalizedValue : s)
+                }));
+            }
+        }
+    }, [updatePersonalInfo, updateItem, generatedResume]);
+
+    const templateAddSectionType = useCallback((type) => {
+        const templates = {
+            experience: { title: "New Role", company: "Company", location: "Location", startDate: "Date", endDate: "Present", description: "Describe your key responsibilities and achievements..." },
+            education: { school: "University", degree: "Degree", location: "Location", startDate: "Date", endDate: "Date", description: "" },
+            skills: "New Skill",
+            projects: { name: "Project Name", description: "Describe the project and its impact", technologies: "React, Node.js" },
+            certifications: { name: "Certification Name", issuer: "Issuing Organization", date: "Date", url: "" },
+            awards: { title: "Award Title", org: "Organization", date: "Date", description: "" },
+            languages: { language: "Language", level: "Proficient" },
+            customSections: { title: "References", content: "Available upon request.", type: "references" },
+        };
+        if (!templates[type]) return;
+        addItem(type, templates[type]);
+        if (generatedResume) {
+            setGeneratedResume(prev => ({
+                ...prev,
+                [type]: [...(prev[type] || []), templates[type]]
+            }));
+        }
+    }, [addItem, generatedResume]);
+
+    React.useEffect(() => {
+        if (!showTemplateDropdown) return;
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") setShowTemplateDropdown(false);
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [showTemplateDropdown]);
+
+    React.useEffect(() => {
+        if (!showMoreMenu) return;
+        const handleClickOutside = (e) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+                setShowMoreMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showMoreMenu]);
+
+    React.useEffect(() => {
+        if (user && !generatedResume && !resumeText.trim()) {
+            setFormData(prev => {
+                const hasExistingResumeIdentity =
+                    !!prev.personalInfo.fullName ||
+                    !!prev.personalInfo.name ||
+                    !!prev.personalInfo.email ||
+                    !!prev.personalInfo.phone ||
+                    !!prev.personalInfo.location;
+
+                if (hasExistingResumeIdentity) {
+                    return prev;
+                }
+
+                return {
+                    ...prev,
+                    personalInfo: {
+                        ...prev.personalInfo,
+                        email: prev.personalInfo.email || user.email || ""
+                    }
+                };
+            });
+        }
+    }, [generatedResume, resumeText, user]);
+
+    React.useEffect(() => {
+        if (!user?._id && !user?.email) {
+            setHistory([]);
+            return;
+        }
+        fetchHistory();
+    }, [user?._id, user?.email]);
+
+    // DB autosave — debounced, handles Resume, Cover Letter, and Portfolio
+    // Changed to save to local storage instead of hitting the database automatically
+    React.useEffect(() => {
+        const isResume = editorTab === 'both' || editorTab === 'editor';
+        const isCL = editorTab === 'cover-letter';
+        const isAL = editorTab === 'application-letter';
+        const isPP = editorTab === 'portfolio';
+
+        let type = "resume";
+        let dataToSave = normalizedResumeForPersistence;
+        let title = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.name || "Draft Resume";
+
+        if (isCL) {
+            if (!coverLetter) return;
+            type = "cover-letter";
+            dataToSave = { content: coverLetter, company: coverLetterCompany };
+            title = `Cover Letter for ${coverLetterCompany || jobDescription || 'Role'}`;
+        } else if (isAL) {
+            if (!applicationLetter) return;
+            type = "application-letter";
+            dataToSave = { content: applicationLetter, company: coverLetterCompany };
+            title = `Application Letter for ${coverLetterCompany || jobDescription || 'Role'}`;
+        } else if (isPP) {
+            if (portfolioPrompts.length === 0) return;
+            type = "portfolio";
+            dataToSave = { prompts: portfolioPrompts };
+            title = `Portfolio Prompts: ${jobDescription || 'Ideas'}`;
+        } else {
+            const hasContent = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.jobTitle ||
+                (dataToSave.experience || []).length > 0 || (dataToSave.skills || []).length > 0;
+            if (!hasContent) return;
+        }
+
+        const timer = setTimeout(() => {
+            try {
+                const draft = {
+                    type,
+                    title,
+                    data: dataToSave,
+                    metadata: {
+                        jobDescription,
+                        documentId:
+                            type === "resume" ? (savedResumeId || undefined) :
+                                type === "cover-letter" ? (savedCLId || undefined) :
+                                    type === "application-letter" ? (savedALId || undefined) :
+                                        type === "portfolio" ? (savedPPId || undefined) :
+                                            undefined,
+                        resumeId: type === "resume" ? undefined : (savedResumeId || undefined),
+                    }
+                };
+                localStorage.setItem(draftStorageKey(type), JSON.stringify(draft));
+                // Optional: show a small toast for local save if needed, though it might be too spammy.
+            } catch (error) {
+                console.error("Local save error:", error);
+            }
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, [normalizedResumeForPersistence, coverLetter, applicationLetter, portfolioPrompts, editorTab, jobDescription, savedResumeId, savedCLId, savedALId, savedPPId, draftStorageKey]);
+
+    React.useEffect(() => {
+        // Load from local storage on mount - but ONLY if there's no current in-memory content to avoid overwriting it
+        try {
+            const isCL = editorTab === 'cover-letter';
+            const isAL = editorTab === 'application-letter';
+            const isPP = editorTab === 'portfolio';
+            let type = "resume";
+            if (isCL) type = "cover-letter";
+            if (isAL) type = "application-letter";
+            if (isPP) type = "portfolio";
+
+            const saved = localStorage.getItem(draftStorageKey(type));
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (type === "resume") {
+                    // Only restore from localStorage if there's no current in-memory content
+                    const hasCurrentContent = generatedResume ||
+                        formData.personalInfo.fullName || formData.personalInfo.jobTitle ||
+                        (formData.projects || []).length > 0 || (formData.experience || []).length > 0 ||
+                        (formData.education || []).length > 0 || (formData.skills || []).length > 0;
+                    if (!hasCurrentContent) {
+                        const sanitizedResume = sanitizeGeneratedResumeData(parsed.data);
+                        setFormData(prev => ({ ...prev, ...sanitizedResume }));
+                        setGeneratedResume(sanitizedResume);
+                        if (parsed.metadata?.documentId) setSavedResumeId(parsed.metadata.documentId);
+                    }
+                } else if (type === "cover-letter") {
+                    if (!coverLetter) {
+                        setCoverLetter(parsed.data.content || "");
+                        setCoverLetterCompany(parsed.data.company || "");
+                        if (parsed.metadata?.documentId) setSavedCLId(parsed.metadata.documentId);
+                        if (parsed.metadata?.resumeId) setSavedResumeId(parsed.metadata.resumeId);
+                    }
+                } else if (type === "application-letter") {
+                    if (!applicationLetter) {
+                        setApplicationLetter(parsed.data.content || "");
+                        setCoverLetterCompany(parsed.data.company || "");
+                        if (parsed.metadata?.documentId) setSavedALId(parsed.metadata.documentId);
+                        if (parsed.metadata?.resumeId) setSavedResumeId(parsed.metadata.resumeId);
+                    }
+                } else if (type === "portfolio") {
+                    if (!portfolioPrompts.length) {
+                        setPortfolioPrompts(parsed.data.prompts || []);
+                        if (parsed.metadata?.documentId) setSavedPPId(parsed.metadata.documentId);
+                        if (parsed.metadata?.resumeId) setSavedResumeId(parsed.metadata.resumeId);
+                    }
+                }
+                if (parsed.metadata?.jobDescription && !jobDescription) {
+                    setJobDescription(parsed.metadata.jobDescription);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load draft from local storage:", e);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editorTab]); // Reload local draft when tab changes — guards prevent overwrite
+
+    React.useEffect(() => {
+        setGeneratedResume(null);
+        setFormData(initialFormData);
+        setResumeText("");
+        setCoverLetter("");
+        setApplicationLetter("");
+        setPortfolioPrompts([]);
+        setSavedResumeId(null);
+        setSavedCLId(null);
+        setSavedALId(null);
+        setSavedPPId(null);
+        setHistory([]);
+    }, [user?._id, user?.email]);
+
+    const saveToDatabase = async () => {
+        const isResume = editorTab === 'both' || editorTab === 'editor';
+        const isCL = editorTab === 'cover-letter';
+        const isAL = editorTab === 'application-letter';
+        const isPP = editorTab === 'portfolio';
+
+        let type = "resume";
+        let documentId = savedResumeId;
+        let dataToSave = normalizedResumeForPersistence;
+        let title = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.name || "Draft Resume";
+
+        if (isCL) {
+            if (!coverLetter) {
+                toast.error("Nothing to save for cover letter");
+                return;
+            }
+            type = "cover-letter";
+            documentId = savedCLId;
+            dataToSave = { content: coverLetter, company: coverLetterCompany };
+            title = `Cover Letter for ${coverLetterCompany || jobDescription || 'Role'}`;
+        } else if (isAL) {
+            if (!applicationLetter) {
+                toast.error("Nothing to save for application letter");
+                return;
+            }
+            type = "application-letter";
+            documentId = savedALId;
+            dataToSave = { content: applicationLetter, company: coverLetterCompany };
+            title = `Application Letter for ${coverLetterCompany || jobDescription || 'Role'}`;
+        } else if (isPP) {
+            if (portfolioPrompts.length === 0) {
+                toast.error("Nothing to save for portfolio");
+                return;
+            }
+            type = "portfolio";
+            documentId = savedPPId;
+            dataToSave = { prompts: portfolioPrompts };
+            title = `Portfolio Prompts: ${jobDescription || 'Ideas'}`;
+        } else {
+            const hasContent = dataToSave.personalInfo?.fullName || dataToSave.personalInfo?.jobTitle ||
+                (dataToSave.experience || []).length > 0 || (dataToSave.skills || []).length > 0 ||
+                (dataToSave.projects || []).length > 0 || (dataToSave.education || []).length > 0;
+            if (!hasContent) {
+                toast.error("Add some content to your resume before saving");
+                return;
+            }
+        }
+
+        const toastId = toast.loading("Saving...");
+        try {
+            const response = await apiClient.post("/api/career/history", {
+                id: documentId,
+                type,
+                title,
+                data: dataToSave,
+                metadata: {
+                    jobDescription,
+                    resumeId: type === "resume" ? undefined : (savedResumeId || undefined),
+                }
+            });
+            if (response.ok) {
+                const saved = await response.json();
+                if (type === "resume") setSavedResumeId(saved._id);
+                else if (type === "cover-letter") setSavedCLId(saved._id);
+                else if (type === "application-letter") setSavedALId(saved._id);
+                else if (type === "portfolio") setSavedPPId(saved._id);
+
+                setHistory(prev => {
+                    const filtered = prev.filter(item => item._id !== saved._id);
+                    return [saved, ...filtered].slice(0, 20);
+                });
+                toast.success("Saved!", { id: toastId });
+            } else {
+                throw new Error("Failed response from server");
+            }
+        } catch (error) {
+            console.error("Manual save error:", error);
+            toast.error("Failed to save to database", { id: toastId });
+        }
+    };
+
+    const fetchHistory = async () => {
+        try {
+            // Fetch all recent career history
+            const response = await apiClient.get("/api/career/history");
+            if (response.ok) {
+                const data = await response.json();
+                setHistory(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch history:", error);
+        }
+    };
+
+    React.useEffect(() => {
+        const autoGenerate = searchParams.get("autoGenerate") === "true";
+        if (autoGenerate && jobDescription && !isGenerating && !generatedResume) {
+            handleGenerate();
+        }
+    }, [searchParams, jobDescription, isGenerating, generatedResume]);
+
+    const persistCareerDocument = useCallback(async ({ id, type, title, data, metadata = {} }) => {
+        const response = await apiClient.post("/api/career/history", {
+            id,
+            type,
+            title,
+            data,
+            metadata: {
+                jobDescription,
+                resumeId: savedResumeId || undefined,
+                ...metadata,
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to save document");
+        }
+
+        const saved = await response.json();
+        setHistory(prev => {
+            const filtered = prev.filter(item => item._id !== saved._id);
+            return [saved, ...filtered].slice(0, 20);
+        });
+        return saved;
+    }, [jobDescription, savedResumeId]);
+
+    const performResumeExport = useCallback(async (format, resumeOverride) => {
+        const resumeData = sanitizeGeneratedResumeData(resumeOverride || currentResumeData);
+        if (!hasMeaningfulResumeContent(resumeData)) {
+            throw new Error("No resume content to export");
+        }
+
+        const fileName = (resumeData?.personalInfo?.fullName || resumeData?.personalInfo?.name || "Resume")
+            .replace(/\s+/g, "_");
+
+        if (format === "pdf") {
+            await downloadResumeAsPDF(resumeData, fileName, selectedTemplate);
+            return;
+        }
+
+        await downloadResumeAsDOCX(resumeData, fileName, selectedTemplate);
+    }, [currentResumeData, selectedTemplate]);
+
+    const ensureResumeSavedForExport = useCallback(async () => {
+        const resumeData = normalizedResumeForPersistence;
+        if (!hasMeaningfulResumeContent(resumeData)) {
+            throw new Error("No resume content to export");
+        }
+
+        const saved = await persistCareerDocument({
+            id: savedResumeId || undefined,
+            type: "resume",
+            title: resumeData.personalInfo?.fullName || resumeData.personalInfo?.name || "Draft Resume",
+            data: resumeData,
+            metadata: currentSavedResume?.metadata || {},
+        });
+
+        setSavedResumeId(saved._id);
+        return saved;
+    }, [currentSavedResume?.metadata, normalizedResumeForPersistence, persistCareerDocument, savedResumeId]);
+
+    const beginPaidResumeExport = useCallback(async (exportFormat) => {
+        const savedResume = await ensureResumeSavedForExport();
+        const response = await apiClient.post("/api/billing/create-session", {
+            purchaseType: "resume-export",
+            historyId: savedResume._id,
+            exportFormat,
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload?.sessionUrl) {
+            throw new Error(payload?.error || "Failed to start export checkout");
+        }
+
+        window.location.href = payload.sessionUrl;
+    }, [ensureResumeSavedForExport]);
+
+    const handleResumeExport = useCallback(async (format) => {
+        if (!hasOpenResume) {
+            throw new Error("Open or generate a resume before exporting");
+        }
+
+        if (!hasPaidPlanExportAccess && !currentResumeIsPaid) {
+            await beginPaidResumeExport(format);
+            return "checkout";
+        }
+
+        await performResumeExport(format);
+        return "downloaded";
+    }, [beginPaidResumeExport, currentResumeIsPaid, hasOpenResume, hasPaidPlanExportAccess, performResumeExport]);
+
+    React.useEffect(() => {
+        const purchaseType = searchParams.get("purchaseType");
+        const payment = searchParams.get("payment");
+        const historyId = searchParams.get("historyId");
+        const exportFormat = (searchParams.get("exportFormat") || "docx").toLowerCase();
+        const ref = searchParams.get("reference") || searchParams.get("trxref") || searchParams.get("ref") || "";
+
+        if (purchaseType !== "resume-export" || payment !== "success" || !historyId) {
+            return;
+        }
+
+        const effectKey = `${historyId}:${exportFormat}:${ref}`;
+        if (handledExportPaymentRef.current === effectKey) {
+            return;
+        }
+
+        // Verify payment server-side first
+        if (ref) {
+            apiClient.get(`/api/billing/verify-payment?ref=${encodeURIComponent(ref)}`).catch(() => {});
+        }
+
+        const resumeItem = history.find((item) => item._id === historyId && item.type === "resume");
+        if (!resumeItem?.metadata?.exportPaid) {
+            return;
+        }
+
+        handledExportPaymentRef.current = effectKey;
+        setSavedResumeId(resumeItem._id);
+
+        const runExport = async () => {
+            const toastId = toast.loading("Payment confirmed. Downloading resume...");
+            try {
+                await performResumeExport(exportFormat, resumeItem.data);
+                toast.success(
+                    exportFormat === "pdf" ? "PDF downloaded!" : "Editable DOCX downloaded!",
+                    { id: toastId }
+                );
+            } catch (error) {
+                console.error("Paid resume export failed:", error);
+                toast.error("Payment succeeded but download could not start", { id: toastId });
+            } finally {
+                const nextParams = new URLSearchParams(searchParams.toString());
+                ["payment", "purchaseType", "historyId", "exportFormat", "ref"].forEach((key) => {
+                    nextParams.delete(key);
+                });
+                const nextQuery = nextParams.toString();
+                router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+            }
+        };
+
+        runExport();
+    }, [history, pathname, performResumeExport, router, searchParams]);
+
+    const loadHistoryItem = (item) => {
+        if (item.type === "resume") {
+            const sanitizedResume = sanitizeGeneratedResumeData(item.data);
+            setGeneratedResume(sanitizedResume);
+            setFormData(prev => ({
+                ...prev,
+                ...sanitizedResume,
+                experience: Array.isArray(sanitizedResume?.experience) ? sanitizedResume.experience : [],
+                education: Array.isArray(sanitizedResume?.education) ? sanitizedResume.education : [],
+                skills: Array.isArray(sanitizedResume?.skills) ? sanitizedResume.skills : [],
+                projects: Array.isArray(sanitizedResume?.projects) ? sanitizedResume.projects : [],
+                certifications: Array.isArray(sanitizedResume?.certifications) ? sanitizedResume.certifications : [],
+                awards: Array.isArray(sanitizedResume?.awards) ? sanitizedResume.awards : [],
+                languages: Array.isArray(sanitizedResume?.languages) ? sanitizedResume.languages : [],
+                customSections: Array.isArray(sanitizedResume?.customSections) ? sanitizedResume.customSections : [],
+                personalInfo: {
+                    ...prev.personalInfo,
+                    ...(sanitizedResume?.personalInfo || {}),
+                },
+            }));
+            setSavedResumeId(item._id); // Track ID so saves are updates, not duplicates
+            setEditorTab('editor');
+            toast.success("Resume restored!");
+        } else if (item.type === "cover-letter") {
+            setCoverLetter(item.data.content || "");
+            setCoverLetterCompany(item.data.company || "");
+            setSavedCLId(item._id);
+            if (item.metadata?.resumeId) setSavedResumeId(item.metadata.resumeId);
+            setEditorTab('cover-letter');
+            toast.success("Cover letter restored!");
+        } else if (item.type === "application-letter") {
+            setApplicationLetter(item.data.content || "");
+            setCoverLetterCompany(item.data.company || "");
+            setSavedALId(item._id);
+            if (item.metadata?.resumeId) setSavedResumeId(item.metadata.resumeId);
+            setEditorTab('application-letter');
+            toast.success("Application letter restored!");
+        } else if (item.type === "portfolio") {
+            setPortfolioPrompts(item.data.prompts || []);
+            setSavedPPId(item._id);
+            setEditorTab('portfolio');
+            toast.success("Portfolio ideas restored!");
+        }
+        setJobDescription(item.metadata?.jobDescription || jobDescription);
+        setError(null);
+    };
+
+    const deleteHistoryItem = async (e, id) => {
+        e.stopPropagation();
+        try {
+            const response = await apiClient.delete(`/api/career/history?id=${id}`);
+            if (response.ok) {
+                setHistory(prev => prev.filter(item => item._id !== id));
+                toast.success("History item deleted");
+            }
+        } catch (error) {
+            toast.error("Failed to delete history item");
+        }
+    };
+
+    const handleOptimize = async () => {
+        const textToOptimize = resumeText.trim() || JSON.stringify(currentResumeData);
+
+        if (!textToOptimize || textToOptimize === "{}" || textToOptimize.length < 50) {
+            toast.error("Please add some content to your resume first");
+            setError("Resume content is required");
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await apiClient.post("/api/career/resume/optimize", {
+                resumeText: textToOptimize,
+                jobDescription: jobDescription || undefined
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setFeedback(data);
+                if (!generatedResume) {
+                    setGeneratedResume({
+                        personalInfo: { name: "Optimized Resume", email: "", phone: "", location: "" },
+                        summary: resumeText,
+                        experience: [],
+                        education: [],
+                        skills: []
+                    });
+                }
+                setEditorTab("insights");
+                fetchHistory();
+                toast.success("Resume optimized successfully!");
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.error || "Failed to optimize resume");
+            }
+        } catch (error) {
+            console.error("Resume optimization error:", error);
+            setError(error.message || "An error occurred during optimization.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGeneratePortfolio = async () => {
+        setIsGeneratingPP(true);
+        const toastId = toast.loading("Curating portfolio prompts...");
+        try {
+            const response = await apiClient.post("/api/career/portfolio/generate", {
+                resume: generatedResume,
+                role: jobDescription
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setPortfolioPrompts(data.prompts || []);
+                setEditorTab("portfolio");
+                toast.success("Portfolio prompts ready!", { id: toastId });
+
+                try {
+                    const saved = await apiClient.post("/api/career/history", {
+                        type: "portfolio",
+                        title: `Portfolio Prompts: ${jobDescription || 'Ideas'}`,
+                        data: { prompts: data.prompts || [] },
+                        metadata: { jobDescription, resumeId: savedResumeId || undefined }
+                    }).then(r => r.json());
+
+                    setHistory(prev => {
+                        const filtered = prev.filter(h => h.type !== "portfolio" || h.title !== `Portfolio Prompts: ${jobDescription || 'Ideas'}`);
+                        return [saved, ...filtered].slice(0, 20);
+                    });
+                } catch (saveErr) {
+                    console.error("Failed to auto-save portfolio", saveErr);
+                }
+            } else {
+                throw new Error("Failed to generate portfolio prompts");
+            }
+        } catch (error) {
+            toast.error(error.message, { id: toastId });
+        } finally {
+            setIsGeneratingPP(false);
+        }
+    };
+
+    const handleNew = () => {
+        if (editorTab === 'editor' || editorTab === 'both') {
+            setFormData(initialFormData);
+            setGeneratedResume(null);
+            setSavedResumeId(null);
+            setCoverLetter("");
+            setApplicationLetter("");
+            setCoverLetterCompany("");
+            setSavedCLId(null);
+            setSavedALId(null);
+            setIsEditing(true);
+            setActiveSection("personal");
+            toast.success("Started a new resume draft");
+        } else if (editorTab === 'cover-letter') {
+            setCoverLetter("");
+            setSavedCLId(null);
+            toast.success("Started a new cover letter");
+        } else if (editorTab === 'application-letter') {
+            setApplicationLetter("");
+            setSavedALId(null);
+            toast.success("Started a new application letter");
+        } else if (editorTab === 'portfolio') {
+            setPortfolioPrompts([]);
+            setSavedPPId(null);
+            toast.success("Cleared portfolio ideas");
+        }
+    };
+
+    const handleGenerateCoverLetter = async (isApplication = false) => {
+        setIsGeneratingCL(true);
+        const toastId = toast.loading(isApplication ? "Drafting application letter..." : "Drafting cover letter...");
+        try {
+            const resumeForLetter = hasUserEnteredResumeContent(currentResumeData, user) ? currentResumeData : null;
+            const response = await apiClient.post("/api/career/cover-letter/generate", {
+                resume: resumeForLetter,
+                role: jobDescription,
+                company: coverLetterCompany || undefined,
+                type: isApplication ? "application-letter" : "cover-letter"
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setCoverLetter(data.content || "");
+                setEditorTab("cover-letter");
+                try {
+                    const saved = await persistCareerDocument({
+                        id: savedCLId || undefined,
+                        type: "cover-letter",
+                        title: `Cover Letter for ${coverLetterCompany || jobDescription || 'Role'}`,
+                        data: { content: data.content || "", company: coverLetterCompany },
+                    });
+                    setSavedCLId(saved._id);
+                } catch (saveErr) {
+                    console.error("Failed to auto-save cover letter", saveErr);
+                }
+                toast.success("Cover letter generated!", { id: toastId });
+            } else {
+                throw new Error("Failed to generate cover letter");
+            }
+        } catch (error) {
+            toast.error(error.message, { id: toastId });
+        } finally {
+            setIsGeneratingCL(false);
+        }
+    };
+
+    const handleGenerateApplicationLetter = async () => {
+        if (!jobDescription || !coverLetterCompany) {
+            toast.error("Role and Company are required for an Application Letter");
+            return;
+        }
+        setIsGeneratingAL(true);
+        const toastId = toast.loading("Drafting application letter...");
+        try {
+            const resumeForLetter = hasUserEnteredResumeContent(currentResumeData, user) ? currentResumeData : null;
+            const response = await apiClient.post("/api/career/cover-letter/generate", {
+                resume: resumeForLetter,
+                role: jobDescription,
+                company: coverLetterCompany,
+                type: "application-letter"
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setApplicationLetter(data.content || "");
+                setEditorTab("application-letter");
+                try {
+                    const saved = await persistCareerDocument({
+                        id: savedALId || undefined,
+                        type: "application-letter",
+                        title: `Application Letter for ${coverLetterCompany || jobDescription || 'Role'}`,
+                        data: { content: data.content || "", company: coverLetterCompany },
+                    });
+                    setSavedALId(saved._id);
+                } catch (saveErr) {
+                    console.error("Failed to auto-save application letter", saveErr);
+                }
+                toast.success("Application letter generated!", { id: toastId });
+            } else {
+                throw new Error("Failed to generate application letter");
+            }
+        } catch (error) {
+            toast.error(error.message, { id: toastId });
+        } finally {
+            setIsGeneratingAL(false);
+        }
+    };
+
+    const handleGenerate = async () => {
+        const trimmedRole = jobDescription.trim();
+        const trimmedResumeText = resumeText.trim();
+
+        if (!trimmedRole && !trimmedResumeText) {
+            toast.error("Add a target role or paste an existing resume");
+            setError("A job role or pasted resume is required");
+            return;
+        }
+        setIsGenerating(true);
+        setError(null);
+        const toastId = toast.loading("Generating your professional resume...");
+        try {
+            const response = await apiClient.post("/api/career/resume/generate", {
+                role: trimmedRole,
+                resumeText: trimmedResumeText || undefined,
+                template: selectedTemplate,
+            });
+            if (response.ok) {
+                const data = sanitizeGeneratedResumeData(await response.json());
+                setGeneratedResume(data);
+                setFormData(prev => ({ ...prev, ...data }));
+                if (trimmedResumeText) {
+                    setResumeText("");
+                }
+                toast.success("Resume generated successfully!", { id: toastId });
+
+                // Auto-save to DB and capture ID to prevent future duplicates
+                try {
+                    const title = data.personalInfo?.fullName || data.personalInfo?.name || trimmedRole || "Draft Resume";
+                    const saved = await apiClient.post("/api/career/history", {
+                        id: savedResumeId || undefined,
+                        type: "resume",
+                        title,
+                        data,
+                        metadata: { jobDescription: trimmedRole }
+                    }).then(r => r.json());
+                    if (saved._id) {
+                        setSavedResumeId(saved._id);
+                        setHistory(prev => {
+                            const filtered = prev.filter(h => h._id !== saved._id);
+                            return [saved, ...filtered].slice(0, 20);
+                        });
+                    }
+                } catch (saveErr) {
+                    console.error("Auto-save after generate failed:", saveErr);
+                }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || "Failed to generate resume");
+            }
+        } catch (error) {
+            console.error("Resume generation error:", error);
+            setError(error.message);
+            toast.error(error.message, { id: toastId });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleGenerateProjectAI = async (index) => {
+        const project = portfolioPrompts[index];
+        if (!isPromptEligibleProject(project)) {
+            toast.error("AI prompt generation is only available for technical or software-based projects.");
+            return;
+        }
+        const toastId = toast.loading(`Generating AI build prompt for ${project.title}...`);
+        try {
+            const response = await apiClient.post("/api/career/portfolio/refine", {
+                projectTitle: project.title,
+                description: project.description,
+                technologies: project.technologies,
+                role: jobDescription
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setPortfolioPrompts(prev => prev.map((p, i) => i === index ? {
+                    ...p,
+                    aiPrompt: data.content,
+                    promptGenerated: true
+                } : p));
+                toast.success("AI project prompt ready!", { id: toastId });
+            }
+        } catch (error) {
+            toast.error("Failed to generate project prompt", { id: toastId });
+        }
+    };
+
+    const addToResume = (project) => {
+        const newProject = {
+            name: project.title,
+            description: project.description,
+            technologies: Array.isArray(project.technologies) ? project.technologies.join(", ") : (project.technologies || "")
+        };
+        setFormData(prev => ({
+            ...prev,
+            projects: [...(prev.projects || []), newProject]
+        }));
+        setGeneratedResume(prev => prev ? {
+            ...prev,
+            projects: [...(prev.projects || []), newProject]
+        } : prev);
+        setEditorTab("editor");
+        setActiveSection("projects");
+        toast.success("Added to resume projects!");
+    };
+
+    const handleJobMatch = async () => {
+        if (!jobMatchDescription.trim()) {
+            toast.error("Please paste a job description first");
+            return;
+        }
+        setIsMatchingJob(true);
+        const toastId = toast.loading("Analyzing ATS match...");
+        try {
+            const response = await apiClient.post("/api/career/resume/match", {
+                resume: currentResumeData,
+                jobDescription: jobMatchDescription
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setJobMatchResult(data);
+                toast.success("Analysis complete!", { id: toastId });
+            } else {
+                throw new Error("Failed to analyze");
+            }
+        } catch (error) {
+            toast.error(error.message, { id: toastId });
+        } finally {
+            setIsMatchingJob(false);
+        }
+    };
+
+    const [isRefining, setIsRefining] = useState(false);
+    const handleRefineResume = async () => {
+        if (!jobMatchResult) return;
+        setIsRefining(true);
+        const toastId = toast.loading("Refining your resume based on match results...");
+        try {
+            const response = await apiClient.post("/api/career/resume/refine", {
+                resume: currentResumeData,
+                jobDescription: jobMatchDescription,
+                matchResult: jobMatchResult,
+                template: selectedTemplate,
+            });
+            if (response.ok) {
+                const data = sanitizeGeneratedResumeData(await response.json());
+                setGeneratedResume(data);
+                setFormData(prev => ({ ...prev, ...data }));
+                setEditorTab("editor");
+                toast.success("Resume refined successfully!", { id: toastId });
+            } else {
+                throw new Error("Failed to refine resume");
+            }
+        } catch (error) {
+            toast.error(error.message, { id: toastId });
+        } finally {
+            setIsRefining(false);
+        }
+    };
+
+    const handleGenerateFromLibrary = async (courseName, courseObj) => {
+        const toastId = toast.loading(`Generating resume from "${courseName}" course...`);
+        try {
+            const response = await apiClient.post("/api/career/resume/from-library", {
+                courseName,
+                category: courseObj?.category,
+                difficulty: courseObj?.difficulty,
+                description: courseObj?.description,
+            });
+            if (response.ok) {
+                const data = sanitizeGeneratedResumeData(await response.json());
+                setGeneratedResume(data);
+                setFormData(prev => ({ ...prev, ...data }));
+                setEditorTab('editor');
+                toast.success(`Resume crafted from your ${courseName} course!`, { id: toastId });
+            } else {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || "Failed to generate from library");
+            }
+        } catch (error) {
+            toast.error(error.message || "Could not find relevant course data", { id: toastId });
+        }
+    };
+    const exportToDOCX = async () => {
+        const toastId = toast.loading("Preparing your Word document...");
+        const resumeData = currentResumeData;
+            const hasResumeContent = hasMeaningfulResumeContent(resumeData);
+
+        if (editorTab === 'editor' && !hasResumeContent) {
+            toast.error("No resume content to export", { id: toastId });
+            return;
+        }
+
+        const fileName = (resumeData?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
+
+        try {
+            if (editorTab === "cover-letter") {
+                if (!coverLetter?.trim()) {
+                    toast.error("No cover letter to export", { id: toastId });
+                    return;
+                }
+                await downloadLetterAsDOCX({
+                    content: coverLetter,
+                    type: "cover-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, `${fileName}_Cover_Letter`);
+            } else if (editorTab === "application-letter") {
+                if (!applicationLetter?.trim()) {
+                    toast.error("No application letter to export", { id: toastId });
+                    return;
+                }
+                await downloadLetterAsDOCX({
+                    content: applicationLetter,
+                    type: "application-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, `${fileName}_Application_Letter`);
+            } else {
+                const result = await handleResumeExport("docx");
+                if (result === "checkout") {
+                    toast.loading(`Redirecting to checkout (${RESUME_EXPORT_PRICE_LABEL})...`, { id: toastId });
+                    return;
+                }
+            }
+            toast.success("Editable DOCX downloaded!", { id: toastId });
+        } catch (error) {
+            console.error("Resume DOCX export error:", error);
+            toast.error(error.message || "Failed to export DOCX", { id: toastId });
+        }
+    };
+
+    const exportToPDF = async () => {
+        const toastId = toast.loading("Preparing your PDF...");
+        const resumeData = currentResumeData;
+        const hasResumeContent = hasMeaningfulResumeContent(resumeData);
+
+        let targetId = 'resume-preview';
+        let fileName = (resumeData?.personalInfo?.fullName || "Resume").replace(/\s+/g, '_');
+
+        if (editorTab === 'cover-letter') {
+            if (!coverLetter?.trim()) { toast.error("No cover letter to export", { id: toastId }); return; }
+            fileName = `${fileName}_Cover_Letter`;
+            try {
+                await downloadLetterAsPDF({
+                    content: coverLetter,
+                    type: "cover-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, fileName);
+                toast.success("Downloaded!", { id: toastId });
+            } catch (error) {
+                console.error("Cover letter PDF export error:", error);
+                toast.error("Failed to export PDF", { id: toastId });
+            }
+            return;
+        } else if (editorTab === 'application-letter') {
+            if (!applicationLetter?.trim()) { toast.error("No application letter to export", { id: toastId }); return; }
+            fileName = `${fileName}_Application_Letter`;
+            try {
+                await downloadLetterAsPDF({
+                    content: applicationLetter,
+                    type: "application-letter",
+                    company: coverLetterCompany,
+                    personalInfo: resumeData?.personalInfo || {},
+                }, fileName);
+                toast.success("Downloaded!", { id: toastId });
+            } catch (error) {
+                console.error("Application letter PDF export error:", error);
+                toast.error("Failed to export PDF", { id: toastId });
+            }
+            return;
+        } else if (!hasResumeContent) {
+            toast.error("No resume content to export", { id: toastId });
+            return;
+        } else {
+            try {
+                const result = await handleResumeExport("pdf");
+                if (result === "checkout") {
+                    toast.loading(`Redirecting to checkout (${RESUME_EXPORT_PRICE_LABEL})...`, { id: toastId });
+                    return;
+                }
+                toast.success("Downloaded!", { id: toastId });
+            } catch (error) {
+                console.error("Resume PDF export error:", error);
+                toast.error(error.message || "Failed to export PDF", { id: toastId });
+            }
+            return;
+        }
+
+        const element = document.getElementById(targetId);
+        if (!element) {
+            toast.error("Preview not found", { id: toastId });
+            return;
+        }
+
+        try {
+            element.setAttribute('data-exporting', 'true');
+            const originalOpacity = element.style.opacity;
+            const originalZIndex = element.style.zIndex;
+
+            if (editorTab !== 'editor') {
+                element.style.opacity = '1';
+                element.style.zIndex = '50';
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 150));
+
+            // Capture at 3× for crisp print quality
+            const canvas = await html2canvas(element, {
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                backgroundColor: "#ffffff",
+                onclone: (clonedDoc, clonedElement) => {
+                    const FALLBACK_TEXT = "#1a1a2e";
+                    const FALLBACK_BG = "#ffffff";
+                    const FALLBACK_BORDER = "#e2e8f0";
+                    const UNSUPPORTED = /oklch\s*\(|color-mix\s*\(|lab\s*\(|lch\s*\(/i;
+                    const colorProps = [
+                        ["color", FALLBACK_TEXT],
+                        ["backgroundColor", FALLBACK_BG],
+                        ["borderColor", FALLBACK_BORDER],
+                        ["borderTopColor", FALLBACK_BORDER],
+                        ["borderRightColor", FALLBACK_BORDER],
+                        ["borderBottomColor", FALLBACK_BORDER],
+                        ["borderLeftColor", FALLBACK_BORDER],
+                        ["outlineColor", FALLBACK_BORDER],
+                        ["textDecorationColor", FALLBACK_TEXT],
+                        ["boxShadow", "none"],
+                        ["textShadow", "none"],
+                        ["fill", FALLBACK_TEXT],
+                        ["stroke", FALLBACK_TEXT],
+                        ["caretColor", FALLBACK_TEXT],
+                        ["columnRuleColor", FALLBACK_BORDER],
+                        ["-webkit-text-fill-color", FALLBACK_TEXT],
+                        ["-webkit-text-stroke-color", FALLBACK_TEXT],
+                    ];
+                    const root = clonedDoc.documentElement;
+                    [
+                        ["--background", FALLBACK_BG],
+                        ["--foreground", FALLBACK_TEXT],
+                        ["--card", FALLBACK_BG],
+                        ["--card-foreground", FALLBACK_TEXT],
+                        ["--popover", FALLBACK_BG],
+                        ["--popover-foreground", FALLBACK_TEXT],
+                        ["--primary", "#166534"],
+                        ["--primary-foreground", FALLBACK_BG],
+                        ["--secondary", FALLBACK_BG],
+                        ["--secondary-foreground", FALLBACK_TEXT],
+                        ["--muted", FALLBACK_BG],
+                        ["--muted-foreground", "#475569"],
+                        ["--accent", "#dcfce7"],
+                        ["--accent-foreground", "#166534"],
+                        ["--border", FALLBACK_BORDER],
+                    ].forEach(([name, value]) => {
+                        root.style.setProperty(name, value);
+                    });
+                    // The only reliable fix for oklch: read computed styles from the
+                    // ORIGINAL elements (browsers resolve oklch → rgb in getComputedStyle)
+                    // and apply those resolved rgb values to the clone as inline styles.
+                    const originalAll = [element, ...element.querySelectorAll('*')];
+                    const clonedAll = [clonedElement, ...clonedElement.querySelectorAll('*')];
+
+                    originalAll.forEach((origEl, idx) => {
+                        const cloneEl = clonedAll[idx];
+                        if (!cloneEl) return;
+                        const cs = window.getComputedStyle(origEl);
+
+                        colorProps.forEach(([prop, fallback]) => {
+                            const value = cs.getPropertyValue(prop) || cs[prop];
+                            const safeValue = value && !UNSUPPORTED.test(value) ? value : fallback;
+                            cloneEl.style.setProperty(prop, safeValue, 'important');
+                        });
+
+                        if (cloneEl.hasAttribute('style')) {
+                            const safeStyle = cloneEl
+                                .getAttribute('style')
+                                .replace(/oklch\([^)]*\)/gi, FALLBACK_TEXT)
+                                .replace(/color-mix\([^)]*\)/gi, FALLBACK_TEXT)
+                                .replace(/lab\([^)]*\)/gi, FALLBACK_TEXT)
+                                .replace(/lch\([^)]*\)/gi, FALLBACK_TEXT);
+                            cloneEl.setAttribute('style', safeStyle);
+                        }
+                    });
+
+                    // Hide interactive edit buttons from the PDF output
+                    clonedElement.querySelectorAll('[data-exporting]').forEach(el => el.removeAttribute('data-exporting'));
+                    clonedElement.querySelectorAll('button').forEach(b => {
+                        // Keep visible structural buttons but hide floating action ones
+                        if (b.closest('.group\\/sec') || b.title === 'Refine this section with AI' || b.title === 'Remove section') {
+                            b.style.setProperty('display', 'none', 'important');
+                        }
+                    });
+                }
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+            const pageWidthMM = pdf.internal.pageSize.getWidth();
+            const pageHeightMM = pdf.internal.pageSize.getHeight();
+
+            // Calculate how many pixels one A4 page maps to in the canvas
+            const imgWidthPx = canvas.width;
+            const imgHeightPx = canvas.height;
+            const imgWidthMM = pageWidthMM;
+            const imgHeightMM = (imgHeightPx / imgWidthPx) * pageWidthMM;
+
+            const pageHeightPx = (pageHeightMM / imgWidthMM) * imgWidthPx;
+            const totalPages = Math.ceil(imgHeightPx / pageHeightPx);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page > 0) pdf.addPage();
+
+                // Slice the source canvas for this page
+                const srcY = page * pageHeightPx;
+                const sliceHeight = Math.min(pageHeightPx, imgHeightPx - srcY);
+
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = imgWidthPx;
+                pageCanvas.height = sliceHeight;
+                const ctx = pageCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, srcY, imgWidthPx, sliceHeight, 0, 0, imgWidthPx, sliceHeight);
+
+                const pageImgData = pageCanvas.toDataURL('image/png');
+                const pageImgHeightMM = (sliceHeight / imgWidthPx) * pageWidthMM;
+                pdf.addImage(pageImgData, 'PNG', 0, 0, pageWidthMM, pageImgHeightMM);
+            }
+
+            pdf.save(`${fileName}.pdf`);
+
+            element.removeAttribute('data-exporting');
+            if (editorTab !== 'editor') {
+                element.style.opacity = originalOpacity;
+                element.style.zIndex = originalZIndex;
+            }
+
+            toast.success("Downloaded!", { id: toastId });
+        } catch (error) {
+            console.error("PDF export error:", error);
+            element.removeAttribute('data-exporting');
+            if (editorTab !== 'editor') {
+                element.style.opacity = '0';
+                element.style.zIndex = '-50';
+            }
+            toast.error("Failed to export PDF", { id: toastId });
+        }
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+        toast.success("Copied to clipboard!");
+    };
+
+    const CARD_COLORS = {
+        resume:              { bg: "bg-green-50 dark:bg-green-900/20",  icon: "text-green-600 dark:text-green-400",  dot: "bg-green-500" },
+        "cover-letter":      { bg: "bg-blue-50 dark:bg-blue-900/20",    icon: "text-blue-600 dark:text-blue-400",    dot: "bg-blue-500" },
+        "application-letter":{ bg: "bg-violet-50 dark:bg-violet-900/20", icon: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500" },
+        portfolio:           { bg: "bg-amber-50 dark:bg-amber-900/20",  icon: "text-amber-600 dark:text-amber-400",  dot: "bg-amber-500" },
+    };
+    const CARD_ICONS = { resume: Edit2, "cover-letter": FileText, "application-letter": Target, portfolio: FolderOpen };
+
+    const renderHistoryCard = (item) => {
+        const colors = CARD_COLORS[item.type] || CARD_COLORS.resume;
+        const Icon = CARD_ICONS[item.type] || FileText;
+        return (
+            <div key={item._id} onClick={() => loadHistoryItem(item)}
+                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className={`w-9 h-9 ${colors.bg} rounded-lg flex items-center justify-center shrink-0`}>
+                        <Icon size={16} className={colors.icon} />
+                    </div>
+                    <button onClick={(e) => deleteHistoryItem(e, item._id)}
+                        className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
+                        <Trash2 size={13} />
+                    </button>
+                </div>
+                <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300 line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors mb-1">
+                    {item.title || "Untitled Document"}
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 flex-1">
+                    {item.type === "cover-letter" ? `Cover letter for ${item.data?.company || "Company"}`
+                        : item.type === "application-letter" ? `Application letter for ${item.data?.company || "Company"}`
+                        : item.type === "portfolio" ? `${item.data?.prompts?.length || 0} project ideas`
+                        : item.metadata?.jobDescription || item.data?.personalInfo?.jobTitle || "Resume draft"}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                        <span className="capitalize font-medium">{item.type?.replace(/-/g, " ") || "Document"}</span>
+                        <span>·</span>
+                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <span className="font-bold text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                        Open <ArrowRight size={10} className="-rotate-45" />
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="max-w-7xl mx-auto px-0 md:px-4 py-6 md:py-10 min-h-screen pb-28 md:pb-10">
+            <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-10 text-center px-4">
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">Resume Builder</h1>
+                <p className="text-xs md:text-base text-slate-500 mt-2">Create, edit, and optimize your professional documents</p>
+            </motion.header>
+
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center gap-3">
+                    <AlertCircle size={20} />
+                    <p>{error}</p>
+                </div>
+            )}
+
+            <div className="flex flex-col items-center gap-4 md:gap-6">
+                <nav className="hidden md:flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-full">
+                    {[
+                        { id: 'editor', label: 'Resume', icon: Edit2 },
+                        { id: 'cover-letter', label: 'Cover Letter', icon: FileText },
+                        { id: 'application-letter', label: 'Application Letter', icon: Target },
+                        { id: 'portfolio', label: 'Portfolio Ideas', icon: FolderOpen }
+                    ].map(tab => (
+                        <button key={tab.id} onClick={() => setEditorTab(tab.id)}
+                            className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap ${editorTab === tab.id ? "bg-slate-100 dark:bg-slate-800 text-green-600" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"}`}>
+                            <tab.icon size={16} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="w-full max-w-4xl hidden md:flex flex-wrap items-center justify-center gap-2">
+                    <Button variant="outline" onClick={handleNew} className="h-10 px-4 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-xs">
+                        <Plus size={14} className="mr-1.5" /> {
+                            editorTab === 'cover-letter' ? 'New Cover Letter' :
+                                editorTab === 'application-letter' ? 'New Application' :
+                                    editorTab === 'portfolio' ? 'New Ideas' : 'New Resume'
+                        }
+                    </Button>
+                    <Button onClick={saveToDatabase} className="h-10 px-5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white shadow-lg shadow-slate-200 dark:shadow-none transition-all font-bold text-xs">
+                        <Save size={14} className="mr-1.5" /> Save
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setEditorTab('insights')}
+                        className="h-10 px-4 rounded-xl bg-white dark:bg-slate-900 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 font-bold text-xs"
+                    >
+                        <TrendingUp size={14} className="mr-1.5" /> Match to Job
+                    </Button>
+                    {editorTab === 'editor' && (
+                        <div className="relative" ref={templateDropdownRef}>
+                            <button
+                                onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+                                className="h-10 px-4 rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-xs flex items-center gap-2 transition-all"
+                            >
+                                <Layout size={14} className="mr-1" />
+                                {getTemplateById(selectedTemplate).name}
+                                <ChevronDown size={12} className={`transition-transform ${showTemplateDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+                        </div>
+                    )}
+                    {/* Template picker — fixed overlay so no parent clips it */}
+                    {editorTab === 'editor' && showTemplateDropdown && (
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center" onClick={() => setShowTemplateDropdown(false)}>
+                            <div className="absolute inset-0 bg-black/30" />
+                            <div
+                                className="relative w-[92vw] max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Choose Template</p>
+                                    <button onClick={() => setShowTemplateDropdown(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <div className="max-h-[60vh] overflow-y-auto p-2 space-y-1">
+                                    {RESUME_TEMPLATES.map((tpl) => (
+                                        <button
+                                            key={tpl.id}
+                                            onClick={() => { setSelectedTemplate(tpl.id); setShowTemplateDropdown(false); }}
+                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex items-start gap-3 ${selectedTemplate === tpl.id ? 'bg-green-50 dark:bg-green-900/20 ring-1 ring-green-200 dark:ring-green-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                        >
+                                            <div className="w-8 h-10 rounded-md border border-slate-200 dark:border-slate-700 shrink-0 mt-0.5" style={{ background: `linear-gradient(135deg, ${tpl.accent}22, ${tpl.accent}44)` }}>
+                                                <div className="w-full h-1.5 rounded-t-md" style={{ background: tpl.accent }} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.name}</span>
+                                                    {selectedTemplate === tpl.id && <Check size={12} className="text-green-600" />}
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{tpl.description}</p>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 capitalize mt-0.5 inline-block">{tpl.category}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {false && <Button variant="outline" onClick={exportToPDF} className="h-10 px-4 rounded-xl bg-white text-slate-600 border-slate-200 hover:bg-slate-50 font-bold text-xs">
+                        <Download size={14} className="mr-1.5" /> Export PDF
+                    </Button>}
+                    {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
+                        <Button variant="outline" onClick={exportToDOCX} className="h-10 px-4 rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-xs">
+                            <Download size={14} className="mr-1.5" /> {shouldShowPaidResumeExportLabel ? "Export DOCX $2.5" : "Export DOCX"}
+                        </Button>
+                    )}
+                </div>
+
+                <div className="w-full bg-white dark:bg-slate-900 rounded-none md:rounded-3xl border-x-0 md:border border-slate-200 dark:border-slate-800 overflow-hidden min-h-screen md:min-h-[800px]">
+                    {editorTab === 'editor' && (
+                        <div className="h-full">
+                            {!hasUserEnteredResumeContent(currentResumeData, user) ? (
+                                <div className="flex flex-col items-center justify-center min-h-[600px] p-12 text-center">
+                                    <div className="w-20 h-20 rounded-3xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6">
+                                        <FileText className="w-10 h-10 text-green-500" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Your resume preview</h3>
+                                    <p className="text-slate-500 max-w-xl mb-8">Start from a target role, paste your full current resume for a full rebuild, or use your library and watch your professional resume come to life in real time.</p>
+                                    <div className="w-full max-w-md space-y-4">
+                                        <InputField
+                                            label="Target Job Role"
+                                            value={jobDescription}
+                                            onChange={e => setJobDescription(e.target.value)}
+                                            placeholder="e.g. Senior Fullstack Developer"
+                                            icon={Target}
+                                        />
+                                        <InputField
+                                            label="Paste Existing Resume (Optional)"
+                                            value={resumeText}
+                                            onChange={e => setResumeText(e.target.value)}
+                                            placeholder="Paste the full resume here and the AI will restructure it into a new editable resume."
+                                            rows={8}
+                                        />
+                                        <ResumeFileUpload onResumeText={setResumeText} />
+                                        <div className="flex gap-3">
+                                            <Button onClick={handleGenerate} disabled={isGenerating || (!jobDescription.trim() && !resumeText.trim())} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl">
+                                                {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                                Generate with AI
+                                            </Button>
+                                            <div className="flex-1 relative">
+                                                <Button variant="outline" onClick={() => {
+                                                    const willOpen = !showLibraryPicker;
+                                                    setShowLibraryPicker(willOpen);
+                                                    if (willOpen) {
+                                                        setLibraryCourses([]); setLibrarySearch(''); setLibraryLoading(true);
+                                                        apiClient.get('/api/library?type=course&limit=50').then(r => r.json()).then(d => {
+                                                            setLibraryCourses(d.items || []);
+                                                        }).catch(() => { }).finally(() => setLibraryLoading(false));
+                                                    }
+                                                }} className="w-full border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                                    <FolderOpen className="mr-2 text-green-500" /> From Library
+                                                </Button>
+                                                {showLibraryPicker && (
+                                                    <div className="fixed inset-0 z-[9999] flex items-center justify-center" onClick={() => setShowLibraryPicker(false)}>
+                                                        <div className="absolute inset-0 bg-black/40" />
+                                                        <div className="relative w-[92vw] max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                                                            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">From Library</p>
+                                                                <button onClick={() => setShowLibraryPicker(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                                                                    <X size={16} />
+                                                                </button>
+                                                            </div>
+                                                            <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                                                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                                                                    <GraduationCap size={14} className="text-slate-400 shrink-0" />
+                                                                    <input
+                                                                        autoFocus
+                                                                        value={librarySearch}
+                                                                        onChange={e => {
+                                                                            setLibrarySearch(e.target.value);
+                                                                            setLibraryLoading(true);
+                                                                            clearTimeout(window._libSearchTimer);
+                                                                            window._libSearchTimer = setTimeout(() => {
+                                                                                apiClient.get(`/api/library?type=course&limit=30&search=${encodeURIComponent(e.target.value)}`).then(r => r.json()).then(d => setLibraryCourses(d.items || [])).catch(() => { }).finally(() => setLibraryLoading(false));
+                                                                            }, 350);
+                                                                        }}
+                                                                        placeholder="Search your courses..."
+                                                                        className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                                                                    />
+                                                                    {libraryLoading && <Loader2 size={13} className="animate-spin text-slate-400 shrink-0" />}
+                                                                </div>
+                                                            </div>
+                                                            <div className="overflow-y-auto flex-1 p-2 space-y-1">
+                                                                {libraryLoading && libraryCourses.length === 0 ? (
+                                                                    <p className="text-xs text-slate-400 text-center py-6">Loading courses...</p>
+                                                                ) : libraryCourses.length === 0 ? (
+                                                                    <p className="text-xs text-slate-400 text-center py-6 italic">No courses found</p>
+                                                                ) : libraryCourses.map(course => (
+                                                                    <button key={course.id}
+                                                                        onClick={() => {
+                                                                            setShowLibraryPicker(false);
+                                                                            handleGenerateFromLibrary(course.title, course);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors group">
+                                                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-green-700 truncate">{course.title}</p>
+                                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                                            <span className="text-[10px] text-slate-400 capitalize">{course.category}</span>
+                                                                            <span className="text-slate-200 dark:text-slate-700">·</span>
+                                                                            <span className="text-[10px] text-slate-400 capitalize">{course.difficulty}</span>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                (() => {
+                                    const TemplateComponent = TEMPLATE_COMPONENTS[selectedTemplate] || TEMPLATE_COMPONENTS.classic;
+                                    return (
+                                        <div id="resume-preview" data-template={selectedTemplate}>
+                                            <TemplateComponent
+                                                data={currentResumeData}
+                                                handleBlur={templateHandleBlur}
+                                                addSectionType={templateAddSectionType}
+                                            />
+                                        </div>
+                                    );
+                                })()
+                            )}
+                        </div>
+                    )}
+                    {editorTab === 'cover-letter' && (
+                        <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
+                            {coverLetter ? (
+                                <div id="cover-letter-preview" className="w-full relative min-h-[900px]">
+                                    <textarea
+                                        value={coverLetter}
+                                        onChange={e => setCoverLetter(e.target.value)}
+                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
+                                    />
+                                    <div
+                                        id="cover-letter-export"
+                                        className="absolute top-0 left-0 w-full p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
+                                    >
+                                        {coverLetter}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
+                                    <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
+                                        <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6 mx-auto">
+                                            <FileText className="w-8 h-8 text-green-500" />
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2">Cover Letter Designer</h3>
+                                        <p className="text-sm text-slate-500 mb-8">Craft a compelling narrative for your next role.</p>
+                                        <div className="space-y-4 text-left">
+                                            <InputField label="Target Role" value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="e.g. Frontend Engineer" />
+                                            <InputField label="Company Name (Optional)" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
+                                        </div>
+                                        <div className="flex flex-col gap-3 mt-8">
+                                            <Button onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL || !jobDescription} className="w-full bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl font-bold">
+                                                {isGeneratingCL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                                Draft using AI
+                                            </Button>
+                                            <Button variant="outline" onClick={() => handleGenerateCoverLetter(false)} disabled={isGeneratingCL} className="w-full border-2 border-green-100 text-green-600 py-6 rounded-2xl font-bold bg-green-50/50">
+                                                Generate from Resume
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {editorTab === 'application-letter' && (
+                        <div className="flex flex-col w-full min-h-screen md:min-h-[800px]">
+                            {applicationLetter ? (
+                                <div id="application-letter-preview" className="w-full relative min-h-[900px]">
+                                    <textarea
+                                        value={applicationLetter}
+                                        onChange={e => setApplicationLetter(e.target.value)}
+                                        className="w-full h-full min-h-[900px] p-8 md:p-14 bg-white dark:bg-slate-900 border-none resize-none font-serif text-[15px] leading-relaxed outline-none text-slate-900 dark:text-slate-100"
+                                    />
+                                    <div
+                                        id="application-letter-export"
+                                        className="absolute top-0 left-0 w-full p-14 bg-white dark:bg-slate-900 font-serif text-[15px] leading-relaxed -z-50 opacity-0 pointer-events-none whitespace-pre-wrap text-slate-900 dark:text-slate-100"
+                                    >
+                                        {applicationLetter}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
+                                    <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-none">
+                                        <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6 mx-auto">
+                                            <Target className="w-8 h-8 text-emerald-500" />
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2">Application Letter Designer</h3>
+                                        <p className="text-sm text-slate-500 mb-8">Formalize your intent with a professional application letter.</p>
+                                        <div className="space-y-4 text-left">
+                                            <InputField label="Target Role" value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="e.g. Frontend Engineer" />
+                                            <InputField label="Company Name" value={coverLetterCompany} onChange={e => setCoverLetterCompany(e.target.value)} placeholder="e.g. Google" />
+                                        </div>
+                                        <div className="flex flex-col gap-3 mt-8">
+                                            <Button onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL || !jobDescription || !coverLetterCompany} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-bold">
+                                                {isGeneratingAL ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                                Draft using AI
+                                            </Button>
+                                            <Button variant="outline" onClick={handleGenerateApplicationLetter} disabled={isGeneratingAL} className="w-full border-2 border-emerald-100 text-emerald-600 py-6 rounded-2xl font-bold bg-emerald-50/50">
+                                                Generate from Resume
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {editorTab === 'portfolio' && (
+                        <div className="p-2 md:p-12 min-h-[600px]">
+                            <div className="max-w-4xl mx-auto">
+                                <div className="flex flex-col items-center text-center mb-12">
+                                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
+                                        <FolderOpen className="w-8 h-8 text-emerald-500" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold mb-2">Portfolio Ideas</h2>
+                                    <p className="text-slate-500 max-w-md">Get market-ready project suggestions tailored to your career goals.</p>
+                                </div>
+
+                                {!portfolioPrompts.length ? (
+                                    <div className="max-w-md mx-auto p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700">
+                                        <InputField
+                                            label="What role are you targeting?"
+                                            value={jobDescription}
+                                            onChange={e => setJobDescription(e.target.value)}
+                                            placeholder="e.g. Backend Engineer"
+                                        />
+                                        <Button
+                                            onClick={handleGeneratePortfolio}
+                                            disabled={isGeneratingPP || !jobDescription}
+                                            className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl"
+                                        >
+                                            {isGeneratingPP ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                            Generate Project Ideas
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {portfolioPrompts.map((prompt, i) => (
+                                            <div key={i} className="p-6 rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-xl transition-all group overflow-hidden relative">
+                                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                    <BrainCircuit size={40} className="text-emerald-500" />
+                                                </div>
+                                                <h4 className="text-lg font-bold mb-2 flex items-center gap-2 text-slate-800 dark:text-white relative z-20">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    {prompt.title}
+                                                </h4>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3 relative z-20">{prompt.description}</p>
+                                                <div className="flex flex-wrap gap-2 mb-6">
+                                                    {prompt.technologies?.map((tech, j) => (
+                                                        <span key={j} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">{tech}</span>
+                                                    ))}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {isPromptEligibleProject(prompt) ? (
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => prompt.promptGenerated ? copyToClipboard(prompt.aiPrompt || "") : handleGenerateProjectAI(i)}
+                                                            className={`flex-1 text-xs py-5 rounded-xl border-emerald-100 hover:bg-emerald-50 text-emerald-600 ${prompt.promptGenerated ? 'bg-emerald-50 border-emerald-500' : ''}`}
+                                                        >
+                                                            {prompt.promptGenerated ? <Copy size={14} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
+                                                            {prompt.promptGenerated ? 'Copy Prompt' : 'Get Prompt'}
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            variant="outline"
+                                                            disabled
+                                                            className="flex-1 text-xs py-5 rounded-xl border-slate-200 text-slate-400"
+                                                        >
+                                                            Not for AI Prompt
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        onClick={() => addToResume(prompt)}
+                                                        className="flex-1 text-xs py-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                    >
+                                                        <Plus size={14} className="mr-1" /> Add to Resume
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    {editorTab === 'insights' && (
+                    <div className="p-8 min-h-[600px] bg-transparent text-slate-900 dark:text-white">
+                            {!jobMatchResult ? (
+                                <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center">
+                                    <div className="w-20 h-20 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-6">
+                                        <TrendingUp className="w-10 h-10 text-emerald-500" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold mb-2">Job Match Analysis</h2>
+                                    <p className="text-slate-500 max-w-md mb-8">Paste a job description below to see how well your resume matches and what keywords you're missing.</p>
+                                    <div className="w-full max-w-lg space-y-4">
+                                        <textarea
+                                            value={jobMatchDescription}
+                                            onChange={e => setJobMatchDescription(e.target.value)}
+                                            placeholder="Paste the job description here..."
+                                            rows={6}
+                                            className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 focus:border-emerald-400 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-sm resize-none text-slate-900 dark:text-white"
+                                        />
+                                        <Button onClick={handleJobMatch} disabled={isMatchingJob || !jobMatchDescription.trim()} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-2xl font-bold">
+                                            {isMatchingJob ? <><Loader2 className="animate-spin mr-2" /> Analyzing...</> : <><TrendingUp className="mr-2" /> Analyze Match Score</>}
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 max-w-3xl mx-auto">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-bold">ATS Match Report</h2>
+                                            <p className="text-slate-500 text-sm mt-1">{jobMatchResult.summary}</p>
+                                        </div>
+                                        <button onClick={() => setJobMatchResult(null)} className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                    {/* Score */}
+                                    <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 text-white text-center">
+                                        <div className="text-7xl font-black mb-2">{jobMatchResult.matchScore}%</div>
+                                        <div className="text-emerald-100 font-medium">ATS Match Score</div>
+                                        <div className="mt-4 h-3 bg-white/20 rounded-full overflow-hidden">
+                                            <div className="h-full bg-white rounded-full transition-all" style={{ width: `${Math.min(jobMatchResult.matchScore, 100)}%` }} />
+                                        </div>
+                                    </div>
+                                    {/* Keywords */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                                            <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-3 flex items-center gap-2"><CheckCircle size={16} /> Keywords Found</h4>
+                                            <div className="flex flex-wrap gap-2">{(jobMatchResult.keywordsFound || []).map((kw, i) => <span key={i} className="px-3 py-1 bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-lg">{kw}</span>)}</div>
+                                        </div>
+                                        <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-800">
+                                            <h4 className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2"><AlertCircle size={16} /> Keywords Missing</h4>
+                                            <div className="flex flex-wrap gap-2">{(jobMatchResult.keywordsMissing || []).map((kw, i) => <span key={i} className="px-3 py-1 bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-lg">{kw}</span>)}</div>
+                                        </div>
+                                    </div>
+                                    {/* Strengths & Gaps */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Strengths</h4>
+                                            <ul className="space-y-2">{(jobMatchResult.strengths || []).map((s, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-emerald-500 mt-0.5">•</span>{s}</li>)}</ul>
+                                        </div>
+                                        <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-bold mb-3 text-slate-700 dark:text-slate-300">Recommendations</h4>
+                                            <ul className="space-y-2">{(jobMatchResult.recommendations || []).map((r, i) => <li key={i} className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"><span className="text-green-500 mt-0.5">•</span>{r}</li>)}</ul>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-3">
+                                        <Button onClick={handleRefineResume} disabled={isRefining} className="w-full bg-green-600 hover:bg-green-700 text-white py-6 rounded-2xl font-bold">
+                                            {isRefining ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                                            Refine Resume with AI
+                                        </Button>
+                                        <Button onClick={() => setJobMatchResult(null)} variant="outline" className="w-full rounded-2xl py-5 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                            Run Another Analysis
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {history.length > 0 && (
+                <div className="w-full mt-16 max-w-6xl">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                                <Clock size={20} className="text-green-600 dark:text-green-400" />
+                            </div>
+                            Recent Work
+                        </h3>
+                    </div>
+                    <div className="space-y-10">
+                        {[
+                            { title: "Resumes", items: groupedHistory.resumes },
+                            { title: "Cover Letters", items: groupedHistory.coverLetters },
+                            { title: "Application Letters", items: groupedHistory.applicationLetters },
+                            { title: "Portfolio Ideas", items: groupedHistory.portfolios },
+                        ].map((section) => section.items.length > 0 && (
+                            <div key={section.title} className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                                    <h4 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        {section.title}
+                                    </h4>
+                                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {section.items.map(renderHistoryCard)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                @media (max-width: 768px) {
+                    #resume-preview { padding: 1rem !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+                    #resume-preview * { font-size: 10px !important; }
+                    #resume-preview h1 { font-size: 18px !important; margin-bottom: 0.5rem !important; }
+                    #resume-preview h3 { font-size: 12px !important; margin-top: 1rem !important; }
+                    #resume-preview p, #resume-preview div { font-size: 11px !important; line-height: 1.5 !important; }
+                    #resume-preview .text-base { font-size: 11px !important; }
+                    #resume-preview .text-[15px] { font-size: 12px !important; }
+                    #resume-preview .text-[13px] { font-size: 10px !important; }
+                    #resume-preview section { margin-bottom: 1.5rem !important; }
+                }
+            ` }} />
+
+            {/* Mobile Fixed Bottom Bar */}
+            {showMoreMenu && (
+                <div className="md:hidden fixed inset-0 z-[70]">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowMoreMenu(false)} />
+                    <div
+                        ref={moreMenuRef}
+                        className="absolute bottom-20 left-4 right-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">More</span>
+                            <button onClick={() => setShowMoreMenu(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-2">
+                            <div className="grid grid-cols-3 gap-1">
+                                <button onClick={() => { setEditorTab('portfolio'); setShowMoreMenu(false); }}
+                                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                    <FolderOpen className="w-6 h-6" />
+                                    <span className="text-[10px] font-medium leading-tight text-center">Portfolios</span>
+                                </button>
+                                <button onClick={() => { saveToDatabase(); setShowMoreMenu(false); }}
+                                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                    <Save className="w-6 h-6" />
+                                    <span className="text-[10px] font-medium leading-tight text-center">Save</span>
+                                </button>
+                                <button onClick={() => { setEditorTab('insights'); setShowMoreMenu(false); }}
+                                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-emerald-600">
+                                    <TrendingUp className="w-6 h-6" />
+                                    <span className="text-[10px] font-medium leading-tight text-center">Match to Job</span>
+                                </button>
+                                {editorTab === 'editor' && (
+                                    <button onClick={() => { setShowTemplateDropdown(!showTemplateDropdown); setShowMoreMenu(false); }}
+                                        className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                        <Layout className="w-6 h-6" />
+                                        <span className="text-[10px] font-medium leading-tight text-center">{getTemplateById(selectedTemplate).name}</span>
+                                    </button>
+                                )}
+                                {(editorTab === 'editor' || editorTab === 'cover-letter' || editorTab === 'application-letter') && (
+                                    <button onClick={() => { exportToDOCX(); setShowMoreMenu(false); }}
+                                        className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                                        <Download className="w-6 h-6" />
+                                        <span className="text-[10px] font-medium leading-tight text-center">Export DOCX</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editorTab === 'editor' && showTemplateDropdown && (
+                <div className="md:hidden fixed inset-0 z-[75]">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowTemplateDropdown(false)} />
+                    <div
+                        ref={templateDropdownRef}
+                        className="absolute bottom-20 left-4 right-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">Choose Template</span>
+                            <button onClick={() => setShowTemplateDropdown(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto p-2 space-y-0.5">
+                            {RESUME_TEMPLATES.map((tpl) => (
+                                <button key={tpl.id} onClick={() => { setSelectedTemplate(tpl.id); setShowTemplateDropdown(false); }}
+                                    className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex items-center gap-3 ${selectedTemplate === tpl.id ? 'bg-green-50 dark:bg-green-900/20 ring-1 ring-green-200 dark:ring-green-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                    <div className="w-8 h-10 rounded-md border border-slate-200 dark:border-slate-700 shrink-0" style={{ background: `linear-gradient(135deg, ${tpl.accent}22, ${tpl.accent}44)` }}>
+                                        <div className="w-full h-1.5 rounded-t-md" style={{ background: tpl.accent }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.name}</span>
+                                            {selectedTemplate === tpl.id && <Check size={12} className="text-green-600" />}
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{tpl.description}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                <div className="flex items-center justify-around h-16 px-1">
+                    <button onClick={() => setEditorTab('editor')}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'editor' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <Edit2 className={`w-5 h-5 transition-all duration-200 ${editorTab === 'editor' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'editor' ? "currentColor" : "none"} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'editor' ? "font-bold" : "font-medium"}`}>Resume</span>
+                    </button>
+                    <button onClick={() => setEditorTab('cover-letter')}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'cover-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <FileText className={`w-5 h-5 transition-all duration-200 ${editorTab === 'cover-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'cover-letter' ? "currentColor" : "none"} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'cover-letter' ? "font-bold" : "font-medium"}`}>Cover</span>
+                    </button>
+                    <button onClick={handleNew}
+                        className="flex items-center justify-center -mt-3 w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all duration-200 shadow-lg">
+                        <Plus className="w-7 h-7 stroke-[2.5]" />
+                    </button>
+                    <button onClick={() => setEditorTab('application-letter')}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${editorTab === 'application-letter' ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <Target className={`w-5 h-5 transition-all duration-200 ${editorTab === 'application-letter' ? "stroke-[2.5]" : "stroke-[1.5]"}`} fill={editorTab === 'application-letter' ? "currentColor" : "none"} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${editorTab === 'application-letter' ? "font-bold" : "font-medium"}`}>App Ltr</span>
+                    </button>
+                    <button onClick={() => setShowMoreMenu(!showMoreMenu)}
+                        className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-all duration-200 ${showMoreMenu ? "text-green-600 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                        <MoreHorizontal className={`w-5 h-5 transition-all duration-200 ${showMoreMenu ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
+                        <span className={`text-[10px] leading-tight whitespace-nowrap transition-all duration-200 ${showMoreMenu ? "font-bold" : "font-medium"}`}>More</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    );
+};
+
+export default ResumeBuilder;

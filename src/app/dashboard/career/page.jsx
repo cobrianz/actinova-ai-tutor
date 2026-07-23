@@ -1,5 +1,5 @@
 "use client";
-import CareerGrowth from "@/app/components/CareerGrowth";
+import CareerGrowth from "@/dashboard/career/components/CareerGrowth";
 
 export default function CareerPage(props) {
   return <CareerGrowth {...props} />;

@@ -1,5 +1,5 @@
 "use client";
-import StudyPlanLibrary from "@/app/components/StudyPlanLibrary";
+import StudyPlanLibrary from "@/dashboard/components/StudyPlanLibrary";
 
 export default function StudyPlansPage(props) {
   return <StudyPlanLibrary {...props} />;

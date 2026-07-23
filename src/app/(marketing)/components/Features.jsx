@@ -1,0 +1,208 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { 
+  Zap, 
+  Brain, 
+  Star as StarIcon,
+  TrendingUp, 
+  BookOpen, 
+  Search,
+  FileText,
+  HelpCircle,
+  ScrollText,
+  MessageCircle,
+  Briefcase,
+  Users,
+  ChevronRight
+} from "lucide-react";
+import { data } from "@/lib/landingData";
+
+export default function Features() {
+  const { features } = data;
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
+
+  // Map icons to features (fallback to Zap if not found)
+  const iconMap = {
+    "AI Course Generation": Zap,
+    "Premium Courses": StarIcon,
+    "Explore & Discover": Search,
+    "Library, Sharing & Downloads": BookOpen,
+    "Flashcards with Review Tools": FileText,
+    "Quizzes & Performance Tracking": HelpCircle,
+    "Reports & Essays": ScrollText,
+    "AI Tutor Chat": MessageCircle,
+    "Progress & Usage Insights": TrendingUp,
+    "Resume & ATS Optimization": Briefcase,
+    "Interview & Networking AI": Users,
+    "Skill Gap & Career Trends": Brain,
+  };
+
+  return (
+    <section id="features" className="py-24 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-20">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-2xl md:text-3xl font-bold mb-4 tracking-tight text-[#1a1a1a]"
+            style={{ fontFamily: "var(--font-fraunces)" }}
+          >
+            Improve Your <span className="text-green-500">Learning Experience</span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-sm md:text-base text-[#1a1a1a]/60 max-w-2xl mx-auto"
+            style={{ fontFamily: "var(--font-fraunces)" }}
+          >
+            Every major workflow already in the product, from generating study material
+            to unlocking premium marketplace content and using career acceleration tools.
+          </motion.p>
+        </div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+            {(features || []).map((feature, index) => {
+              const Icon = iconMap[feature.title] || Zap;
+              return (
+                <motion.div
+                  key={index}
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  className="group relative p-8 rounded-[32px] border-2 border-[#D2D7F8]/80 bg-green-50/40 backdrop-blur-lg hover:bg-green-50/70 transition-all cursor-pointer overflow-hidden"
+                >
+                  <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 group-hover:left-[200%] transition-all duration-1000 ease-out" />
+                  
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-white/80 border border-[#D2D7F8]/80 flex items-center justify-center mb-6 group-hover:bg-[#1a1a1a] transition-colors">
+                      <Icon className="w-6 h-6 text-[#1a1a1a] group-hover:text-white" />
+                    </div>
+                    <h3 className="text-base font-bold mb-2 text-[#1a1a1a]"
+                        style={{ fontFamily: "var(--font-fraunces)" }}>
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-[#1a1a1a]/60 leading-relaxed"
+                       style={{ fontFamily: "var(--font-fraunces)" }}>
+                      {feature.description}
+                    </p>
+                    
+                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-5 h-5 text-[#1a1a1a]/40" />
+                    </div>
+                  </div>
+                </motion.div>
+            );
+          })}
+        </motion.div>
+
+        {/* Highlight Section / Social Proof */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mt-20 p-8 md:p-12 rounded-[32px] bg-green-200/90 backdrop-blur-xl border-2 border-white text-[#1a1a1a] relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-green-400/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-green-400/30 transition-colors" />
+          
+          <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4 leading-tight text-[#1a1a1a]"
+                  style={{ fontFamily: "var(--font-fraunces)" }}>
+                One platform for learning, practice, writing, and career growth.
+              </h3>
+              <p className="text-sm text-[#1a1a1a]/60 mb-6"
+                 style={{ fontFamily: "var(--font-fraunces)" }}>
+                Move from idea to course, quiz, flashcards, report, premium marketplace access, and career action without switching tools.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex -space-x-4">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-white overflow-hidden shadow-sm">
+                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col justify-center ml-2">
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
+                  </div>
+                  <span className="text-xs font-medium text-[#1a1a1a]/80">4.9/5 from 2,000+ reviews</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/60 backdrop-blur-md rounded-[24px] p-6 border-2 border-white shadow-sm">
+              <div className="space-y-4">
+                {[
+                  { label: "Study Generation Modes", value: "4" },
+                  { label: "Core Product Areas", value: "10+" },
+                  { label: "Career AI Tools", value: "4" }
+                ].map((stat, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-[#1a1a1a]/60"
+                          style={{ fontFamily: "var(--font-fraunces)" }}>{stat.label}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-32 h-2 bg-black/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "100%" }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.5 + i*0.1, duration: 1 }}
+                          className="h-full bg-green-500"
+                        />
+                      </div>
+                      <span className="text-base font-bold text-[#1a1a1a]"
+                            style={{ fontFamily: "var(--font-fraunces)" }}>{stat.value}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Star({ className }) {
+  return (
+    <svg 
+      className={className} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}

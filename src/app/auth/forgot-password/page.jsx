@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
-import AuthLayout from "@/components/AuthLayout";
+import AuthLayout from "@/auth/components/AuthLayout";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

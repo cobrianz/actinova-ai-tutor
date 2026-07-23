@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { withAuth, withErrorHandling } from "@/lib/middleware";
-import { validateStructure } from "@/services/outlineStructureValidator";
+import { validateStructure } from "@/lib/outlineStructureValidator";
 
 async function handleGet(request, { params }) {
     const { id } = await params;

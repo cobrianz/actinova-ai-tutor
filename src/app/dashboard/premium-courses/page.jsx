@@ -1,5 +1,5 @@
 "use client";
-import PremiumCourses from "@/app/components/PremiumCourses";
+import PremiumCourses from "@/dashboard/components/PremiumCourses";
 
 export default function PremiumCoursesPage(props) {
   return <PremiumCourses {...props} />;

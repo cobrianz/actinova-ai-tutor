@@ -1,4 +1,4 @@
-import LandingPage from "./components/LandingPage";
+import LandingPage from "@/(marketing)/components/LandingPage";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getActiveSiteNotice } from "@/lib/siteNotices";
 

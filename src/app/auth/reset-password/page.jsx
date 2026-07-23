@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/csrfClient";
-import AuthLayout from "@/components/AuthLayout";
+import AuthLayout from "@/auth/components/AuthLayout";
 
 function ResetPasswordForm() {
   const [formData, setFormData] = useState({

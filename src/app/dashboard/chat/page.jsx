@@ -1,5 +1,5 @@
 "use client";
-import Chat from "@/app/components/Chat";
+import Chat from "@/dashboard/components/Chat";
 
 export default function ChatPage(props) {
   return <Chat {...props} />;
