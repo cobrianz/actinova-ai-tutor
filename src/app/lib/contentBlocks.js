@@ -172,6 +172,96 @@ export const parseContentIntoBlocks = (content) => {
       visualMatches.push({ type: "tikz", content: m[1], full: m[0], index: m.index });
     }
 
+    // Detect {{diagram:diagram-id}} references
+    const diagramRegex = /\{\{diagram:([a-z0-9-]+)\}\}/gi;
+    let dm;
+    while ((dm = diagramRegex.exec(text)) !== null) {
+      visualMatches.push({
+        type: "diagram",
+        diagramId: dm[1].toLowerCase(),
+        full: dm[0],
+        index: dm.index,
+      });
+    }
+
+    // Fallback 1: detect markdown image syntax ![alt](url) with diagram-like alt text
+    // Converts ![Diagram of X](url) or ![X Diagram](url) to diagram blocks
+    const mdImageRegex = /!\[([^\]]*)\]\(([^)\s]+(?:\([^)]*\)[^)\s]*)*)\)/g;
+    let mdImgMatch;
+    while ((mdImgMatch = mdImageRegex.exec(text)) !== null) {
+      const altLower = mdImgMatch[1].toLowerCase();
+      if (/(?:diagram|chart|illustration|figure|anatomy|structure|system|model|overview)/.test(altLower)) {
+        const diagramId = altLower
+          .replace(/^(diagram of |figure \d+:? |illustration of |chart of |anatomy of |structure of |system of |model of |overview of )/i, "")
+          .replace(/s$/, "")
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "");
+        if (diagramId.length > 2) {
+          visualMatches.push({
+            type: "diagram",
+            diagramId,
+            full: mdImgMatch[0],
+            index: mdImgMatch.index,
+          });
+        }
+      }
+    }
+
+    // Fallback 2: detect AI-generated HTML <img> tags with diagram-like alt text
+    const imgDiagramRegex = /<img\s+[^>]*alt=["']([^"']*(?:diagram|chart|illustration|figure|anatomy|structure|system|model|overview)[^"']*)["'][^>]*\/?>/gi;
+    let imgMatch;
+    while ((imgMatch = imgDiagramRegex.exec(text)) !== null) {
+      const altText = imgMatch[1].toLowerCase()
+        .replace(/^(diagram of |figure \d+:? |illustration of |chart of |anatomy of |structure of |system of |model of |overview of )/i, "")
+        .replace(/s$/, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      if (altText.length > 2) {
+        visualMatches.push({
+          type: "diagram",
+          diagramId: altText,
+          full: imgMatch[0],
+          index: imgMatch.index,
+        });
+      }
+    }
+
+    // Fallback 3: strip ALL remaining <img> tags (broken/empty src, non-diagram)
+    // These cause "Failed to load image" errors and SyntaxErrors
+    const remainingImgRegex = /<img\s+[^>]*\/?>/gi;
+    let stripImgMatch;
+    while ((stripImgMatch = remainingImgRegex.exec(text)) !== null) {
+      // Only strip if not already caught by fallback 2 (check if this index is already in visualMatches)
+      const alreadyCaught = visualMatches.some(
+        (vm) => vm.type === "diagram" && vm.index === stripImgMatch.index
+      );
+      if (!alreadyCaught) {
+        visualMatches.push({
+          type: "strip",
+          full: stripImgMatch[0],
+          index: stripImgMatch.index,
+        });
+      }
+    }
+
+    // Fallback 4: strip ALL remaining markdown images (non-diagram)
+    const remainingMdImgRegex = /!\[([^\]]*)\]\(([^)\s]+(?:\([^)]*\)[^)\s]*)*)\)/g;
+    let stripMdImgMatch;
+    while ((stripMdImgMatch = remainingMdImgRegex.exec(text)) !== null) {
+      const alreadyCaught = visualMatches.some(
+        (vm) => vm.type === "diagram" && vm.index === stripMdImgMatch.index
+      );
+      if (!alreadyCaught) {
+        visualMatches.push({
+          type: "strip",
+          full: stripMdImgMatch[0],
+          index: stripMdImgMatch.index,
+        });
+      }
+    }
+
     // Detect YAML-style chart blocks by scanning line-by-line
     // Looks for "type: line|bar|..." lines and extracts the surrounding block
     const yamlTypeRegex = /\btype:\s*(line|bar|pie|doughnut|scatter)\b/gi;
@@ -299,6 +389,14 @@ export const parseContentIntoBlocks = (content) => {
           data: vMatch.data,
           title: vMatch.title,
         });
+      } else if (vMatch.type === "diagram") {
+        blocks.push({
+          type: "diagram",
+          diagramId: vMatch.diagramId,
+        });
+      } else if (vMatch.type === "strip") {
+        // Silently remove broken <img> tags and non-diagram markdown images
+        // These cause "Failed to load image" errors and Runtime SyntaxErrors
       }
       lastIdx = vMatch.end || (vMatch.index + (vMatch.full || "").length);
     });

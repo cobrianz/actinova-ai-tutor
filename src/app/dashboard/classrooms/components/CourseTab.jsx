@@ -14,6 +14,7 @@ import { TYPE_CONFIG } from "./constants";
 import { renderLessonBlocks } from "@/lib/contentRenderer";
 import LessonChart from "@/dashboard/learn/components/LessonChart";
 import LessonTable from "@/dashboard/learn/components/LessonTable";
+import LessonDiagram from "@/dashboard/learn/components/LessonDiagram";
 import ConfirmModal from "@/components/ConfirmModal";
 import ForkContentPanel from "./ForkContentPanel";
 import MyProgressWidget from "./MyProgressWidget";
@@ -1222,7 +1223,7 @@ function ForkedModuleCard({
                     ) : contentChecked && lessonContent ? (
                       <div className="bg-white dark:bg-slate-900">
                         <div className="space-y-6" id="lesson-content-container">
-                          {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
+                          {renderLessonBlocks(lessonContent, { LessonChart, LessonTable, LessonDiagram })}
                         </div>
                       </div>
                     ) : contentChecked ? (
@@ -1400,7 +1401,7 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
                           </button>
                         )}
                         <div className="space-y-6" id="lesson-content-container">
-                          {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
+                          {renderLessonBlocks(lessonContent, { LessonChart, LessonTable, LessonDiagram })}
                         </div>
                       </div>
                     ) : (

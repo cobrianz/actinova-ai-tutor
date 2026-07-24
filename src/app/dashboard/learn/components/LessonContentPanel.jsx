@@ -5,6 +5,7 @@ import { BookOpen, Play, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { renderLessonBlocks } from "@/lib/contentRenderer";
 import LessonChart from "@/dashboard/learn/components/LessonChart";
 import LessonTable from "@/dashboard/learn/components/LessonTable";
+import LessonDiagram from "@/dashboard/learn/components/LessonDiagram";
 
 export default function LessonContentPanel({
   contentRef,
@@ -118,7 +119,7 @@ export default function LessonContentPanel({
                         </div>
                       </div>
                       <div className="space-y-6" id="lesson-content-container">
-                        {renderLessonBlocks(deferredTypingContent, { streaming: true, LessonChart, LessonTable })}
+                        {renderLessonBlocks(deferredTypingContent, { streaming: true, LessonChart, LessonTable, LessonDiagram })}
                       </div>
                     </div>
                   </div>
@@ -173,7 +174,7 @@ export default function LessonContentPanel({
                       </div>
                     </div>
                     <div className="space-y-6" id="lesson-content-container">
-                      {renderLessonBlocks(currentLesson.content, { LessonChart, LessonTable })}
+                      {renderLessonBlocks(currentLesson.content, { LessonChart, LessonTable, LessonDiagram })}
                     </div>
 
                     <div className="mt-12 pt-8 border-t border-border flex justify-between items-center">

@@ -133,7 +133,7 @@ export function renderContent(content) {
              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
            </button>
          </div>
-         <pre class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg overflow-x-auto border border-border font-mono m-0"><code class="text-sm font-mono language-${lang || "plaintext"}">${highlightedCode}</code></pre>
+         <pre class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg overflow-x-auto font-mono m-0"><code class="text-sm font-mono language-${lang || "plaintext"}">${highlightedCode}</code></pre>
        </div>`
     );
     return placeholder;
@@ -148,15 +148,13 @@ export function renderContent(content) {
     return placeholder;
   });
 
-  html = escapeHtmlText(html);
+  // Safety net: strip all HTML <img> tags and markdown image syntax from prose text.
+  // Diagrams are rendered via LessonDiagram component; stray images cause
+  // "Failed to load image" errors and Runtime SyntaxErrors from broken src attrs.
+  html = html.replace(/<img\s+[^>]*\/?>/gi, "");
+  html = html.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
 
-  html = html.replace(
-    /!\[([^\]]*)\]\(([^)\s]+(?:\([^)]*\)[^)\s]*)*)\)/g,
-    (match, alt, url) => {
-      const cleanUrl = url.trim();
-      return `<div class="my-4 flex justify-center"><img src="${cleanUrl}" alt="${alt}" class="max-w-full h-auto rounded-lg shadow-md" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"text-destructive p-4 bg-destructive/10 rounded-lg\\">Failed to load image: ${alt}</div>'" /></div>`;
-    }
-  );
+  html = escapeHtmlText(html);
 
   html = html.replace(
     /\\\[([\s\S]*?)\\\]/g,
@@ -294,6 +292,18 @@ export function renderContent(content) {
     '<em class="italic text-foreground/90">$1</em>'
   );
 
+  // Convert markdown links [text](url) to <a> with target="_blank"
+  html = html.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors">$1</a>'
+  );
+
+  // Also handle bare URLs (not already inside href or quotes)
+  html = html.replace(
+    /(?<!href="|="|")(?<!\w)(https?:\/\/[^\s<>"')\]]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors">$1</a>'
+  );
+
   const lines = html.split("\n");
   let processedHtml = [];
   let listStack = [];
@@ -370,7 +380,7 @@ export function renderContent(content) {
 }
 
 function lessonBlockToJSX(block, idx, opts = {}) {
-  const { LessonChart, LessonTable, streaming } = opts;
+  const { LessonChart, LessonTable, LessonDiagram, streaming } = opts;
 
   if (streaming && block.type === "code" && (block.lang === "chart" || block.lang === "table")) {
     return null;
@@ -389,6 +399,13 @@ function lessonBlockToJSX(block, idx, opts = {}) {
       </div>
     );
   }
+  if (block.type === "diagram") {
+    return (
+      <div key={`diagram-${idx}`} id={`visual-diagram-${idx}`}>
+        <LessonDiagram diagramId={block.diagramId} />
+      </div>
+    );
+  }
   return (
     <div
       key={`block-${idx}`}
@@ -403,8 +420,8 @@ function lessonBlockToJSX(block, idx, opts = {}) {
   );
 }
 
-export function renderLessonBlocks(content, { streaming = false, LessonChart, LessonTable } = {}) {
+export function renderLessonBlocks(content, { streaming = false, LessonChart, LessonTable, LessonDiagram } = {}) {
   return parseContentIntoBlocks(content).flatMap((block, idx) => {
-    return [lessonBlockToJSX(block, idx, { streaming, LessonChart, LessonTable })].filter(Boolean);
+    return [lessonBlockToJSX(block, idx, { streaming, LessonChart, LessonTable, LessonDiagram })].filter(Boolean);
   });
 }

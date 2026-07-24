@@ -4,6 +4,7 @@ import { JETBRAINS_MONO_BASE64 } from "./jetbrains-mono-base64";
 import { tokenizeCode } from "./syntaxHighlighter";
 import { parseContentIntoBlocks } from "./contentBlocks";
 import { isFlutterApp, downloadViaFlutter, saveBlobViaFlutter } from "./appBridge";
+import diagramMap from "@/data/diagrams/diagramMap";
 
 function savePdf(pdf, filename) {
   if (isFlutterApp()) {
@@ -151,17 +152,28 @@ const stripMarkdown = (text) => {
 };
 
 /**
+ * Replace inline LaTeX math delimiters in a line with cleaned Unicode text.
+ * Handles \(...\) and $...$ (non-block) within prose lines.
+ */
+const cleanInlineLatex = (line) => {
+    if (!line) return line;
+    return line
+        // Inline \(...\)
+        .replace(/\\\(([\s\S]*?)\\\)/g, (_, math) => cleanLatex(math))
+        // Inline $...$ (not $$, not at start/end of line with $$)
+        .replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (_, math) => cleanLatex(math));
+};
+
+/**
  * Parses and cleans LaTeX math expressions to readable plaintext symbols
  */
 const cleanLatex = (text) => {
     if (!text || typeof text !== "string") return text;
     
-    // First, handle display math blocks which might span multiple lines if they were somehow preserved
     let cleaned = text;
     
-    // Expand the symbol mapping significantly
     const symbolMap = {
-        '\\\\': '\n',             // Newline
+        '\\\\': '\n',
         '\\times': '×',
         '\\cdot': '·',
         '\\div': '÷',
@@ -194,6 +206,17 @@ const cleanLatex = (text) => {
         '\\Leftarrow': '⇐',
         '\\leftrightarrow': '↔',
         '\\Leftrightarrow': '⇔',
+        '\\sum': 'Σ',
+        '\\prod': 'Π',
+        '\\int': '∫',
+        '\\oint': '∮',
+        '\\cup': '∪',
+        '\\cap': '∩',
+        '\\emptyset': '∅',
+        '\\ldots': '…',
+        '\\cdots': '⋯',
+        '\\quad': '  ',
+        '\\qquad': '    ',
         '\\pi': 'π',
         '\\alpha': 'α',
         '\\beta': 'β',
@@ -227,10 +250,54 @@ const cleanLatex = (text) => {
         '\\Sigma': 'Σ',
         '\\Phi': 'Φ',
         '\\Psi': 'Ψ',
-        '\\Omega': 'Ω'
+        '\\Omega': 'Ω',
     };
 
-    // Replace known symbols first
+    // Helper: extract content inside matching braces (handles nesting)
+    const extractBrace = (str, startIdx) => {
+        if (str[startIdx] !== '{') return null;
+        let depth = 0;
+        for (let i = startIdx; i < str.length; i++) {
+            if (str[i] === '{') depth++;
+            else if (str[i] === '}') { depth--; if (depth === 0) return str.substring(startIdx + 1, i); }
+        }
+        return null;
+    };
+
+    // Iteratively resolve nested brace commands (frac, sqrt, etc.)
+    let prev = "";
+    let iterations = 0;
+    while (cleaned !== prev && iterations < 20) {
+        prev = cleaned;
+        iterations++;
+        // \frac{...}{...}
+        cleaned = cleaned.replace(/\\frac\s*/g, () => "FRAC:");
+        cleaned = cleaned.replace(/FRAC:([^{}]*(?:\{[^{}]*\}[^{}]*)*)\s*([^{}]*(?:\{[^{}]*\}[^{}]*)*)/g, (_, a, b) => {
+            const num = a.replace(/[{}]/g, "").trim();
+            const den = b.replace(/[{}]/g, "").trim();
+            return `(${num})/(${den})`;
+        });
+        // \sqrt{...} and \sqrt[n]{...}
+        cleaned = cleaned.replace(/\\sqrt(?:\[([^\]]+)\])?\s*\{([^{}]*)\}/g, (_, n, inner) =>
+            n ? `(${inner})^(1/${n})` : `√(${inner})`
+        );
+        // \overline{...}
+        cleaned = cleaned.replace(/\\overline\s*\{([^{}]*)\}/g, "($1̄)");
+        // \underline{...}
+        cleaned = cleaned.replace(/\\underline\s*\{([^{}]*)\}/g, "($1̲)");
+        // \vec{...}
+        cleaned = cleaned.replace(/\\vec\s*\{([^{}]*)\}/g, "$1⃗");
+        // \hat{...}
+        cleaned = cleaned.replace(/\\hat\s*\{([^{}]*)\}/g, "$1̂");
+        // \bar{...}
+        cleaned = cleaned.replace(/\\bar\s*\{([^{}]*)\}/g, "$1̅");
+        // \binom{n}{k}
+        cleaned = cleaned.replace(/\\binom\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "($1 $2)");
+        // \lim_{...}
+        cleaned = cleaned.replace(/\\lim_(?:\{([^{}]*)\}|(\w))/g, (_, br, single) => `lim(${br || single})`);
+    }
+
+    // Replace known symbols
     Object.entries(symbolMap).forEach(([latex, unicode]) => {
         const regex = new RegExp(latex.replace(/\\/g, '\\\\') + '\\b', 'g');
         cleaned = cleaned.replace(regex, unicode);
@@ -249,19 +316,25 @@ const cleanLatex = (text) => {
         .replace(/\\mathrm\s*\{([^{}]+)\}/g, "$1")
         .replace(/\\mathbf\s*\{([^{}]+)\}/g, "$1")
         .replace(/\\mathcal\s*\{([^{}]+)\}/g, "$1")
-        // Fractions & Roots
-        .replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "($1)/($2)")
-        .replace(/\\sqrt\s*\{([^{}]+)\}/g, "√($1)")
-        .replace(/\\sqrt\[([0-9]+)\]\{([^{}]+)\}/g, "($2)^(1/$1)")
+        .replace(/\\operatorname\s*\{([^{}]+)\}/g, "$1")
+        // Environments
+        .replace(/\\begin\{[^}]+\}/g, "")
+        .replace(/\\end\{[^}]+\}/g, "")
         // Superscript/Subscript with braces
         .replace(/\^\{([^{}]+)\}/g, "^($1)")
         .replace(/_\{([^{}]+)\}/g, "_($1)")
-        // Superscript/Subscript without braces (single char or digits)
+        // Superscript/Subscript without braces
         .replace(/\^([a-zA-Z0-9])/g, "^$1")
         .replace(/_([a-zA-Z0-9])/g, "_$1")
-        // Clean up common leftovers
-        .replace(/\\text\{([^{}]+)\}/g, "$1")
-        .replace(/\\mathrm\{([^{}]+)\}/g, "$1")
+        // Remaining known commands
+        .replace(/\\log\b/g, "log")
+        .replace(/\\sin\b/g, "sin")
+        .replace(/\\cos\b/g, "cos")
+        .replace(/\\tan\b/g, "tan")
+        .replace(/\\ln\b/g, "ln")
+        .replace(/\\exp\b/g, "exp")
+        .replace(/\\max\b/g, "max")
+        .replace(/\\min\b/g, "min")
         // Remove any remaining backslashes from commands
         .replace(/\\[a-zA-Z]+/g, "")
         // Sized delimiters
@@ -327,6 +400,45 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
             return true;
         }
         return false;
+    };
+
+    const renderChartAsTableFallback = (block) => {
+        if (!block?.data) return;
+        const labels = Array.isArray(block.data.labels) ? block.data.labels : [];
+        const datasets = Array.isArray(block.data.datasets) ? block.data.datasets : [];
+        if (!labels.length || !datasets.length) return;
+
+        // Chart title
+        if (block.title) {
+            pdf.setFont("times", "bold");
+            pdf.setFontSize(11);
+            pdf.setTextColor(...COLORS.text);
+            checkNewPage(10);
+            pdf.text(block.title, margin, y);
+            y += 6;
+        }
+
+        const headers = ["Label", ...datasets.map((d, i) => String(d?.label || `Series ${i + 1}`))];
+        const rows = labels.map((lbl, i) => {
+            const row = [String(lbl)];
+            datasets.forEach((d) => {
+                const val = Array.isArray(d?.data) ? d.data[i] : "";
+                row.push(val == null ? "" : String(val));
+            });
+            return row;
+        });
+
+        autoTable(pdf, {
+            startY: y,
+            head: [headers],
+            body: rows,
+            theme: "grid",
+            styles: { fontSize: 9, cellPadding: 2, font: "times", textColor: COLORS.text },
+            headStyles: { fillColor: COLORS.primary, textColor: [255, 255, 255], fontStyle: "bold" },
+            alternateRowStyles: { fillColor: [247, 248, 250] },
+            margin: { left: margin, right: margin },
+        });
+        y = pdf.lastAutoTable.finalY + 8;
     };
 
     const renderEquationBlock = (latex, { displayMode = true } = {}) => {
@@ -556,6 +668,160 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
         let tableIdx = 0;
 
         for (const block of blocks) {
+            if (block.type === "diagram") {
+                const diagramTitle = block.diagramId
+                    .split("-")
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(" ");
+
+                // Try to load the actual SVG and render it in the PDF
+                let svgRendered = false;
+                try {
+                    const local = diagramMap[block.diagramId];
+                    let svgText = null;
+
+                    if (local?.path) {
+                        try {
+                            const res = await fetch(local.path);
+                            if (res.ok) svgText = await res.text();
+                        } catch (_) {}
+                    }
+
+                    if (!svgText) {
+                        // Try Wikimedia Commons — direct filename then search
+                        try {
+                            const filename = block.diagramId
+                                .split("-")
+                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                .join("_") + ".svg";
+                            const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${filename}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+                            const apiRes = await fetch(apiUrl);
+                            const apiData = await apiRes.json();
+                            const pages = apiData.query?.pages;
+                            const page = pages && Object.values(pages)[0];
+                            const url = page?.imageinfo?.[0]?.url;
+                            if (url) {
+                                const svgRes = await fetch(url);
+                                if (svgRes.ok) svgText = await svgRes.text();
+                            }
+
+                            if (!svgText) {
+                                const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${block.diagramId.replace(/-/g, " ")}&srnamespace=6&format=json&origin=*`;
+                                const searchRes = await fetch(searchUrl);
+                                const searchData = await searchRes.json();
+                                const result = searchData.query?.search?.[0];
+                                if (result) {
+                                    const title = result.title.replace("File:", "");
+                                    const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+                                    const infoRes = await fetch(infoUrl);
+                                    const infoData = await infoRes.json();
+                                    const infoPages = infoData.query?.pages;
+                                    const infoPage = infoPages && Object.values(infoPages)[0];
+                                    const svgUrl = infoPage?.imageinfo?.[0]?.url;
+                                    if (svgUrl && svgUrl.endsWith(".svg")) {
+                                        const svgRes = await fetch(svgUrl);
+                                        if (svgRes.ok) svgText = await svgRes.text();
+                                    }
+                                }
+                            }
+                        } catch (_) {}
+                    }
+
+                    if (svgText) {
+                        svgText = svgText
+                            .replace(/<script[\s\S]*?<\/script>/gi, "")
+                            .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "")
+                            .replace(/<metadata[\s\S]*?<\/metadata>/gi, "")
+                            .replace(/<desc[^>]*>[\s\S]*?<\/desc>/gi, "")
+                            .replace(/<title>[\s\S]*?<\/title>/gi, "")
+                            .replace(/\son\w+="[^"]*"/gi, "")
+                            .replace(/\son\w+='[^']*'/gi, "")
+                            .replace(/<(text|g)[^>]*>(?:[^<]|<(?!\/\1>))*?(?:To modify|read User|Edition of Inkscape|Wikimedia Commons from images|draw with layers|Source:)[\s\S]*?<\/\1>/gi, "");
+
+                        // Parse native aspect ratio from viewBox
+                        let natW = 600, natH = 400;
+                        const vbMatch = svgText.match(/viewBox=["']([^"']*)["']/i);
+                        if (vbMatch) {
+                            const parts = vbMatch[1].trim().split(/[\s,]+/).map(Number);
+                            if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) { natW = parts[2]; natH = parts[3]; }
+                        } else {
+                            const wM = svgText.match(/\bwidth=["'](\d+(?:\.\d+)?)["']/i);
+                            const hM = svgText.match(/\bheight=["'](\d+(?:\.\d+)?)["']/i);
+                            if (wM && hM) { natW = parseFloat(wM[1]) || 600; natH = parseFloat(hM[1]) || 400; }
+                        }
+
+                        const aspect = natH / natW;
+                        let w = contentWidth;
+                        let h = w * aspect;
+                        const maxH = pageBottom - CONTENT_START_Y - 10;
+                        if (h > maxH) { h = maxH; w = h / aspect; }
+
+                        // 6x scale for maximum sharpness (jsPDF renders at 72 DPI internally)
+                        const scale = 6;
+                        const renderW = Math.round(w * scale);
+                        const renderH = Math.round(h * scale);
+
+                        // Force SVG to exact pixel dimensions via viewBox + width/height
+                        // Remove existing width/height/viewBox first, then set them precisely
+                        svgText = svgText
+                            .replace(/\s+viewBox=["'][^"']*["']/gi, "")
+                            .replace(/<svg([^>]*?)(?:\s+width="[^"]*")/gi, "<svg$1")
+                            .replace(/<svg([^>]*?)(?:\s+height="[^"]*")/gi, "<svg$1")
+                            .replace(/<svg/, `<svg width="${renderW}" height="${renderH}" viewBox="0 0 ${natW} ${natH}"`);
+
+                        const img = new Image();
+                        const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+                        const svgUrl = URL.createObjectURL(svgBlob);
+
+                        const result = await new Promise((resolve) => {
+                            img.onload = () => {
+                                const canvas = document.createElement("canvas");
+                                canvas.width = renderW;
+                                canvas.height = renderH;
+                                const ctx = canvas.getContext("2d");
+                                ctx.fillStyle = "#ffffff";
+                                ctx.fillRect(0, 0, renderW, renderH);
+                                ctx.drawImage(img, 0, 0, renderW, renderH);
+                                URL.revokeObjectURL(svgUrl);
+                                resolve({ dataUrl: canvas.toDataURL("image/png", 1.0), w, h });
+                            };
+                            img.onerror = () => { URL.revokeObjectURL(svgUrl); resolve(null); };
+                            img.src = svgUrl;
+                        });
+
+                        if (result?.dataUrl) {
+                            checkNewPage(result.h + 8);
+                            try {
+                                pdf.addImage(result.dataUrl, "PNG", margin, y, result.w, result.h);
+                                y += result.h + 4;
+                                svgRendered = true;
+                            } catch (_) {}
+                        }
+                    }
+                } catch (_) {}
+
+                if (!svgRendered) {
+                    checkNewPage(30);
+                    pdf.setFillColor(247, 248, 250);
+                    pdf.setDrawColor(...COLORS.divider);
+                    pdf.setLineWidth(0.3);
+                    pdf.roundedRect(margin, y, contentWidth, 22, 2, 2, "FD");
+                    pdf.setFillColor(...COLORS.primary);
+                    pdf.circle(margin + 8, y + 8, 3, "F");
+                    pdf.setFont("times", "bolditalic");
+                    pdf.setFontSize(11);
+                    pdf.setTextColor(...COLORS.text);
+                    pdf.text(diagramTitle, margin + 16, y + 9);
+                    pdf.setFont("times", "italic");
+                    pdf.setFontSize(8);
+                    pdf.setTextColor(...COLORS.textLight);
+                    pdf.text("Diagram — see online version for full visual", margin + 16, y + 16);
+                    y += 28;
+                }
+
+                continue;
+            }
+
             if (block.type === "chart" || block.type === "table") {
                 const targetType = block.type;
                 const targetIndex = targetType === "chart" ? chartIdx++ : tableIdx++;
@@ -626,17 +892,16 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                         console.error(`Failed to add ${targetType} image to PDF:`, imgErr);
                         // Fallback fallback
                         if (block.type === "chart") {
-                            renderCodeBlock(JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2), margin + 4, "json");
+                            renderChartAsTableFallback(block);
                         } else {
                             renderCodeBlock(block.headers.join(" | "), margin + 4, "text");
                         }
                     }
                 } else {
-                    // Fallback to text if image missing
+                    // Fallback to table if image missing
                     y += 2;
                     if (block.type === "chart") {
-                        const fallbackContent = block.data ? JSON.stringify({ type: block.chartType, data: block.data, title: block.title }, null, 2) : "Chart Data Missing";
-                        renderCodeBlock(fallbackContent, margin + 4, "json");
+                        renderChartAsTableFallback(block);
                     }
                 }
             } else if (block.type === "code") {
@@ -695,7 +960,7 @@ export const downloadCourseAsPDF = async (data, mode = "course", visuals = []) =
                     }
 
                     let trimmedLine = rawTrimmedLine;
-                    trimmedLine = typeof cleanLatex === "function" ? cleanLatex(trimmedLine) : trimmedLine;
+                    trimmedLine = cleanInlineLatex(trimmedLine);
 
                     const rawLine = stripMarkdown(trimmedLine).trim();
                     const rawLower = rawLine.toLowerCase();

@@ -198,14 +198,28 @@ async function handlePost(request) {
             await db.collection("users").updateOne({ _id: user._id }, updateOps);
 
             // Also check if course just completed (100%)
-            if (isFinished && !xpUser?.courses?.find(c => c.courseId?.toString() === courseId)?.completed) {
-              const courseXp = XP_REWARDS.course_complete;
-              const finalXp = newXp + courseXp;
-              const finalLevel = calculateLevel(finalXp);
-              await db.collection("users").updateOne(
-                { _id: user._id },
-                { $set: { xp: finalXp, level: finalLevel.level } }
-              );
+            // Calculate completion early for XP bonus
+            const earlyUserDoc = await db.collection("users").findOne(
+              { _id: user._id, "courses.courseId": courseId },
+              { projection: { "courses.$": 1 } }
+            );
+            const earlyUserCourse = earlyUserDoc?.courses?.[0];
+            if (earlyUserCourse) {
+              const earlyCourseDoc = await db.collection("library").findOne({ _id: courseObjId });
+              const earlyTotal = earlyCourseDoc?.totalLessons || 0;
+              const earlyCompleted = earlyUserCourse.completedLessons?.length || 0;
+              const earlyProgress = earlyTotal > 0 ? Math.round((earlyCompleted / earlyTotal) * 100) : 0;
+              const earlyFinished = earlyProgress >= 100;
+
+              if (earlyFinished && !xpUser?.courses?.find(c => c.courseId?.toString() === courseId)?.completed) {
+                const courseXp = XP_REWARDS.course_complete;
+                const finalXp = newXp + courseXp;
+                const finalLevel = calculateLevel(finalXp);
+                await db.collection("users").updateOne(
+                  { _id: user._id },
+                  { $set: { xp: finalXp, level: finalLevel.level } }
+                );
+              }
             }
           } catch (xpErr) {
             console.error("XP award error:", xpErr);

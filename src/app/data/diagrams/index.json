@@ -1,0 +1,473 @@
+{
+  "diagrams": [
+    {
+      "id": "human-brain-sagittal",
+      "file": "biology/human-brain-sagittal.svg",
+      "description": "Sagittal section of human brain with skull, labeled regions",
+      "category": "biology",
+      "topics": ["brain", "nervous system", "anatomy", "neuroscience"]
+    },
+    {
+      "id": "human-heart-diagram",
+      "file": "biology/human-heart-diagram.svg",
+      "description": "Cross-section of human heart showing chambers, valves, and blood vessels",
+      "category": "biology",
+      "topics": ["heart", "circulatory system", "anatomy", "cardiovascular"]
+    },
+    {
+      "id": "human-heart-labeled",
+      "file": "biology/human-heart-labeled.svg",
+      "description": "Labeled heart diagram with oxygenated and deoxygenated blood pathways",
+      "category": "biology",
+      "topics": ["heart", "blood flow", "circulation", "anatomy"]
+    },
+    {
+      "id": "animal-cell-structure",
+      "file": "biology/animal-cell-structure.svg",
+      "description": "Detailed animal cell diagram with all organelles labeled",
+      "category": "biology",
+      "topics": ["cell", "organelles", "nucleus", "mitochondria", "cell biology"]
+    },
+    {
+      "id": "animal-cell-simple",
+      "file": "biology/animal-cell-simple.svg",
+      "description": "Simple animal cell showing cell membrane, nucleus, and mitochondria",
+      "category": "biology",
+      "topics": ["cell", "basic cell structure", "cell biology"]
+    },
+    {
+      "id": "plant-cell-structure",
+      "file": "biology/plant-cell-structure.svg",
+      "description": "Detailed plant cell with cell wall, chloroplasts, large vacuole, and all organelles",
+      "category": "biology",
+      "topics": ["plant cell", "chloroplast", "cell wall", "vacuole"]
+    },
+    {
+      "id": "plant-cell-simple",
+      "file": "biology/plant-cell-simple.svg",
+      "description": "Simple plant cell showing cytoplasm, nucleus, cell wall, mitochondria, chloroplasts",
+      "category": "biology",
+      "topics": ["plant cell", "basic structure", "photosynthesis"]
+    },
+    {
+      "id": "animal-vs-plant-cell",
+      "file": "biology/animal-vs-plant-cell.svg",
+      "description": "Side-by-side comparison of animal and plant cells with key differences",
+      "category": "biology",
+      "topics": ["cell comparison", "animal cell", "plant cell", "differences"]
+    },
+    {
+      "id": "dna-double-helix",
+      "file": "biology/dna-double-helix.svg",
+      "description": "DNA double-strand helix structure with base pairs and sugar-phosphate backbone",
+      "category": "biology",
+      "topics": ["DNA", "genetics", "molecular biology", "double helix"]
+    },
+    {
+      "id": "dna-simple",
+      "file": "biology/dna-simple.svg",
+      "description": "Simple diagram of double-stranded DNA showing nucleotide base pairing",
+      "category": "biology",
+      "topics": ["DNA", "base pairs", "nucleotides", "genetics"]
+    },
+    {
+      "id": "human-lungs-detailed",
+      "file": "biology/human-lungs-detailed.svg",
+      "description": "Detailed human lungs diagram showing trachea, bronchi, and internal structures",
+      "category": "biology",
+      "topics": ["lungs", "respiratory system", "anatomy", "breathing"]
+    },
+    {
+      "id": "respiratory-system",
+      "file": "biology/respiratory-system.svg",
+      "description": "Complete respiratory system showing airways, lungs, alveoli, and respiratory muscles",
+      "category": "biology",
+      "topics": ["respiratory system", "lungs", "airways", "anatomy"]
+    },
+    {
+      "id": "alveolus-diagram",
+      "file": "biology/alveolus-diagram.svg",
+      "description": "Diagram of pulmonary alveolus showing gas exchange with capillary bed",
+      "category": "biology",
+      "topics": ["alveolus", "gas exchange", "respiration", "lungs"]
+    },
+    {
+      "id": "digestive-system",
+      "file": "biology/digestive-system.svg",
+      "description": "Complete human digestive system from mouth to anus, all organs labeled",
+      "category": "biology",
+      "topics": ["digestive system", "stomach", "intestines", "anatomy"]
+    },
+    {
+      "id": "human-eye-anatomy",
+      "file": "biology/human-eye-anatomy.svg",
+      "description": "Cross-section of human eye with 15 labeled structures",
+      "category": "biology",
+      "topics": ["eye", "vision", "anatomy", "senses"]
+    },
+    {
+      "id": "food-chain",
+      "file": "biology/food-chain.svg",
+      "description": "Exemplary food chain showing energy transfer from sun through producers to consumers",
+      "category": "biology",
+      "topics": ["food chain", "ecology", "energy transfer", "ecosystem"]
+    },
+    {
+      "id": "food-web",
+      "file": "biology/food-web.svg",
+      "description": "Complex food web showing interconnections between organisms",
+      "category": "biology",
+      "topics": ["food web", "ecology", "ecosystem", "interconnections"]
+    },
+    {
+      "id": "ecological-pyramid",
+      "file": "biology/ecological-pyramid.svg",
+      "description": "Energy pyramid showing trophic levels and 10% energy transfer rule",
+      "category": "biology",
+      "topics": ["ecological pyramid", "trophic levels", "energy flow", "ecology"]
+    },
+    {
+      "id": "mitochondrion-structure",
+      "file": "biology/mitochondrion-structure.svg",
+      "description": "Mitochondrion cross-section showing inner/outer membrane, cristae, and matrix",
+      "category": "biology",
+      "topics": ["mitochondria", "cell biology", "energy", "organelle"]
+    },
+    {
+      "id": "chloroplast-structure",
+      "file": "biology/chloroplast-structure.svg",
+      "description": "Chloroplast ultrastructure showing thylakoids, grana, stroma, and envelope membranes",
+      "category": "biology",
+      "topics": ["chloroplast", "photosynthesis", "plant cell", "organelle"]
+    },
+    {
+      "id": "simple-circuit-voltmeter",
+      "file": "physics/simple-circuit-voltmeter.svg",
+      "description": "Simple electric circuit with battery, resistor, and voltmeter",
+      "category": "physics",
+      "topics": ["circuit", "electricity", "voltage", "resistor"]
+    },
+    {
+      "id": "series-parallel-circuits",
+      "file": "physics/series-parallel-circuits.svg",
+      "description": "Comparison of series and parallel circuits",
+      "category": "physics",
+      "topics": ["series circuit", "parallel circuit", "electricity", "resistance"]
+    },
+    {
+      "id": "led-circuit",
+      "file": "physics/led-circuit.svg",
+      "description": "Simple LED circuit diagram with power supply, LED, and resistor",
+      "category": "physics",
+      "topics": ["LED", "circuit", "electronics", "diode"]
+    },
+    {
+      "id": "em-spectrum-properties",
+      "file": "physics/em-spectrum-properties.svg",
+      "description": "Detailed EM spectrum showing wavelength, frequency, black body temperature",
+      "category": "physics",
+      "topics": ["electromagnetic spectrum", "wavelength", "frequency", "radiation"]
+    },
+    {
+      "id": "em-spectrum-sources",
+      "file": "physics/em-spectrum-sources.svg",
+      "description": "Electromagnetic spectrum with radiation types and examples of sources",
+      "category": "physics",
+      "topics": ["EM spectrum", "radiation types", "light", "waves"]
+    },
+    {
+      "id": "em-spectrum-diagram",
+      "file": "physics/em-spectrum-diagram.svg",
+      "description": "Clean EM wave spectrum diagram showing all radiation types with wavelength scales",
+      "category": "physics",
+      "topics": ["EM spectrum", "wavelength", "radiation", "electromagnetic waves"]
+    },
+    {
+      "id": "wave-characteristics",
+      "file": "physics/wave-characteristics.svg",
+      "description": "Diagram showing wave amplitude, wavelength, crest, and trough",
+      "category": "physics",
+      "topics": ["waves", "amplitude", "wavelength", "frequency"]
+    },
+    {
+      "id": "wave-types-comparison",
+      "file": "physics/wave-types-comparison.svg",
+      "description": "Different types of waves: transverse, horizontal transverse, and longitudinal",
+      "category": "physics",
+      "topics": ["transverse wave", "longitudinal wave", "wave types", "sound"]
+    },
+    {
+      "id": "newton-three-laws",
+      "file": "physics/newton-three-laws.svg",
+      "description": "Illustration of Newton's three laws of motion with real-world examples",
+      "category": "physics",
+      "topics": ["Newton's laws", "motion", "force", "inertia"]
+    },
+    {
+      "id": "newton-gravitation",
+      "file": "physics/newton-gravitation.svg",
+      "description": "Newton's law of universal gravitation with force diagram and formula",
+      "category": "physics",
+      "topics": ["gravity", "gravitation", "force", "Newton"]
+    },
+    {
+      "id": "centripetal-force",
+      "file": "physics/centripetal-force.svg",
+      "description": "Centripetal force diagram showing circular motion with force vectors",
+      "category": "physics",
+      "topics": ["centripetal force", "circular motion", "acceleration"]
+    },
+    {
+      "id": "projectile-motion",
+      "file": "physics/projectile-motion.svg",
+      "description": "Parabolic projectile path showing initial velocity, launch angle, range",
+      "category": "physics",
+      "topics": ["projectile motion", "trajectory", "kinematics", "motion"]
+    },
+    {
+      "id": "projectile-angles",
+      "file": "physics/projectile-angles.svg",
+      "description": "Multiple projectile trajectories at different angles",
+      "category": "physics",
+      "topics": ["projectile motion", "launch angle", "trajectory", "kinematics"]
+    },
+    {
+      "id": "free-body-inclined",
+      "file": "physics/free-body-inclined.svg",
+      "description": "Free body diagram of a mass on an inclined plane",
+      "category": "physics",
+      "topics": ["free body diagram", "inclined plane", "forces", "friction"]
+    },
+    {
+      "id": "force-decomposition",
+      "file": "physics/force-decomposition.svg",
+      "description": "Force decomposition on an inclined plane with parallelogram of forces",
+      "category": "physics",
+      "topics": ["force decomposition", "vectors", "inclined plane", "components"]
+    },
+    {
+      "id": "force-distance-work",
+      "file": "physics/force-distance-work.svg",
+      "description": "Force-distance diagram showing variable force and work as area under curve",
+      "category": "physics",
+      "topics": ["work", "force", "energy", "diagram"]
+    },
+    {
+      "id": "periodic-table-detailed",
+      "file": "chemistry/periodic-table-detailed.svg",
+      "description": "Detailed periodic table with electron configurations",
+      "category": "chemistry",
+      "topics": ["periodic table", "elements", "electron configuration", "chemistry"]
+    },
+    {
+      "id": "periodic-table-large",
+      "file": "chemistry/periodic-table-large.svg",
+      "description": "Periodic table with name, atomic mass, electron configuration",
+      "category": "chemistry",
+      "topics": ["periodic table", "elements", "atomic mass", "properties"]
+    },
+    {
+      "id": "periodic-table-simple",
+      "file": "chemistry/periodic-table-simple.svg",
+      "description": "Clean periodic table color-coded by element type",
+      "category": "chemistry",
+      "topics": ["periodic table", "elements", "metals", "nonmetals"]
+    },
+    {
+      "id": "periodic-table-electron-shells",
+      "file": "chemistry/periodic-table-electron-shells.svg",
+      "description": "Periodic table showing electron shell configurations for each element",
+      "category": "chemistry",
+      "topics": ["periodic table", "electron shells", "atomic structure"]
+    },
+    {
+      "id": "water-molecule",
+      "file": "chemistry/water-molecule.svg",
+      "description": "Water molecule (H2O) structure showing bond angle and atom arrangement",
+      "category": "chemistry",
+      "topics": ["water", "molecule", "bond angle", "H2O"]
+    },
+    {
+      "id": "water-molecule-3d",
+      "file": "chemistry/water-molecule-3d.svg",
+      "description": "Space-filling 3D model of water molecule",
+      "category": "chemistry",
+      "topics": ["water", "3D model", "molecule", "space-filling"]
+    },
+    {
+      "id": "water-dipole",
+      "file": "chemistry/water-dipole.svg",
+      "description": "Water molecule structural formula showing dipole moment and partial charges",
+      "category": "chemistry",
+      "topics": ["water", "dipole", "polarity", "charges"]
+    },
+    {
+      "id": "co2-structure",
+      "file": "chemistry/co2-structure.svg",
+      "description": "Carbon dioxide (CO2) structural formula showing double bonds",
+      "category": "chemistry",
+      "topics": ["carbon dioxide", "CO2", "double bond", "molecule"]
+    },
+    {
+      "id": "methane-structure",
+      "file": "chemistry/methane-structure.svg",
+      "description": "Methane (CH4) structural formula showing tetrahedral carbon",
+      "category": "chemistry",
+      "topics": ["methane", "CH4", "tetrahedral", "organic chemistry"]
+    },
+    {
+      "id": "methane-geometry",
+      "file": "chemistry/methane-geometry.svg",
+      "description": "3D tetrahedral geometry of methane molecule with bond angles",
+      "category": "chemistry",
+      "topics": ["methane", "geometry", "bond angles", "3D structure"]
+    },
+    {
+      "id": "covalent-bond-methane",
+      "file": "chemistry/covalent-bond-methane.svg",
+      "description": "Covalent bonding in methane molecule showing shared electron pairs",
+      "category": "chemistry",
+      "topics": ["covalent bond", "methane", "shared electrons", "bonding"]
+    },
+    {
+      "id": "covalent-bond-hydrogen",
+      "file": "chemistry/covalent-bond-hydrogen.svg",
+      "description": "Covalent bond formation between two hydrogen atoms sharing electrons",
+      "category": "chemistry",
+      "topics": ["covalent bond", "hydrogen", "electron sharing"]
+    },
+    {
+      "id": "ionic-bond-nacl",
+      "file": "chemistry/ionic-bond-nacl.svg",
+      "description": "Lewis structure depicting ionic bond formation between sodium and chlorine",
+      "category": "chemistry",
+      "topics": ["ionic bond", "NaCl", "sodium", "chlorine", "electron transfer"]
+    },
+    {
+      "id": "ionic-bonding-lif",
+      "file": "chemistry/ionic-bonding-lif.svg",
+      "description": "Ionic bonding between lithium and fluorine forming lithium fluoride",
+      "category": "chemistry",
+      "topics": ["ionic bond", "LiF", "lithium", "fluorine"]
+    },
+    {
+      "id": "nacl-crystal",
+      "file": "chemistry/nacl-crystal.svg",
+      "description": "Crystal structure of NaCl showing ionic bonds between ions",
+      "category": "chemistry",
+      "topics": ["NaCl", "crystal structure", "ionic bonds", "lattice"]
+    },
+    {
+      "id": "chemical-reactions-types",
+      "file": "chemistry/chemical-reactions-types.svg",
+      "description": "Four types of chemical reactions: synthesis, decomposition, substitution, metathesis",
+      "category": "chemistry",
+      "topics": ["chemical reactions", "synthesis", "decomposition", "types"]
+    },
+    {
+      "id": "reaction-coordinate",
+      "file": "chemistry/reaction-coordinate.svg",
+      "description": "Reaction coordinate diagram showing reactants, products, transition state",
+      "category": "chemistry",
+      "topics": ["reaction coordinate", "activation energy", "transition state"]
+    },
+    {
+      "id": "redox-reaction",
+      "file": "chemistry/redox-reaction.svg",
+      "description": "Redox reaction example with OIL RIG mnemonic and oxidation states",
+      "category": "chemistry",
+      "topics": ["redox", "oxidation", "reduction", "electron transfer"]
+    },
+    {
+      "id": "ph-scale",
+      "file": "chemistry/ph-scale.svg",
+      "description": "Universal indicator pH scale from 0-14 showing color gradient",
+      "category": "chemistry",
+      "topics": ["pH", "acid", "base", "scale", "indicator"]
+    },
+    {
+      "id": "ph-chart-examples",
+      "file": "chemistry/ph-chart-examples.svg",
+      "description": "Visual pH chart with common substances placed at their pH values",
+      "category": "chemistry",
+      "topics": ["pH", "acids", "bases", "substances"]
+    },
+    {
+      "id": "glucose-structure",
+      "file": "chemistry/glucose-structure.svg",
+      "description": "Cyclic glucose (D-glucopyranose) chemical structure",
+      "category": "chemistry",
+      "topics": ["glucose", "sugar", "organic chemistry", "carbohydrate"]
+    },
+    {
+      "id": "glucose-fischer",
+      "file": "chemistry/glucose-fischer.svg",
+      "description": "Open-chain glucose Fischer projection showing aldehyde group",
+      "category": "chemistry",
+      "topics": ["glucose", "Fischer projection", "open chain", "aldehyde"]
+    },
+    {
+      "id": "rectangle",
+      "file": "math/rectangle.svg",
+      "description": "Rectangle with labeled length (l) and width (w) dimensions",
+      "category": "math",
+      "topics": ["rectangle", "perimeter", "area", "quadrilateral", "geometry"]
+    },
+    {
+      "id": "square",
+      "file": "math/square.svg",
+      "description": "Square with equal sides (s) and right angle markers",
+      "category": "math",
+      "topics": ["square", "perimeter", "area", "quadrilateral", "geometry"]
+    },
+    {
+      "id": "circle",
+      "file": "math/circle.svg",
+      "description": "Circle with labeled radius (r), center (O), and diameter (d = 2r)",
+      "category": "math",
+      "topics": ["circle", "radius", "diameter", "circumference", "area"]
+    },
+    {
+      "id": "triangle",
+      "file": "math/triangle.svg",
+      "description": "Triangle with labeled sides (a, b, c) and vertices (A, B, C)",
+      "category": "math",
+      "topics": ["triangle", "perimeter", "area", "vertices", "geometry"]
+    },
+    {
+      "id": "right-triangle",
+      "file": "math/right-triangle.svg",
+      "description": "Right triangle with hypotenuse labeled and Pythagorean theorem (a² + b² = c²)",
+      "category": "math",
+      "topics": ["right triangle", "Pythagorean theorem", "hypotenuse", "geometry"]
+    },
+    {
+      "id": "parallelogram",
+      "file": "math/parallelogram.svg",
+      "description": "Parallelogram with base (b) and height (h) labeled",
+      "category": "math",
+      "topics": ["parallelogram", "area", "base", "height", "geometry"]
+    },
+    {
+      "id": "trapezoid",
+      "file": "math/trapezoid.svg",
+      "description": "Trapezoid with parallel bases (b₁, b₂) and height (h) labeled",
+      "category": "math",
+      "topics": ["trapezoid", "area", "bases", "height", "geometry"]
+    },
+    {
+      "id": "cylinder",
+      "file": "math/cylinder.svg",
+      "description": "Cylinder with radius (r) and height (h) labeled",
+      "category": "math",
+      "topics": ["cylinder", "volume", "surface area", "3D shape", "geometry"]
+    },
+    {
+      "id": "cone",
+      "file": "math/cone.svg",
+      "description": "Cone with radius (r), height (h), slant height (l), and apex labeled",
+      "category": "math",
+      "topics": ["cone", "volume", "surface area", "3D shape", "geometry"]
+    }
+  ]
+}

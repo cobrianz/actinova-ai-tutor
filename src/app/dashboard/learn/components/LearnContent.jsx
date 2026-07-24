@@ -37,6 +37,7 @@ import { apiClient } from "@/lib/csrfClient";
 import { PRODUCTS } from "@/lib/planLimits";
 import LessonChart from "@/dashboard/learn/components/LessonChart";
 import LessonTable from "@/dashboard/learn/components/LessonTable";
+import LessonDiagram from "@/dashboard/learn/components/LessonDiagram";
 import CourseNotes from "./CourseNotes";
 import html2canvas from "html2canvas";
 
@@ -889,64 +890,64 @@ export default function LearnContent() {
       let chartIndex = 0;
       let tableIndex = 0;
 
-      // Ensure visuals are rendered and give some time for charts to animate/render
-      document.body.setAttribute('data-exporting', 'true');
       toast.loading("Capturing visuals...", { id: toastId });
 
-      try {
-        // Increase timeout to ensure all charts are fully rendered
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      // Set data-exporting to ensure CSS visibility rules apply
+      document.body.setAttribute("data-exporting", "true");
 
-        for (let i = 0; i < visualBlocks.length; i++) {
-          const block = visualBlocks[i];
-          if (block.type === "chart" || block.type === "table") {
-            const elementId = `visual-${block.type}-${i}`;
-            const element = document.getElementById(elementId);
+      // Increase timeout to ensure all charts are fully rendered
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-            if (element) {
-              try {
-                const canvas = await html2canvas(element, {
-                  scale: 2,
-                  useCORS: true,
-                  logging: false,
-                  backgroundColor: "#ffffff",
-                  onclone: (clonedDoc) => {
-                    const clonedEl = clonedDoc.getElementById(elementId);
-                    if (clonedEl) {
-                      clonedEl.style.visibility = 'visible';
-                      clonedEl.style.opacity = '1';
-                      clonedEl.style.display = 'block';
-                    }
+      for (let i = 0; i < visualBlocks.length; i++) {
+        const block = visualBlocks[i];
+        // Only capture charts and tables via html2canvas — diagrams are rendered
+        // directly from SVG in the PDF, so skip them to avoid SVG capture issues
+        if (block.type === "chart" || block.type === "table") {
+          const elementId = `visual-${block.type}-${i}`;
+          const element = document.getElementById(elementId);
+
+          if (element) {
+            try {
+              const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: "#ffffff",
+                onclone: (clonedDoc) => {
+                  const clonedEl = clonedDoc.getElementById(elementId);
+                  if (clonedEl) {
+                    clonedEl.style.visibility = 'visible';
+                    clonedEl.style.opacity = '1';
+                    clonedEl.style.display = 'block';
                   }
-                });
-
-                const imgData = canvas.toDataURL("image/png");
-                if (imgData && imgData.startsWith("data:image/png;base64,") && imgData.length > 30) {
-                  visuals.push({
-                    type: block.type,
-                    index: block.type === "chart" ? chartIndex : tableIndex,
-                    image: imgData,
-                    width: canvas.width,
-                    height: canvas.height
-                  });
-                } else {
-                  console.warn(`Failed to capture valid image for ${elementId}`);
                 }
-              } catch (err) {
-                console.error(`Error capturing ${elementId}:`, err);
+              });
+
+              const imgData = canvas.toDataURL("image/png");
+              if (imgData && imgData.startsWith("data:image/png;base64,") && imgData.length > 30) {
+                visuals.push({
+                  type: block.type,
+                  index: block.type === "chart" ? chartIndex : tableIndex,
+                  image: imgData,
+                  width: canvas.width,
+                  height: canvas.height
+                });
+              } else {
+                console.warn(`Failed to capture valid image for ${elementId}`);
               }
-            } else {
-              console.warn(`Element not found for capture: ${elementId}`);
+            } catch (err) {
+              console.error(`Error capturing ${elementId}:`, err);
             }
-            
-            // Always increment indices to stay in sync with PDF parser
-            if (block.type === "chart") chartIndex++;
-            else if (block.type === "table") tableIndex++;
+          } else {
+            console.warn(`Element not found for capture: ${elementId}`);
           }
+          
+          if (block.type === "chart") chartIndex++;
+          else if (block.type === "table") tableIndex++;
         }
-      } finally {
-        document.body.removeAttribute('data-exporting');
       }
+
+      document.body.removeAttribute("data-exporting");
 
       const lessonData = {
         ...currentLesson,

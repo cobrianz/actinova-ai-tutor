@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <!-- Right triangle -->
+  <polygon points="80,240 320,240 80,60" stroke="#6366f1" stroke-width="2.5" fill="#eef2ff"/>
+  <!-- Right angle marker -->
+  <rect x="80" y="220" width="20" height="20" fill="none" stroke="#6366f1" stroke-width="1.5"/>
+  <!-- Side labels -->
+  <text x="80" y="148" text-anchor="middle" font-family="serif" font-size="16" font-style="italic" fill="#1f2937">a</text>
+  <text x="200" y="260" text-anchor="middle" font-family="serif" font-size="16" font-style="italic" fill="#1f2937">b</text>
+  <text x="218" y="145" text-anchor="middle" font-family="serif" font-size="16" font-style="italic" fill="#6366f1">c</text>
+  <!-- Hypotenuse highlight -->
+  <text x="220" y="132" text-anchor="middle" font-family="serif" font-size="12" fill="#6366f1">hypotenuse</text>
+  <!-- a² + b² = c² -->
+  <text x="200" y="290" text-anchor="middle" font-family="serif" font-size="14" fill="#374151">a² + b² = c²</text>
+</svg>

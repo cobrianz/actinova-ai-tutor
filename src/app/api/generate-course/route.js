@@ -209,6 +209,13 @@ async function handlePost(request) {
           - \`\`\`table for markdown tables
         - High-level data visualizations (graphs) are encouraged; flow-based diagrams are forbidden.
         - Plan for at least 3-5 charts per lesson to ensure maximum visual engagement.
+        - DIAGRAMS — MANDATORY: Every lesson MUST include at least 1-2 {{diagram:diagram-id}} references. This is NOT optional.
+        - Available diagram IDs:
+          - Biology: human-brain-sagittal, human-heart-diagram, human-heart-labeled, animal-cell-structure, animal-cell-simple, animal-cell-detailed, respiratory-system, digestive-system, skeletal-system, nervous-system, muscular-system, plant-cell, cell-mitosis
+          - Physics: battery-resistor-circuit, em-spectrum, electromagnetic-wave, light-refraction, newtons-cradle, projectile-motion
+          - Chemistry: periodic-table, atom-bohr-model, ionic-bonding, ph-scale, dna-helix
+          - Math/Geometry: pythagorean-theorem, inscribed-angle, coordinate-plane, rectangle, square, circle, triangle, right-triangle, parallelogram, trapezoid, cylinder, cone
+        - ALWAYS include diagrams for: anatomy, cell biology, organ systems, and geometry lessons.
         9. NEVER put math equations inside code blocks. NEVER use Markdown code backticks for math.
         10. Return ONLY the JSON object.`,
         },

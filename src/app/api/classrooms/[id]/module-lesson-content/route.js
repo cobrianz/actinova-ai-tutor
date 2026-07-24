@@ -56,6 +56,17 @@ Target length: 1500-2500 words (CRITICAL: Do not be concise. Dive extremely deep
   - \`\`\`chart\`\`\` for data visualizations (bar, line, pie, doughnut)
   - \`\`\`table\`\`\` for markdown tables
 - **Quantity constraint**: Include at least 3-5 high-quality charts using the \`\`\`chart\`\`\` block per lesson.
+- **DIAGRAMS — MANDATORY**: You MUST include at least 1-2 diagram references per lesson using {{diagram:diagram-id}} on its own line. This is NOT optional. Place it on its own line. Available diagrams:
+  - Biology: human-brain-sagittal, human-heart-diagram, human-heart-labeled, animal-cell-structure, animal-cell-simple, animal-cell-detailed, respiratory-system, digestive-system, skeletal-system, nervous-system, muscular-system, plant-cell, cell-mitosis
+  - Physics: battery-resistor-circuit, em-spectrum, electromagnetic-wave, light-refraction, newtons-cradle, projectile-motion
+  - Chemistry: periodic-table, atom-bohr-model, ionic-bonding, ph-scale, dna-helix
+  - Math/Geometry: pythagorean-theorem, inscribed-angle, coordinate-plane, rectangle, square, circle, triangle, right-triangle, parallelogram, trapezoid, cylinder, cone
+  - ALWAYS include diagrams for: anatomy lessons (skeletal-system, muscular-system, etc.), cell biology (animal-cell-*, plant-cell), organ systems (respiratory-system, digestive-system), and geometry (rectangle, circle, triangle, etc.).
+  - Example: The skeletal system provides structural support.
+
+    {{diagram:skeletal-system}}
+
+    The axial skeleton forms the central axis...
 Use proper Markdown: ##, ###, **bold**, *italics*, \`\`\`code\`\`\`, > quotes, lists.
 CRITICAL: DO NOT use tables or table formatting. Use lists or structured paragraphs instead.`;
 

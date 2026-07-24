@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <!-- Equilateral triangle -->
+  <polygon points="200,40 80,240 320,240" stroke="#6366f1" stroke-width="2.5" fill="#eef2ff"/>
+  <!-- Side labels -->
+  <text x="200" y="28" text-anchor="middle" font-family="serif" font-size="16" font-style="italic" fill="#1f2937">a</text>
+  <text x="125" y="148" text-anchor="middle" font-family="serif" font-size="16" font-style="italic" fill="#1f2937">b</text>
+  <text x="275" y="148" text-anchor="middle" font-family="serif" font-size="16" font-style="italic" fill="#1f2937">c</text>
+  <!-- Vertex labels -->
+  <text x="200" y="56" text-anchor="middle" font-family="serif" font-size="13" fill="#6b7280">A</text>
+  <text x="62" y="256" text-anchor="middle" font-family="serif" font-size="13" fill="#6b7280">B</text>
+  <text x="338" y="256" text-anchor="middle" font-family="serif" font-size="13" fill="#6b7280">C</text>
+</svg>

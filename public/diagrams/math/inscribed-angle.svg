@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="470"
+   height="470"
+   id="svg1323"
+   sodipodi:version="0.32"
+   inkscape:version="0.43"
+   sodipodi:docname="Inscribed_angle_theorem.svg"
+   sodipodi:docbase="/home/proteins/Desktop">
+  <metadata
+     id="metadata16">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="920"
+     inkscape:window-width="1270"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:object-points="false"
+     inkscape:object-nodes="false"
+     inkscape:object-paths="false"
+     inkscape:zoom="0.61919874"
+     inkscape:cx="-245.92499"
+     inkscape:cy="175.39692"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:current-layer="svg1323"
+     showgrid="false" />
+  <defs
+     id="defs1325">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 66 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="132 : 66 : 1"
+       inkscape:persp3d-origin="66 : 44 : 1"
+       id="perspective19" />
+  </defs>
+  <path
+     d=""
+     style="fill:none;stroke:#1d0e81;stroke-width:1.71844506;stroke-linejoin:round;stroke-miterlimit:10"
+     id="path13" />
+  <g
+     id="g1336"
+     transform="translate(167.959,167.959)">
+    <line
+       stroke-miterlimit="10"
+       x1="158.51176"
+       y1="-135.03421"
+       x2="220.98091"
+       y2="218.70113"
+       id="line3"
+       style="fill:none;stroke:#009600;stroke-width:5.17500019;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1" />
+    <line
+       stroke-miterlimit="10"
+       x1="158.51176"
+       y1="-135.03421"
+       x2="-89.091331"
+       y2="218.59419"
+       id="line5"
+       style="fill:none;stroke:#009600;stroke-width:5.17500019;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1" />
+    <polyline
+       stroke-miterlimit="10"
+       points="  108.702,108.701 2.294,47.729 18.548,108.391 "
+       id="polyline9"
+       transform="matrix(3.45,0,0,3.45,-154.041,-156.3173)"
+       style="fill:none;stroke:#0000ff;stroke-width:1.5;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1" />
+    <circle
+       sodipodi:ry="63.530998"
+       sodipodi:rx="63.530998"
+       sodipodi:cy="63.778999"
+       sodipodi:cx="63.779999"
+       id="circle11"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-miterlimit:10;stroke-dasharray:none"
+       transform="matrix(3.45,0,0,3.45,-154.041,-156.3173)"
+       r="63.530998"
+       cy="63.778999"
+       cx="63.779999" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text15"
+       style="font-size:41.40000153px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;font-family:Times New Roman"
+       y="74.985809"
+       x="-121.52484">θ</text>
+    <path
+       transform="matrix(3.45,0,0,3.45,-161.7,-163.9797)"
+       sodipodi:open="true"
+       sodipodi:end="2.3607355"
+       sodipodi:start="0.78137196"
+       d="M 111.12927,110.76832 A 63.56842,63.56842 0 0 1 20.845687,110.74508"
+       sodipodi:ry="63.56842"
+       sodipodi:rx="63.56842"
+       sodipodi:cy="66"
+       sodipodi:cx="65.999001"
+       id="path1901"
+       style="fill:none;fill-opacity:1;stroke:#ff00ff;stroke-width:1.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       sodipodi:type="arc" />
+    <path
+       sodipodi:nodetypes="ccc"
+       id="polyline2790"
+       d="M -89.091296,218.59424 L 130.93085,273.21844 L 221.595,219.31529"
+       style="fill:none;stroke:#c86400;stroke-width:5.17500019;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#c86400;stroke-width:5.17500019;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+       d="M -89.0913,218.59445 L 194.30909,289.32263"
+       id="path2793"
+       sodipodi:nodetypes="cc" />
+    <text
+       transform="scale(1.028664,0.972135)"
+       sodipodi:linespacing="125%"
+       id="text2392"
+       style="font-size:32.81316757px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#fb0f0c;font-family:Times New Roman"
+       y="114.55998"
+       x="42.959122">
+      <tspan
+         y="114.55998"
+         x="42.959122"
+         id="tspan2394"
+         sodipodi:role="line">2θ</tspan>
+    </text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text2398"
+       style="font-size:41.40000153px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#009600;fill-opacity:1;font-family:Times New Roman"
+       y="-61.294674"
+       x="134.59688">θ</text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text2400"
+       style="font-size:41.40000153px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#c86400;fill-opacity:1;font-family:Times New Roman"
+       y="282.25415"
+       x="186.13527">θ</text>
+    <polyline
+       stroke-miterlimit="10"
+       points="18.826,108.67 63.779,63.779   108.88,108.879 "
+       id="polyline7"
+       transform="matrix(3.45,0,0,3.45,-154.041,-156.3173)"
+       style="fill:none;stroke:#fb0f0c;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none" />
+  </g>
+</svg>
