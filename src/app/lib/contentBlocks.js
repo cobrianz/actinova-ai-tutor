@@ -107,6 +107,70 @@ export const parseContentIntoBlocks = (content) => {
       visualMatches.push({ type: "tikz", content: m[1], full: m[0], index: m.index });
     }
 
+    // Detect YAML-style chart blocks:
+    //   Chart Title (optional)
+    //   type: line|bar|pie|doughnut
+    //   data:
+    //     labels: [...]
+    //     datasets:
+    //       - label: "..."
+    //         data: [...]
+    const yamlChartRegex = /(?:^|\n)((?:[^\n]*\n)?type:\s*(line|bar|pie|doughnut|scatter)\s*\ndata:\s*\n[\s\S]*?(?:datasets:[\s\S]*?(?:- label:[\s\S]*?data:\s*\[[^\]]*\]\s*)+|labels:\s*\[[^\]]*\]\s*\n\s*data:\s*\[[^\]]*\]))\s*(?=\n\n|\n(?=[A-Z])|\n#{1,6}\s|\n$|$)/g;
+    let yMatch;
+    while ((yMatch = yamlChartRegex.exec(text)) !== null) {
+      try {
+        const fullBlock = yMatch[0].trim();
+        const chartType = yMatch[2];
+        const dataSection = yMatch[1];
+
+        // Extract title from the line before "type:" if it exists
+        const titleMatch = dataSection.match(/^(?!type:|data:|labels:|datasets:)([^\n]+)\n/);
+        const title = titleMatch ? titleMatch[1].trim() : "Chart";
+
+        // Extract labels
+        const labelsMatch = dataSection.match(/labels:\s*\[([^\]]*)\]/);
+        const labels = labelsMatch ? labelsMatch[1].split(",").map((s) => s.trim().replace(/"/g, "")) : [];
+
+        // Extract datasets
+        const datasets = [];
+        const datasetBlockMatch = dataSection.match(/datasets:\s*\n([\s\S]*)/);
+        if (datasetBlockMatch) {
+          const dsBlock = datasetBlockMatch[1];
+          const dsMatches = dsBlock.matchAll(/- label:\s*"([^"]*)"\s*\ndata:\s*\[([^\]]*)\]/g);
+          for (const ds of dsMatches) {
+            datasets.push({
+              label: ds[1],
+              data: ds[2].split(",").map((v) => parseFloat(v.trim()) || 0),
+            });
+          }
+        }
+
+        // If no datasets (simple labels+data chart)
+        if (datasets.length === 0) {
+          const dataMatch = dataSection.match(/data:\s*\[([^\]]*)\]/);
+          if (dataMatch) {
+            datasets.push({
+              label: title,
+              data: dataMatch[1].split(",").map((v) => parseFloat(v.trim()) || 0),
+            });
+          }
+        }
+
+        if (labels.length > 0 && datasets.length > 0) {
+          visualMatches.push({
+            type: "yamlChart",
+            chartType,
+            data: { labels, datasets },
+            title,
+            full: fullBlock,
+            index: yMatch.index,
+          });
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+    }
+
     const startRegex = /(?:^|\n)[ \t]*(?:chart\s*\n+)?([ \t]*\{)/g;
     let nMatch;
     while ((nMatch = startRegex.exec(text)) !== null) {

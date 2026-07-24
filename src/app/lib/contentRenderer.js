@@ -47,7 +47,7 @@ export function renderContent(content) {
 
   const rawNlCount = (html.match(/\n/g) || []).length;
   const escapedNlCount = (html.match(/\\n/g) || []).length;
-  if (escapedNlCount > 3 && escapedNlCount > rawNlCount * 2) {
+  if (escapedNlCount > 0) {
     html = html
       .replace(/\\r\\n/g, "\n")
       .replace(/\\n/g, "\n")
@@ -242,53 +242,56 @@ export function renderContent(content) {
     }
   );
 
-  html = html.replace(/^\s*#+\s+(?:Module|Lesson|Course|Topic)\s*:\s*$/gim, "");
-  html = html.replace(/^\s*(?:Module|Lesson|Course|Topic)\s*:\s*$/gim, "");
-  html = html.replace(/^([ \t]*#)\s+(?:Module|Lesson|Course|Topic)\s+\d+\s*:\s*(.+)$/gim, "$1 $2");
-  html = html.replace(/^([ \t]*)(?:Module|Lesson|Course|Topic)\s+\d+\s*:\s*(.+)$/gim, "$1$2");
+  // ─── Strip course / module / lesson / topic headings entirely ───────────
+  // Remove standalone headings like "# Course: X", "## Module 1: X", "### Lesson X: Y"
+  html = html.replace(/^\s*#{1,6}\s+(?:Course|Module|Lesson|Topic)\s*[:\-\u2013]?\s*(?:\d+\s*[:\-\u2013]?\s*)?.*$/gim, "");
+  // Remove non-heading lines like "Module 1:", "Lesson:", "Course: X"
+  html = html.replace(/^\s*(?:Course|Module|Lesson|Topic)\s*[:\-\u2013]?\s*(?:\d+\s*[:\-\u2013]?\s*)?.*$/gim, "");
+  // Strip leading blank lines left by removal
+  html = html.replace(/^\n{2,}/g, "\n");
 
   html = html.replace(
     /^[ \t]*# (.+)$/gm,
-    '<h1 class="text-3xl lg:text-5xl font-black font-serif text-foreground mb-4 mt-4">$1</h1>'
+    '<h1 class="text-2xl sm:text-3xl font-black text-foreground mb-4 mt-6">$1</h1>'
   );
   html = html.replace(
     /^[ \t]*## (.*$)/gm,
-    '<h2 class="text-2xl lg:text-4xl font-bold font-serif text-foreground mb-3 mt-3">$1</h2>'
+    '<h2 class="text-xl sm:text-2xl font-bold text-foreground mb-3 mt-5">$1</h2>'
   );
   html = html.replace(
     /^[ \t]*### (.*$)/gm,
-    '<h3 class="text-xl lg:text-3xl font-bold font-serif text-foreground/90 mb-2 mt-3">$1</h3>'
+    '<h3 class="text-lg sm:text-xl font-bold text-foreground/90 mb-2 mt-4">$1</h3>'
   );
   html = html.replace(
     /^[ \t]*#### (.*$)/gm,
-    '<h4 class="text-lg lg:text-2xl font-bold font-serif text-foreground/90 mb-2 mt-2.5">$1</h4>'
+    '<h4 class="text-base sm:text-lg font-bold text-foreground/90 mb-2 mt-3">$1</h4>'
   );
   html = html.replace(
     /^[ \t]*##### (.*$)/gm,
-    '<h5 class="text-md lg:text-xl font-bold font-serif text-foreground/90 mb-1 mt-2">$1</h5>'
+    '<h5 class="text-sm sm:text-md font-bold text-foreground/90 mb-1 mt-3">$1</h5>'
   );
   html = html.replace(
     /^[ \t]*###### (.*$)/gm,
-    '<h6 class="text-sm lg:text-lg font-bold font-serif text-foreground/80 mb-1 mt-2">$1</h6>'
+    '<h6 class="text-sm font-bold text-foreground/80 mb-1 mt-2">$1</h6>'
   );
 
   html = html.replace(
     /^> (.*$)/gm,
-    '<blockquote class="border-l-4 border-primary pl-4 py-2 my-6 bg-secondary font-serif italic rounded-r text-foreground/80 lg:text-xl">$1</blockquote>'
+    '<blockquote class="border-l-4 border-green-500 pl-4 py-2 my-4 bg-green-50 dark:bg-green-900/10 italic rounded-r text-foreground/80">$1</blockquote>'
   );
 
   html = html.replace(
     /\*\*([\s\S]+?)\*\*/g,
-    '<strong class="font-bold font-serif text-foreground">$1</strong>'
+    '<strong class="font-bold text-foreground">$1</strong>'
   );
   html = html.replace(
     /<b>([\s\S]+?)<\/b>/g,
-    '<b class="font-bold font-serif text-foreground">$1</b>'
+    '<b class="font-bold text-foreground">$1</b>'
   );
 
   html = html.replace(
     /\*([^\*\n\s][^\*\n]*?)\*/g,
-    '<em class="italic font-serif text-foreground/90">$1</em>'
+    '<em class="italic text-foreground/90">$1</em>'
   );
 
   const lines = html.split("\n");
@@ -328,14 +331,14 @@ export function renderContent(content) {
     if (olMatch) {
       if (listStack[listStack.length - 1] !== 'ol') {
         closeList();
-        processedHtml.push('<ol class="list-decimal list-outside mb-6 space-y-4 font-serif text-[1.05rem] lg:text-xl text-foreground/80 ml-10">');
+        processedHtml.push('<ol class="list-decimal list-outside mb-6 space-y-4 text-foreground/80 ml-10">');
         listStack.push('ol');
       }
       processedHtml.push(`<li class="pl-3">${olMatch[2]}</li>`);
     } else if (ulMatch) {
       if (listStack[listStack.length - 1] !== 'ul') {
         closeList();
-        processedHtml.push('<ul class="list-disc list-outside mb-6 space-y-3 font-serif text-[1.05rem] lg:text-xl text-foreground/80 ml-10">');
+        processedHtml.push('<ul class="list-disc list-outside mb-6 space-y-3 text-foreground/80 ml-10">');
         listStack.push('ul');
       }
       processedHtml.push(`<li class="pl-3">${ulMatch[2]}</li>`);
@@ -344,11 +347,11 @@ export function renderContent(content) {
         closeList();
         processedHtml.push('<hr class="my-8 border-t-2 border-primary/20 hidden" />');
       } else if (listStack.length > 0) {
-        processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 font-serif text-[1.02rem] lg:text-lg leading-relaxed">${line}</div>`);
+        processedHtml.push(`<div class="mt-2 mb-4 pl-3 opacity-90 text-[1rem] lg:text-lg leading-relaxed">${line}</div>`);
       } else if (line.startsWith('<h') || line.startsWith('<blockquote') || line.startsWith('<hr')) {
         processedHtml.push(line);
       } else {
-        processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed font-serif text-[1.05rem] lg:text-xl lg:leading-loose">${line}</p>`);
+        processedHtml.push(`<p class="mb-5 text-foreground/90 leading-relaxed text-[1rem] lg:text-lg lg:leading-loose">${line}</p>`);
       }
     }
   }

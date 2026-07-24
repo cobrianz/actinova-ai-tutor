@@ -326,7 +326,7 @@ export default function CourseTab({ classroomState }) {
           )}
         </div>
       )}
-      {showForkPanel && <ForkContentPanel classroom={classroom} onClose={() => setShowForkPanel(false)} browseResults={browseResults} browseLoading={browseLoading} browseQuery={browseQuery} setBrowseQuery={setBrowseQuery} browseType={browseType} setBrowseType={setBrowseType} onBrowse={fetchBrowseContent} forking={forking} forkedIdSet={forkedIdSet} browseError={browseError} />}
+      {showForkPanel && <ForkContentPanel classroom={classroom} onClose={() => setShowForkPanel(false)} onForkContent={handleForkContent} browseResults={browseResults} browseLoading={browseLoading} browseQuery={browseQuery} setBrowseQuery={setBrowseQuery} browseType={browseType} setBrowseType={setBrowseType} onBrowse={fetchBrowseContent} forking={forking} forkedIdSet={forkedIdSet} browseError={browseError} />}
 
       {/* Quick Info Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1221,10 +1221,8 @@ function ForkedModuleCard({
                       </div>
                     ) : contentChecked && lessonContent ? (
                       <div className="bg-white dark:bg-slate-900">
-                        <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none break-words leading-relaxed" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
-                          <div className="space-y-6" id="lesson-content-container">
-                            {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
-                          </div>
+                        <div className="space-y-6" id="lesson-content-container">
+                          {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
                         </div>
                       </div>
                     ) : contentChecked ? (
@@ -1401,10 +1399,8 @@ function ModuleCard({ mod, index, classroomId, isInstructor, setCourseModules, s
                             <FileText className="w-3 h-3 text-slate-500" />
                           </button>
                         )}
-                        <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none break-words leading-relaxed" style={{ "--tw-prose-body": "#1e293b", "--tw-prose-headings": "#0f172a" }}>
-                          <div className="space-y-6" id="lesson-content-container">
-                            {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
-                          </div>
+                        <div className="space-y-6" id="lesson-content-container">
+                          {renderLessonBlocks(lessonContent, { LessonChart, LessonTable })}
                         </div>
                       </div>
                     ) : (

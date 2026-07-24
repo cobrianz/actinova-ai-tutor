@@ -12,6 +12,10 @@ import {
   MessagesSquare,
   LayoutDashboard,
   Calendar,
+  BarChart2,
+  TrendingUp,
+  Users,
+  UserCheck,
 } from "lucide-react";
 
 // Always visible in the bottom bar (max 4 + More)
@@ -27,6 +31,10 @@ const SECONDARY_TABS = [
   { id: "chat",         label: "Chat",       icon: MessageSquare },
   { id: "calendar",     label: "Calendar",  icon: Calendar },
   { id: "materials",    label: "Materials", icon: Layers },
+  { id: "grades",       label: "Grades",    icon: BarChart2 },
+  { id: "analytics",    label: "Analytics", icon: TrendingUp, instructorOnly: true },
+  { id: "attendance",   label: "Attendance", icon: UserCheck, instructorOnly: true },
+  { id: "students",     label: "Students",  icon: Users, instructorOnly: true },
 ];
 
 const INSTRUCTOR_TAB = { id: "settings", label: "Settings", icon: Settings };
@@ -63,9 +71,10 @@ function ClassroomMobileNav({ activeTab, setActiveTab, isInstructor, onBack }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const secondaryTabs = isInstructor
-    ? [...SECONDARY_TABS, INSTRUCTOR_TAB]
-    : SECONDARY_TABS;
+  const secondaryTabs = [
+    ...SECONDARY_TABS.filter((t) => !t.instructorOnly || isInstructor),
+    ...(isInstructor ? [INSTRUCTOR_TAB] : []),
+  ];
 
   // Close on outside click
   useEffect(() => {
