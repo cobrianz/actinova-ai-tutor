@@ -36,6 +36,9 @@ const defaultOptions = {
   animations: {
     enabled: false
   },
+  layout: {
+    padding: { top: 4, bottom: 4, left: 4, right: 4 },
+  },
   plugins: {
     legend: {
       display: true,
@@ -43,31 +46,33 @@ const defaultOptions = {
       labels: {
         usePointStyle: true,
         pointStyle: 'rect',
-        padding: 20,
-        font: { family: "'Inter', sans-serif", size: 14, weight: '500' },
-        color: '#0f172a',
+        padding: 14,
+        font: { family: "'Inter', sans-serif", size: 11, weight: '500' },
+        color: '#64748b',
       },
     },
     tooltip: {
-      enabled: false, // Tooltips are useless in PDF
+      enabled: false,
     },
   },
   scales: {
     x: {
       grid: { display: false },
-      border: { display: true, color: '#f1f5f9' },
+      border: { display: false },
       ticks: {
-        color: '#64748b',
-        font: { family: "'Inter', sans-serif", size: 12 },
+        color: '#94a3b8',
+        font: { family: "'Inter', sans-serif", size: 10 },
+        maxRotation: 0,
       },
     },
     y: {
       beginAtZero: true,
-      grid: { display: false },
+      grid: { display: true, color: '#f1f5f9', lineWidth: 1 },
       border: { display: false },
       ticks: {
-        color: '#64748b',
-        font: { family: "'Inter', sans-serif", size: 12 },
+        color: '#94a3b8',
+        font: { family: "'Inter', sans-serif", size: 10 },
+        padding: 4,
       },
     },
   },
@@ -76,24 +81,37 @@ const defaultOptions = {
 export default function LessonChart({ type = 'bar', data, title, className = "" }) {
   if (!data || !data.datasets) return null;
 
+  const isRadial = type === 'pie' || type === 'doughnut';
+
+  const palette = [
+    '#6366f1',
+    '#2563eb',
+    '#06b6d4',
+    '#8b5cf6',
+    '#a855f7',
+    '#ec4899',
+    '#14b8a6',
+    '#f59e0b',
+  ];
+
   const chartData = {
     labels: data.labels,
     datasets: data.datasets.map((ds, i) => ({
       ...ds,
-      backgroundColor: ds.backgroundColor || [
-        '#2563eb', // Primary Blue
-        '#64748b', // Slate 500
-        '#94a3b8', // Slate 400
-        '#cbd5e1', // Slate 300
-      ][i % 4],
-      borderColor: (type === 'line' || type === 'scatter') ? '#2563eb' : 'transparent',
-      borderWidth: (type === 'line' || type === 'scatter') ? 2 : 0,
-      borderRadius: type === 'bar' ? 4 : 0,
-      tension: 0.3,
+      backgroundColor: isRadial
+        ? (ds.backgroundColor || palette.slice(0, data.labels?.length || 4))
+        : (ds.backgroundColor || palette[i % palette.length] + '22'),
+      borderColor: isRadial
+        ? '#ffffff'
+        : (ds.borderColor || palette[i % palette.length]),
+      borderWidth: isRadial ? 2 : (type === 'line' || type === 'scatter') ? 2 : 1,
+      borderRadius: type === 'bar' ? 6 : 0,
+      tension: 0.4,
       showLine: type === 'line',
-      pointRadius: (type === 'line' || type === 'scatter') ? 4 : 0,
+      pointRadius: (type === 'line' || type === 'scatter') ? 3 : 0,
       pointBackgroundColor: '#fff',
       pointBorderWidth: 2,
+      fill: type === 'line' ? { target: 'origin', above: palette[i % palette.length] + '10' } : undefined,
     })),
   };
 
@@ -105,8 +123,6 @@ export default function LessonChart({ type = 'bar', data, title, className = "" 
     scatter: Scatter,
   }[type] || Bar;
 
-  const isRadial = type === 'pie' || type === 'doughnut';
-
   const chartOptions = {
     ...defaultOptions,
     scales: isRadial ? undefined : defaultOptions.scales,
@@ -114,23 +130,26 @@ export default function LessonChart({ type = 'bar', data, title, className = "" 
       ...defaultOptions.plugins,
       legend: {
         ...defaultOptions.plugins.legend,
-        position: isRadial ? 'right' : 'bottom',
-      }
-    }
+        position: isRadial ? 'bottom' : 'bottom',
+        labels: {
+          ...defaultOptions.plugins.legend.labels,
+          color: '#64748b',
+        },
+      },
+    },
   };
 
   return (
-    <div 
-      className={`w-full my-10 flex flex-col rounded-2xl border border-border p-4 sm:p-6 transition-all ${className}`} 
-      style={{ height: '400px', backgroundColor: '#fcfcfd' }}
+    <div
+      className={`max-w-2xl mx-auto my-6 flex flex-col rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/60 overflow-hidden transition-all ${className}`}
     >
       {title && (
-        <div className="mb-6 px-2">
-          <h4 className="text-lg font-bold tracking-tight" style={{ color: '#0f172a' }}>{title}</h4>
-          <div className="mt-2" style={{ height: '1px', width: '100%', backgroundColor: '#e2e8f0' }} />
+        <div className="px-4 pt-3 pb-2">
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 tracking-tight">{title}</h4>
+          <div className="mt-1.5 h-px bg-slate-100 dark:bg-slate-700/50" />
         </div>
       )}
-      <div className="flex-1 relative">
+      <div className="px-3 pb-2" style={{ height: '240px' }}>
         <ChartComponent data={chartData} options={chartOptions} />
       </div>
     </div>

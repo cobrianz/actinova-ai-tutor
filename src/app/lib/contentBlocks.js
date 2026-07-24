@@ -3,8 +3,73 @@
  *
  * Kept separate from pdfUtils so normal lesson rendering does not pull heavy PDF assets.
  */
+
+/**
+ * Parse YAML-style chart definitions into a chart block.
+ * Handles formats like:
+ *   Chart Title
+ *   type: line
+ *   data:
+ *     labels: ["Jan", "Feb"]
+ *     datasets:
+ *       - label: "Series"
+ *         data: [1, 2]
+ */
+function parseYamlChart(text) {
+  const typeMatch = text.match(/\btype:\s*(line|bar|pie|doughnut|scatter)\b/i);
+  if (!typeMatch) return null;
+  const chartType = typeMatch[1].toLowerCase();
+
+  // Title: line before "type:" that isn't a YAML key
+  const lines = text.split("\n");
+  const typeLineIdx = lines.findIndex((l) => /^\s*type:\s*/i.test(l));
+  let title = "Chart";
+  if (typeLineIdx > 0) {
+    for (let i = typeLineIdx - 1; i >= 0; i--) {
+      const candidate = lines[i].trim();
+      if (!candidate) break;
+      if (/^(type|data|labels|datasets):\s*/i.test(candidate)) break;
+      title = candidate;
+      break;
+    }
+  }
+
+  // Labels
+  const labelsMatch = text.match(/labels:\s*\[([^\]]*)\]/);
+  const labels = labelsMatch ? labelsMatch[1].split(",").map((s) => s.trim().replace(/^"|"$/g, "")) : [];
+
+  // Datasets
+  const datasets = [];
+  const dsMatches = [...text.matchAll(/- label:\s*"([^"]*)"\s*\ndata:\s*\[([^\]]*)\]/g)];
+  for (const ds of dsMatches) {
+    datasets.push({
+      label: ds[1],
+      data: ds[2].split(",").map((v) => parseFloat(v.trim()) || 0),
+    });
+  }
+
+  // Simple labels + data (no datasets)
+  if (datasets.length === 0 && labels.length > 0) {
+    const dataMatch = text.match(/data:\s*\[([^\]]*)\]/);
+    if (dataMatch) {
+      datasets.push({
+        label: title,
+        data: dataMatch[1].split(",").map((v) => parseFloat(v.trim()) || 0),
+      });
+    }
+  }
+
+  if (labels.length === 0 || datasets.length === 0) return null;
+  return { type: "chart", chartType, data: { labels, datasets }, title };
+}
+
 export const parseContentIntoBlocks = (content) => {
   let normalizedContent = (content || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+
+  // Normalize escaped newlines (literal "\n" strings from DB)
+  if ((normalizedContent.match(/\\n/g) || []).length > 0) {
+    normalizedContent = normalizedContent.replace(/\\n/g, "\n");
+  }
 
   // Strip outer triple backticks if they wrap the entire content
   // e.g., ```markdown\n# Header\n... ```
@@ -107,67 +172,62 @@ export const parseContentIntoBlocks = (content) => {
       visualMatches.push({ type: "tikz", content: m[1], full: m[0], index: m.index });
     }
 
-    // Detect YAML-style chart blocks:
-    //   Chart Title (optional)
-    //   type: line|bar|pie|doughnut
-    //   data:
-    //     labels: [...]
-    //     datasets:
-    //       - label: "..."
-    //         data: [...]
-    const yamlChartRegex = /(?:^|\n)((?:[^\n]*\n)?type:\s*(line|bar|pie|doughnut|scatter)\s*\ndata:\s*\n[\s\S]*?(?:datasets:[\s\S]*?(?:- label:[\s\S]*?data:\s*\[[^\]]*\]\s*)+|labels:\s*\[[^\]]*\]\s*\n\s*data:\s*\[[^\]]*\]))\s*(?=\n\n|\n(?=[A-Z])|\n#{1,6}\s|\n$|$)/g;
-    let yMatch;
-    while ((yMatch = yamlChartRegex.exec(text)) !== null) {
-      try {
-        const fullBlock = yMatch[0].trim();
-        const chartType = yMatch[2];
-        const dataSection = yMatch[1];
-
-        // Extract title from the line before "type:" if it exists
-        const titleMatch = dataSection.match(/^(?!type:|data:|labels:|datasets:)([^\n]+)\n/);
-        const title = titleMatch ? titleMatch[1].trim() : "Chart";
-
-        // Extract labels
-        const labelsMatch = dataSection.match(/labels:\s*\[([^\]]*)\]/);
-        const labels = labelsMatch ? labelsMatch[1].split(",").map((s) => s.trim().replace(/"/g, "")) : [];
-
-        // Extract datasets
-        const datasets = [];
-        const datasetBlockMatch = dataSection.match(/datasets:\s*\n([\s\S]*)/);
-        if (datasetBlockMatch) {
-          const dsBlock = datasetBlockMatch[1];
-          const dsMatches = dsBlock.matchAll(/- label:\s*"([^"]*)"\s*\ndata:\s*\[([^\]]*)\]/g);
-          for (const ds of dsMatches) {
-            datasets.push({
-              label: ds[1],
-              data: ds[2].split(",").map((v) => parseFloat(v.trim()) || 0),
-            });
-          }
+    // Detect YAML-style chart blocks by scanning line-by-line
+    // Looks for "type: line|bar|..." lines and extracts the surrounding block
+    const yamlTypeRegex = /\btype:\s*(line|bar|pie|doughnut|scatter)\b/gi;
+    let ym;
+    while ((ym = yamlTypeRegex.exec(text)) !== null) {
+      const afterType = text.substring(ym.index);
+      // Find the end of this YAML chart block (next blank line, heading, or end of text)
+      const endMatch = afterType.match(/\n\n|\n#{1,6}\s/);
+      const blockEnd = endMatch ? ym.index + endMatch.index + endMatch[0].length : text.length;
+      // Look backwards for title
+      const beforeType = text.substring(0, ym.index);
+      const lastNewlineBefore = beforeType.lastIndexOf("\n");
+      let blockStart = lastNewlineBefore + 1;
+      if (blockStart > 0) {
+        const prevLine = text.substring(text.lastIndexOf("\n", lastNewlineBefore - 1) + 1, lastNewlineBefore).trim();
+        if (prevLine && !/^(type|data|labels|datasets):\s*/i.test(prevLine) && prevLine.length < 200) {
+          blockStart = text.lastIndexOf("\n", lastNewlineBefore - 1) + 1;
         }
+      }
 
-        // If no datasets (simple labels+data chart)
-        if (datasets.length === 0) {
-          const dataMatch = dataSection.match(/data:\s*\[([^\]]*)\]/);
-          if (dataMatch) {
-            datasets.push({
-              label: title,
-              data: dataMatch[1].split(",").map((v) => parseFloat(v.trim()) || 0),
-            });
-          }
-        }
+      const fullBlock = text.substring(blockStart, blockEnd).trim();
+      const chartType = ym[1].toLowerCase();
+      const labelsMatch = fullBlock.match(/labels:\s*\[([^\]]*)\]/);
+      const labels = labelsMatch ? labelsMatch[1].split(",").map((s) => s.trim().replace(/^"|"$/g, "")) : [];
 
-        if (labels.length > 0 && datasets.length > 0) {
-          visualMatches.push({
-            type: "yamlChart",
-            chartType,
-            data: { labels, datasets },
-            title,
-            full: fullBlock,
-            index: yMatch.index,
-          });
+      const datasets = [];
+      const dsMatches = [...fullBlock.matchAll(/- label:\s*"([^"]*)"\s*\ndata:\s*\[([^\]]*)\]/g)];
+      for (const ds of dsMatches) {
+        datasets.push({
+          label: ds[1],
+          data: ds[2].split(",").map((v) => parseFloat(v.trim()) || 0),
+        });
+      }
+
+      if (datasets.length === 0 && labels.length > 0) {
+        const dataMatch = fullBlock.match(/data:\s*\[([^\]]*)\]/);
+        if (dataMatch) {
+          const lines = fullBlock.split("\n");
+          const typeIdx = lines.findIndex((l) => /^\s*type:/i.test(l));
+          const titleLine = typeIdx > 0 ? lines[typeIdx - 1]?.trim() : "";
+          const title = titleLine && !/^(type|data|labels|datasets):/i.test(titleLine) ? titleLine : "Chart";
+          datasets.push({ label: title, data: dataMatch[1].split(",").map((v) => parseFloat(v.trim()) || 0) });
         }
-      } catch (e) {
-        // ignore parse errors
+      }
+
+      if (labels.length > 0 && datasets.length > 0) {
+        const titleLine2 = fullBlock.split("\n").find((l) => l.trim() && !/^(type|data|labels|datasets|[\s]*-)/i.test(l.trim()));
+        visualMatches.push({
+          type: "yamlChart",
+          chartType,
+          data: { labels, datasets },
+          title: titleLine2?.trim() || "Chart",
+          full: fullBlock,
+          index: blockStart,
+          end: blockEnd,
+        });
       }
     }
 
@@ -232,8 +292,15 @@ export const parseContentIntoBlocks = (content) => {
         } catch (e) {
           blocks.push({ type: "code", lang: "chart", content: vMatch.content });
         }
+      } else if (vMatch.type === "yamlChart") {
+        blocks.push({
+          type: "chart",
+          chartType: vMatch.chartType,
+          data: vMatch.data,
+          title: vMatch.title,
+        });
       }
-      lastIdx = vMatch.index + vMatch.full.length;
+      lastIdx = vMatch.end || (vMatch.index + (vMatch.full || "").length);
     });
     const remainingText = text.substring(lastIdx);
     if (remainingText.trim()) extractTablesFromText(remainingText);
@@ -259,9 +326,13 @@ export const parseContentIntoBlocks = (content) => {
           title: chartData.title || "Interactive Data Chart",
         });
       } catch (e) {
-        // During generation/streaming, chart JSON can be incomplete. Avoid noisy console errors;
-        // callers may choose to hide these fallback blocks until the JSON is complete.
-        blocks.push({ type: "code", lang: "chart", content: code });
+        // Try YAML-style chart parsing as fallback
+        const yamlChart = parseYamlChart(code);
+        if (yamlChart) {
+          blocks.push(yamlChart);
+        } else {
+          blocks.push({ type: "code", lang: "chart", content: code });
+        }
       }
     } else if (lang === "table") {
       try {
